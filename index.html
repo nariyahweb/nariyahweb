@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLOUPYUD</title>
+
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background:#f5f3ff;
+}
+
+/* LOGIN */
+#loginPage {
+  display:flex;
+  height:100vh;
+  justify-content:center;
+  align-items:center;
+}
+.login-box {
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  width:250px;
+}
+input {
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+}
+button {
+  width:100%;
+  padding:10px;
+  background:#7c3aed;
+  color:white;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+/* APP */
+#app {
+  display:none;
+}
+.header {
+  background:#7c3aed;
+  color:white;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+}
+
+.board {
+  display:flex;
+  gap:10px;
+  padding:10px;
+  overflow-x:auto;
+}
+
+.column {
+  background:#ede9fe;
+  border-radius:10px;
+  padding:10px;
+  min-width:250px;
+}
+
+.card {
+  background:#7c3aed;
+  color:white;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+  cursor:grab;
+}
+
+/* MODAL */
+.modal {
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.5);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+.modal-box {
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  width:300px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-box">
+    <h3>FLOUPYUD</h3>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <b>FLOUPYUD</b>
+    <div>
+      <button onclick="openModal()">+ Tambah</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="column" id="baru" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <h3>Baru</h3>
+    </div>
+
+    <div class="column" id="followup" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <h3>Follow Up</h3>
+    </div>
+
+    <div class="column" id="pending" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <h3>Pending</h3>
+    </div>
+
+    <div class="column" id="closing" ondrop="drop(event)" ondragover="allowDrop(event)">
+      <h3>Closing</h3>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3>Tambah Pelanggan</h3>
+    <input id="nama" placeholder="Nama">
+    <input id="hp" placeholder="No HP">
+    <input id="tanggal" type="date">
+    <input id="catatan" placeholder="Catatan">
+    <button onclick="addData()">Simpan</button>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCfj2Xdj6et3fThyA2gg-GWG8yZOhoqREA",
+  authDomain: "floupyud.firebaseapp.com",
+  projectId: "floupyud",
+  storageBucket: "floupyud.firebasestorage.app",
+  messagingSenderId: "135934200752",
+  appId: "1:135934200752:web:b788e6ff6412ac4ea02475",
+  measurementId: "G-SVP2JHMMRY"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// LOGIN
+function login(){
+  let email = document.getElementById("email").value;
+  let pass = document.getElementById("password").value;
+
+  auth.signInWithEmailAndPassword(email, pass)
+  .catch(e=>alert(e.message));
+}
+
+// LOGOUT
+function logout(){
+  auth.signOut();
+}
+
+// CEK LOGIN
+auth.onAuthStateChanged(user=>{
+  if(user){
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("app").style.display="block";
+    loadData();
+  } else {
+    document.getElementById("loginPage").style.display="flex";
+    document.getElementById("app").style.display="none";
+  }
+});
+
+// MODAL
+function openModal(){
+  document.getElementById("modal").style.display="flex";
+}
+
+// TAMBAH DATA
+function addData(){
+  db.collection("customers").add({
+    nama: nama.value,
+    hp: hp.value,
+    tanggal: tanggal.value,
+    catatan: catatan.value,
+    status: "baru"
+  });
+  modal.style.display="none";
+}
+
+// LOAD DATA REALTIME
+function loadData(){
+  db.collection("customers").onSnapshot(snap=>{
+    document.querySelectorAll(".column").forEach(c=>c.innerHTML="<h3>"+c.id+"</h3>");
+
+    snap.forEach(doc=>{
+      let d = doc.data();
+
+      let card = document.createElement("div");
+      card.className="card";
+      card.draggable=true;
+      card.id=doc.id;
+
+      card.innerHTML = `
+        <b>${d.nama}</b><br>
+        ${d.hp}<br>
+        ${d.tanggal}
+      `;
+
+      card.ondragstart = drag;
+
+      document.getElementById(d.status).appendChild(card);
+    });
+  });
+}
+
+// DRAG
+function drag(ev){
+  ev.dataTransfer.setData("id", ev.target.id);
+}
+
+function allowDrop(ev){
+  ev.preventDefault();
+}
+
+function drop(ev){
+  ev.preventDefault();
+  let id = ev.dataTransfer.getData("id");
+  let status = ev.currentTarget.id;
+
+  db.collection("customers").doc(id).update({
+    status: status
+  });
+}
+</script>
+
+</body>
+</html>
