@@ -126,6 +126,42 @@ button {
     <input id="hp" placeholder="No HP">
     <input id="tanggal" type="date">
     <input id="catatan" placeholder="Catatan">
+<select id="media">
+  <option>Whatsapp Chat</option>
+  <option>Whatsapp Call</option>
+  <option>Telegram Chat</option>
+  <option>Telegram Call</option>
+</select>
+
+<select id="status_pesan">
+  <option>Dibaca</option>
+  <option>Belum Dibaca</option>
+  <option>Gagal Kirim</option>
+</select>
+
+<select id="respon">
+  <option>Ya</option>
+  <option>Tidak</option>
+  <option>Menunggu</option>
+</select>
+
+<input id="jenis_respon" placeholder="Isi balasan customer">
+
+<select id="kategori_issue">
+  <option>Ada Keluhan</option>
+  <option>Masalah Saldo</option>
+  <option>Masalah Internal</option>
+  <option>Masalah Pelayanan</option>
+</select>
+
+<input id="penyebab" placeholder="Penyebab utama">
+
+<select id="tidak_lanjut">
+  <option>Close Issue</option>
+  <option>Repeat FU</option>
+  <option>Impossible To Continue</option>
+  <option>Blacklist</option>
+</select>
     <button onclick="addData()">Simpan</button>
     <button onclick="closeModal()" style="background:gray;margin-top:5px;">Tutup</button>
   </div>
@@ -194,6 +230,15 @@ window.addData = function(){
     user_id: auth.currentUser.uid
   };
 
+   media: media.value,
+  status_pesan: status_pesan.value,
+  respon: respon.value,
+  jenis_respon: jenis_respon.value,
+  kategori_issue: kategori_issue.value,
+  penyebab: penyebab.value,
+  tidak_lanjut: tidak_lanjut.value
+};
+
   if(editId){
     db.collection("customers").doc(editId).update(data);
     editId = null;
@@ -235,15 +280,29 @@ function loadData(){
         tanggal.value=d.tanggal;
         catatan.value=d.catatan;
         editId=doc.id;
+media.value = d.media || "";
+status_pesan.value = d.status_pesan || "";
+respon.value = d.respon || "";
+jenis_respon.value = d.jenis_respon || "";
+kategori_issue.value = d.kategori_issue || "";
+penyebab.value = d.penyebab || "";
+tidak_lanjut.value = d.tidak_lanjut || "";
       };
 
       card.innerHTML = `
-        <b>${d.nama}</b><br>
-        ${d.hp}<br>
-        ${d.tanggal}<br>
-        <button onclick="event.stopPropagation(); hapus('${doc.id}')" style="background:red;margin-top:5px;">Hapus</button>
-      `;
+  <b>${d.nama}</b><br>
+  ${d.hp}<br>
+  ${d.tanggal}<br>
 
+  📱 ${d.media || '-'}<br>
+  📩 ${d.status_pesan || '-'}<br>
+  💬 ${d.respon || '-'}<br>
+
+  <button onclick="event.stopPropagation(); hapus('${doc.id}')" 
+    style="background:red;margin-top:5px;">
+    Hapus
+  </button>
+`;
       card.ondragstart = drag;
 
       document.getElementById(d.status).appendChild(card);
@@ -284,6 +343,13 @@ function resetForm(){
   hp.value="";
   tanggal.value="";
   catatan.value="";
+media.value = "";
+status_pesan.value = "";
+respon.value = "";
+jenis_respon.value = "";
+kategori_issue.value = "";
+penyebab.value = "";
+tidak_lanjut.value = "";
 }
 </script>
 
