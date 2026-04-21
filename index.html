@@ -206,8 +206,8 @@ function addData(){
     hp: hp.value,
     tanggal: tanggal.value,
     catatan: catatan.value,
-    status: "baru"
-    user_id: auth.currentUser.uid
+    status: "baru",
+user_id: auth.currentUser.uid
   });
   modal.style.display="none";
 }
@@ -229,11 +229,9 @@ function loadData(){
 
       let today = new Date().toISOString().split("T")[0];
 
-if(d.tanggal === today){
-  card.style.background = "#dc2626"; // merah
-}
+let today = new Date().toISOString().split("T")[0];
 
-      if(d.tanggal === today){
+if(d.tanggal === today){
   card.style.background = "#dc2626";
 } else if(d.tanggal < today){
   card.style.background = "#7f1d1d";
