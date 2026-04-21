@@ -169,7 +169,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // LOGIN
-function login(){
+window.login = function(){
   let email = document.getElementById("email").value;
   let pass = document.getElementById("password").value;
 
@@ -178,7 +178,7 @@ function login(){
 }
 
 // LOGOUT
-function logout(){
+window.logout = function(){
   auth.signOut();
 }
 
@@ -195,12 +195,12 @@ auth.onAuthStateChanged(user=>{
 });
 
 // MODAL
-function openModal(){
+window.openModal = function(){
   document.getElementById("modal").style.display="flex";
 }
 
 // TAMBAH DATA
-function addData(){
+window.addData = function(){
   db.collection("customers").add({
     nama: nama.value,
     hp: hp.value,
@@ -226,8 +226,6 @@ function loadData(){
       card.className="card";
       card.draggable=true;
       card.id=doc.id;
-
-      let today = new Date().toISOString().split("T")[0];
 
 let today = new Date().toISOString().split("T")[0];
 
@@ -259,15 +257,15 @@ if(d.tanggal === today){
 }
 
 // DRAG
-function drag(ev){
+window.drag = function(ev){
   ev.dataTransfer.setData("id", ev.target.id);
 }
 
-function allowDrop(ev){
+window.allowDrop = function(ev){
   ev.preventDefault();
 }
 
-function drop(ev){
+window.drop = function(ev){
   ev.preventDefault();
   let id = ev.dataTransfer.getData("id");
   let status = ev.currentTarget.id;
