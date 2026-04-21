@@ -150,7 +150,7 @@ button {
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIza...",
+  apiKey: "AIzaSyCfj2Xdj6et3fThyA2gg-GWG8yZOhoqREA",
   authDomain: "floupyud.firebaseapp.com",
   projectId: "floupyud"
 };
@@ -163,8 +163,12 @@ let currentCustomer = null;
 
 // LOGIN
 window.login = function(){
-  auth.signInWithEmailAndPassword(email.value,password.value)
-  .catch(e=>alert(e.message));
+  auth.signInWithEmailAndPassword(email.value, password.value)
+  .then(()=>console.log("Login sukses"))
+  .catch(e=>{
+    alert(e.message); // 🔥 WAJIB biar tau errornya
+    console.log(e);
+  });
 }
 
 // LOGOUT
