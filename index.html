@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FLOUPYUD</title>
@@ -92,6 +93,12 @@ button {
     </div>
   </div>
 
+  <div style="padding:10px">
+    <b>Total:</b> <span id="total">0</span> |
+    <b>Closing:</b> <span id="closingCount">0</span> |
+    <b>Rate:</b> <span id="rate">0%</span>
+  </div>
+
   <div class="board">
     <div class="column" id="baru"><h3>Baru</h3></div>
     <div class="column" id="followup"><h3>Follow Up</h3></div>
@@ -138,6 +145,7 @@ button {
 
     <input id="jenis_respon" placeholder="Isi balasan">
     <input id="penyebab" placeholder="Penyebab">
+    <input id="reminder" type="datetime-local">
 
     <button onclick="saveFU()">Simpan FU</button>
     <button onclick="closeFU()">Tutup</button>
@@ -222,15 +230,16 @@ window.openFU = function(id){
 window.closeFU = ()=> modalFU.style.display="none";
 
 window.saveFU = function(){
-  db.collection("followups").add({
-    customer_id:currentCustomer,
-    media:media.value,
-    status_pesan:status_pesan.value,
-    respon:respon.value,
-    jenis_respon:jenis_respon.value,
-    penyebab:penyebab.value,
-    tanggal:new Date().toISOString()
-  });
+ db.collection("followups").add({
+  customer_id:currentCustomer,
+  media:media.value,
+  status_pesan:status_pesan.value,
+  respon:respon.value,
+  jenis_respon:jenis_respon.value,
+  penyebab:penyebab.value,
+  tanggal:new Date().toISOString(),
+  reminder: reminder.value
+});
 
   db.collection("customers").doc(currentCustomer).update({
     status:"followup"
@@ -245,32 +254,56 @@ function loadData(){
   .where("user_id","==",auth.currentUser.uid)
   .onSnapshot(snap=>{
 
-    document.querySelectorAll(".column").forEach(c=>c.innerHTML="<h3>"+c.id+"</h3>");
+    document.querySelectorAll(".column")
+    .forEach(c=>c.innerHTML="<h3>"+c.id+"</h3>");
+
+    let total = 0;
+    let closing = 0;
 
     snap.forEach(doc=>{
       let d = doc.data();
 
+      total++;
+      if(d.status === "closing") closing++;
+
       let card = document.createElement("div");
-      card.onclick = () => showHistory(doc.id);
       card.className="card";
+      card.setAttribute("data-id", doc.id);
+      card.onclick = () => showHistory(doc.id);
 
- card.innerHTML = `
-  <b>${d.nama}</b><br>
-  ${d.hp}<br>
+      card.innerHTML = `
+        <b>${d.nama}</b><br>
+        ${d.hp}<br>
 
-  <button onclick="event.stopPropagation(); openFU('${doc.id}')">Follow Up</button><br>
+        <button onclick="event.stopPropagation(); openWA('${d.hp}')">WA</button>
+        <button onclick="event.stopPropagation(); openFU('${doc.id}')">Follow Up</button><br>
 
-  <button onclick="event.stopPropagation(); updateStatus('${doc.id}','followup')">→ FU</button>
-  <button onclick="event.stopPropagation(); updateStatus('${doc.id}','pending')">→ Pending</button>
-  <button onclick="event.stopPropagation(); updateStatus('${doc.id}','closing')">→ Closing</button>
-  <br><br>
+        <button onclick="event.stopPropagation(); updateStatus('${doc.id}','followup')">→ FU</button>
+        <button onclick="event.stopPropagation(); updateStatus('${doc.id}','pending')">→ Pending</button>
+        <button onclick="event.stopPropagation(); updateStatus('${doc.id}','closing')">→ Closing</button>
 
-  <button onclick="event.stopPropagation(); editCustomer('${doc.id}','${d.nama}','${d.hp}','${d.tanggal}')">Edit</button>
-  <button onclick="event.stopPropagation(); deleteCustomer('${doc.id}')">Hapus</button>
-`;
+        <br><br>
+
+        <button onclick="event.stopPropagation(); editCustomer('${doc.id}','${d.nama}','${d.hp}','${d.tanggal}')">Edit</button>
+        <button onclick="event.stopPropagation(); deleteCustomer('${doc.id}')">Hapus</button>
+      `;
 
       document.getElementById(d.status).appendChild(card);
     });
+
+    // ✅ TARUH DI SINI (SETELAH LOOP)
+    document.getElementById("total").innerText = total;
+    document.getElementById("closingCount").innerText = closing;
+
+    let rate = total ? Math.round((closing/total)*100) : 0;
+    document.getElementById("rate").innerText = rate + "%";
+
+    // ✅ TARUH DI SINI (bukan di dalam card)
+    setTimeout(initDrag, 300);
+
+    // ✅ PANGGIL SEKALI
+    checkReminder();
+
   });
 }
 
@@ -280,7 +313,7 @@ window.updateStatus = function(id, status){
   });
 }
 
-  function showHistory(id){
+ function showHistory(id){
   db.collection("followups")
   .where("customer_id","==",id)
   .get()
@@ -332,6 +365,50 @@ ${f.jenis_respon}
     // balikin ke mode tambah lagi
     location.reload();
   }
+}
+
+  function initDrag(){
+  ["baru","followup","pending","closing"].forEach(status=>{
+    new Sortable(document.getElementById(status), {
+      group: "shared",
+      animation: 150,
+
+      onAdd: function (evt) {
+        let id = evt.item.getAttribute("data-id");
+        let newStatus = evt.to.id;
+
+        db.collection("customers").doc(id).update({
+          status: newStatus
+        });
+      }
+    });
+  });
+}
+
+  function checkReminder(){
+  db.collection("followups")
+  .get()
+  .then(snap=>{
+    let now = new Date();
+
+    snap.forEach(doc=>{
+      let d = doc.data();
+      if(d.reminder){
+        let t = new Date(d.reminder);
+
+        if(t <= now){
+          alert("Reminder FU!\n" + d.jenis_respon);
+        }
+      }
+    });
+  });
+}
+
+  window.openWA = function(hp){
+  let nomor = hp.replace(/^0/, "62");
+  let link = "https://wa.me/" + nomor;
+
+  window.open(link, "_blank");
 }
   
 </script>
