@@ -116,6 +116,8 @@ button {
     </div>
   </div>
 
+<input id="search" placeholder="Cari nama..." onkeyup="searchData()" style="margin:10px;padding:8px;width:200px;">
+  
   <div class="board">
     <div class="column" id="baru" ondrop="drop(event)" ondragover="allowDrop(event)">
       <h3>Baru</h3>
@@ -205,13 +207,16 @@ function addData(){
     tanggal: tanggal.value,
     catatan: catatan.value,
     status: "baru"
+    user_id: auth.currentUser.uid
   });
   modal.style.display="none";
 }
 
 // LOAD DATA REALTIME
 function loadData(){
-  db.collection("customers").onSnapshot(snap=>{
+  db.collection("customers")
+.where("user_id", "==", auth.currentUser.uid)
+.onSnapshot(snap=>{
     document.querySelectorAll(".column").forEach(c=>c.innerHTML="<h3>"+c.id+"</h3>");
 
     snap.forEach(doc=>{
@@ -221,6 +226,26 @@ function loadData(){
       card.className="card";
       card.draggable=true;
       card.id=doc.id;
+
+      let today = new Date().toISOString().split("T")[0];
+
+if(d.tanggal === today){
+  card.style.background = "#dc2626"; // merah
+}
+
+      if(d.tanggal === today){
+  card.style.background = "#dc2626";
+} else if(d.tanggal < today){
+  card.style.background = "#7f1d1d";
+}
+
+      card.onclick = ()=>{
+  document.getElementById("modal").style.display="flex";
+  nama.value = d.nama;
+  hp.value = d.hp;
+  tanggal.value = d.tanggal;
+  catatan.value = d.catatan;
+}
 
       card.innerHTML = `
         <b>${d.nama}</b><br>
@@ -253,6 +278,15 @@ function drop(ev){
     status: status
   });
 }
+  
+function searchData(){
+  let val = document.getElementById("search").value.toLowerCase();
+
+  document.querySelectorAll(".card").forEach(c=>{
+    c.style.display = c.innerText.toLowerCase().includes(val) ? "block" : "none";
+  });
+}
+  
 </script>
 
 </body>
