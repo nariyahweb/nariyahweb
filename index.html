@@ -254,17 +254,19 @@ function loadData(){
       card.onclick = () => showHistory(doc.id);
       card.className="card";
 
-  card.innerHTML = `
+ card.innerHTML = `
   <b>${d.nama}</b><br>
   ${d.hp}<br>
 
-  <button onclick="event.stopPropagation(); openFU('${doc.id}')">
-    Follow Up
-  </button><br>
+  <button onclick="event.stopPropagation(); openFU('${doc.id}')">Follow Up</button><br>
 
   <button onclick="event.stopPropagation(); updateStatus('${doc.id}','followup')">→ FU</button>
   <button onclick="event.stopPropagation(); updateStatus('${doc.id}','pending')">→ Pending</button>
   <button onclick="event.stopPropagation(); updateStatus('${doc.id}','closing')">→ Closing</button>
+  <br><br>
+
+  <button onclick="event.stopPropagation(); editCustomer('${doc.id}','${d.nama}','${d.hp}','${d.tanggal}')">Edit</button>
+  <button onclick="event.stopPropagation(); deleteCustomer('${doc.id}')">Hapus</button>
 `;
 
       document.getElementById(d.status).appendChild(card);
@@ -296,6 +298,40 @@ ${f.jenis_respon}
 
     alert(text || "Belum ada follow up");
   });
+}
+
+  window.deleteCustomer = function(id){
+  if(confirm("Yakin mau hapus customer ini?")){
+    db.collection("customers").doc(id).delete();
+  }
+}
+
+  window.editCustomer = function(id, n, h, t){
+  nama.value = n;
+  hp.value = h;
+  tanggal.value = t;
+
+  openModal();
+
+  // ubah tombol jadi mode update
+  window.saveCustomer = function(){
+
+    if(!nama.value || !hp.value){
+      alert("Nama & No HP wajib diisi!");
+      return;
+    }
+
+    db.collection("customers").doc(id).update({
+      nama:nama.value,
+      hp:hp.value,
+      tanggal:tanggal.value
+    });
+
+    closeModal();
+
+    // balikin ke mode tambah lagi
+    location.reload();
+  }
 }
   
 </script>
