@@ -6,30 +6,14 @@
 <title>FLOUPYUD</title>
 
 <style>
-body {
-  margin:0;
-  font-family: Arial;
-  background:#f5f3ff;
-}
+body { margin:0; font-family: Arial; background:#f5f3ff; }
 
 /* LOGIN */
-#loginPage {
-  display:flex;
-  height:100vh;
-  justify-content:center;
-  align-items:center;
-}
-.login-box {
-  background:white;
-  padding:20px;
-  border-radius:12px;
-  width:250px;
-}
-input {
-  width:100%;
-  padding:8px;
-  margin:5px 0;
-}
+#loginPage { display:flex; height:100vh; justify-content:center; align-items:center; }
+.login-box { background:white; padding:20px; border-radius:12px; width:250px; }
+
+input { width:100%; padding:8px; margin:5px 0; }
+
 button {
   width:100%;
   padding:10px;
@@ -41,9 +25,8 @@ button {
 }
 
 /* APP */
-#app {
-  display:none;
-}
+#app { display:none; }
+
 .header {
   background:#7c3aed;
   color:white;
@@ -85,6 +68,7 @@ button {
   justify-content:center;
   align-items:center;
 }
+
 .modal-box {
   background:white;
   padding:20px;
@@ -116,21 +100,18 @@ button {
     </div>
   </div>
 
-<input id="search" placeholder="Cari nama..." onkeyup="searchData()" style="margin:10px;padding:8px;width:200px;">
-  
+  <input id="search" placeholder="Cari nama..." onkeyup="searchData()" style="margin:10px;padding:8px;width:200px;">
+
   <div class="board">
     <div class="column" id="baru" ondrop="drop(event)" ondragover="allowDrop(event)">
       <h3>Baru</h3>
     </div>
-
     <div class="column" id="followup" ondrop="drop(event)" ondragover="allowDrop(event)">
       <h3>Follow Up</h3>
     </div>
-
     <div class="column" id="pending" ondrop="drop(event)" ondragover="allowDrop(event)">
       <h3>Pending</h3>
     </div>
-
     <div class="column" id="closing" ondrop="drop(event)" ondragover="allowDrop(event)">
       <h3>Closing</h3>
     </div>
@@ -140,12 +121,13 @@ button {
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-box">
-    <h3>Tambah Pelanggan</h3>
+    <h3>Tambah / Edit</h3>
     <input id="nama" placeholder="Nama">
     <input id="hp" placeholder="No HP">
     <input id="tanggal" type="date">
     <input id="catatan" placeholder="Catatan">
     <button onclick="addData()">Simpan</button>
+    <button onclick="closeModal()" style="background:gray;margin-top:5px;">Tutup</button>
   </div>
 </div>
 
@@ -153,28 +135,23 @@ button {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCfj2Xdj6et3fThyA2gg-GWG8yZOhoqREA",
   authDomain: "floupyud.firebaseapp.com",
-  projectId: "floupyud",
-  storageBucket: "floupyud.firebasestorage.app",
-  messagingSenderId: "135934200752",
-  appId: "1:135934200752:web:b788e6ff6412ac4ea02475",
-  measurementId: "G-SVP2JHMMRY"
+  projectId: "floupyud"
 };
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-  let editId = null;
+
+let editId = null;
 
 // LOGIN
 window.login = function(){
-  let email = document.getElementById("email").value;
-  let pass = document.getElementById("password").value;
-
-  auth.signInWithEmailAndPassword(email, pass)
+  auth.signInWithEmailAndPassword(email.value, password.value)
   .catch(e=>alert(e.message));
 }
 
@@ -186,22 +163,26 @@ window.logout = function(){
 // CEK LOGIN
 auth.onAuthStateChanged(user=>{
   if(user){
-    document.getElementById("loginPage").style.display="none";
-    document.getElementById("app").style.display="block";
+    loginPage.style.display="none";
+    app.style.display="block";
     loadData();
   } else {
-    document.getElementById("loginPage").style.display="flex";
-    document.getElementById("app").style.display="none";
+    loginPage.style.display="flex";
+    app.style.display="none";
   }
 });
 
 // MODAL
 window.openModal = function(){
-  document.getElementById("modal").style.display="flex";
+  modal.style.display="flex";
 }
 
-// TAMBAH DATA
-window.addData = function(){
+window.closeModal = function(){
+  modal.style.display="none";
+  resetForm();
+}
+
+// TAMBAH / EDIT DATA
 window.addData = function(){
 
   let data = {
@@ -214,22 +195,21 @@ window.addData = function(){
   };
 
   if(editId){
-    // 🔥 UPDATE
     db.collection("customers").doc(editId).update(data);
     editId = null;
   } else {
-    // 🔥 TAMBAH BARU
     db.collection("customers").add(data);
   }
 
-  modal.style.display="none";
+  closeModal();
 }
 
-// LOAD DATA REALTIME
+// LOAD DATA
 function loadData(){
   db.collection("customers")
-.where("user_id", "==", auth.currentUser.uid)
-.onSnapshot(snap=>{
+  .where("user_id","==",auth.currentUser.uid)
+  .onSnapshot(snap=>{
+
     document.querySelectorAll(".column").forEach(c=>c.innerHTML="<h3>"+c.id+"</h3>");
 
     snap.forEach(doc=>{
@@ -240,36 +220,29 @@ function loadData(){
       card.draggable=true;
       card.id=doc.id;
 
-let today = new Date().toISOString().split("T")[0];
+      let today = new Date().toISOString().split("T")[0];
 
-if(d.tanggal === today){
-  card.style.background = "#dc2626";
-} else if(d.tanggal < today){
-  card.style.background = "#7f1d1d";
-}
+      if(d.tanggal === today){
+        card.style.background="#dc2626";
+      } else if(d.tanggal < today){
+        card.style.background="#7f1d1d";
+      }
 
-     card.onclick = ()=>{
-  document.getElementById("modal").style.display="flex";
+      card.onclick = ()=>{
+        openModal();
+        nama.value=d.nama;
+        hp.value=d.hp;
+        tanggal.value=d.tanggal;
+        catatan.value=d.catatan;
+        editId=doc.id;
+      };
 
-  nama.value = d.nama;
-  hp.value = d.hp;
-  tanggal.value = d.tanggal;
-  catatan.value = d.catatan;
-
-  editId = doc.id; // 🔥 simpan id
-}
-
-card.innerHTML = `
-  <b>${d.nama}</b><br>
-  ${d.hp}<br>
-  ${d.tanggal}<br>
-
-  <button 
-    onclick="event.stopPropagation(); hapus('${doc.id}')" 
-    style="margin-top:5px;background:red;color:white;border:none;padding:5px;border-radius:5px;">
-    Hapus
-  </button>
-`;
+      card.innerHTML = `
+        <b>${d.nama}</b><br>
+        ${d.hp}<br>
+        ${d.tanggal}<br>
+        <button onclick="event.stopPropagation(); hapus('${doc.id}')" style="background:red;margin-top:5px;">Hapus</button>
+      `;
 
       card.ondragstart = drag;
 
@@ -279,38 +252,39 @@ card.innerHTML = `
 }
 
 // DRAG
-window.drag = function(ev){
-  ev.dataTransfer.setData("id", ev.target.id);
-}
-
-window.allowDrop = function(ev){
-  ev.preventDefault();
-}
+window.drag = ev => ev.dataTransfer.setData("id", ev.target.id);
+window.allowDrop = ev => ev.preventDefault();
 
 window.drop = function(ev){
   ev.preventDefault();
   let id = ev.dataTransfer.getData("id");
   let status = ev.currentTarget.id;
 
-  db.collection("customers").doc(id).update({
-    status: status
-  });
+  db.collection("customers").doc(id).update({status});
 }
-  
-function searchData(){
-  let val = document.getElementById("search").value.toLowerCase();
 
+// DELETE
+window.hapus = function(id){
+  if(confirm("Yakin hapus?")){
+    db.collection("customers").doc(id).delete();
+  }
+}
+
+// SEARCH
+function searchData(){
+  let val = search.value.toLowerCase();
   document.querySelectorAll(".card").forEach(c=>{
     c.style.display = c.innerText.toLowerCase().includes(val) ? "block" : "none";
   });
 }
 
-  window.hapus = function(id){
-  if(confirm("Yakin mau hapus data ini?")){
-    db.collection("customers").doc(id).delete();
-  }
+// RESET FORM
+function resetForm(){
+  nama.value="";
+  hp.value="";
+  tanggal.value="";
+  catatan.value="";
 }
-  
 </script>
 
 </body>
