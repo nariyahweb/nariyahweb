@@ -8,11 +8,10 @@
 <style>
 body { margin:0; font-family: Arial; background:#f5f3ff; }
 
-/* LOGIN */
 #loginPage { display:flex; height:100vh; justify-content:center; align-items:center; }
 .login-box { background:white; padding:20px; border-radius:12px; width:250px; }
 
-input { width:100%; padding:8px; margin:5px 0; }
+input, select { width:100%; padding:8px; margin:5px 0; }
 
 button {
   width:100%;
@@ -24,7 +23,6 @@ button {
   cursor:pointer;
 }
 
-/* APP */
 #app { display:none; }
 
 .header {
@@ -35,12 +33,7 @@ button {
   justify-content:space-between;
 }
 
-.board {
-  display:flex;
-  gap:10px;
-  padding:10px;
-  overflow-x:auto;
-}
+.board { display:flex; gap:10px; padding:10px; overflow-x:auto; }
 
 .column {
   background:#ede9fe;
@@ -58,7 +51,6 @@ button {
   cursor:grab;
 }
 
-/* MODAL */
 .modal {
   position:fixed;
   top:0;left:0;
@@ -84,8 +76,8 @@ button {
 <div id="loginPage">
   <div class="login-box">
     <h3>FLOUPYUD</h3>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
     <button onclick="login()">Login</button>
   </div>
 </div>
@@ -95,86 +87,70 @@ button {
   <div class="header">
     <b>FLOUPYUD</b>
     <div>
-      <button onclick="openModal()">+ Tambah</button>
+      <button onclick="openModal()">+ Customer</button>
       <button onclick="logout()">Logout</button>
     </div>
   </div>
 
-  <input id="search" placeholder="Cari nama..." onkeyup="searchData()" style="margin:10px;padding:8px;width:200px;">
-
   <div class="board">
-    <div class="column" id="baru" ondrop="drop(event)" ondragover="allowDrop(event)">
-      <h3>Baru</h3>
-    </div>
-    <div class="column" id="followup" ondrop="drop(event)" ondragover="allowDrop(event)">
-      <h3>Follow Up</h3>
-    </div>
-    <div class="column" id="pending" ondrop="drop(event)" ondragover="allowDrop(event)">
-      <h3>Pending</h3>
-    </div>
-    <div class="column" id="closing" ondrop="drop(event)" ondragover="allowDrop(event)">
-      <h3>Closing</h3>
-    </div>
+    <div class="column" id="baru"><h3>Baru</h3></div>
+    <div class="column" id="followup"><h3>Follow Up</h3></div>
+    <div class="column" id="pending"><h3>Pending</h3></div>
+    <div class="column" id="closing"><h3>Closing</h3></div>
   </div>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL CUSTOMER -->
 <div class="modal" id="modal">
   <div class="modal-box">
-    <h3>Tambah / Edit</h3>
+    <h3>Customer</h3>
     <input id="nama" placeholder="Nama">
     <input id="hp" placeholder="No HP">
     <input id="tanggal" type="date">
-    <input id="catatan" placeholder="Catatan">
-<select id="media">
-  <option>Whatsapp Chat</option>
-  <option>Whatsapp Call</option>
-  <option>Telegram Chat</option>
-  <option>Telegram Call</option>
-</select>
-
-<select id="status_pesan">
-  <option>Dibaca</option>
-  <option>Belum Dibaca</option>
-  <option>Gagal Kirim</option>
-</select>
-
-<select id="respon">
-  <option>Ya</option>
-  <option>Tidak</option>
-  <option>Menunggu</option>
-</select>
-
-<input id="jenis_respon" placeholder="Isi balasan customer">
-
-<select id="kategori_issue">
-  <option>Ada Keluhan</option>
-  <option>Masalah Saldo</option>
-  <option>Masalah Internal</option>
-  <option>Masalah Pelayanan</option>
-</select>
-
-<input id="penyebab" placeholder="Penyebab utama">
-
-<select id="tidak_lanjut">
-  <option>Close Issue</option>
-  <option>Repeat FU</option>
-  <option>Impossible To Continue</option>
-  <option>Blacklist</option>
-</select>
-    <button onclick="addData()">Simpan</button>
-    <button onclick="closeModal()" style="background:gray;margin-top:5px;">Tutup</button>
+    <button onclick="saveCustomer()">Simpan</button>
+    <button onclick="closeModal()">Tutup</button>
   </div>
 </div>
 
-<!-- FIREBASE -->
+<!-- MODAL FOLLOW UP -->
+<div class="modal" id="modalFU">
+  <div class="modal-box">
+    <h3>Follow Up</h3>
+
+    <select id="media">
+      <option>Whatsapp Chat</option>
+      <option>Whatsapp Call</option>
+      <option>Telegram Chat</option>
+      <option>Telegram Call</option>
+    </select>
+
+    <select id="status_pesan">
+      <option>Dibaca</option>
+      <option>Belum Dibaca</option>
+      <option>Gagal Kirim</option>
+    </select>
+
+    <select id="respon">
+      <option>Ya</option>
+      <option>Tidak</option>
+      <option>Menunggu</option>
+    </select>
+
+    <input id="jenis_respon" placeholder="Isi balasan">
+    <input id="penyebab" placeholder="Penyebab">
+
+    <button onclick="saveFU()">Simpan FU</button>
+    <button onclick="closeFU()">Tutup</button>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyCfj2Xdj6et3fThyA2gg-GWG8yZOhoqREA",
+  apiKey: "AIza...",
   authDomain: "floupyud.firebaseapp.com",
   projectId: "floupyud"
 };
@@ -183,20 +159,18 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-let editId = null;
+let currentCustomer = null;
 
 // LOGIN
 window.login = function(){
-  auth.signInWithEmailAndPassword(email.value, password.value)
+  auth.signInWithEmailAndPassword(email.value,password.value)
   .catch(e=>alert(e.message));
 }
 
 // LOGOUT
-window.logout = function(){
-  auth.signOut();
-}
+window.logout = function(){ auth.signOut(); }
 
-// CEK LOGIN
+// AUTH
 auth.onAuthStateChanged(user=>{
   if(user){
     loginPage.style.display="none";
@@ -208,45 +182,40 @@ auth.onAuthStateChanged(user=>{
   }
 });
 
-// MODAL
-window.openModal = function(){
-  modal.style.display="flex";
-}
+// CUSTOMER
+window.openModal = ()=> modal.style.display="flex";
+window.closeModal = ()=> modal.style.display="none";
 
-window.closeModal = function(){
-  modal.style.display="none";
-  resetForm();
-}
-
-// TAMBAH / EDIT DATA
-window.addData = function(){
-
-  let data = {
-    nama: nama.value,
-    hp: hp.value,
-    tanggal: tanggal.value,
-    catatan: catatan.value,
-    status: "baru",
-    user_id: auth.currentUser.uid,
-
-    // 🔥 SEMUA HARUS DI DALAM OBJECT
-    media: media.value,
-    status_pesan: status_pesan.value,
-    respon: respon.value,
-    jenis_respon: jenis_respon.value,
-    kategori_issue: kategori_issue.value,
-    penyebab: penyebab.value,
-    tidak_lanjut: tidak_lanjut.value
-  };
-
-  if(editId){
-    db.collection("customers").doc(editId).update(data);
-    editId = null;
-  } else {
-    db.collection("customers").add(data);
-  }
-
+window.saveCustomer = function(){
+  db.collection("customers").add({
+    nama:nama.value,
+    hp:hp.value,
+    tanggal:tanggal.value,
+    status:"baru",
+    user_id:auth.currentUser.uid
+  });
   closeModal();
+}
+
+// FOLLOW UP
+window.openFU = function(id){
+  currentCustomer = id;
+  modalFU.style.display="flex";
+}
+
+window.closeFU = ()=> modalFU.style.display="none";
+
+window.saveFU = function(){
+  db.collection("followups").add({
+    customer_id:currentCustomer,
+    media:media.value,
+    status_pesan:status_pesan.value,
+    respon:respon.value,
+    jenis_respon:jenis_respon.value,
+    penyebab:penyebab.value,
+    tanggal:new Date().toISOString()
+  });
+  closeFU();
 }
 
 // LOAD DATA
@@ -262,94 +231,18 @@ function loadData(){
 
       let card = document.createElement("div");
       card.className="card";
-      card.draggable=true;
-      card.id=doc.id;
-
-      let today = new Date().toISOString().split("T")[0];
-
-      if(d.tanggal === today){
-        card.style.background="#dc2626";
-      } else if(d.tanggal < today){
-        card.style.background="#7f1d1d";
-      }
-
-      card.onclick = ()=>{
-        openModal();
-        nama.value=d.nama;
-        hp.value=d.hp;
-        tanggal.value=d.tanggal;
-        catatan.value=d.catatan;
-        editId=doc.id;
-media.value = d.media || "";
-status_pesan.value = d.status_pesan || "";
-respon.value = d.respon || "";
-jenis_respon.value = d.jenis_respon || "";
-kategori_issue.value = d.kategori_issue || "";
-penyebab.value = d.penyebab || "";
-tidak_lanjut.value = d.tidak_lanjut || "";
-      };
 
       card.innerHTML = `
-  <b>${d.nama}</b><br>
-  ${d.hp}<br>
-  ${d.tanggal}<br>
-
-  📱 ${d.media || '-'}<br>
-  📩 ${d.status_pesan || '-'}<br>
-  💬 ${d.respon || '-'}<br>
-
-  <button onclick="event.stopPropagation(); hapus('${doc.id}')" 
-    style="background:red;margin-top:5px;">
-    Hapus
-  </button>
-`;
-      card.ondragstart = drag;
+        <b>${d.nama}</b><br>
+        ${d.hp}<br>
+        <button onclick="event.stopPropagation(); openFU('${doc.id}')">
+          Follow Up
+        </button>
+      `;
 
       document.getElementById(d.status).appendChild(card);
     });
   });
-}
-
-// DRAG
-window.drag = ev => ev.dataTransfer.setData("id", ev.target.id);
-window.allowDrop = ev => ev.preventDefault();
-
-window.drop = function(ev){
-  ev.preventDefault();
-  let id = ev.dataTransfer.getData("id");
-  let status = ev.currentTarget.id;
-
-  db.collection("customers").doc(id).update({status});
-}
-
-// DELETE
-window.hapus = function(id){
-  if(confirm("Yakin hapus?")){
-    db.collection("customers").doc(id).delete();
-  }
-}
-
-// SEARCH
-function searchData(){
-  let val = search.value.toLowerCase();
-  document.querySelectorAll(".card").forEach(c=>{
-    c.style.display = c.innerText.toLowerCase().includes(val) ? "block" : "none";
-  });
-}
-
-// RESET FORM
-function resetForm(){
-  nama.value="";
-  hp.value="";
-  tanggal.value="";
-  catatan.value="";
-media.value = "";
-status_pesan.value = "";
-respon.value = "";
-jenis_respon.value = "";
-kategori_issue.value = "";
-penyebab.value = "";
-tidak_lanjut.value = "";
 }
 </script>
 
