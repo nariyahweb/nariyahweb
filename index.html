@@ -191,10 +191,11 @@ let currentCustomer = null;
 // LOGIN
 window.login = function(){
   auth.signInWithEmailAndPassword(email.value, password.value)
-  .then(()=>console.log("Login sukses"))
+  .then((res)=>{
+    console.log("Login sukses:", res.user.uid);
+  })
   .catch(e=>{
-    alert(e.message); // 🔥 WAJIB biar tau errornya
-    console.log(e);
+    alert("ERROR: " + e.message);
   });
 }
 
@@ -205,8 +206,22 @@ window.logout = function(){ auth.signOut(); }
 auth.onAuthStateChanged(user=>{
   if(user){
 
-    db.collection("users").doc(user.uid).get().then(doc=>{
-      currentRole = doc.data()?.role || "cs";
+    auth.onAuthStateChanged(user=>{
+  if(user){
+
+    db.collection("users").doc(user.uid).get()
+    .then(doc=>{
+
+      if(doc.exists){
+        currentRole = doc.data().role || "cs";
+      } else {
+        // kalau belum ada data user → auto buat
+        db.collection("users").doc(user.uid).set({
+          role: "cs"
+        });
+
+        currentRole = "cs";
+      }
 
       loginPage.style.display="none";
       app.style.display="block";
@@ -214,6 +229,11 @@ auth.onAuthStateChanged(user=>{
       loadData();
     });
 
+  } else {
+    loginPage.style.display="flex";
+    app.style.display="none";
+  }
+});
   } else {
     loginPage.style.display="flex";
     app.style.display="none";
