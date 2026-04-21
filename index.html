@@ -1,7 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
+<!-- Drag -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<!-- Calendar -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FLOUPYUD</title>
@@ -85,21 +93,31 @@ button {
 
 <!-- APP -->
 <div id="app">
-  <div class="header">
-    <b>FLOUPYUD</b>
-    <div>
-      <button onclick="openModal()">+ Customer</button>
-      <button onclick="logout()">Logout</button>
-    </div>
+ <div class="header">
+  <b>FLOUPYUD</b>
+  <div>
+    <button onclick="openModal()">+ Customer</button>
+    <button onclick="logout()">Logout</button>
   </div>
+</div>
 
-  <div style="padding:10px">
-    <b>Total:</b> <span id="total">0</span> |
-    <b>Closing:</b> <span id="closingCount">0</span> |
-    <b>Rate:</b> <span id="rate">0%</span>
-  </div>
+<!-- ✅ dashboard DI SINI -->
+<div style="padding:10px">
+  <b>Total:</b> <span id="total">0</span> |
+  <b>Closing:</b> <span id="closingCount">0</span> |
+  <b>Rate:</b> <span id="rate">0%</span>
+</div>
+
+<!-- ✅ chart DI SINI -->
+<canvas id="chart" height="100"></canvas>
 
   <div class="board">
+  ...
+</div>
+
+<!-- ✅ taruh DI SINI -->
+<div id="calendar" style="padding:10px;"></div>
+    
     <div class="column" id="baru"><h3>Baru</h3></div>
     <div class="column" id="followup"><h3>Follow Up</h3></div>
     <div class="column" id="pending"><h3>Pending</h3></div>
@@ -168,6 +186,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let currentCustomer = null;
+  let currentRole = null;
 
 // LOGIN
 window.login = function(){
@@ -185,9 +204,16 @@ window.logout = function(){ auth.signOut(); }
 // AUTH
 auth.onAuthStateChanged(user=>{
   if(user){
-    loginPage.style.display="none";
-    app.style.display="block";
-    loadData();
+
+    db.collection("users").doc(user.uid).get().then(doc=>{
+      currentRole = doc.data()?.role || "cs";
+
+      loginPage.style.display="none";
+      app.style.display="block";
+
+      loadData();
+    });
+
   } else {
     loginPage.style.display="flex";
     app.style.display="none";
@@ -248,6 +274,21 @@ window.saveFU = function(){
   closeFU();
 }
 
+  function showNotif(text){
+  let div = document.createElement("div");
+  div.innerText = text;
+
+  div.style.background = "#7c3aed";
+  div.style.color = "white";
+  div.style.padding = "10px";
+  div.style.marginBottom = "10px";
+  div.style.borderRadius = "8px";
+
+  document.getElementById("notifBox").appendChild(div);
+
+  setTimeout(()=> div.remove(), 4000);
+}
+
 // LOAD DATA
 function loadData(){
   db.collection("customers")
@@ -258,13 +299,18 @@ function loadData(){
     .forEach(c=>c.innerHTML="<h3>"+c.id+"</h3>");
 
     let total = 0;
-    let closing = 0;
+let closing = 0;
+let pending = 0;
+let followup = 0;
 
     snap.forEach(doc=>{
       let d = doc.data();
 
-      total++;
-      if(d.status === "closing") closing++;
+     total++;
+
+if(d.status === "closing") closing++;
+if(d.status === "pending") pending++;
+if(d.status === "followup") followup++;
 
       let card = document.createElement("div");
       card.className="card";
@@ -293,17 +339,15 @@ function loadData(){
 
     // ✅ TARUH DI SINI (SETELAH LOOP)
     document.getElementById("total").innerText = total;
-    document.getElementById("closingCount").innerText = closing;
+document.getElementById("closingCount").innerText = closing;
 
-    let rate = total ? Math.round((closing/total)*100) : 0;
-    document.getElementById("rate").innerText = rate + "%";
+let rate = total ? Math.round((closing/total)*100) : 0;
+document.getElementById("rate").innerText = rate + "%";
 
-    // ✅ TARUH DI SINI (bukan di dalam card)
-    setTimeout(initDrag, 300);
-
-    // ✅ PANGGIL SEKALI
-    checkReminder();
-
+loadChart(total, closing, pending, followup);
+loadCalendar();
+checkReminder();
+setTimeout(initDrag, 300);
   });
 }
 
@@ -385,19 +429,23 @@ ${f.jenis_respon}
   });
 }
 
-  function checkReminder(){
-  db.collection("followups")
-  .get()
-  .then(snap=>{
+ function checkReminder(){
+  db.collection("followups").get().then(snap=>{
     let now = new Date();
 
     snap.forEach(doc=>{
       let d = doc.data();
+
       if(d.reminder){
         let t = new Date(d.reminder);
 
-        if(t <= now){
-          alert("Reminder FU!\n" + d.jenis_respon);
+        if(t <= now && !d.notified){
+
+          showNotif("Follow up: " + d.jenis_respon);
+
+          db.collection("followups").doc(doc.id).update({
+            notified:true
+          });
         }
       }
     });
@@ -410,8 +458,68 @@ ${f.jenis_respon}
 
   window.open(link, "_blank");
 }
-  
+
+let calendar = null;
+
+function loadCalendar(){
+
+  if(calendar){
+    calendar.destroy();
+  }
+
+  let calendarEl = document.getElementById('calendar');
+
+  calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 500
+  });
+
+  db.collection("followups").get().then(snap=>{
+    snap.forEach(doc=>{
+      let d = doc.data();
+
+      if(d.reminder){
+        calendar.addEvent({
+          title: d.jenis_respon,
+          start: d.reminder
+        });
+      }
+    });
+
+    calendar.render();
+  });
+}
+
+function loadChart(total, closing, pending, followup){
+
+  // ✅ HAPUS chart lama kalau ada
+  if(myChart){
+    myChart.destroy();
+  }
+
+  // ✅ BUAT chart baru
+  myChart = new Chart(document.getElementById("chart"), {
+    type: 'bar',
+    data: {
+      labels: ['Total','Closing','Pending','Follow Up'],
+      datasets: [{
+        label: 'Performa',
+        data: [total, closing, pending, followup]
+      }]
+    }
+  });
+
+}
+
 </script>
+
+    <!-- NOTIF -->
+<div id="notifBox" style="
+position:fixed;
+top:20px;
+right:20px;
+z-index:9999;
+"></div>
 
 </body>
 </html>
