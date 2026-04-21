@@ -167,6 +167,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+  let editId = null;
 
 // LOGIN
 window.login = function(){
@@ -201,14 +202,26 @@ window.openModal = function(){
 
 // TAMBAH DATA
 window.addData = function(){
-  db.collection("customers").add({
+window.addData = function(){
+
+  let data = {
     nama: nama.value,
     hp: hp.value,
     tanggal: tanggal.value,
     catatan: catatan.value,
     status: "baru",
-user_id: auth.currentUser.uid
-  });
+    user_id: auth.currentUser.uid
+  };
+
+  if(editId){
+    // 🔥 UPDATE
+    db.collection("customers").doc(editId).update(data);
+    editId = null;
+  } else {
+    // 🔥 TAMBAH BARU
+    db.collection("customers").add(data);
+  }
+
   modal.style.display="none";
 }
 
@@ -235,19 +248,28 @@ if(d.tanggal === today){
   card.style.background = "#7f1d1d";
 }
 
-      card.onclick = ()=>{
+     card.onclick = ()=>{
   document.getElementById("modal").style.display="flex";
+
   nama.value = d.nama;
   hp.value = d.hp;
   tanggal.value = d.tanggal;
   catatan.value = d.catatan;
+
+  editId = doc.id; // 🔥 simpan id
 }
 
-      card.innerHTML = `
-        <b>${d.nama}</b><br>
-        ${d.hp}<br>
-        ${d.tanggal}
-      `;
+card.innerHTML = `
+  <b>${d.nama}</b><br>
+  ${d.hp}<br>
+  ${d.tanggal}<br>
+
+  <button 
+    onclick="event.stopPropagation(); hapus('${doc.id}')" 
+    style="margin-top:5px;background:red;color:white;border:none;padding:5px;border-radius:5px;">
+    Hapus
+  </button>
+`;
 
       card.ondragstart = drag;
 
@@ -281,6 +303,12 @@ function searchData(){
   document.querySelectorAll(".card").forEach(c=>{
     c.style.display = c.innerText.toLowerCase().includes(val) ? "block" : "none";
   });
+}
+
+  window.hapus = function(id){
+  if(confirm("Yakin mau hapus data ini?")){
+    db.collection("customers").doc(id).delete();
+  }
 }
   
 </script>
