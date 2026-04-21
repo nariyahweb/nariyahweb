@@ -191,6 +191,12 @@ window.openModal = ()=> modal.style.display="flex";
 window.closeModal = ()=> modal.style.display="none";
 
 window.saveCustomer = function(){
+
+  if(!nama.value || !hp.value){
+    alert("Nama & No HP wajib diisi!");
+    return;
+  }
+
   db.collection("customers").add({
     nama:nama.value,
     hp:hp.value,
@@ -198,6 +204,12 @@ window.saveCustomer = function(){
     status:"baru",
     user_id:auth.currentUser.uid
   });
+
+  // reset form
+  nama.value = "";
+  hp.value = "";
+  tanggal.value = "";
+
   closeModal();
 }
 
@@ -219,6 +231,11 @@ window.saveFU = function(){
     penyebab:penyebab.value,
     tanggal:new Date().toISOString()
   });
+
+  db.collection("customers").doc(currentCustomer).update({
+    status:"followup"
+  });
+
   closeFU();
 }
 
@@ -234,20 +251,53 @@ function loadData(){
       let d = doc.data();
 
       let card = document.createElement("div");
+      card.onclick = () => showHistory(doc.id);
       card.className="card";
 
-      card.innerHTML = `
-        <b>${d.nama}</b><br>
-        ${d.hp}<br>
-        <button onclick="event.stopPropagation(); openFU('${doc.id}')">
-          Follow Up
-        </button>
-      `;
+  card.innerHTML = `
+  <b>${d.nama}</b><br>
+  ${d.hp}<br>
+
+  <button onclick="event.stopPropagation(); openFU('${doc.id}')">
+    Follow Up
+  </button><br>
+
+  <button onclick="event.stopPropagation(); updateStatus('${doc.id}','followup')">→ FU</button>
+  <button onclick="event.stopPropagation(); updateStatus('${doc.id}','pending')">→ Pending</button>
+  <button onclick="event.stopPropagation(); updateStatus('${doc.id}','closing')">→ Closing</button>
+`;
 
       document.getElementById(d.status).appendChild(card);
     });
   });
 }
+
+window.updateStatus = function(id, status){
+  db.collection("customers").doc(id).update({
+    status: status
+  });
+}
+
+  function showHistory(id){
+  db.collection("followups")
+  .where("customer_id","==",id)
+  .get()
+  .then(snap=>{
+    let text = "";
+
+    snap.forEach(d=>{
+      let f = d.data();
+      text += `
+${f.media} | ${f.respon}
+${f.jenis_respon}
+---------------------
+`;
+    });
+
+    alert(text || "Belum ada follow up");
+  });
+}
+  
 </script>
 
 </body>
