@@ -227,17 +227,17 @@ window.addData = function(){
     tanggal: tanggal.value,
     catatan: catatan.value,
     status: "baru",
-    user_id: auth.currentUser.uid
-  };
+    user_id: auth.currentUser.uid,
 
-   media: media.value,
-  status_pesan: status_pesan.value,
-  respon: respon.value,
-  jenis_respon: jenis_respon.value,
-  kategori_issue: kategori_issue.value,
-  penyebab: penyebab.value,
-  tidak_lanjut: tidak_lanjut.value
-};
+    // 🔥 SEMUA HARUS DI DALAM OBJECT
+    media: media.value,
+    status_pesan: status_pesan.value,
+    respon: respon.value,
+    jenis_respon: jenis_respon.value,
+    kategori_issue: kategori_issue.value,
+    penyebab: penyebab.value,
+    tidak_lanjut: tidak_lanjut.value
+  };
 
   if(editId){
     db.collection("customers").doc(editId).update(data);
