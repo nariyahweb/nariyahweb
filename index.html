@@ -117,7 +117,19 @@ h3 {
   </div>
 
   <!-- CHART -->
-  <canvas id="chart" height="100"></canvas>
+<div style="display:flex; gap:20px; padding:10px">
+
+  <div style="flex:1; background:white; padding:10px; border-radius:10px;">
+    <h3>Followup Agen</h3>
+    <canvas id="chartCustomer"></canvas>
+  </div>
+
+  <div style="flex:1; background:white; padding:10px; border-radius:10px;">
+    <h3>Prospek Agen</h3>
+    <canvas id="chartProspek"></canvas>
+  </div>
+
+</div>
 
 <!-- ========================= -->
 <!-- ✅ FOLLOWUP AGEN -->
@@ -350,10 +362,18 @@ function loadData(){
   .where("user_id","==",auth.currentUser.uid)
   .onSnapshot(snap=>{
 
-    document.querySelectorAll(".column")
-    .forEach(c=>c.innerHTML="<h3>"+c.id+"</h3>");
+const titleMap = {
+  baru:"Baru",
+  followup:"Follow Up",
+  pending:"Pending",
+  closing:"Closing"
+};
 
-    let total = 0;
+Object.keys(titleMap).forEach(id=>{
+  document.getElementById(id).innerHTML = "<h3>" + titleMap[id] + "</h3>";
+});
+    
+let total = 0;
 let closing = 0;
 let pending = 0;
 let followup = 0;
@@ -401,7 +421,7 @@ let rate = total ? Math.round((closing/total)*100) : 0;
 document.getElementById("rate").innerText = rate + "%";
 
     // ✅ PEMANGGILAN
-loadChart(total, closing, pending, followup);
+loadChartCustomer(total, closing, pending, followup);
 checkReminder();
 setTimeout(initDrag, 300);
   });
@@ -416,18 +436,31 @@ window.updateStatus = function(id, status){
 function loadProspek(){
   db.collection("prospek")
   .where("user_id","==",auth.currentUser.uid)
-  .onSnapshot(snap=>{
+     .onSnapshot(snap=>{
 
+  let count = {
+    baru:0,
+    hubungi:0,
+    tertarik:0,
+    tidak:0
+  };
     // reset kolom
-    ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"]
-    .forEach(id=>{
-      document.getElementById(id).innerHTML = "<h3>" + document.getElementById(id).querySelector("h3").innerText + "</h3>";
-    });
-
+["baru","followup","pending","closing"].forEach(id=>{
+  document.getElementById(id).innerHTML = "<h3>" + {
+    baru:"Baru",
+    followup:"Follow Up",
+    pending:"Pending",
+    closing:"Closing"
+  }[id] + "</h3>";
+});
     snap.forEach(doc=>{
       let d = doc.data();
 
       let col = "prospekBaru";
+      if(d.status === "Baru") count.baru++;
+      if(d.status === "Sudah Dihubungi") count.hubungi++;
+      if(d.status === "Tertarik") count.tertarik++;
+      if(d.status === "Tidak Tertarik") count.tidak++;
       if(d.status === "Sudah Dihubungi") col = "prospekHubungi";
       if(d.status === "Tertarik") col = "prospekTertarik";
       if(d.status === "Tidak Tertarik") col = "prospekTidak";
@@ -452,8 +485,8 @@ function loadProspek(){
 
       document.getElementById(col).appendChild(card);
     });
-
-  });
+       loadChartProspek(count);
+    });
 }
 
   window.updateProspek = function(id, status){
@@ -592,23 +625,47 @@ ${f.jenis_respon}
   window.open(link, "_blank");
 }
 
-function loadChart(total, closing, pending, followup){
+let chartCustomer = null;
+let chartProspek = null;
 
-  if(myChart){
-    myChart.destroy();
-  }
+function loadChartCustomer(total, closing, pending, followup){
 
-  myChart = new Chart(document.getElementById("chart"), {
-    type: 'bar',
+  if(chartCustomer) chartCustomer.destroy();
+
+  chartCustomer = new Chart(document.getElementById("chartCustomer"), {
+    type: 'pie',
     data: {
-      labels: ['Total','Closing','Pending','Follow Up'],
+      labels: ['Closing','Pending','Follow Up','Baru'],
       datasets: [{
-        label: 'Performa',
-        data: [total, closing, pending, followup]
+        data: [
+          closing,
+          pending,
+          followup,
+          total - (closing + pending + followup)
+        ]
       }]
     }
   });
+}
 
+  function loadChartProspek(data){
+
+  if(chartProspek) chartProspek.destroy();
+
+  chartProspek = new Chart(document.getElementById("chartProspek"), {
+    type: 'pie',
+    data: {
+      labels: ['Baru','Dihubungi','Tertarik','Tidak'],
+      datasets: [{
+        data: [
+          data.baru,
+          data.hubungi,
+          data.tertarik,
+          data.tidak
+        ]
+      }]
+    }
+  });
 }
 
   window.openProspek = ()=> modalProspek.style.display="flex";
