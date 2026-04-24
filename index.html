@@ -24,6 +24,33 @@ button {
   font-size:12px;
 }
 
+  .chart-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 15px;
+}
+
+.chart-box {
+  background: white;
+  padding: 15px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: 0.2s;
+}
+
+.chart-box:hover {
+  transform: translateY(-3px);
+}
+
+.chart-box canvas {
+  max-width: 220px;
+  max-height: 220px;
+}
+
 #app { display:none; }
 
 .header {
@@ -50,6 +77,21 @@ button {
   margin:8px 0;
   border-radius:8px;
   cursor:grab;
+}
+
+.chart-box {
+  flex: 1;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-box canvas {
+  max-width: 250px;   /* 🔥 ukuran kecil */
+  max-height: 250px;
 }
 
 .modal {
@@ -81,6 +123,34 @@ h3 {
 
 .board {
   margin-top:10px;
+}
+
+  .stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
+  gap: 10px;
+  padding: 10px;
+}
+
+.stat-box {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+}
+
+.stat-box h4 {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.stat-box p {
+  margin: 5px 0 0;
+  font-size: 20px;
+  font-weight: bold;
+  color: #7c3aed;
 }
   
 </style>
@@ -117,18 +187,31 @@ h3 {
   </div>
 
   <!-- CHART -->
-<div style="display:flex; gap:20px; padding:10px">
-
-  <div style="flex:1; background:white; padding:10px; border-radius:10px;">
-    <h3>Followup Agen</h3>
-    <canvas id="chartCustomer"></canvas>
+  <div class="stats">
+  <div class="stat-box">
+    <h4>Total</h4>
+    <p id="total">0</p>
   </div>
-
-  <div style="flex:1; background:white; padding:10px; border-radius:10px;">
-    <h3>Prospek Agen</h3>
-    <canvas id="chartProspek"></canvas>
+  <div class="stat-box">
+    <h4>Closing</h4>
+    <p id="closingCount">0</p>
   </div>
+  <div class="stat-box">
+    <h4>Rate</h4>
+    <p id="rate">0%</p>
+  </div>
+</div>
+<div class="chart-container">
 
+<div class="chart-box">
+  <h3>Followup Agen</h3>
+  <canvas id="chartCustomer"></canvas>
+</div>
+
+<div class="chart-box">
+  <h3>Prospek Agen</h3>
+  <canvas id="chartProspek"></canvas>
+</div>
 </div>
 
 <!-- ========================= -->
@@ -633,7 +716,7 @@ function loadChartCustomer(total, closing, pending, followup){
   if(chartCustomer) chartCustomer.destroy();
 
   chartCustomer = new Chart(document.getElementById("chartCustomer"), {
-    type: 'pie',
+  type: 'doughnut',
     data: {
       labels: ['Closing','Pending','Follow Up','Baru'],
       datasets: [{
@@ -642,18 +725,28 @@ function loadChartCustomer(total, closing, pending, followup){
           pending,
           followup,
           total - (closing + pending + followup)
-        ]
-      }]
+        ],
+        backgroundColor: [
+    '#22c55e', // closing (hijau)
+    '#f59e0b', // pending (kuning)
+    '#3b82f6', // followup (biru)
+    '#ef4444'  // baru (merah)
+  ]
+}]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true
     }
   });
 }
 
-  function loadChartProspek(data){
+function loadChartProspek(data){
 
   if(chartProspek) chartProspek.destroy();
 
   chartProspek = new Chart(document.getElementById("chartProspek"), {
-    type: 'pie',
+   type: 'doughnut',
     data: {
       labels: ['Baru','Dihubungi','Tertarik','Tidak'],
       datasets: [{
@@ -662,8 +755,22 @@ function loadChartCustomer(total, closing, pending, followup){
           data.hubungi,
           data.tertarik,
           data.tidak
-        ]
-      }]
+        ],
+ backgroundColor: [
+    '#6366f1',
+    '#0ea5e9',
+    '#22c55e',
+    '#ef4444'
+  ]
+}]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+       cutout: '65%',
+  plugins: {
+    legend: {
+      position: 'bottom'
     }
   });
 }
