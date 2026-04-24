@@ -3,10 +3,6 @@
 <head>
 <!-- Drag -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-<!-- Calendar -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   
 <!-- Chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -103,7 +99,6 @@ button {
   <b>Closing:</b> <span id="closingCount">0</span> |
   <b>Rate:</b> <span id="rate">0%</span>
 </div>
-  <div id="calendar" style="padding:10px;"></div>
 
 <!-- ✅ chart DI SINI -->
 <canvas id="chart" height="100"></canvas>
@@ -389,8 +384,8 @@ document.getElementById("closingCount").innerText = closing;
 let rate = total ? Math.round((closing/total)*100) : 0;
 document.getElementById("rate").innerText = rate + "%";
 
+    // ✅ PEMANGGILAN
 loadChart(total, closing, pending, followup);
-loadCalendar();
 checkReminder();
 setTimeout(initDrag, 300);
   });
@@ -537,37 +532,6 @@ ${f.jenis_respon}
   let link = "https://wa.me/" + nomor;
 
   window.open(link, "_blank");
-}
-
-let calendar = null;
-
-function loadCalendar(){
-
-  if(calendar){
-    calendar.destroy();
-  }
-
-  let calendarEl = document.getElementById('calendar');
-
-  calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    height: 500
-  });
-
-  db.collection("followups").get().then(snap=>{
-    snap.forEach(doc=>{
-      let d = doc.data();
-
-      if(d.reminder){
-        calendar.addEvent({
-          title: d.jenis_respon,
-          start: d.reminder
-        });
-      }
-    });
-
-    calendar.render();
-  });
 }
 
 function loadChart(total, closing, pending, followup){
