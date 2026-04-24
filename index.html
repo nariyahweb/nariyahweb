@@ -105,7 +105,6 @@ h3 {
   <div class="header">
     <b>FLOUPYUD</b>
     <div>
-      <button onclick="openModal()">+ Customer</button>
       <button onclick="logout()">Logout</button>
     </div>
   </div>
@@ -120,17 +119,20 @@ h3 {
   <!-- CHART -->
   <canvas id="chart" height="100"></canvas>
 
-  <!-- ========================= -->
-  <!-- ✅ BOARD CUSTOMER -->
-  <!-- ========================= -->
-  <div style="padding:10px">
-    <div class="board">
-      <div class="column" id="baru"><h3>Baru</h3></div>
-      <div class="column" id="followup"><h3>Follow Up</h3></div>
-      <div class="column" id="pending"><h3>Pending</h3></div>
-      <div class="column" id="closing"><h3>Closing</h3></div>
-    </div>
+<!-- ========================= -->
+<!-- ✅ FOLLOWUP AGEN -->
+<!-- ========================= -->
+<div style="padding:10px">
+  <h3>Followup Agen</h3>
+  <button onclick="openModal()">+ Followup Agen</button>
+
+  <div class="board">
+    <div class="column" id="baru"><h3>Baru</h3></div>
+    <div class="column" id="followup"><h3>Follow Up</h3></div>
+    <div class="column" id="pending"><h3>Pending</h3></div>
+    <div class="column" id="closing"><h3>Closing</h3></div>
   </div>
+</div>
 
   <!-- ========================= -->
   <!-- ✅ PROSPEK (DI BAWAH) -->
