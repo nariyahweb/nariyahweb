@@ -181,7 +181,6 @@ h3 {
 
   <!-- DASHBOARD -->
   <div style="padding:10px">
-    <b>Total:</b> <span id="total">0</span> |
     <b>Closing:</b> <span id="closingCount">0</span> |
     <b>Rate:</b> <span id="rate">0%</span>
   </div>
@@ -734,11 +733,15 @@ function loadChartCustomer(total, closing, pending, followup){
   ]
 }]
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true
+options: {
+  responsive: true,
+  maintainAspectRatio: true,
+  cutout: '65%',
+  plugins: {
+    legend: {
+      position: 'bottom'
     }
-  });
+  }
 }
 
 function loadChartProspek(data){
@@ -746,7 +749,7 @@ function loadChartProspek(data){
   if(chartProspek) chartProspek.destroy();
 
   chartProspek = new Chart(document.getElementById("chartProspek"), {
-   type: 'doughnut',
+    type: 'doughnut',
     data: {
       labels: ['Baru','Dihubungi','Tertarik','Tidak'],
       datasets: [{
@@ -756,25 +759,26 @@ function loadChartProspek(data){
           data.tertarik,
           data.tidak
         ],
- backgroundColor: [
-    '#6366f1',
-    '#0ea5e9',
-    '#22c55e',
-    '#ef4444'
-  ]
-}]
+        backgroundColor: [
+          '#6366f1',
+          '#0ea5e9',
+          '#22c55e',
+          '#ef4444'
+        ]
+      }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
-       cutout: '65%',
-  plugins: {
-    legend: {
-      position: 'bottom'
+      cutout: '65%',
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
     }
   });
 }
-
   window.openProspek = ()=> modalProspek.style.display="flex";
 window.closeProspek = ()=> modalProspek.style.display="none";
 
