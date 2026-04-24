@@ -7,7 +7,7 @@
 <!-- Calendar -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
+  
 <!-- Chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <meta charset="UTF-8">
@@ -23,13 +23,9 @@ body { margin:0; font-family: Arial; background:#f5f3ff; }
 input, select { width:100%; padding:8px; margin:5px 0; }
 
 button {
-  width:100%;
-  padding:10px;
-  background:#7c3aed;
-  color:white;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
+  width:auto;
+  padding:6px 10px;
+  font-size:12px;
 }
 
 #app { display:none; }
@@ -107,21 +103,40 @@ button {
   <b>Closing:</b> <span id="closingCount">0</span> |
   <b>Rate:</b> <span id="rate">0%</span>
 </div>
+  <div id="calendar" style="padding:10px;"></div>
 
 <!-- ✅ chart DI SINI -->
 <canvas id="chart" height="100"></canvas>
 
-  <div class="board">
-  ...
-</div>
+  <div style="display:flex; gap:20px; padding:10px">
 
-<!-- ✅ taruh DI SINI -->
-<div id="calendar" style="padding:10px;"></div>
-    
-    <div class="column" id="baru"><h3>Baru</h3></div>
-    <div class="column" id="followup"><h3>Follow Up</h3></div>
-    <div class="column" id="pending"><h3>Pending</h3></div>
-    <div class="column" id="closing"><h3>Closing</h3></div>
+  <!-- BOARD LAMA -->
+  <div style="flex:2">
+    <div class="board">
+      <div class="column" id="baru"><h3>Baru</h3></div>
+      <div class="column" id="followup"><h3>Follow Up</h3></div>
+      <div class="column" id="pending"><h3>Pending</h3></div>
+      <div class="column" id="closing"><h3>Closing</h3></div>
+    </div>
+  </div>
+
+  <!-- TABEL PROSPEK -->
+  <div style="flex:1; background:white; padding:10px; border-radius:10px;">
+    <h3>Prospek Agen</h3>
+
+    <button onclick="openProspek()">+ Tambah Prospek</button>
+
+    <table border="1" width="100%" style="margin-top:10px; font-size:12px;">
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>HP</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="prospekTable"></tbody>
+    </table>
   </div>
 </div>
 
@@ -137,6 +152,24 @@ button {
   </div>
 </div>
 
+<div class="modal" id="modalProspek">
+  <div class="modal-box">
+    <h3>Prospek Agen</h3>
+    <input id="p_nama" placeholder="Nama Agen">
+    <input id="p_hp" placeholder="No HP">
+    
+    <select id="p_status">
+      <option>Baru</option>
+      <option>Sudah Dihubungi</option>
+      <option>Tertarik</option>
+      <option>Tidak Tertarik</option>
+    </select>
+
+    <button onclick="saveProspek()">Simpan</button>
+    <button onclick="closeProspek()">Tutup</button>
+  </div>
+</div>
+  
 <!-- MODAL FOLLOW UP -->
 <div class="modal" id="modalFU">
   <div class="modal-box">
@@ -187,6 +220,7 @@ const db = firebase.firestore();
 
 let currentCustomer = null;
   let currentRole = null;
+  let myChart = null;
 
 // LOGIN
 window.login = function(){
@@ -206,20 +240,15 @@ window.logout = function(){ auth.signOut(); }
 auth.onAuthStateChanged(user=>{
   if(user){
 
-    auth.onAuthStateChanged(user=>{
-  if(user){
-
     db.collection("users").doc(user.uid).get()
     .then(doc=>{
 
       if(doc.exists){
         currentRole = doc.data().role || "cs";
       } else {
-        // kalau belum ada data user → auto buat
         db.collection("users").doc(user.uid).set({
           role: "cs"
         });
-
         currentRole = "cs";
       }
 
@@ -228,6 +257,12 @@ auth.onAuthStateChanged(user=>{
 
       loadData();
     });
+
+  } else {
+    loginPage.style.display="flex";
+    app.style.display="none";
+  }
+});
 
   } else {
     loginPage.style.display="flex";
@@ -311,6 +346,7 @@ window.saveFU = function(){
 
 // LOAD DATA
 function loadData(){
+  loadProspek();
   db.collection("customers")
   .where("user_id","==",auth.currentUser.uid)
   .onSnapshot(snap=>{
@@ -352,6 +388,7 @@ if(d.status === "followup") followup++;
 
         <button onclick="event.stopPropagation(); editCustomer('${doc.id}','${d.nama}','${d.hp}','${d.tanggal}')">Edit</button>
         <button onclick="event.stopPropagation(); deleteCustomer('${doc.id}')">Hapus</button>
+        <button onclick="convertToCustomer('${doc.id}')">Jadikan Customer</button>
       `;
 
       document.getElementById(d.status).appendChild(card);
@@ -375,6 +412,41 @@ window.updateStatus = function(id, status){
   db.collection("customers").doc(id).update({
     status: status
   });
+}
+
+function loadProspek(){
+  db.collection("prospek")
+  .where("user_id","==",auth.currentUser.uid)
+  .onSnapshot(snap=>{
+
+    let table = document.getElementById("prospekTable");
+    table.innerHTML = "";
+
+    snap.forEach(doc=>{
+      let d = doc.data();
+
+      let row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${d.nama}</td>
+        <td>${d.hp}</td>
+        <td>${d.status}</td>
+        <td>
+          <button onclick="openWA('${d.hp}')">WA</button>
+          <button onclick="deleteProspek('${doc.id}')">Hapus</button>
+        </td>
+      `;
+
+      table.appendChild(row);
+    });
+
+  });
+}
+
+    window.deleteProspek = function(id){
+  if(confirm("Hapus prospek ini?")){
+    db.collection("prospek").doc(id).delete();
+  }
 }
 
  function showHistory(id){
@@ -512,12 +584,10 @@ function loadCalendar(){
 
 function loadChart(total, closing, pending, followup){
 
-  // ✅ HAPUS chart lama kalau ada
   if(myChart){
     myChart.destroy();
   }
 
-  // ✅ BUAT chart baru
   myChart = new Chart(document.getElementById("chart"), {
     type: 'bar',
     data: {
@@ -527,6 +597,52 @@ function loadChart(total, closing, pending, followup){
         data: [total, closing, pending, followup]
       }]
     }
+  });
+
+}
+
+  window.openProspek = ()=> modalProspek.style.display="flex";
+window.closeProspek = ()=> modalProspek.style.display="none";
+
+  window.saveProspek = function(){
+
+  if(!p_nama.value || !p_hp.value){
+    alert("Nama & HP wajib diisi!");
+    return;
+  }
+
+  db.collection("prospek").add({
+    nama: p_nama.value,
+    hp: p_hp.value,
+    status: p_status.value,
+    user_id: auth.currentUser.uid,
+    created: new Date().toISOString()
+  });
+
+  p_nama.value = "";
+  p_hp.value = "";
+
+  closeProspek();
+}
+
+  window.convertToCustomer = function(id){
+
+  db.collection("prospek").doc(id).get().then(doc=>{
+    let d = doc.data();
+
+    // masuk ke customer
+    db.collection("customers").add({
+      nama: d.nama,
+      hp: d.hp,
+      tanggal: new Date().toISOString().split("T")[0],
+      status: "baru",
+      user_id: auth.currentUser.uid
+    });
+
+    // hapus dari prospek
+    db.collection("prospek").doc(id).delete();
+
+    alert("Berhasil jadi customer!");
   });
 
 }
