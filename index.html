@@ -85,28 +85,30 @@ button {
 
 <!-- APP -->
 <div id="app">
- <div class="header">
-  <b>FLOUPYUD</b>
-  <div>
-    <button onclick="openModal()">+ Customer</button>
-    <button onclick="logout()">Logout</button>
+
+  <!-- HEADER -->
+  <div class="header">
+    <b>FLOUPYUD</b>
+    <div>
+      <button onclick="openModal()">+ Customer</button>
+      <button onclick="logout()">Logout</button>
+    </div>
   </div>
-</div>
 
-<!-- ✅ dashboard DI SINI -->
-<div style="padding:10px">
-  <b>Total:</b> <span id="total">0</span> |
-  <b>Closing:</b> <span id="closingCount">0</span> |
-  <b>Rate:</b> <span id="rate">0%</span>
-</div>
+  <!-- DASHBOARD -->
+  <div style="padding:10px">
+    <b>Total:</b> <span id="total">0</span> |
+    <b>Closing:</b> <span id="closingCount">0</span> |
+    <b>Rate:</b> <span id="rate">0%</span>
+  </div>
 
-<!-- ✅ chart DI SINI -->
-<canvas id="chart" height="100"></canvas>
+  <!-- CHART -->
+  <canvas id="chart" height="100"></canvas>
 
-  <div style="display:flex; gap:20px; padding:10px">
-
-  <!-- BOARD LAMA -->
-  <div style="flex:2">
+  <!-- ========================= -->
+  <!-- ✅ BOARD CUSTOMER -->
+  <!-- ========================= -->
+  <div style="padding:10px">
     <div class="board">
       <div class="column" id="baru"><h3>Baru</h3></div>
       <div class="column" id="followup"><h3>Follow Up</h3></div>
@@ -115,26 +117,23 @@ button {
     </div>
   </div>
 
-  <!-- TABEL PROSPEK -->
-  <div style="flex:1; background:white; padding:10px; border-radius:10px;">
+  <!-- ========================= -->
+  <!-- ✅ PROSPEK (DI BAWAH) -->
+  <!-- ========================= -->
+  <div style="padding:10px">
     <h3>Prospek Agen</h3>
-
     <button onclick="openProspek()">+ Tambah Prospek</button>
 
-    <table border="1" width="100%" style="margin-top:10px; font-size:12px;">
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>HP</th>
-          <th>Status</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="prospekTable"></tbody>
-    </table>
+    <div class="board">
+      <div class="column" id="prospekBaru"><h3>Baru</h3></div>
+      <div class="column" id="prospekHubungi"><h3>Sudah Dihubungi</h3></div>
+      <div class="column" id="prospekTertarik"><h3>Tertarik</h3></div>
+      <div class="column" id="prospekTidak"><h3>Tidak Tertarik</h3></div>
+    </div>
   </div>
-</div>
 
+</div>
+    
 <!-- MODAL CUSTOMER -->
 <div class="modal" id="modal">
   <div class="modal-box">
@@ -402,27 +401,47 @@ function loadProspek(){
   .where("user_id","==",auth.currentUser.uid)
   .onSnapshot(snap=>{
 
-    let table = document.getElementById("prospekTable");
-    table.innerHTML = "";
+    // reset kolom
+    ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"]
+    .forEach(id=>{
+      document.getElementById(id).innerHTML = "<h3>" + document.getElementById(id).querySelector("h3").innerText + "</h3>";
+    });
 
     snap.forEach(doc=>{
       let d = doc.data();
 
-      let row = document.createElement("tr");
+      let col = "prospekBaru";
+      if(d.status === "Sudah Dihubungi") col = "prospekHubungi";
+      if(d.status === "Tertarik") col = "prospekTertarik";
+      if(d.status === "Tidak Tertarik") col = "prospekTidak";
 
-      row.innerHTML = `
-        <td>${d.nama}</td>
-        <td>${d.hp}</td>
-        <td>${d.status}</td>
-        <td>
-          <button onclick="openWA('${d.hp}')">WA</button>
-          <button onclick="deleteProspek('${doc.id}')">Hapus</button>
-        </td>
+      let card = document.createElement("div");
+      card.className = "card";
+
+      card.innerHTML = `
+        <b>${d.nama}</b><br>
+        ${d.hp}<br><br>
+
+        <button onclick="openWA('${d.hp}')">WA</button>
+        <button onclick="updateProspek('${doc.id}','Sudah Dihubungi')">Hubungi</button>
+        <button onclick="updateProspek('${doc.id}','Tertarik')">Tertarik</button>
+        <button onclick="updateProspek('${doc.id}','Tidak Tertarik')">Tidak</button>
+
+        <br><br>
+
+        <button onclick="convertToCustomer('${doc.id}')">Jadikan Customer</button>
+        <button onclick="deleteProspek('${doc.id}')">Hapus</button>
       `;
 
-      table.appendChild(row);
+      document.getElementById(col).appendChild(card);
     });
 
+  });
+}
+
+  window.updateProspek = function(id, status){
+  db.collection("prospek").doc(id).update({
+    status: status
   });
 }
 
@@ -504,6 +523,28 @@ ${f.jenis_respon}
   });
 }
 
+["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"].forEach(status=>{
+  new Sortable(document.getElementById(status), {
+    group: "prospek",
+    animation: 150,
+    onAdd: function(evt){
+      let id = evt.item.getAttribute("data-id");
+      let newStatus = evt.to.id;
+
+      let map = {
+        prospekBaru: "Baru",
+        prospekHubungi: "Sudah Dihubungi",
+        prospekTertarik: "Tertarik",
+        prospekTidak: "Tidak Tertarik"
+      };
+
+      db.collection("prospek").doc(id).update({
+        status: map[newStatus]
+      });
+    }
+  });
+});
+  
  function checkReminder(){
   db.collection("followups").get().then(snap=>{
     let now = new Date();
@@ -597,6 +638,13 @@ window.closeProspek = ()=> modalProspek.style.display="none";
     alert("Berhasil jadi customer!");
   });
 
+}
+
+  h3 {
+  margin-bottom:5px;
+}
+.board {
+  margin-top:10px;
 }
 
 </script>
