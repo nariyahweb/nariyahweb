@@ -734,54 +734,31 @@ window.saveCustomer = function(){
       filter: "h3",
       preventOnFilter: true,
 
-      onAdd: function (evt) {
+onAdd: function(evt){
   let id = evt.item.getAttribute("data-id");
   let newStatus = evt.to.id;
 
-  // ❌ JANGAN langsung update kalau closing
-  if(newStatus === "closing"){
-    evt.from.appendChild(evt.item); // balikin card
-    openClosingConfirm(id);
+  let map = {
+    prospekBaru: "Baru",
+    prospekHubungi: "Sudah Dihubungi",
+    prospekTertarik: "Tertarik",
+    prospekTidak: "Tidak Tertarik"
+  };
+
+  let statusBaru = map[newStatus];
+
+  // KHUSUS TIDAK TERTARIK
+  if(statusBaru === "Tidak Tertarik"){
+    evt.from.appendChild(evt.item);
+
+    openTidakTertarikChoice(id);
     return;
   }
 
-  db.collection("customers").doc(id).update({
-    status: newStatus
+  db.collection("prospek").doc(id).update({
+    status: statusBaru
   });
 }
-    });
-  });
-}
-
-["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"].forEach(status=>{
-  new Sortable(document.getElementById(status), {
-    group: "prospek",
-    draggable: ".card",
-    animation: 150,
-    onAdd: function(evt){
-      let id = evt.item.getAttribute("data-id");
-      let newStatus = evt.to.id;
-
-      let map = {
-        prospekBaru: "Baru",
-        prospekHubungi: "Sudah Dihubungi",
-        prospekTertarik: "Tertarik",
-        prospekTidak: "Tidak Tertarik"
-      };
-
-      let statusBaru = map[newStatus];
-
-// ❌ tahan dulu kalau Tidak Tertarik
-if(statusBaru === "Tidak Tertarik"){
-  evt.from.appendChild(evt.item);
-  openTidakTertarikConfirm(id);
-  return;
-}
-
-db.collection("prospek").doc(id).update({
-  status: statusBaru
-});
-    }
   });
 });
   
@@ -1193,6 +1170,71 @@ window.closeDBTidak = function(){
     });
 
     alert("Masuk database Tidak Tertarik!");
+  });
+}
+
+  window.openClosingChoice = function(id){
+
+  let pilih = confirm(
+    "OK = Masuk Database Closing\nCANCEL = Tetap di kolom Closing"
+  );
+
+  if(pilih){
+    // 👉 MASUK DATABASE
+    saveToClosingDB(id);
+  }else{
+    // 👉 HANYA PINDAH STATUS
+    db.collection("customers").doc(id).update({
+      status: "closing"
+    });
+  }
+}
+
+  function saveToClosingDB(id){
+  db.collection("customers").doc(id).get().then(doc=>{
+    let d = doc.data();
+
+    // simpan ke database khusus
+    db.collection("db_closing").add({
+      ...d,
+      closing_date: new Date().toISOString()
+    });
+
+    // 🔥 HAPUS dari collection utama
+    db.collection("customers").doc(id).delete();
+
+    alert("Masuk database Closing & hilang dari board!");
+  });
+}
+
+    window.openTidakTertarikChoice = function(id){
+
+  let pilih = confirm(
+    "OK = Masuk Database Tidak Tertarik\nCANCEL = Tetap di kolom"
+  );
+
+  if(pilih){
+    saveToTidakTertarikDB(id);
+  }else{
+    db.collection("prospek").doc(id).update({
+      status: "Tidak Tertarik"
+    });
+  }
+}
+
+    function saveToTidakTertarikDB(id){
+  db.collection("prospek").doc(id).get().then(doc=>{
+    let d = doc.data();
+
+    db.collection("db_tidak_tertarik").add({
+      ...d,
+      tanggal: new Date().toISOString()
+    });
+
+    // 🔥 HAPUS dari board
+    db.collection("prospek").doc(id).delete();
+
+    alert("Masuk database Tidak Tertarik & hilang dari board!");
   });
 }
   
