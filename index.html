@@ -471,29 +471,31 @@ let closing = 0;
 let pending = 0;
 let followup = 0;
 
-    snap.forEach(doc=>{
-      let d = doc.data();
+snap.forEach(doc=>{
+  let d = doc.data();
 
-     total++;
+  total++;
 
-if(d.status === "closing") closing++;
-if(d.status === "pending") pending++;
-if(d.status === "followup") followup++;
+  if(d.status === "closing") closing++;
+  if(d.status === "pending") pending++;
+  if(d.status === "followup") followup++;
 
-      let card = document.createElement("div");
-card.className="card";
-card.setAttribute("data-id", doc.id);
+  let card = document.createElement("div");
+  card.className="card";
+  card.setAttribute("data-id", doc.id);
 
-// 🔥 klik card buka detail
-card.onclick = () => openDetailCustomer(doc.id);
+  card.onclick = () => openDetailCustomer(doc.id);
 
-// 🔥 isi card simple
-card.innerHTML = `
-  <b>${d.nama || '-'}</b><br>
-  <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
-    WhatsApp
-  </button>
-`;
+  card.innerHTML = `
+    <b>${d.nama || '-'}</b><br>
+    <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
+      WhatsApp
+    </button>
+  `;
+
+  document.getElementById(d.status).appendChild(card);
+
+});
 
     // ✅ TARUH DI SINI (SETELAH LOOP)
     document.getElementById("total").innerText = total;
@@ -516,54 +518,70 @@ window.updateStatus = function(id, status){
 }
 
 function loadProspek(){
+
   db.collection("prospek")
   .where("user_id","==",auth.currentUser.uid)
-     .onSnapshot(snap=>{
+  .onSnapshot(snap=>{
 
-  let count = {
-    baru:0,
-    hubungi:0,
-    tertarik:0,
-    tidak:0
-  };
+    let count = {
+      baru:0,
+      hubungi:0,
+      tertarik:0,
+      tidak:0
+    };
+
     // reset kolom
-["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"].forEach(id=>{
-  document.getElementById(id).innerHTML = "<h3>" + {
-    prospekBaru:"Baru",
-    prospekHubungi:"Sudah Dihubungi",
-    prospekTertarik:"Tertarik",
-    prospekTidak:"Tidak Tertarik"
-  }[id] + "</h3>";
-});
+    ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"].forEach(id=>{
+      document.getElementById(id).innerHTML = "<h3>" + {
+        prospekBaru:"Baru",
+        prospekHubungi:"Sudah Dihubungi",
+        prospekTertarik:"Tertarik",
+        prospekTidak:"Tidak Tertarik"
+      }[id] + "</h3>";
+    });
+
     snap.forEach(doc=>{
       let d = doc.data();
 
       let col = "prospekBaru";
+
       if(d.status === "Baru") count.baru++;
-      if(d.status === "Sudah Dihubungi") count.hubungi++;
-      if(d.status === "Tertarik") count.tertarik++;
-      if(d.status === "Tidak Tertarik") count.tidak++;
-      if(d.status === "Sudah Dihubungi") col = "prospekHubungi";
-      if(d.status === "Tertarik") col = "prospekTertarik";
-      if(d.status === "Tidak Tertarik") col = "prospekTidak";
+      if(d.status === "Sudah Dihubungi") {
+        count.hubungi++;
+        col = "prospekHubungi";
+      }
+      if(d.status === "Tertarik") {
+        count.tertarik++;
+        col = "prospekTertarik";
+      }
+      if(d.status === "Tidak Tertarik") {
+        count.tidak++;
+        col = "prospekTidak";
+      }
 
-let card = document.createElement("div");
-card.className = "card";
-card.setAttribute("data-id", doc.id); // 🔥 WAJIB
+      let card = document.createElement("div");
+      card.className = "card";
+      card.setAttribute("data-id", doc.id);
 
-// 🔥 klik buka detail
-card.onclick = () => openDetailProspek(doc.id);
+      card.onclick = () => openDetailProspek(doc.id);
 
-// 🔥 isi simple
-card.innerHTML = `
-  <b>${d.nama || '-'}</b><br>
-  <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
-    WhatsApp
-  </button>
-`;
-       loadChartProspek(count);
-    });
-}
+      card.innerHTML = `
+        <b>${d.nama || '-'}</b><br>
+        <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
+          WhatsApp
+        </button>
+      `;
+
+      document.getElementById(col).appendChild(card);
+
+    }); // ✅ TUTUP forEach
+
+    // 🔥 TARUH DI LUAR forEach
+    loadChartProspek(count);
+
+  }); // ✅ TUTUP onSnapshot
+
+} // ✅ TUTUP function loadProspek
 
   window.updateProspek = function(id, status){
   db.collection("prospek").doc(id).update({
