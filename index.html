@@ -1057,9 +1057,7 @@ window.openDBClosing = function(){
   closeAllModal();
   modalDBClosing.style.display = "flex";
 
-  db.collection("customers")
-  .where("status","==","closing")
-  .where("user_id","==",auth.currentUser.uid)
+  db.collection("db_closing")
   .get()
   .then(snap=>{
     let html = "";
@@ -1072,7 +1070,6 @@ window.openDBClosing = function(){
           <b>${d.nama}</b><br>
           ${d.hp}<br>
           <button onclick="openWA('${d.hp}')">WhatsApp</button>
-          <button onclick="deleteCustomer('${doc.id}')">Hapus</button>
         </div>
       `;
     });
@@ -1128,22 +1125,25 @@ window.closeDBTidak = function(){
 }
 
 function saveToClosingDB(id){
+
   db.collection("customers").doc(id).get().then(doc=>{
     let d = doc.data();
 
-    // masuk database khusus
+    // 1. simpan dulu ke DB closing
     db.collection("db_closing").add({
       ...d,
       closing_date: new Date().toISOString()
+    }).then(()=>{
+
+      // 2. baru hapus dari board utama
+      db.collection("customers").doc(id).delete();
+
+      alert("Berhasil masuk DB Closing!");
     });
 
-    // ❌ HAPUS dari board utama
-    db.collection("customers").doc(id).delete();
-
-    alert("Masuk database Closing & hilang dari board!");
   });
-}
 
+}
 window.openTidakTertarikConfirm = function(id){
   if(confirm("Masukkan ke database Tidak Tertarik?")){
     saveToTidakTertarikDB(id);
