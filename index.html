@@ -364,6 +364,10 @@ h3 {
 </div>
   
 <script>
+if(typeof Sortable === "undefined"){
+  console.error("Sortable gagal load!");
+}
+  
 function closeAllModal(){
   document.querySelectorAll(".modal").forEach(m=>{
     m.style.display = "none";
@@ -731,13 +735,20 @@ window.saveCustomer = function(){
       preventOnFilter: true,
 
       onAdd: function (evt) {
-        let id = evt.item.getAttribute("data-id");
-        let newStatus = evt.to.id;
+  let id = evt.item.getAttribute("data-id");
+  let newStatus = evt.to.id;
 
-        db.collection("customers").doc(id).update({
-          status: newStatus
-        });
-      }
+  // ❌ JANGAN langsung update kalau closing
+  if(newStatus === "closing"){
+    evt.from.appendChild(evt.item); // balikin card
+    openClosingConfirm(id);
+    return;
+  }
+
+  db.collection("customers").doc(id).update({
+    status: newStatus
+  });
+}
     });
   });
 }
@@ -758,9 +769,18 @@ window.saveCustomer = function(){
         prospekTidak: "Tidak Tertarik"
       };
 
-      db.collection("prospek").doc(id).update({
-        status: map[newStatus]
-      });
+      let statusBaru = map[newStatus];
+
+// ❌ tahan dulu kalau Tidak Tertarik
+if(statusBaru === "Tidak Tertarik"){
+  evt.from.appendChild(evt.item);
+  openTidakTertarikConfirm(id);
+  return;
+}
+
+db.collection("prospek").doc(id).update({
+  status: statusBaru
+});
     }
   });
 });
@@ -1126,6 +1146,54 @@ window.openDBTidak = function(){
 
 window.closeDBTidak = function(){
   modalDBTidak.style.display = "none";
+}
+
+  window.openClosingConfirm = function(id){
+  if(confirm("Masukkan ke database Closing?")){
+    saveToClosingDB(id);
+  }
+}
+
+  function saveToClosingDB(id){
+  db.collection("customers").doc(id).get().then(doc=>{
+    let d = doc.data();
+
+    // simpan ke database baru
+    db.collection("db_closing").add({
+      ...d,
+      closing_date: new Date().toISOString()
+    });
+
+    // baru update status
+    db.collection("customers").doc(id).update({
+      status: "closing"
+    });
+
+    alert("Masuk database Closing!");
+  });
+}
+
+  window.openTidakTertarikConfirm = function(id){
+  if(confirm("Masukkan ke database Tidak Tertarik?")){
+    saveToTidakTertarikDB(id);
+  }
+}
+
+  function saveToTidakTertarikDB(id){
+  db.collection("prospek").doc(id).get().then(doc=>{
+    let d = doc.data();
+
+    db.collection("db_tidak_tertarik").add({
+      ...d,
+      tanggal: new Date().toISOString()
+    });
+
+    db.collection("prospek").doc(id).update({
+      status: "Tidak Tertarik"
+    });
+
+    alert("Masuk database Tidak Tertarik!");
+  });
 }
   
 </script>
