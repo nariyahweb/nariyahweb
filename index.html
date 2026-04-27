@@ -152,6 +152,14 @@ h3 {
   font-weight: bold;
   color: #7c3aed;
 }
+
+  .card {
+  transition: 0.2s;
+}
+.card:hover {
+  transform: scale(1.03);
+  background:#6d28d9;
+}
   
 </style>
 </head>
@@ -310,6 +318,10 @@ h3 {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+  <div class="modal" id="modalDetail">
+  <div class="modal-box" id="detailContent"></div>
+</div>
 
 <script>
 const firebaseConfig = {
@@ -471,26 +483,7 @@ if(d.status === "followup") followup++;
       let card = document.createElement("div");
       card.className="card";
       card.setAttribute("data-id", doc.id);
-      card.onclick = () => showHistory(doc.id);
-
-      card.innerHTML = `
-        <b>${d.nama}</b><br>
-        ${d.hp}<br>
-
-        <button onclick="event.stopPropagation(); openWA('${d.hp}')">WA</button>
-        <button onclick="event.stopPropagation(); openFU('${doc.id}')">Follow Up</button><br>
-
-        <button onclick="event.stopPropagation(); updateStatus('${doc.id}','followup')">→ FU</button>
-        <button onclick="event.stopPropagation(); updateStatus('${doc.id}','pending')">→ Pending</button>
-        <button onclick="event.stopPropagation(); updateStatus('${doc.id}','closing')">→ Closing</button>
-
-        <br><br>
-
-        <button onclick="event.stopPropagation(); editCustomer('${doc.id}','${d.nama}','${d.hp}','${d.tanggal}')">Edit</button>
-        <button onclick="event.stopPropagation(); deleteCustomer('${doc.id}')">Hapus</button>
-        <button onclick="convertToCustomer('${doc.id}')">Jadikan Customer</button>
-      `;
-
+      card.onclick = () => openDetailCustomer(doc.id);
       document.getElementById(d.status).appendChild(card);
     });
 
@@ -550,23 +543,8 @@ function loadProspek(){
 card.className = "card";
 card.setAttribute("data-id", doc.id); // 🔥 FIX WAJIB
 card.setAttribute("draggable", true);
-      
-      card.innerHTML = `
-        <b>${d.nama}</b><br>
-        ${d.hp}<br><br>
-
-        <button onclick="openWA('${d.hp}')">WA</button>
-        <button onclick="updateProspek('${doc.id}','Sudah Dihubungi')">Hubungi</button>
-        <button onclick="updateProspek('${doc.id}','Tertarik')">Tertarik</button>
-        <button onclick="updateProspek('${doc.id}','Tidak Tertarik')">Tidak</button>
-
-        <br><br>
-
-        <button onclick="convertToCustomer('${doc.id}')">Jadikan Customer</button>
-        <button onclick="deleteProspek('${doc.id}')">Hapus</button>
-      `;
-
-      document.getElementById(col).appendChild(card);
+card.onclick = () => openDetailProspek(doc.id);
+document.getElementById(col).appendChild(card);
     });
        loadChartProspek(count);
     });
@@ -826,6 +804,71 @@ window.closeProspek = ()=> modalProspek.style.display="none";
     alert("Berhasil jadi customer!");
   });
 
+}
+
+  window.openDetailCustomer = function(id){
+  db.collection("customers").doc(id).get().then(doc=>{
+    let d = doc.data();
+
+    detailContent.innerHTML = `
+      <h3>${d.nama}</h3>
+      <p>${d.hp}</p>
+      <p>Status: ${d.status}</p>
+
+      <button onclick="openWA('${d.hp}')">WA</button>
+      <button onclick="openFU('${id}')">Follow Up</button>
+
+      <br><br>
+
+      <button onclick="updateStatus('${id}','followup')">Follow Up</button>
+      <button onclick="updateStatus('${id}','pending')">Pending</button>
+      <button onclick="updateStatus('${id}','closing')">Closing</button>
+
+      <br><br>
+
+      <button onclick="editCustomer('${id}','${d.nama}','${d.hp}','${d.tanggal}')">Edit</button>
+      <button onclick="deleteCustomer('${id}')">Hapus</button>
+
+      <br><br>
+      <button onclick="closeDetail()">Tutup</button>
+    `;
+
+    modalDetail.style.display = "flex";
+  });
+}
+
+  window.openDetailProspek = function(id){
+  db.collection("prospek").doc(id).get().then(doc=>{
+    let d = doc.data();
+
+    detailContent.innerHTML = `
+      <h3>${d.nama}</h3>
+      <p>${d.hp}</p>
+      <p>Status: ${d.status}</p>
+
+      <button onclick="openWA('${d.hp}')">WA</button>
+
+      <br><br>
+
+      <button onclick="updateProspek('${id}','Sudah Dihubungi')">Hubungi</button>
+      <button onclick="updateProspek('${id}','Tertarik')">Tertarik</button>
+      <button onclick="updateProspek('${id}','Tidak Tertarik')">Tidak</button>
+
+      <br><br>
+
+      <button onclick="convertToCustomer('${id}')">Jadikan Customer</button>
+      <button onclick="deleteProspek('${id}')">Hapus</button>
+
+      <br><br>
+      <button onclick="closeDetail()">Tutup</button>
+    `;
+
+    modalDetail.style.display = "flex";
+  });
+}
+
+  window.closeDetail = function(){
+  modalDetail.style.display = "none";
 }
 
 </script>
