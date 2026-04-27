@@ -160,6 +160,15 @@ h3 {
   transform: scale(1.03);
   background:#6d28d9;
 }
+
+  .new-badge {
+  background: #22c55e;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 5px;
+}
   
 </style>
 </head>
@@ -486,15 +495,18 @@ snap.forEach(doc=>{
 
   card.onclick = () => openDetailCustomer(doc.id);
 
-  card.innerHTML = `
-    <b>${d.nama || '-'}</b><br>
-    <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
-      WhatsApp
-    </button>
-  `;
+ card.innerHTML = `
+  <b>
+    ${d.nama || '-'}
+    ${d.isNew ? '<span style="color:yellow; font-size:10px; margin-left:5px;">NEW</span>' : ''}
+  </b>
+  <br>
+  <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
+    WhatsApp
+  </button>
+`;
 
   document.getElementById(d.status).appendChild(card);
-
 });
 
     // ✅ TARUH DI SINI (SETELAH LOOP)
@@ -826,6 +838,28 @@ window.closeProspek = ()=> modalProspek.style.display="none";
 }
 
   window.convertToCustomer = function(id){
+
+  db.collection("prospek").doc(id).get().then(doc=>{
+    let d = doc.data();
+
+    // masuk ke customer
+    db.collection("customers").add({
+      nama: d.nama,
+      hp: d.hp,
+      tanggal: new Date().toISOString().split("T")[0],
+      status: "baru",
+      user_id: auth.currentUser.uid,
+
+      // 🔥 TAMBAHAN INI
+      isNew: true
+    });
+
+    db.collection("prospek").doc(id).delete();
+
+    alert("Berhasil jadi customer!");
+  });
+
+}
 
   db.collection("prospek").doc(id).get().then(doc=>{
     let d = doc.data();
