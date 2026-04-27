@@ -234,7 +234,7 @@ h3 {
   </div>
   <div class="stat-box">
     <h4>Rate</h4>
-    <p id="rate">0%</p>
+    <p id="rateText">0%</p>
   </div>
 </div>
 <div class="chart-container">
@@ -611,41 +611,53 @@ function loadProspek(){
     };
 
     // reset kolom
-    ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"].forEach(status=>{
-  new Sortable(document.getElementById(status), {
-    group: "prospek",
-    animation: 150,
-    draggable: ".card",
-    filter: "h3",
-    preventOnFilter: true,
+    let prospekDragInit = false;
 
-    onAdd: function(evt){
-      let id = evt.item.getAttribute("data-id");
-      let newStatus = evt.to.id;
+function initProspekDrag(){
 
-      let map = {
-        prospekBaru: "Baru",
-        prospekHubungi: "Sudah Dihubungi",
-        prospekTertarik: "Tertarik",
-        prospekTidak: "Tidak Tertarik"
-      };
+  if(prospekDragInit) return;
+  prospekDragInit = true;
 
-      let statusBaru = map[newStatus];
+  ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"]
+  .forEach(id=>{
 
-      if(!statusBaru) return;
+    new Sortable(document.getElementById(id), {
+      group: "prospek",
+      animation: 150,
+      draggable: ".card",
 
-      // ❌ kalau Tidak Tertarik → pakai confirm logic kamu
-      if(statusBaru === "Tidak Tertarik"){
-        evt.from.appendChild(evt.item);
-        openTidakTertarikChoice(id);
-        return;
+      onAdd: function(evt){
+        let id = evt.item.getAttribute("data-id");
+        let newStatus = evt.to.id;
+
+        let map = {
+          prospekBaru: "Baru",
+          prospekHubungi: "Sudah Dihubungi",
+          prospekTertarik: "Tertarik",
+          prospekTidak: "Tidak Tertarik"
+        };
+
+        let statusBaru = map[newStatus];
+
+        if(statusBaru === "Tidak Tertarik"){
+          evt.from.appendChild(evt.item);
+          openTidakTertarikChoice(id);
+          return;
+        }
+
+        db.collection("prospek").doc(id).update({
+          status: statusBaru
+        });
       }
+    });
 
-      db.collection("prospek").doc(id).update({
-        status: statusBaru
-      });
-    }
   });
+}
+    ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"]
+.forEach(id=>{
+  let el = document.getElementById(id);
+  let title = el.querySelector("h3").innerText;
+  el.innerHTML = "<h3>" + title + "</h3>";
 });
     snap.forEach(doc=>{
       let d = doc.data();
@@ -685,6 +697,7 @@ function loadProspek(){
 
     // 🔥 TARUH DI LUAR forEach
     loadChartProspek(count);
+    initProspekDrag();
 
   }); // ✅ TUTUP onSnapshot
 
@@ -1158,9 +1171,9 @@ window.closeDBTidak = function(){
   }
 }
 
-window.deleteDBClosing = function(id){
+window.deleteDBTidak = function(id){
   if(confirm("Hapus data ini?")){
-    db.collection("db_closing").doc(id).delete();
+    db.collection("db_tidak_tertarik").doc(id).delete();
   }
 }
 
@@ -1258,6 +1271,9 @@ function saveToTidakTertarikDB(id){
     db.collection("prospek").doc(id).delete();
 
     alert("Masuk database Tidak Tertarik & hilang dari board!");
+  });
+}
+  document.getElementById("rateText").innerText = rate + "%";
   });
 }
   
