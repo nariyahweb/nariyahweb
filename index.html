@@ -322,7 +322,7 @@ h3 {
   <div class="modal" id="modalDetail">
   <div class="modal-box" id="detailContent"></div>
 </div>
-
+  
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCfj2Xdj6et3fThyA2gg-GWG8yZOhoqREA",
@@ -481,11 +481,19 @@ if(d.status === "pending") pending++;
 if(d.status === "followup") followup++;
 
       let card = document.createElement("div");
-      card.className="card";
-      card.setAttribute("data-id", doc.id);
-      card.onclick = () => openDetailCustomer(doc.id);
-      document.getElementById(d.status).appendChild(card);
-    });
+card.className="card";
+card.setAttribute("data-id", doc.id);
+
+// 🔥 klik card buka detail
+card.onclick = () => openDetailCustomer(doc.id);
+
+// 🔥 isi card simple
+card.innerHTML = `
+  <b>${d.nama || '-'}</b><br>
+  <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
+    WhatsApp
+  </button>
+`;
 
     // ✅ TARUH DI SINI (SETELAH LOOP)
     document.getElementById("total").innerText = total;
@@ -539,13 +547,20 @@ function loadProspek(){
       if(d.status === "Tertarik") col = "prospekTertarik";
       if(d.status === "Tidak Tertarik") col = "prospekTidak";
 
-      let card = document.createElement("div");
+let card = document.createElement("div");
 card.className = "card";
-card.setAttribute("data-id", doc.id); // 🔥 FIX WAJIB
-card.setAttribute("draggable", true);
+card.setAttribute("data-id", doc.id); // 🔥 WAJIB
+
+// 🔥 klik buka detail
 card.onclick = () => openDetailProspek(doc.id);
-document.getElementById(col).appendChild(card);
-    });
+
+// 🔥 isi simple
+card.innerHTML = `
+  <b>${d.nama || '-'}</b><br>
+  <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
+    WhatsApp
+  </button>
+`;
        loadChartProspek(count);
     });
 }
@@ -679,11 +694,19 @@ ${f.jenis_respon}
   });
 }
 
-  window.openWA = function(hp){
-  let nomor = hp.replace(/^0/, "62");
-  let link = "https://wa.me/" + nomor;
+window.openWA = function(hp){
+  if(!hp){
+    alert("Nomor tidak tersedia");
+    return;
+  }
 
-  window.open(link, "_blank");
+  let nomor = hp.replace(/\D/g,'');
+
+  if(nomor.startsWith("0")){
+    nomor = "62" + nomor.substring(1);
+  }
+
+  window.open("https://wa.me/" + nomor, "_blank");
 }
 
 let chartCustomer = null;
@@ -806,7 +829,7 @@ window.closeProspek = ()=> modalProspek.style.display="none";
 
 }
 
-  window.openDetailCustomer = function(id){
+window.openDetailCustomer = function(id){
   db.collection("customers").doc(id).get().then(doc=>{
     let d = doc.data();
 
@@ -815,7 +838,7 @@ window.closeProspek = ()=> modalProspek.style.display="none";
       <p>${d.hp}</p>
       <p>Status: ${d.status}</p>
 
-      <button onclick="openWA('${d.hp}')">WA</button>
+      <button onclick="openWA('${d.hp}')">WhatsApp</button>
       <button onclick="openFU('${id}')">Follow Up</button>
 
       <br><br>
@@ -826,18 +849,17 @@ window.closeProspek = ()=> modalProspek.style.display="none";
 
       <br><br>
 
-      <button onclick="editCustomer('${id}','${d.nama}','${d.hp}','${d.tanggal}')">Edit</button>
       <button onclick="deleteCustomer('${id}')">Hapus</button>
-
       <br><br>
+
       <button onclick="closeDetail()">Tutup</button>
     `;
 
     modalDetail.style.display = "flex";
   });
 }
-
-  window.openDetailProspek = function(id){
+  
+window.openDetailProspek = function(id){
   db.collection("prospek").doc(id).get().then(doc=>{
     let d = doc.data();
 
@@ -846,7 +868,7 @@ window.closeProspek = ()=> modalProspek.style.display="none";
       <p>${d.hp}</p>
       <p>Status: ${d.status}</p>
 
-      <button onclick="openWA('${d.hp}')">WA</button>
+      <button onclick="openWA('${d.hp}')">WhatsApp</button>
 
       <br><br>
 
@@ -860,6 +882,7 @@ window.closeProspek = ()=> modalProspek.style.display="none";
       <button onclick="deleteProspek('${id}')">Hapus</button>
 
       <br><br>
+
       <button onclick="closeDetail()">Tutup</button>
     `;
 
