@@ -725,7 +725,11 @@ window.saveCustomer = function(){
 }
 }
     
-  function initDrag(){
+let isDragInit = false;
+
+function initDrag(){
+  if(isDragInit) return;
+  isDragInit = true;
   ["baru","followup","pending","closing"].forEach(status=>{
     new Sortable(document.getElementById(status), {
       group: "shared",
@@ -738,25 +742,16 @@ onAdd: function(evt){
   let id = evt.item.getAttribute("data-id");
   let newStatus = evt.to.id;
 
-  let map = {
-    prospekBaru: "Baru",
-    prospekHubungi: "Sudah Dihubungi",
-    prospekTertarik: "Tertarik",
-    prospekTidak: "Tidak Tertarik"
-  };
-
-  let statusBaru = map[newStatus];
-
-  // KHUSUS TIDAK TERTARIK
-  if(statusBaru === "Tidak Tertarik"){
-    evt.from.appendChild(evt.item);
-
-    openTidakTertarikChoice(id);
+  // KHUSUS CLOSING
+  if(newStatus === "closing"){
+    evt.from.appendChild(evt.item); // balikin dulu
+    openClosingChoice(id);
     return;
   }
 
-  db.collection("prospek").doc(id).update({
-    status: statusBaru
+  // STATUS NORMAL
+  db.collection("customers").doc(id).update({
+    status: newStatus
   });
 }
   });
@@ -1151,13 +1146,13 @@ window.closeDBTidak = function(){
   });
 }
 
-  window.openTidakTertarikConfirm = function(id){
+window.openTidakTertarikConfirm = function(id){
   if(confirm("Masukkan ke database Tidak Tertarik?")){
     saveToTidakTertarikDB(id);
   }
 }
 
-  {
+function saveToTidakTertarikDB(id){
   db.collection("prospek").doc(id).get().then(doc=>{
     let d = doc.data();
 
