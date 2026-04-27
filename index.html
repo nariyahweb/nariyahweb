@@ -498,7 +498,7 @@ snap.forEach(doc=>{
  card.innerHTML = `
   <b>
     ${d.nama || '-'}
-    ${d.isNew ? '<span style="color:yellow; font-size:10px; margin-left:5px;">NEW</span>' : ''}
+    ${d.isNew ? '<span class="new-badge">NEW</span>' : ''}
   </b>
   <br>
   <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
@@ -837,21 +837,18 @@ window.closeProspek = ()=> modalProspek.style.display="none";
   closeProspek();
 }
 
-  window.convertToCustomer = function(id){
+window.convertToCustomer = function(id){
 
   db.collection("prospek").doc(id).get().then(doc=>{
     let d = doc.data();
 
-    // masuk ke customer
     db.collection("customers").add({
       nama: d.nama,
       hp: d.hp,
       tanggal: new Date().toISOString().split("T")[0],
       status: "baru",
       user_id: auth.currentUser.uid,
-
-      // 🔥 TAMBAHAN INI
-      isNew: true
+      isNew: true // 🔥 penanda NEW
     });
 
     db.collection("prospek").doc(id).delete();
