@@ -761,6 +761,7 @@ onAdd: function(evt){
 }
   });
 });
+}
   
  function checkReminder(){
   db.collection("followups").get().then(snap=>{
@@ -1146,7 +1147,7 @@ window.closeDBTidak = function(){
       status: "closing"
     });
 
-    alert("Masuk database Closing!");
+    alert("Masuk database Closing & hilang dari board!");
   });
 }
 
@@ -1156,7 +1157,7 @@ window.closeDBTidak = function(){
   }
 }
 
-  function saveToTidakTertarikDB(id){
+  {
   db.collection("prospek").doc(id).get().then(doc=>{
     let d = doc.data();
 
@@ -1188,23 +1189,6 @@ window.closeDBTidak = function(){
       status: "closing"
     });
   }
-}
-
-  function saveToClosingDB(id){
-  db.collection("customers").doc(id).get().then(doc=>{
-    let d = doc.data();
-
-    // simpan ke database khusus
-    db.collection("db_closing").add({
-      ...d,
-      closing_date: new Date().toISOString()
-    });
-
-    // 🔥 HAPUS dari collection utama
-    db.collection("customers").doc(id).delete();
-
-    alert("Masuk database Closing & hilang dari board!");
-  });
 }
 
     window.openTidakTertarikChoice = function(id){
