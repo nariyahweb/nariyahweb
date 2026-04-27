@@ -207,6 +207,10 @@ h3 {
 
   <!-- DASHBOARD -->
   <div style="padding:10px">
+  <button onclick="openDBClosing()">📁 DB Closing</button>
+  <button onclick="openDBTidak()">📁 DB Tidak Tertarik</button>
+</div>
+  <div style="padding:10px">
     <b>Rate:</b> <span id="rate">0%</span>
   </div>
 
@@ -339,6 +343,24 @@ h3 {
 
   <div class="modal" id="modalDetail">
   <div class="modal-box" id="detailContent"></div>
+</div>
+
+  <!-- MODAL DB CLOSING -->
+<div class="modal" id="modalDBClosing">
+  <div class="modal-box">
+    <h3>Database Closing</h3>
+    <div id="dbClosingList"></div>
+    <button onclick="closeDBClosing()">Tutup</button>
+  </div>
+</div>
+
+<!-- MODAL DB TIDAK TERTARIK -->
+<div class="modal" id="modalDBTidak">
+  <div class="modal-box">
+    <h3>Database Tidak Tertarik</h3>
+    <div id="dbTidakList"></div>
+    <button onclick="closeDBTidak()">Tutup</button>
+  </div>
 </div>
   
 <script>
@@ -1034,6 +1056,77 @@ function validasiNomor(nomor){
     }
   });
 });
+
+  // ===============================
+// DB CLOSING
+// ===============================
+window.openDBClosing = function(){
+  closeAllModal();
+  modalDBClosing.style.display = "flex";
+
+  db.collection("customers")
+  .where("status","==","closing")
+  .where("user_id","==",auth.currentUser.uid)
+  .get()
+  .then(snap=>{
+    let html = "";
+
+    snap.forEach(doc=>{
+      let d = doc.data();
+
+      html += `
+        <div class="card">
+          <b>${d.nama}</b><br>
+          ${d.hp}<br>
+          <button onclick="openWA('${d.hp}')">WhatsApp</button>
+          <button onclick="deleteCustomer('${doc.id}')">Hapus</button>
+        </div>
+      `;
+    });
+
+    dbClosingList.innerHTML = html || "Tidak ada data";
+  });
+}
+
+window.closeDBClosing = function(){
+  modalDBClosing.style.display = "none";
+}
+
+
+// ===============================
+// DB TIDAK TERTARIK
+// ===============================
+window.openDBTidak = function(){
+  closeAllModal();
+  modalDBTidak.style.display = "flex";
+
+  db.collection("prospek")
+  .where("status","==","Tidak Tertarik")
+  .where("user_id","==",auth.currentUser.uid)
+  .get()
+  .then(snap=>{
+    let html = "";
+
+    snap.forEach(doc=>{
+      let d = doc.data();
+
+      html += `
+        <div class="card">
+          <b>${d.nama}</b><br>
+          ${d.hp}<br>
+          <button onclick="openWA('${d.hp}')">WhatsApp</button>
+          <button onclick="deleteProspek('${doc.id}')">Hapus</button>
+        </div>
+      `;
+    });
+
+    dbTidakList.innerHTML = html || "Tidak ada data";
+  });
+}
+
+window.closeDBTidak = function(){
+  modalDBTidak.style.display = "none";
+}
   
 </script>
 
