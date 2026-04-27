@@ -274,8 +274,8 @@ h3 {
 <div class="modal" id="modal">
   <div class="modal-box">
     <h3>Customer</h3>
-    <input id="nama" placeholder="Nama">
-    <input id="hp" placeholder="No HP">
+    <input id="nama" placeholder="Nama" maxlength="25">
+    <input id="hp" placeholder="No HP" maxlength="15" inputmode="numeric">
     <input id="tanggal" type="date">
     <button onclick="saveCustomer()">Simpan</button>
     <button onclick="closeModal()">Tutup</button>
@@ -285,8 +285,8 @@ h3 {
 <div class="modal" id="modalProspek">
   <div class="modal-box">
     <h3>Prospek Agen</h3>
-    <input id="p_nama" placeholder="Nama Agen">
-    <input id="p_hp" placeholder="No HP">
+    <input id="p_nama" placeholder="Nama Agen" maxlength="25">
+    <input id="p_hp" placeholder="No HP" maxlength="15" inputmode="numeric">
     
     <select id="p_status">
       <option>Baru</option>
@@ -413,6 +413,15 @@ window.closeModal = ()=> modal.style.display="none";
 window.saveCustomer = function(){
 
   if(!nama.value || !hp.value){
+      if(nama.value.length > 25){
+    alert("Nama maksimal 25 karakter");
+    return;
+  }
+
+  if(hp.value.length > 15){
+    alert("Nomor maksimal 15 digit");
+    return;
+  }
     alert("Nama & No HP wajib diisi!");
     return;
   }
@@ -840,7 +849,16 @@ window.closeProspek = ()=> modalProspek.style.display="none";
 
   window.saveProspek = function(){
 
-  if(!p_nama.value || !p_hp.value){
+    if(p_nama.value.length > 25){
+    alert("Nama maksimal 25 karakter");
+    return;
+  }
+
+  if(p_hp.value.length > 15){
+    alert("Nomor maksimal 15 digit");
+    return;
+  }
+    if(!p_nama.value || !p_hp.value){
     alert("Nama & HP wajib diisi!");
     return;
   }
@@ -952,6 +970,12 @@ modalDetail.style.display = "flex";
     if(e.target === modal){
       modal.style.display = "none";
     }
+  });
+});
+
+  ["hp","p_hp"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", function(){
+    this.value = this.value.replace(/\D/g,'').slice(0,15);
   });
 });
 
