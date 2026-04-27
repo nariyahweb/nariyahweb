@@ -588,8 +588,8 @@ document.getElementById("rate").innerText = rate + "%";
 loadChartCustomer(total, closing, pending, followup);
 checkReminder();
 setTimeout(initDrag, 300);
-    
-  });
+
+});
 }
 
 window.updateStatus = function(id, status){
@@ -1222,9 +1222,6 @@ function saveToTidakTertarikDB(id){
     db.collection("prospek").doc(id).delete();
 
     alert("Masuk database Tidak Tertarik & hilang dari board!");
-  });
-}
-  document.getElementById("rateText").innerText = rate + "%";
   });
 }
   
