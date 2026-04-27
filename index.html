@@ -948,7 +948,13 @@ window.openDetailProspek = function(id){
 
       <br><br>
 
-      <button onclick="convertToCustomer('${id}')">Jadikan Customer</button>
+      ${d.status === "Tertarik" ? 
+  `<button onclick="if(confirm('Yakin ingin menjadikan ini sebagai customer?')) convertToCustomer('${id}')">
+  Jadikan Customer
+</button>` 
+  : ''
+}
+
       <button onclick="deleteProspek('${id}')">Hapus</button>
 
       <br><br>
