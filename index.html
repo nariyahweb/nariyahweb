@@ -610,70 +610,28 @@ function loadProspek(){
       tidak:0
     };
 
-    // reset kolom
-    let prospekDragInit = false;
-
-function initProspekDrag(){
-
-  if(prospekDragInit) return;
-  prospekDragInit = true;
-
-  ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"]
-  .forEach(id=>{
-
-    new Sortable(document.getElementById(id), {
-      group: "prospek",
-      animation: 150,
-      draggable: ".card",
-
-      onAdd: function(evt){
-        let id = evt.item.getAttribute("data-id");
-        let newStatus = evt.to.id;
-
-        let map = {
-          prospekBaru: "Baru",
-          prospekHubungi: "Sudah Dihubungi",
-          prospekTertarik: "Tertarik",
-          prospekTidak: "Tidak Tertarik"
-        };
-
-        let statusBaru = map[newStatus];
-
-        if(statusBaru === "Tidak Tertarik"){
-          evt.from.appendChild(evt.item);
-          openTidakTertarikChoice(id);
-          return;
-        }
-
-        db.collection("prospek").doc(id).update({
-          status: statusBaru
-        });
-      }
+    ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"]
+    .forEach(id=>{
+      let el = document.getElementById(id);
+      let title = el.querySelector("h3").innerText;
+      el.innerHTML = "<h3>" + title + "</h3>";
     });
 
-  });
-}
-    ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"]
-.forEach(id=>{
-  let el = document.getElementById(id);
-  let title = el.querySelector("h3").innerText;
-  el.innerHTML = "<h3>" + title + "</h3>";
-});
     snap.forEach(doc=>{
       let d = doc.data();
 
       let col = "prospekBaru";
 
       if(d.status === "Baru") count.baru++;
-      if(d.status === "Sudah Dihubungi") {
+      if(d.status === "Sudah Dihubungi"){
         count.hubungi++;
         col = "prospekHubungi";
       }
-      if(d.status === "Tertarik") {
+      if(d.status === "Tertarik"){
         count.tertarik++;
         col = "prospekTertarik";
       }
-      if(d.status === "Tidak Tertarik") {
+      if(d.status === "Tidak Tertarik"){
         count.tidak++;
         col = "prospekTidak";
       }
@@ -692,16 +650,14 @@ function initProspekDrag(){
       `;
 
       document.getElementById(col).appendChild(card);
+    });
 
-    }); // ✅ TUTUP forEach
-
-    // 🔥 TARUH DI LUAR forEach
     loadChartProspek(count);
-    initProspekDrag();
+    initProspekDrag(); // 🔥 ini tetap di sini
 
-  }); // ✅ TUTUP onSnapshot
+  });
 
-} // ✅ TUTUP function loadProspek
+}
 
   window.updateProspek = function(id, status){
   db.collection("prospek").doc(id).update({
@@ -1168,12 +1124,6 @@ window.closeDBTidak = function(){
   window.openClosingConfirm = function(id){
   if(confirm("Masukkan ke database Closing?")){
     saveToClosingDB(id);
-  }
-}
-
-window.deleteDBTidak = function(id){
-  if(confirm("Hapus data ini?")){
-    db.collection("db_tidak_tertarik").doc(id).delete();
   }
 }
 
