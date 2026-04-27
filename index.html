@@ -694,6 +694,9 @@ ${f.jenis_respon}
     new Sortable(document.getElementById(status), {
       group: "shared",
       animation: 150,
+      draggable: ".card",
+      filter: "h3",
+      preventOnFilter: true,
 
       onAdd: function (evt) {
         let id = evt.item.getAttribute("data-id");
@@ -710,6 +713,7 @@ ${f.jenis_respon}
 ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"].forEach(status=>{
   new Sortable(document.getElementById(status), {
     group: "prospek",
+    draggable: ".card",
     animation: 150,
     onAdd: function(evt){
       let id = evt.item.getAttribute("data-id");
