@@ -1066,22 +1066,21 @@ window.openDBClosing = function(){
   modalDBClosing.style.display = "flex";
 
   db.collection("db_closing")
-  .get()
-  .then(snap=>{
+  .onSnapshot(snap=>{
     let html = "";
 
     snap.forEach(doc=>{
       let d = doc.data();
 
-html += `
-  <div class="card">
-    <b>${d.nama}</b><br>
-    ${d.hp}<br>
+      html += `
+        <div class="card">
+          <b>${d.nama}</b><br>
+          ${d.hp}<br>
 
-    <button onclick="openWA('${d.hp}')">WhatsApp</button>
-    <button onclick="deleteDBClosing('${doc.id}')">Hapus</button>
-  </div>
-`;
+          <button onclick="openWA('${d.hp}')">WhatsApp</button>
+          <button onclick="deleteDBClosing('${doc.id}')">Hapus</button>
+        </div>
+      `;
     });
 
     dbClosingList.innerHTML = html || "Tidak ada data";
@@ -1100,11 +1099,8 @@ window.openDBTidak = function(){
   closeAllModal();
   modalDBTidak.style.display = "flex";
 
-  db.collection("prospek")
-  .where("status","==","Tidak Tertarik")
-  .where("user_id","==",auth.currentUser.uid)
-  .get()
-  .then(snap=>{
+  db.collection("db_tidak_tertarik")
+  .onSnapshot(snap=>{
     let html = "";
 
     snap.forEach(doc=>{
@@ -1114,8 +1110,9 @@ window.openDBTidak = function(){
         <div class="card">
           <b>${d.nama}</b><br>
           ${d.hp}<br>
+
           <button onclick="openWA('${d.hp}')">WhatsApp</button>
-          <button onclick="deleteProspek('${doc.id}')">Hapus</button>
+          <button onclick="deleteDBTidak('${doc.id}')">Hapus</button>
         </div>
       `;
     });
@@ -1134,9 +1131,15 @@ window.closeDBTidak = function(){
   }
 }
 
-  window.deleteDBClosing = function(id){
-  if(confirm("Hapus data ini dari DB Closing?")){
+window.deleteDBClosing = function(id){
+  if(confirm("Hapus data ini?")){
     db.collection("db_closing").doc(id).delete();
+  }
+}
+
+window.deleteDBTidak = function(id){
+  if(confirm("Hapus data ini?")){
+    db.collection("db_tidak_tertarik").doc(id).delete();
   }
 }
 
