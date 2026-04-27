@@ -526,12 +526,12 @@ function loadProspek(){
     tidak:0
   };
     // reset kolom
-["baru","followup","pending","closing"].forEach(id=>{
+["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"].forEach(id=>{
   document.getElementById(id).innerHTML = "<h3>" + {
-    baru:"Baru",
-    followup:"Follow Up",
-    pending:"Pending",
-    closing:"Closing"
+    prospekBaru:"Baru",
+    prospekHubungi:"Sudah Dihubungi",
+    prospekTertarik:"Tertarik",
+    prospekTidak:"Tidak Tertarik"
   }[id] + "</h3>";
 });
     snap.forEach(doc=>{
@@ -547,8 +547,10 @@ function loadProspek(){
       if(d.status === "Tidak Tertarik") col = "prospekTidak";
 
       let card = document.createElement("div");
-      card.className = "card";
-
+card.className = "card";
+card.setAttribute("data-id", doc.id); // 🔥 FIX WAJIB
+card.setAttribute("draggable", true);
+      
       card.innerHTML = `
         <b>${d.nama}</b><br>
         ${d.hp}<br><br>
