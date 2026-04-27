@@ -674,29 +674,6 @@ ${f.jenis_respon}
 
   openModal();
 
-    function validasiNomor(nomor){
-
-  if(!nomor.startsWith("+62")){
-    return "Nomor harus diawali +62";
-  }
-
-  if(nomor.length < 4 || nomor[3] !== "8"){
-    return "Nomor salah, harus +62 8...";
-  }
-
-  let angka = nomor.replace("+62","");
-
-  if(!/^\d+$/.test(angka)){
-    return "Nomor hanya boleh angka";
-  }
-
-  if(nomor.length > 15){
-    return "Nomor maksimal 15 digit";
-  }
-
-  return null;
-}
-
   // ubah tombol jadi mode update
 window.saveCustomer = function(){
 
@@ -719,6 +696,7 @@ window.saveCustomer = function(){
 
   closeModal();
   location.reload();
+}
 }
     
   function initDrag(){
@@ -908,7 +886,7 @@ window.closeProspek = ()=> modalProspek.style.display="none";
   });
 
   p_nama.value = "";
-  p_hp.value = "";
+  p_hp.value = "+62";
 
   closeProspek();
 }
@@ -1017,7 +995,7 @@ modalDetail.style.display = "flex";
 
   ["hp","p_hp"].forEach(id=>{
   document.getElementById(id).addEventListener("input", function(){
-    this.value = this.value.replace(/\D/g,'').slice(0,15);
+    this.value = "+62" + this.value.replace(/\D/g,'').replace(/^62/, '').slice(0,13);
   });
 });
 
