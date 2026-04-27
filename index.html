@@ -1127,20 +1127,18 @@ window.closeDBTidak = function(){
   }
 }
 
-  function saveToClosingDB(id){
+function saveToClosingDB(id){
   db.collection("customers").doc(id).get().then(doc=>{
     let d = doc.data();
 
-    // simpan ke database baru
+    // masuk database khusus
     db.collection("db_closing").add({
       ...d,
       closing_date: new Date().toISOString()
     });
 
-    // baru update status
-    db.collection("customers").doc(id).update({
-      status: "closing"
-    });
+    // ❌ HAPUS dari board utama
+    db.collection("customers").doc(id).delete();
 
     alert("Masuk database Closing & hilang dari board!");
   });
