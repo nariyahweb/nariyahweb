@@ -413,16 +413,11 @@ window.closeModal = ()=> modal.style.display="none";
 window.saveCustomer = function(){
 
   if(!nama.value || !hp.value){
-  alert("Nama & No HP wajib diisi!");
-  return;
-}
+    alert("Nama & No HP wajib diisi!");
+    return;
+  }
 
-let err = validasiNomor(hp.value);
-if(err){
-  alert(err);
-  return;
-}
-      if(nama.value.length > 25){
+  if(nama.value.length > 25){
     alert("Nama maksimal 25 karakter");
     return;
   }
@@ -431,7 +426,10 @@ if(err){
     alert("Nomor maksimal 15 digit");
     return;
   }
-    alert("Nama & No HP wajib diisi!");
+
+  let err = validasiNomor(hp.value);
+  if(err){
+    alert(err);
     return;
   }
 
@@ -443,9 +441,8 @@ if(err){
     user_id:auth.currentUser.uid
   });
 
-  // reset form
   nama.value = "";
-  hp.value = "";
+  hp.value = "+62";
   tanggal.value = "";
 
   closeModal();
@@ -677,39 +674,53 @@ ${f.jenis_respon}
 
   openModal();
 
-  // ubah tombol jadi mode update
-  window.saveCustomer = function(){
+    function validasiNomor(nomor){
 
-    if(!p_nama.value || !p_hp.value){
-  alert("Nama & HP wajib diisi!");
-  return;
-}
-
-let err = validasiNomor(p_hp.value);
-if(err){
-  alert(err);
-  return;
-}
-
-let err = validasiNomor(hp.value);
-if(err){
-  alert(err);
-  return;
-}
-
-    db.collection("customers").doc(id).update({
-      nama:nama.value,
-      hp:hp.value,
-      tanggal:tanggal.value
-    });
-
-    closeModal();
-
-    // balikin ke mode tambah lagi
-    location.reload();
+  if(!nomor.startsWith("+62")){
+    return "Nomor harus diawali +62";
   }
+
+  if(nomor.length < 4 || nomor[3] !== "8"){
+    return "Nomor salah, harus +62 8...";
+  }
+
+  let angka = nomor.replace("+62","");
+
+  if(!/^\d+$/.test(angka)){
+    return "Nomor hanya boleh angka";
+  }
+
+  if(nomor.length > 15){
+    return "Nomor maksimal 15 digit";
+  }
+
+  return null;
 }
 
+  // ubah tombol jadi mode update
+window.saveCustomer = function(){
+
+  if(!nama.value || !hp.value){
+    alert("Nama & No HP wajib diisi!");
+    return;
+  }
+
+  let err = validasiNomor(hp.value);
+  if(err){
+    alert(err);
+    return;
+  }
+
+  db.collection("customers").doc(id).update({
+    nama:nama.value,
+    hp:hp.value,
+    tanggal:tanggal.value
+  });
+
+  closeModal();
+  location.reload();
+}
+    
   function initDrag(){
   ["baru","followup","pending","closing"].forEach(status=>{
     new Sortable(document.getElementById(status), {
