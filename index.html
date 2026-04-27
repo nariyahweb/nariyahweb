@@ -858,26 +858,6 @@ window.convertToCustomer = function(id){
 
 }
 
-  db.collection("prospek").doc(id).get().then(doc=>{
-    let d = doc.data();
-
-    // masuk ke customer
-    db.collection("customers").add({
-      nama: d.nama,
-      hp: d.hp,
-      tanggal: new Date().toISOString().split("T")[0],
-      status: "baru",
-      user_id: auth.currentUser.uid
-    });
-
-    // hapus dari prospek
-    db.collection("prospek").doc(id).delete();
-
-    alert("Berhasil jadi customer!");
-  });
-
-}
-
 window.openDetailCustomer = function(id){
   db.collection("customers").doc(id).get().then(doc=>{
     let d = doc.data();
