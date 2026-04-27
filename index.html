@@ -275,7 +275,7 @@ h3 {
   <div class="modal-box">
     <h3>Customer</h3>
     <input id="nama" placeholder="Nama" maxlength="25">
-    <input id="hp" placeholder="No HP" maxlength="15" inputmode="numeric">
+    <input id="hp" placeholder="No HP" maxlength="15" value="+62">
     <input id="tanggal" type="date">
     <button onclick="saveCustomer()">Simpan</button>
     <button onclick="closeModal()">Tutup</button>
@@ -286,7 +286,7 @@ h3 {
   <div class="modal-box">
     <h3>Prospek Agen</h3>
     <input id="p_nama" placeholder="Nama Agen" maxlength="25">
-    <input id="p_hp" placeholder="No HP" maxlength="15" inputmode="numeric">
+    <input id="p_hp" placeholder="No HP" maxlength="15" value="+62">
     
     <select id="p_status">
       <option>Baru</option>
@@ -413,6 +413,15 @@ window.closeModal = ()=> modal.style.display="none";
 window.saveCustomer = function(){
 
   if(!nama.value || !hp.value){
+  alert("Nama & No HP wajib diisi!");
+  return;
+}
+
+let err = validasiNomor(hp.value);
+if(err){
+  alert(err);
+  return;
+}
       if(nama.value.length > 25){
     alert("Nama maksimal 25 karakter");
     return;
@@ -671,10 +680,22 @@ ${f.jenis_respon}
   // ubah tombol jadi mode update
   window.saveCustomer = function(){
 
-    if(!nama.value || !hp.value){
-      alert("Nama & No HP wajib diisi!");
-      return;
-    }
+    if(!p_nama.value || !p_hp.value){
+  alert("Nama & HP wajib diisi!");
+  return;
+}
+
+let err = validasiNomor(p_hp.value);
+if(err){
+  alert(err);
+  return;
+}
+
+let err = validasiNomor(hp.value);
+if(err){
+  alert(err);
+  return;
+}
 
     db.collection("customers").doc(id).update({
       nama:nama.value,
@@ -762,7 +783,7 @@ window.openWA = function(hp){
     return;
   }
 
-  let nomor = hp.replace(/\D/g,'');
+  let nomor = hp.replace("+", ""); // jadi 628xxxx
 
   if(nomor.startsWith("0")){
     nomor = "62" + nomor.substring(1);
@@ -989,6 +1010,42 @@ modalDetail.style.display = "flex";
   });
 });
 
+function validasiNomor(nomor){
+
+  // harus diawali +62
+  if(!nomor.startsWith("+62")){
+    return "Nomor harus diawali +62";
+  }
+
+  // setelah +62 harus angka 8
+  if(nomor.length < 4 || nomor[3] !== "8"){
+    return "Nomor salah, harus +62 8...";
+  }
+
+  // hanya angka setelah +62
+  let angka = nomor.replace("+62","");
+
+  if(!/^\d+$/.test(angka)){
+    return "Nomor hanya boleh angka";
+  }
+
+  if(nomor.length > 15){
+    return "Nomor maksimal 15 digit";
+  }
+
+  return null; // valid
+}
+
+  ["hp","p_hp"].forEach(id=>{
+  let input = document.getElementById(id);
+
+  input.addEventListener("input", function(){
+    if(!this.value.startsWith("+62")){
+      this.value = "+62";
+    }
+  });
+});
+  
 </script>
 
     <!-- NOTIF -->
