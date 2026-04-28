@@ -233,7 +233,42 @@ h3 {
   gap: 10px;
 }
 
-  
+ .menu-container {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 35px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  display: none;
+  flex-direction: column;
+  min-width: 180px;
+  overflow: hidden;
+  z-index: 999;
+}
+
+.dropdown-menu button {
+  width: 100%;
+  border: none;
+  background: white;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-menu button:hover {
+  background: #f3f4f6;
+}
+
+.dropdown-menu hr {
+  margin: 5px 0;
+  border: none;
+  border-top: 1px solid #eee;
+} 
   
 </style>
 </head>
@@ -254,12 +289,20 @@ h3 {
 <div id="app">
 
   <!-- HEADER -->
-  <div class="header">
-    <b>FLOUPYUD</b>
-    <div>
-      <button onclick="logout()">Logout</button>
+<div class="header">
+  <b>FLOUPYUD</b>
+
+  <div class="menu-container">
+    <button onclick="toggleMenu()">☰ Menu</button>
+
+    <div id="dropdownMenu" class="dropdown-menu">
+      <button onclick="openDBClosing()">📁 DB Closing</button>
+      <button onclick="openDBTidak()">📁 DB Tidak Tertarik</button>
+      <hr>
+      <button onclick="logout()">🚪 Logout</button>
     </div>
   </div>
+</div>
 
   <!-- DASHBOARD -->
 <div class="import-wrapper">
@@ -277,9 +320,6 @@ h3 {
       </select>
 
       <button onclick="importExcel()">🚀 Import Data</button>
-
-      <button onclick="openDBClosing()">📁 DB Closing</button>
-      <button onclick="openDBTidak()">📁 DB Tidak Tertarik</button>
 
     </div>
 
@@ -473,6 +513,24 @@ window.login = function(){
   .catch(e=>{
     alert("ERROR: " + e.message);
   });
+}
+
+  document.addEventListener("click", function(e){
+  let menu = document.getElementById("dropdownMenu");
+
+  if(!e.target.closest(".menu-container")){
+    menu.style.display = "none";
+  }
+});
+
+  function toggleMenu(){
+  let menu = document.getElementById("dropdownMenu");
+
+  if(menu.style.display === "flex"){
+    menu.style.display = "none";
+  } else {
+    menu.style.display = "flex";
+  }
 }
 
 // LOGOUT
