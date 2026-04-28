@@ -187,6 +187,24 @@ h3 {
   margin-top:5px;
   margin-right:5px;
 }
+
+  .import-box {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+  margin-bottom: 10px;
+}
+
+.import-box input,
+.import-box select {
+  margin-top: 5px;
+}
+
+.import-box button {
+  margin-top: 10px;
+  margin-right: 5px;
+}
   
 </style>
 </head>
@@ -215,20 +233,25 @@ h3 {
   </div>
 
   <!-- DASHBOARD -->
-  <div style="padding:10px">
-    <input type="file" id="excelFile" accept=".xlsx,.csv">
+<div class="import-box">
 
-<select id="importType">
-  <option value="prospek">Import ke Prospek</option>
-  <option value="customer">Import ke Customer</option>
-</select>
+  <label><b>Import Data Excel</b></label><br>
 
-    <button onclick="importExcel()">Import Data</button>
-    <button onclick="openDBClosing()">📁 DB Closing</button>
-    <button onclick="openDBTidak()">📁 DB Tidak Tertarik</button>
-    <input type="file" id="excelFile" accept=".xlsx,.csv" />
-    <button onclick="importExcel()">Import Excel</button>
+  <input type="file" id="excelFile" accept=".xlsx,.csv">
+
+  <select id="importType">
+    <option value="prospek">Import ke Prospek</option>
+    <option value="customer">Import ke Customer</option>
+  </select>
+
+  <br>
+
+  <button onclick="importExcel()">🚀 Import</button>
+  <button onclick="openDBClosing()">📁 Closing</button>
+  <button onclick="openDBTidak()">📁 Tidak Tertarik</button>
+
 </div>
+  
   <div style="padding:10px">
     <b>Rate:</b> <span id="rate">0%</span>
   </div>
@@ -1273,52 +1296,6 @@ function saveToTidakTertarikDB(id){
 
     alert("Masuk database Tidak Tertarik & hilang dari board!");
   });
-}
-
-  window.importExcel = function(){
-  let file = document.getElementById("excelFile").files[0];
-
-  if(!file){
-    alert("Pilih file dulu!");
-    return;
-  }
-
-  let reader = new FileReader();
-
-  reader.onload = function(e){
-    let data = new Uint8Array(e.target.result);
-    let workbook = XLSX.read(data, {type: "array"});
-
-    let sheet = workbook.Sheets[workbook.SheetNames[0]];
-    let json = XLSX.utils.sheet_to_json(sheet);
-
-    json.forEach(row => {
-
-      let nama = row.nama || row.Nama;
-      let hp = row.hp || row.HP || "+62";
-
-      if(!nama || !hp) return;
-
-      // FORMAT NOMOR
-      hp = hp.toString();
-      if(!hp.startsWith("+62")){
-        hp = "+62" + hp.replace(/^0/, '');
-      }
-
-      // 🔥 MASUK KE PROSPEK
-db.collection("customers").add({
-  nama: nama,
-  hp: hp,
-  tanggal: new Date().toISOString().split("T")[0],
-  status: "baru",
-  user_id: auth.currentUser.uid
-});
-    });
-
-    alert("Import berhasil!");
-  };
-
-  reader.readAsArrayBuffer(file);
 }
 
   function formatNomor(nomor){
