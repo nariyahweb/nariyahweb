@@ -205,6 +205,35 @@ h3 {
   margin-top: 10px;
   margin-right: 5px;
 }
+
+  .import-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+}
+
+.import-box {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.06);
+
+  width: 100%;
+  max-width: 500px; /* 🔥 BATASI BIAR GAK PANJANG */
+}
+
+.import-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.import-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+  
   
 </style>
 </head>
@@ -233,23 +262,28 @@ h3 {
   </div>
 
   <!-- DASHBOARD -->
-<div class="import-box">
+<div class="import-wrapper">
+  <div class="import-box">
 
-  <label><b>Import Data Excel</b></label><br>
+    <b>Import Data Excel</b>
 
-  <input type="file" id="excelFile" accept=".xlsx,.csv">
+    <div class="import-grid">
 
-  <select id="importType">
-    <option value="prospek">Import ke Prospek</option>
-    <option value="customer">Import ke Customer</option>
-  </select>
+      <input type="file" id="excelFile" accept=".xlsx,.csv">
 
-  <br>
+      <select id="importType">
+        <option value="prospek">Import ke Prospek</option>
+        <option value="customer">Import ke Customer</option>
+      </select>
 
-  <button onclick="importExcel()">🚀 Import</button>
-  <button onclick="openDBClosing()">📁 Closing</button>
-  <button onclick="openDBTidak()">📁 Tidak Tertarik</button>
+      <button onclick="importExcel()">🚀 Import Data</button>
 
+      <button onclick="openDBClosing()">📁 DB Closing</button>
+      <button onclick="openDBTidak()">📁 DB Tidak Tertarik</button>
+
+    </div>
+
+  </div>
 </div>
   
   <div style="padding:10px">
