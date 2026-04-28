@@ -216,6 +216,14 @@ h3 {
 
   <!-- DASHBOARD -->
   <div style="padding:10px">
+    <input type="file" id="excelFile" accept=".xlsx,.csv">
+
+<select id="importType">
+  <option value="prospek">Import ke Prospek</option>
+  <option value="customer">Import ke Customer</option>
+</select>
+
+    <button onclick="importExcel()">Import Data</button>
     <button onclick="openDBClosing()">📁 DB Closing</button>
     <button onclick="openDBTidak()">📁 DB Tidak Tertarik</button>
     <input type="file" id="excelFile" accept=".xlsx,.csv" />
@@ -1308,6 +1316,119 @@ db.collection("customers").add({
     });
 
     alert("Import berhasil!");
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+  function formatNomor(nomor){
+  nomor = nomor.toString().replace(/\D/g,'');
+
+  // ubah 08 jadi 628
+  if(nomor.startsWith("0")){
+    nomor = "62" + nomor.substring(1);
+  }
+
+  // kalau belum ada 62
+  if(!nomor.startsWith("62")){
+    return null;
+  }
+
+  // panjang minimal & maksimal
+  if(nomor.length < 10 || nomor.length > 15){
+    return null;
+  }
+
+  return "+" + nomor;
+}
+
+  window.importExcel = async function(){
+
+  let file = document.getElementById("excelFile").files[0];
+  let type = document.getElementById("importType").value;
+
+  if(!file){
+    alert("Pilih file dulu!");
+    return;
+  }
+
+  let reader = new FileReader();
+
+  reader.onload = async function(e){
+
+    let data = new Uint8Array(e.target.result);
+    let workbook = XLSX.read(data, {type: "array"});
+    let sheet = workbook.Sheets[workbook.SheetNames[0]];
+    let json = XLSX.utils.sheet_to_json(sheet);
+
+    let batch = db.batch();
+    let count = 0;
+    let success = 0;
+    let failed = 0;
+
+    for(let i = 0; i < json.length; i++){
+
+      let row = json[i];
+
+      let nama = row.nama || row.Nama;
+      let hp = row.hp || row.HP;
+
+      if(!nama || !hp){
+        failed++;
+        continue;
+      }
+
+      hp = formatNomor(hp);
+
+      if(!hp){
+        failed++;
+        continue;
+      }
+
+      let ref;
+
+      if(type === "prospek"){
+        ref = db.collection("prospek").doc();
+        batch.set(ref, {
+          nama,
+          hp,
+          status: "Baru",
+          user_id: auth.currentUser.uid,
+          created: new Date().toISOString()
+        });
+      } else {
+        ref = db.collection("customers").doc();
+        batch.set(ref, {
+          nama,
+          hp,
+          tanggal: new Date().toISOString().split("T")[0],
+          status: "baru",
+          user_id: auth.currentUser.uid
+        });
+      }
+
+      count++;
+      success++;
+
+      // 🔥 commit tiap 400 data (batas aman firestore)
+      if(count === 400){
+        await batch.commit();
+        batch = db.batch();
+        count = 0;
+      }
+    }
+
+    // commit sisa
+    if(count > 0){
+      await batch.commit();
+    }
+
+    alert(
+      "Import selesai!\n" +
+      "Berhasil: " + success + "\n" +
+      "Gagal: " + failed
+    );
+
   };
 
   reader.readAsArrayBuffer(file);
