@@ -416,23 +416,21 @@ h3 {
 
 /* TOPBAR */
 .topbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
-
-  background: #7c3aed; /* 🔥 INI YANG HILANG */
-  color: white;
-
   display: flex;
-  justify-content: space-between; /* 🔥 kiri & kanan */
+  justify-content: space-between;
   align-items: center;
+}
 
-  padding: 0 20px;
-  box-sizing: border-box;
+.top-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-  z-index: 3000;
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 /* CONTENT */
@@ -573,27 +571,6 @@ h3 {
   font-size: 12px;
 }
 
-/* PROFILE DROPDOWN */
-.profile-dropdown {
-  position: absolute;
-  right: 0;
-  top: 45px;
-  background: white;
-  color: black;
-  border-radius: 10px;
-  display: none;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.profile-dropdown button {
-  border: none;
-  background: none;
-  padding: 10px;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-}
-  
 </style>
 </head>
 
@@ -642,47 +619,33 @@ h3 {
   <div class="main">
 
     <!-- TOPBAR -->
-  <div class="topbar">
-  <span id="profileName">CS Agent</span>
+ <div class="topbar">
 
-  <!-- LEFT -->
+  <!-- KIRI -->
   <div class="top-left">
-  <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
 
-  <!-- LOGO -->
-  <div class="logo">
-    <svg viewBox="0 0 100 100" width="28" height="28">
-      <defs>
-        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#a78bfa"/>
-          <stop offset="100%" stop-color="#7c3aed"/>
-        </linearGradient>
-      </defs>
-      <circle cx="50" cy="50" r="45" fill="url(#g1)"/>
-      <text x="50" y="58" text-anchor="middle" font-size="40" fill="white" font-family="Arial" font-weight="bold">
-        F
-      </text>
-    </svg>
+    <div class="logo">
+      <!-- SVG LOGO -->
+    </div>
+
+    <span class="brand-text">FLOUPYUD</span>
   </div>
 
-  <span class="brand-text">FLOUPYUD</span>
-</div>
-
-  <!-- RIGHT -->
+  <!-- KANAN -->
   <div class="top-right">
 
     <!-- NOTIF -->
     <div class="notif" onclick="toggleNotif()">
       🔔
       <span id="notifCount">0</span>
-
       <div id="notifDropdown" class="notif-dropdown"></div>
     </div>
 
     <!-- PROFILE -->
     <div class="profile" onclick="openProfileModal()">
       <img src="https://i.pravatar.cc/40">
-      <span>CS Agent</span>
+      <span id="profileName">CS Agent</span>
     </div>
 
   </div>
@@ -934,16 +897,6 @@ window.login = function(){
   .catch(e=>{
     alert("ERROR: " + e.message);
   });
-}
-
-  function toggleMenu(){
-  let menu = document.getElementById("dropdownMenu");
-
-  if(menu.style.display === "flex"){
-    menu.style.display = "none";
-  } else {
-    menu.style.display = "flex";
-  }
 }
 
 // LOGOUT
@@ -2076,6 +2029,7 @@ sidebar.addEventListener("mouseleave", () => {
 
   window.saveProfile = function(){
 
+    document.getElementById("profileName").innerText = profile_nama.value;
   let user = auth.currentUser;
 
   if(!profile_nama.value){
@@ -2098,10 +2052,14 @@ sidebar.addEventListener("mouseleave", () => {
   modalProfile.style.display = "none";
 }
 
-  db.collection("users").doc(user.uid).get().then(doc=>{
-  if(doc.exists){
-    document.getElementById("profileName").innerText =
-      doc.data().nama || "CS Agent";
+  auth.onAuthStateChanged(user=>{
+  if(user){
+    db.collection("users").doc(user.uid).get().then(doc=>{
+      if(doc.exists){
+        document.getElementById("profileName").innerText =
+          doc.data().nama || "CS Agent";
+      }
+    });
   }
 });
 
