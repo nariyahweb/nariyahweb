@@ -129,11 +129,10 @@ h3 {
   margin-top:10px;
 }
 
-  .stats {
+.stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
-  gap: 10px;
-  padding: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
 }
 
 .stat-box {
@@ -296,6 +295,102 @@ h3 {
 .import-box button:hover {
   background:#6d28d9;
 }
+
+  .layout {
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: #6d28d9;
+  color: white;
+  height: 100vh;
+  padding: 15px;
+}
+
+.sidebar h2 {
+  margin-bottom: 20px;
+}
+
+.menu-item {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.menu-item:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.menu-item.active {
+  background: white;
+  color: #6d28d9;
+}
+
+.menu-item.logout {
+  margin-top: 20px;
+  background: #ef4444;
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  background: #f5f3ff;
+}
+
+/* TOPBAR */
+.topbar {
+  background: linear-gradient(to right, #7c3aed, #6d28d9);
+  color: white;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* CONTENT */
+.content {
+  padding: 20px;
+}
+
+.import-card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.import-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.upload-box {
+  border: 2px dashed #c4b5fd;
+  padding: 30px;
+  text-align: center;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.info-box {
+  background: #fef3c7;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.btn-import {
+  margin-top: 15px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  border-radius: 10px;
+}
   
 </style>
 </head>
@@ -313,7 +408,43 @@ h3 {
 </div>
 
 <!-- APP -->
-<div id="app">
+<div id="app" class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>FLOUPYUD</h2>
+
+    <div class="menu">
+      <div class="menu-item active">🏠 Dashboard</div>
+      <div class="menu-item">👥 Followup Agen</div>
+      <div class="menu-item">📊 Prospek Agen</div>
+
+      <hr>
+
+      <small>DATABASE</small>
+      <div class="menu-item" onclick="openDBClosing()">📁 DB Closing</div>
+      <div class="menu-item" onclick="openDBTidak()">📁 DB Tidak Tertarik</div>
+
+      <hr>
+
+      <small>IMPORT</small>
+      <div class="menu-item active">📥 Import Data</div>
+
+      <div class="menu-item logout" onclick="logout()">🚪 Logout</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>☰</div>
+      <div>CS Agent</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
 
   <!-- HEADER -->
 <div class="header">
@@ -334,19 +465,37 @@ h3 {
   <!-- DASHBOARD -->
 <div class="import-wrapper">
   <div class="import-box">
+<div class="import-card">
 
-    <b>Import Data Excel</b>
+  <h3>📥 Import Data Excel</h3>
 
-    <div class="import-grid">
+  <div class="import-grid">
 
-  <input type="file" id="excelFile" accept=".xlsx,.csv">
+    <!-- FILE -->
+    <div class="upload-box" onclick="document.getElementById('excelFile').click()">
+      <p>📂 Drag & Drop / Klik File</p>
+      <input type="file" id="excelFile" hidden>
+    </div>
 
-  <select id="importType">
-    <option value="prospek">Prospek</option>
-    <option value="customer">Customer</option>
-  </select>
+    <!-- TYPE -->
+    <div>
+      <label>Pilih Tujuan</label>
+      <select id="importType">
+        <option value="prospek">Prospek</option>
+        <option value="customer">Customer</option>
+      </select>
+    </div>
 
-  <button onclick="importExcel()">🚀 Import</button>
+    <!-- INFO -->
+    <div class="info-box">
+      <p>✔ Batch ribuan data</p>
+      <p>✔ Validasi nomor otomatis</p>
+      <p>✔ Data invalid dilewati</p>
+    </div>
+
+  </div>
+
+  <button class="btn-import" onclick="importExcel()">🚀 Import Sekarang</button>
 
 </div>
 
