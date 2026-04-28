@@ -297,21 +297,25 @@ h3 {
   height: 100vh; /* 🔥 penting */
 }
 
+/* SIDEBAR */
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
-  height: 100vh;
-}
-
-/* SIDEBAR */
-.sidebar {
   width: 220px;
-  transition: 0.3s;
+  height: 100vh;
   background: #6d28d9;
   color: white;
-  height: 100vh;
   padding: 15px;
+
+  transform: translateX(-100%); /* 🔥 sembunyi */
+  transition: transform 0.3s ease;
+  z-index: 1000;
+}
+
+/* 🔥 saat aktif */
+.sidebar.active {
+  transform: translateX(0);
 }
 
 .sidebar h2 {
@@ -339,13 +343,21 @@ h3 {
   background: #ef4444;
 }
 
+  #hoverZone {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 10px;
+  height: 100vh;
+  z-index: 999;
+}
+
 /* MAIN */
 .main {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  margin-left: 220px; /* 🔥 posisi awal ikut sidebar */
-  transition: 0.3s;
+  width: 100%;
 }
 
 /* saat collapse */
@@ -466,29 +478,6 @@ h3 {
   height: 35px;
   border-radius: 50%;
   border: 2px solid white;
-}
-
-  /* SIDEBAR COLLAPSE */
-.sidebar.collapsed {
-  width: 70px;
-}
-
-.sidebar.collapsed h2,
-.sidebar.collapsed small,
-.sidebar.collapsed .menu-item span {
-  display: none;
-}
-.sidebar.collapsed .menu-item::before {
-  font-size: 18px;
-}
-
-/* MAIN SHIFT */
-.main {
-  transition: 0.3s;
-}
-
-.main.shift {
-  margin-left: 70px;
 }
 
 /* TOGGLE BTN */
@@ -1886,13 +1875,26 @@ function updateNotifCount(){
   // =======================
 // SIDEBAR COLLAPSE
 // =======================
-function toggleSidebar(){
-  let sidebar = document.querySelector(".sidebar");
-  let main = document.querySelector(".main");
+let sidebar = document.querySelector(".sidebar");
 
-  sidebar.classList.toggle("collapsed");
-  main.classList.toggle("shift");
+function toggleSidebar(){
+  sidebar.classList.toggle("active");
 }
+  let hoverZone = document.getElementById("hoverZone");
+
+// muncul saat hover kiri
+  let timeout;
+  
+sidebar.addEventListener("mouseleave", () => {
+  timeout = setTimeout(() => {
+    sidebar.classList.remove("active");
+  }, 200);
+});
+
+// hilang saat keluar dari sidebar
+sidebar.addEventListener("mouseenter", () => {
+  clearTimeout(timeout);
+});
 
 
 // =======================
@@ -1935,4 +1937,5 @@ z-index:9999;
 "></div>
 
 </body>
+    <div id="hoverZone"></div>
 </html>
