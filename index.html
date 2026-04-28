@@ -643,6 +643,7 @@ h3 {
 
     <!-- TOPBAR -->
   <div class="topbar">
+  <span id="profileName">CS Agent</span>
 
   <!-- LEFT -->
   <div class="top-left">
@@ -679,13 +680,9 @@ h3 {
     </div>
 
     <!-- PROFILE -->
-    <div class="profile" onclick="toggleProfile()">
+    <div class="profile" onclick="openProfileModal()">
       <img src="https://i.pravatar.cc/40">
       <span>CS Agent</span>
-
-      <div id="profileDropdown" class="profile-dropdown">
-        <button onclick="logout()">🚪 Logout</button>
-      </div>
     </div>
 
   </div>
@@ -887,6 +884,19 @@ h3 {
     <h3>Database Tidak Tertarik</h3>
     <div id="dbTidakList"></div>
     <button onclick="closeDBTidak()">Tutup</button>
+  </div>
+</div>
+
+    <div class="modal" id="modalProfile">
+  <div class="modal-box">
+    <h3>Profile CS Agent</h3>
+
+    <input id="profile_nama" placeholder="Nama">
+    <input id="profile_email" placeholder="Email" disabled>
+    <input id="profile_hp" placeholder="No HP">
+
+    <button onclick="saveProfile()">Simpan</button>
+    <button onclick="closeProfile()">Tutup</button>
   </div>
 </div>
   
@@ -2003,10 +2013,6 @@ function toggleNotif(){
 // =======================
 // PROFILE DROPDOWN
 // =======================
-function toggleProfile(){
-  let el = document.getElementById("profileDropdown");
-  el.style.display = el.style.display === "block" ? "none" : "block";
-}
 
 // CLOSE CLICK OUTSIDE
 document.addEventListener("click", function(e){
@@ -2023,12 +2029,7 @@ document.addEventListener("click", function(e){
   if(!e.target.closest(".notif")){
     document.getElementById("notifDropdown").style.display = "none";
   }
-
-  // PROFILE
-  if(!e.target.closest(".profile")){
-    document.getElementById("profileDropdown").style.display = "none";
-  }
-
+  
 });
 
 hoverZone.addEventListener("mouseenter", () => {
@@ -2040,6 +2041,67 @@ hoverZone.addEventListener("mouseenter", () => {
 sidebar.addEventListener("mouseleave", () => {
   if(!isMobile()){
     sidebar.classList.remove("active");
+  }
+});
+
+  window.openProfileModal = function(){
+  closeAllModal();
+
+  let user = auth.currentUser;
+
+  if(!user){
+    alert("User tidak ditemukan");
+    return;
+  }
+
+  modalProfile.style.display = "flex";
+
+  // isi email dari auth
+  profile_email.value = user.email;
+
+  // ambil data dari firestore
+  db.collection("users").doc(user.uid).get()
+  .then(doc=>{
+    if(doc.exists){
+      let d = doc.data();
+
+      profile_nama.value = d.nama || "";
+      profile_hp.value = d.hp || "+62";
+    }else{
+      profile_nama.value = "";
+      profile_hp.value = "+62";
+    }
+  });
+}
+
+  window.saveProfile = function(){
+
+  let user = auth.currentUser;
+
+  if(!profile_nama.value){
+    alert("Nama wajib diisi");
+    return;
+  }
+
+  db.collection("users").doc(user.uid).set({
+    nama: profile_nama.value,
+    hp: profile_hp.value,
+    email: user.email,
+    role: currentRole || "cs"
+  }, { merge: true });
+
+  alert("Profile berhasil disimpan");
+  closeProfile();
+}
+
+  window.closeProfile = function(){
+  modalProfile.style.display = "none";
+}
+
+  db.collection("users").doc(user.uid).get().then(doc=>{
+  if(doc.exists){
+    document.getElementById("profileName").innerText =
+      doc.data().nama || "CS Agent";
   }
 });
 
