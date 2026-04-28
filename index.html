@@ -304,10 +304,6 @@ h3 {
   height: 100vh;
 }
 
-.main {
-  margin-left: 220px;
-}
-
 /* SIDEBAR */
 .sidebar {
   width: 220px;
@@ -344,8 +340,14 @@ h3 {
 
 /* MAIN */
 .main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.content {
   flex: 1;
-  background: #f5f3ff;
+  overflow-y: auto;
 }
 
 /* TOPBAR */
@@ -398,6 +400,65 @@ h3 {
   width: 100%;
   border-radius: 10px;
 }
+
+  .topbar {
+  height: 60px;
+  background: linear-gradient(to right, #7c3aed, #6d28d9);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* kiri */
+.top-left {
+  font-weight: bold;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* kanan */
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* notif */
+.notif {
+  position: relative;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.notif span {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background: red;
+  color: white;
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 50%;
+}
+
+/* profile */
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile img {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
   
 </style>
 </head>
@@ -446,9 +507,21 @@ h3 {
 
     <!-- TOPBAR -->
     <div class="topbar">
-      <div>☰</div>
-      <div>CS Agent</div>
+  <div class="top-left">
+    ☰ <span>Dashboard</span>
+  </div>
+
+  <div class="top-right">
+    <div class="notif" onclick="openNotif()">🔔
+      <span id="notifCount">0</span>
     </div>
+
+    <div class="profile">
+      <img src="https://i.pravatar.cc/40" alt="cs">
+      <span>CS Agent</span>
+    </div>
+  </div>
+</div>
 
     <!-- CONTENT -->
     <div class="content">
@@ -823,6 +896,7 @@ window.saveFU = function(){
 
 // LOAD DATA
 function loadData(){
+  updateNotifCount();
   loadProspek();
   db.collection("customers")
   .where("user_id","==",auth.currentUser.uid)
@@ -1671,6 +1745,31 @@ function saveToTidakTertarikDB(id){
   };
 
   reader.readAsArrayBuffer(file);
+}
+
+  // NOTIF TOPBAR
+  function openNotif(){
+  alert("Fitur notifikasi bisa dikembangkan (list follow up / reminder)");
+}
+
+// AUTO HITUNG NOTIF DARI REMINDER
+function updateNotifCount(){
+  db.collection("followups").get().then(snap=>{
+    let count = 0;
+    let now = new Date();
+
+    snap.forEach(doc=>{
+      let d = doc.data();
+      if(d.reminder){
+        let t = new Date(d.reminder);
+        if(t <= now && !d.notified){
+          count++;
+        }
+      }
+    });
+
+    document.getElementById("notifCount").innerText = count;
+  });
 }
   
 </script>
