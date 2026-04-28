@@ -19,7 +19,18 @@ body { margin:0; font-family: Arial; background:#f5f3ff; }
 
 input, select { width:100%; padding:8px; margin:5px 0; }
 
-button {
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.brand-text {
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+  
+  button {
   width:auto;
   padding:6px 10px;
   font-size:12px;
@@ -579,7 +590,7 @@ h3 {
     <h2>FLOUPYUD</h2>
 
     <div class="menu">
-      <div class="menu-item">🏠 <span>Dashboard</span></div>
+      <div class="menu-item">🏠 <span class="brand-text">FLOUPYUD</span></div>
       <div class="menu-item">👥 Followup Agen</div>
       <div class="menu-item">📊 Prospek Agen</div>
 
@@ -606,9 +617,26 @@ h3 {
 
   <!-- LEFT -->
   <div class="top-left">
-    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-    <span>Dashboard</span>
+  <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+  <!-- LOGO -->
+  <div class="logo">
+    <svg viewBox="0 0 100 100" width="28" height="28">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#a78bfa"/>
+          <stop offset="100%" stop-color="#7c3aed"/>
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="45" fill="url(#g1)"/>
+      <text x="50" y="58" text-anchor="middle" font-size="40" fill="white" font-family="Arial" font-weight="bold">
+        F
+      </text>
+    </svg>
   </div>
+
+  <span class="brand-text">FLOUPYUD</span>
+</div>
 
   <!-- RIGHT -->
   <div class="top-right">
