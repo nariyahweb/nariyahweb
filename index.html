@@ -307,6 +307,7 @@ h3 {
 /* SIDEBAR */
 .sidebar {
   width: 220px;
+  transition: 0.3s;
   background: #6d28d9;
   color: white;
   height: 100vh;
@@ -343,6 +344,13 @@ h3 {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  margin-left: 220px; /* 🔥 posisi awal ikut sidebar */
+  transition: 0.3s;
+}
+
+/* saat collapse */
+.sidebar.collapsed ~ .main {
+  margin-left: 70px;
 }
 
 .content {
@@ -467,10 +475,9 @@ h3 {
 
 .sidebar.collapsed h2,
 .sidebar.collapsed small,
-.sidebar.collapsed .menu-item {
-  font-size: 0;
+.sidebar.collapsed .menu-item span {
+  display: none;
 }
-
 .sidebar.collapsed .menu-item::before {
   font-size: 18px;
 }
@@ -559,7 +566,7 @@ h3 {
     <h2>FLOUPYUD</h2>
 
     <div class="menu">
-      <div class="menu-item active">🏠 Dashboard</div>
+      <div class="menu-item">🏠 <span>Dashboard</span></div>
       <div class="menu-item">👥 Followup Agen</div>
       <div class="menu-item">📊 Prospek Agen</div>
 
@@ -1880,7 +1887,11 @@ function updateNotifCount(){
 // SIDEBAR COLLAPSE
 // =======================
 function toggleSidebar(){
-  document.querySelector(".sidebar").classList.toggle("collapsed");
+  let sidebar = document.querySelector(".sidebar");
+  let main = document.querySelector(".main");
+
+  sidebar.classList.toggle("collapsed");
+  main.classList.toggle("shift");
 }
 
 
