@@ -56,18 +56,9 @@ input, select { width:100%; padding:8px; margin:5px 0; }
 .chart-box:hover {
   transform: translateY(-3px);
 }
-
-.chart-box canvas {
-  max-width: 220px;
-  max-height: 220px;
-}
-
+  
 #app { display:none; }
-
-.header {
-  display: none;
-}
-
+  
 .board { display:flex; gap:10px; padding:10px; overflow-x:auto; }
 
 .column {
@@ -84,21 +75,6 @@ input, select { width:100%; padding:8px; margin:5px 0; }
   margin:8px 0;
   border-radius:8px;
   cursor:grab;
-}
-
-.chart-box {
-  flex: 1;
-  background: white;
-  padding: 10px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.chart-box canvas {
-  max-width: 250px;   /* 🔥 ukuran kecil */
-  max-height: 250px;
 }
 
 .modal {
@@ -119,9 +95,6 @@ input, select { width:100%; padding:8px; margin:5px 0; }
 
   max-height: 80vh;   /* 🔥 penting */
   overflow-y: auto;   /* 🔥 biar bisa scroll */
-}
-h3 {
-  margin-bottom:5px;
 }
 .board {
   margin-top:10px;
@@ -598,9 +571,6 @@ h3 {
 </head>
 
 <body>
-  
-  <div id="hoverZone"></div>
-
 <!-- LOGIN -->
 <div id="loginPage">
   <div class="login-box">
@@ -612,291 +582,74 @@ h3 {
 </div>
 
 <!-- APP -->
-<div id="app" class="layout">
+<div id="app">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <h2>FLOUPYUD</h2>
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="top-left">
+    <b>FLOUPYUD</b>
+  </div>
 
-    <div class="menu">
-      <div class="menu-item">🏠 <span class="brand-text">FLOUPYUD</span></div>
-      <div class="menu-item">👥 Followup Agen</div>
-      <div class="menu-item">📊 Prospek Agen</div>
-
-      <hr>
-
-      <small>DATABASE</small>
-      <div class="menu-item" onclick="openDBClosing()">📁 DB Closing</div>
-      <div class="menu-item" onclick="openDBTidak()">📁 DB Tidak Tertarik</div>
-
-      <hr>
-
-      <small>IMPORT</small>
-      <div class="menu-item active">📥 Import Data</div>
-
-      <div class="menu-item logout" onclick="logout()">🚪 Logout</div>
+  <div class="top-right">
+    <div class="profile" onclick="toggleProfile()">
+      <img id="profileImgTop" src="https://i.pravatar.cc/100">
+      <span id="profileName">CS</span>
     </div>
   </div>
-
-  <!-- MAIN -->
-  <div class="main">
-
-    <!-- TOPBAR -->
-  <div class="topbar">
-
-  <!-- LEFT -->
-  <div class="top-left">
-  <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-
-  <!-- LOGO -->
-  <div class="logo">
-    <svg viewBox="0 0 100 100" width="28" height="28">
-      <defs>
-        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#a78bfa"/>
-          <stop offset="100%" stop-color="#7c3aed"/>
-        </linearGradient>
-      </defs>
-      <circle cx="50" cy="50" r="45" fill="url(#g1)"/>
-      <text x="50" y="58" text-anchor="middle" font-size="40" fill="white" font-family="Arial" font-weight="bold">
-        F
-      </text>
-    </svg>
-  </div>
-
-  <span class="brand-text">FLOUPYUD</span>
 </div>
 
-  <!-- RIGHT -->
-  <div class="top-right">
+<!-- CONTENT -->
+<div style="margin-top:70px;padding:10px">
 
-    <!-- NOTIF -->
-    <div class="notif" onclick="toggleNotif()">
-      🔔
-      <span id="notifCount">0</span>
+<h3>Followup Agen</h3>
+<button onclick="openModal()">+ Tambah</button>
 
-      <div id="notifDropdown" class="notif-dropdown"></div>
-    </div>
+<div class="board">
+  <div class="column" id="baru"><h3>Baru</h3></div>
+  <div class="column" id="followup"><h3>Follow Up</h3></div>
+  <div class="column" id="closing"><h3>Closing</h3></div>
+</div>
 
-    <!-- PROFILE -->
+</div>
+
+</div>
+
+<!-- MODAL CUSTOMER -->
+<div class="modal" id="modal">
+  <div class="modal-box">
+    <h3>Customer</h3>
+    <input id="nama" placeholder="Nama">
+    <input id="hp" placeholder="No HP" value="+62">
+    <button onclick="saveCustomer()">Simpan</button>
+    <button onclick="closeModal()">Tutup</button>
+  </div>
+</div>
+
+<!-- MODAL PROFILE -->
 <div class="modal" id="modalProfile">
   <div class="modal-box">
-    <h3>Profile CS</h3>
+    <h3>Profile</h3>
 
     <center>
-      <img id="previewImg" src="https://i.pravatar.cc/100" 
+      <img id="previewImgModal" src="https://i.pravatar.cc/100"
            style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;">
       <br>
-      <input type="file" id="uploadImg">
+      <input type="file" id="uploadImgModal">
     </center>
 
-    <input id="cs_nama" placeholder="Nama">
-    <input id="cs_email" placeholder="Email">
+    <input id="cs_nama_modal" placeholder="Nama">
+    <input id="cs_email_modal" placeholder="Email">
 
     <button onclick="saveProfile()">Simpan</button>
     <button onclick="closeProfile()">Tutup</button>
   </div>
 </div>
 
-    <!-- CONTENT -->
-    <div class="content">
-
-  <!-- HEADER -->
-
-
-  <!-- DASHBOARD -->
-<div class="import-wrapper">
-  <div class="import-box">
-<div class="import-card">
-
-  <h3>📥 Import Data Excel</h3>
-
-  <div class="import-grid">
-
-    <!-- FILE -->
-    <div class="upload-box" onclick="document.getElementById('excelFile').click()">
-      <p>📂 Drag & Drop / Klik File</p>
-      <input type="file" id="excelFile" hidden>
-    </div>
-
-    <!-- TYPE -->
-    <div>
-      <label>Pilih Tujuan</label>
-      <select id="importType">
-        <option value="prospek">Prospek</option>
-        <option value="customer">Customer</option>
-      </select>
-    </div>
-
-    <!-- INFO -->
-    <div class="info-box">
-      <p>✔ Batch ribuan data</p>
-      <p>✔ Validasi nomor otomatis</p>
-      <p>✔ Data invalid dilewati</p>
-    </div>
-
-  </div>
-
-  <button class="btn-import" onclick="importExcel()">🚀 Import Sekarang</button>
-
-</div>
-
-  </div>
-</div>
-  
-  <div style="padding:10px">
-    <b>Rate:</b> <span id="rate">0%</span>
-  </div>
-
-  <!-- CHART -->
-  <div class="stats">
-  <div class="stat-box">
-    <h4>Total</h4>
-    <p id="total">0</p>
-  </div>
-  <div class="stat-box">
-    <h4>Closing</h4>
-    <p id="closingCount">0</p>
-  </div>
-  <div class="stat-box">
-    <h4>Rate</h4>
-    <p id="rateText">0%</p>
-  </div>
-</div>
-<div class="chart-container">
-
-<div class="chart-box">
-  <h3>Followup Agen</h3>
-  <canvas id="chartCustomer"></canvas>
-</div>
-
-<div class="chart-box">
-  <h3>Prospek Agen</h3>
-  <canvas id="chartProspek"></canvas>
-</div>
-</div>
-
-<!-- ========================= -->
-<!-- ✅ FOLLOWUP AGEN -->
-<!-- ========================= -->
-<div style="padding:10px">
-  <h3>Followup Agen</h3>
-  <button onclick="openModal()">+ Followup Agen</button>
-
-  <div class="board">
-    <div class="column" id="baru"><h3>Baru</h3></div>
-    <div class="column" id="followup"><h3>Follow Up</h3></div>
-    <div class="column" id="pending"><h3>Pending</h3></div>
-    <div class="column" id="closing"><h3>Closing</h3></div>
-  </div>
-</div>
-
-  <!-- ========================= -->
-  <!-- ✅ PROSPEK (DI BAWAH) -->
-  <!-- ========================= -->
-  <div style="padding:10px">
-    <h3>Prospek Agen</h3>
-    <button onclick="openProspek()">+ Tambah Prospek</button>
-
-    <div class="board">
-      <div class="column" id="prospekBaru"><h3>Baru</h3></div>
-      <div class="column" id="prospekHubungi"><h3>Sudah Dihubungi</h3></div>
-      <div class="column" id="prospekTertarik"><h3>Tertarik</h3></div>
-      <div class="column" id="prospekTidak"><h3>Tidak Tertarik</h3></div>
-    </div>
-  </div>
-
-</div>
-    
-<!-- MODAL CUSTOMER -->
-<div class="modal" id="modal">
-  <div class="modal-box">
-    <h3>Customer</h3>
-    <input id="nama" placeholder="Nama" maxlength="25">
-    <input id="hp" placeholder="No HP" maxlength="15" value="+62">
-    <input id="tanggal" type="date">
-    <button onclick="saveCustomer()">Simpan</button>
-    <button onclick="closeModal()">Tutup</button>
-  </div>
-</div>
-
-<div class="modal" id="modalProspek">
-  <div class="modal-box">
-    <h3>Prospek Agen</h3>
-    <input id="p_nama" placeholder="Nama Agen" maxlength="25">
-    <input id="p_hp" placeholder="No HP" maxlength="15" value="+62">
-    
-    <select id="p_status">
-      <option>Baru</option>
-      <option>Sudah Dihubungi</option>
-      <option>Tertarik</option>
-      <option>Tidak Tertarik</option>
-    </select>
-
-    <button onclick="saveProspek()">Simpan</button>
-    <button onclick="closeProspek()">Tutup</button>
-  </div>
-</div>
-  
-<!-- MODAL FOLLOW UP -->
-<div class="modal" id="modalFU">
-  <div class="modal-box">
-    <h3>Follow Up</h3>
-
-    <select id="media">
-      <option>Whatsapp Chat</option>
-      <option>Whatsapp Call</option>
-      <option>Telegram Chat</option>
-      <option>Telegram Call</option>
-    </select>
-
-    <select id="status_pesan">
-      <option>Dibaca</option>
-      <option>Belum Dibaca</option>
-      <option>Gagal Kirim</option>
-    </select>
-
-    <select id="respon">
-      <option>Ya</option>
-      <option>Tidak</option>
-      <option>Menunggu</option>
-    </select>
-
-    <input id="jenis_respon" placeholder="Isi balasan">
-    <input id="penyebab" placeholder="Penyebab">
-    <input id="reminder" type="datetime-local">
-
-    <button onclick="saveFU()">Simpan FU</button>
-    <button onclick="closeFU()">Tutup</button>
-  </div>
-</div>
-
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
-  <div class="modal" id="modalDetail">
-  <div class="modal-box" id="detailContent"></div>
-</div>
-
-  <!-- MODAL DB CLOSING -->
-<div class="modal" id="modalDBClosing">
-  <div class="modal-box">
-    <h3>Database Closing</h3>
-    <div id="dbClosingList"></div>
-    <button onclick="closeDBClosing()">Tutup</button>
-  </div>
-</div>
-
-<!-- MODAL DB TIDAK TERTARIK -->
-<div class="modal" id="modalDBTidak">
-  <div class="modal-box">
-    <h3>Database Tidak Tertarik</h3>
-    <div id="dbTidakList"></div>
-    <button onclick="closeDBTidak()">Tutup</button>
-  </div>
-</div>
-  
 <script>
 if(typeof Sortable === "undefined"){
   console.error("Sortable gagal load!");
@@ -1340,7 +1093,7 @@ function initProspekDrag(){
 }
   
  function checkReminder(){
-  db.collection("followups").get().then(snap=>{
+  .onSnapshot().then(snap=>{
     let now = new Date();
 
     snap.forEach(doc=>{
@@ -1393,7 +1146,7 @@ function loadChartCustomer(total, closing, pending, followup){
           closing,
           pending,
           followup,
-          total - (closing + pending + followup)
+          Math.max(0, total - (closing + pending + followup))
         ],
         backgroundColor: [
     '#22c55e', // closing (hijau)
@@ -1736,23 +1489,6 @@ window.openTidakTertarikConfirm = function(id){
   }
 }
 
-function saveToTidakTertarikDB(id){
-  db.collection("prospek").doc(id).get().then(doc=>{
-    let d = doc.data();
-
-    db.collection("db_tidak_tertarik").add({
-      ...d,
-      tanggal: new Date().toISOString()
-    });
-
-    db.collection("prospek").doc(id).update({
-      status: "Tidak Tertarik"
-    });
-
-    alert("Masuk database Tidak Tertarik!");
-  });
-}
-
   window.openClosingChoice = function(id){
 
   let pilih = confirm(
@@ -1922,7 +1658,7 @@ function saveToTidakTertarikDB(id){
 // AUTO HITUNG NOTIF DARI REMINDER
 function updateNotifCount(){
 
-  db.collection("followups").get().then(snap=>{
+  .onSnapshot().then(snap=>{
     let now = new Date();
     let count = 0;
     let html = "";
@@ -2012,12 +1748,12 @@ function toggleNotif(){
 // =======================
 // buka modal profile
 function toggleProfile(){
-  modalProfile.style.display = "flex";
+  document.getElementById("modalProfile").style.display = "flex";
 }
 
 // tutup
 function closeProfile(){
-  modalProfile.style.display = "none";
+  document.getElementById("modalProfile").style.display = "none";
 }
 
 // preview foto
@@ -2071,11 +1807,6 @@ document.addEventListener("click", function(e){
   // NOTIF
   if(!e.target.closest(".notif")){
     document.getElementById("notifDropdown").style.display = "none";
-  }
-
-  // PROFILE
-  if(!e.target.closest(".profile")){
-    document.getElementById("profileDropdown").style.display = "none";
   }
 
 });
