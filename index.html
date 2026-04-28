@@ -459,6 +459,82 @@ h3 {
   border-radius: 50%;
   border: 2px solid white;
 }
+
+  /* SIDEBAR COLLAPSE */
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar.collapsed h2,
+.sidebar.collapsed small,
+.sidebar.collapsed .menu-item {
+  font-size: 0;
+}
+
+.sidebar.collapsed .menu-item::before {
+  font-size: 18px;
+}
+
+/* MAIN SHIFT */
+.main {
+  transition: 0.3s;
+}
+
+.main.shift {
+  margin-left: 70px;
+}
+
+/* TOGGLE BTN */
+.toggle-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* NOTIF DROPDOWN */
+.notif-dropdown {
+  position: absolute;
+  right: 0;
+  top: 35px;
+  width: 250px;
+  background: white;
+  color: black;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  display: none;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 999;
+}
+
+.notif-item {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+}
+
+/* PROFILE DROPDOWN */
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: 45px;
+  background: white;
+  color: black;
+  border-radius: 10px;
+  display: none;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.profile-dropdown button {
+  border: none;
+  background: none;
+  padding: 10px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
   
 </style>
 </head>
@@ -506,20 +582,35 @@ h3 {
   <div class="main">
 
     <!-- TOPBAR -->
-    <div class="topbar">
+  <div class="topbar">
+
+  <!-- LEFT -->
   <div class="top-left">
-    ☰ <span>Dashboard</span>
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    <span>Dashboard</span>
   </div>
 
+  <!-- RIGHT -->
   <div class="top-right">
-    <div class="notif" onclick="openNotif()">🔔
+
+    <!-- NOTIF -->
+    <div class="notif" onclick="toggleNotif()">
+      🔔
       <span id="notifCount">0</span>
+
+      <div id="notifDropdown" class="notif-dropdown"></div>
     </div>
 
-    <div class="profile">
-      <img src="https://i.pravatar.cc/40" alt="cs">
+    <!-- PROFILE -->
+    <div class="profile" onclick="toggleProfile()">
+      <img src="https://i.pravatar.cc/40">
       <span>CS Agent</span>
+
+      <div id="profileDropdown" class="profile-dropdown">
+        <button onclick="logout()">🚪 Logout</button>
+      </div>
     </div>
+
   </div>
 </div>
 
@@ -896,7 +987,6 @@ window.saveFU = function(){
 
 // LOAD DATA
 function loadData(){
-  updateNotifCount();
   loadProspek();
   db.collection("customers")
   .where("user_id","==",auth.currentUser.uid)
@@ -955,6 +1045,7 @@ let rate = total ? Math.round((closing/total)*100) : 0;
 document.getElementById("rate").innerText = rate + "%";
 
     // ✅ PEMANGGILAN
+updateNotifCount();
 loadChartCustomer(total, closing, pending, followup);
 checkReminder();
 setTimeout(initDrag, 300);
@@ -1754,23 +1845,73 @@ function saveToTidakTertarikDB(id){
 
 // AUTO HITUNG NOTIF DARI REMINDER
 function updateNotifCount(){
+
   db.collection("followups").get().then(snap=>{
-    let count = 0;
     let now = new Date();
+    let count = 0;
+    let html = "";
 
     snap.forEach(doc=>{
       let d = doc.data();
+
       if(d.reminder){
         let t = new Date(d.reminder);
+
         if(t <= now && !d.notified){
           count++;
+
+          html += `
+            <div class="notif-item">
+              <b>Follow Up</b><br>
+              ${d.jenis_respon || '-'}
+            </div>
+          `;
         }
       }
     });
 
     document.getElementById("notifCount").innerText = count;
+    document.getElementById("notifDropdown").innerHTML = html || "<div class='notif-item'>Tidak ada notifikasi</div>";
+
   });
 }
+
+  // =======================
+// SIDEBAR COLLAPSE
+// =======================
+function toggleSidebar(){
+  document.querySelector(".sidebar").classList.toggle("collapsed");
+}
+
+
+// =======================
+// NOTIF DROPDOWN
+// =======================
+function toggleNotif(){
+  let el = document.getElementById("notifDropdown");
+  el.style.display = el.style.display === "block" ? "none" : "block";
+}
+
+// =======================
+// PROFILE DROPDOWN
+// =======================
+function toggleProfile(){
+  let el = document.getElementById("profileDropdown");
+  el.style.display = el.style.display === "block" ? "none" : "block";
+}
+
+// CLOSE CLICK OUTSIDE
+document.addEventListener("click", function(e){
+
+  if(!e.target.closest(".notif")){
+    document.getElementById("notifDropdown").style.display = "none";
+  }
+
+  if(!e.target.closest(".profile")){
+    document.getElementById("profileDropdown").style.display = "none";
+  }
+
+});
   
 </script>
 
