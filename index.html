@@ -639,6 +639,7 @@ h3 {
 
     <input id="cs_nama_modal" placeholder="Nama">
     <input id="cs_email_modal" placeholder="Email">
+    <input id="tanggal" type="date">
 
     <button onclick="saveProfile()">Simpan</button>
     <button onclick="closeProfile()">Tutup</button>
@@ -1093,7 +1094,8 @@ function initProspekDrag(){
 }
   
  function checkReminder(){
-  .onSnapshot().then(snap=>{
+  db.collection("followups")
+  .onSnapshot(snap=>{
     let now = new Date();
 
     snap.forEach(doc=>{
@@ -1658,7 +1660,8 @@ window.openTidakTertarikConfirm = function(id){
 // AUTO HITUNG NOTIF DARI REMINDER
 function updateNotifCount(){
 
-  .onSnapshot().then(snap=>{
+  db.collection("followups")
+  .onSnapshot(snap=>{
     let now = new Date();
     let count = 0;
     let html = "";
@@ -1757,7 +1760,7 @@ function closeProfile(){
 }
 
 // preview foto
-document.getElementById("uploadImg").addEventListener("change", function(e){
+document.getElementById("uploadImgModal").addEventListener("change", function(e){
   let file = e.target.files[0];
   if(file){
     let reader = new FileReader();
@@ -1771,8 +1774,8 @@ document.getElementById("uploadImg").addEventListener("change", function(e){
 // simpan (sementara local saja)
 function saveProfile(){
 
-  let nama = document.getElementById("cs_nama").value;
-  let email = document.getElementById("cs_email").value;
+  let nama = document.getElementById("cs_nama_modal").value;
+let email = document.getElementById("cs_email_modal").value;
   let foto = document.getElementById("previewImg").src;
 
   if(!nama){
@@ -1782,7 +1785,7 @@ function saveProfile(){
 
   // tampilkan ke header
   document.getElementById("profileName").innerText = nama;
-  document.getElementById("profileImg").src = foto;
+  document.getElementById("profileImgTop").src = foto;
 
   closeProfile();
 }
