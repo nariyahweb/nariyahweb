@@ -312,17 +312,19 @@ h3 {
 .sidebar {
   position: fixed;
   left: 0;
-  top: 0;
+  top: 60px; /* 🔥 mulai dari bawah header */
   width: 220px;
-  height: 100vh;
-  background: #6d28d9;
-  color: white;
+  height: calc(100vh - 60px); /* 🔥 sisa layar */
+
+  background: white; /* 🔥 jadi putih */
+  color: #333;
   padding: 15px;
 
   transform: translateX(-100%);
   transition: transform 0.35s cubic-bezier(.4,0,.2,1);
   z-index: 1000;
-  will-change: transform;
+
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05); /* 🔥 biar ada depth */
 }
 
 .sidebar.active {
@@ -333,11 +335,35 @@ h3 {
 #hoverZone {
   position: fixed;
   left: 0;
-  top: 0;
-  width: 15px; /* 🔥 agak diperbesar biar gampang kena */
-  height: 100vh;
-  z-index: 2000; /* 🔥 lebih tinggi dari sidebar */
+  top: 60px; /* 🔥 ikut turun */
+  width: 15px;
+  height: calc(100vh - 60px);
+  z-index: 2000;
   background: transparent;
+}
+
+  .menu-item {
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 5px;
+  color: #444;
+}
+
+.menu-item:hover {
+  background: #f3f4f6;
+}
+
+.menu-item.active {
+  background: #ede9fe;
+  color: #6d28d9;
+  font-weight: bold;
+}
+
+.menu-item.logout {
+  margin-top: 20px;
+  background: #ef4444;
+  color: white;
 }
 
 /* 🔥 saat aktif */
@@ -346,6 +372,7 @@ h3 {
 }
 
 .sidebar h2 {
+  color: #6d28d9;
   margin-bottom: 20px;
 }
 
@@ -390,15 +417,17 @@ h3 {
 
 /* TOPBAR */
 .topbar {
-  background: linear-gradient(to right, #7c3aed, #6d28d9);
-  color: white;
-  padding: 12px 20px;
-  font-weight: bold;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 3000; /* 🔥 di atas sidebar */
 }
 
 /* CONTENT */
 .content {
   padding: 20px;
+  margin-top: 60px; /* 🔥 biar gak ketutup header */
 }
 
 .import-card {
@@ -437,17 +466,6 @@ h3 {
   padding: 10px;
   width: 100%;
   border-radius: 10px;
-}
-
-  .topbar {
-  height: 60px;
-  background: linear-gradient(to right, #7c3aed, #6d28d9);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 /* kiri */
