@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+<!-- Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <!-- Drag -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  
 <!-- Chart -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <meta charset="UTF-8">
@@ -215,8 +216,10 @@ h3 {
 
   <!-- DASHBOARD -->
   <div style="padding:10px">
-  <button onclick="openDBClosing()">📁 DB Closing</button>
-  <button onclick="openDBTidak()">📁 DB Tidak Tertarik</button>
+    <button onclick="openDBClosing()">📁 DB Closing</button>
+    <button onclick="openDBTidak()">📁 DB Tidak Tertarik</button>
+    <input type="file" id="excelFile" accept=".xlsx,.csv" />
+    <button onclick="importExcel()">Import Excel</button>
 </div>
   <div style="padding:10px">
     <b>Rate:</b> <span id="rate">0%</span>
@@ -1262,6 +1265,52 @@ function saveToTidakTertarikDB(id){
 
     alert("Masuk database Tidak Tertarik & hilang dari board!");
   });
+}
+
+  window.importExcel = function(){
+  let file = document.getElementById("excelFile").files[0];
+
+  if(!file){
+    alert("Pilih file dulu!");
+    return;
+  }
+
+  let reader = new FileReader();
+
+  reader.onload = function(e){
+    let data = new Uint8Array(e.target.result);
+    let workbook = XLSX.read(data, {type: "array"});
+
+    let sheet = workbook.Sheets[workbook.SheetNames[0]];
+    let json = XLSX.utils.sheet_to_json(sheet);
+
+    json.forEach(row => {
+
+      let nama = row.nama || row.Nama;
+      let hp = row.hp || row.HP || "+62";
+
+      if(!nama || !hp) return;
+
+      // FORMAT NOMOR
+      hp = hp.toString();
+      if(!hp.startsWith("+62")){
+        hp = "+62" + hp.replace(/^0/, '');
+      }
+
+      // 🔥 MASUK KE PROSPEK
+db.collection("customers").add({
+  nama: nama,
+  hp: hp,
+  tanggal: new Date().toISOString().split("T")[0],
+  status: "baru",
+  user_id: auth.currentUser.uid
+});
+    });
+
+    alert("Import berhasil!");
+  };
+
+  reader.readAsArrayBuffer(file);
 }
   
 </script>
