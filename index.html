@@ -309,7 +309,7 @@ h3 {
   padding: 15px;
 
   transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.35s cubic-bezier(.4,0,.2,1);
   z-index: 1000;
 }
 
@@ -322,9 +322,10 @@ h3 {
   position: fixed;
   left: 0;
   top: 0;
-  width: 12px;
+  width: 15px; /* 🔥 agak diperbesar biar gampang kena */
   height: 100vh;
-  z-index: 999;
+  z-index: 2000; /* 🔥 lebih tinggi dari sidebar */
+  background: transparent;
 }
 
 /* 🔥 saat aktif */
@@ -494,8 +495,8 @@ h3 {
   cursor: pointer;
 }
 
-  .toggle-btn {
-  display: none;
+.toggle-btn {
+  display: block;
 }
 
 /* tampil hanya di mobile */
@@ -1930,9 +1931,7 @@ sidebar.addEventListener("mouseenter", () => {
 // MOBILE (PAKAI TOMBOL)
 // =======================
 function toggleSidebar(){
-  if(isMobile()){
-    sidebar.classList.toggle("active");
-  }
+  sidebar.classList.toggle("active");
 }
 
 // hilang saat keluar dari sidebar
@@ -1968,6 +1967,22 @@ document.addEventListener("click", function(e){
     document.getElementById("profileDropdown").style.display = "none";
   }
 
+});
+
+  document.addEventListener("mousemove", (e) => {
+  if(!isMobile()){
+    if(e.clientX <= 10){
+      sidebar.classList.add("active");
+    }
+  }
+});
+
+  sidebar.addEventListener("mouseleave", () => {
+  if(!isMobile()){
+    timeout = setTimeout(()=>{
+      sidebar.classList.remove("active");
+    }, 300); // 🔥 lebih smooth
+  }
 });
   
 </script>
