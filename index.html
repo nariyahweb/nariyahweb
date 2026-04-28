@@ -654,8 +654,7 @@ function loadProspek(){
     });
 
     loadChartProspek(count);
-    initProspekDrag(); // 🔥 ini tetap di sini
-
+    setTimeout(initProspekDrag, 300);
   });
 
 }
@@ -761,6 +760,46 @@ onAdd: function(evt){
 }
   });
 });
+}
+
+  let isProspekDragInit = false;
+
+function initProspekDrag(){
+  if(isProspekDragInit) return;
+  isProspekDragInit = true;
+
+  const mapStatus = {
+    prospekBaru: "Baru",
+    prospekHubungi: "Sudah Dihubungi",
+    prospekTertarik: "Tertarik",
+    prospekTidak: "Tidak Tertarik"
+  };
+
+  Object.keys(mapStatus).forEach(colId=>{
+    new Sortable(document.getElementById(colId), {
+      group: "prospek",
+      animation: 150,
+      draggable: ".card",
+      filter: "h3",
+      preventOnFilter: true,
+
+      onAdd: function(evt){
+        let id = evt.item.getAttribute("data-id");
+        let newStatus = mapStatus[evt.to.id];
+
+        // 🔥 KHUSUS TIDAK TERTARIK
+        if(newStatus === "Tidak Tertarik"){
+          evt.from.appendChild(evt.item); // balikin dulu
+          openTidakTertarikChoice(id);
+          return;
+        }
+
+        db.collection("prospek").doc(id).update({
+          status: newStatus
+        });
+      }
+    });
+  });
 }
   
  function checkReminder(){
