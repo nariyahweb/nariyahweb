@@ -19,15 +19,14 @@ body { margin:0; font-family: Arial; background:#f5f3ff; }
 
 input, select { width:100%; padding:8px; margin:5px 0; }
 
-.logo {
-  display: flex;
-  align-items: center;
+.logo svg {
+  display: block;
 }
 
 .brand-text {
   font-size: 16px;
   font-weight: bold;
-  letter-spacing: 1px;
+  color: white;
 }
   
   button {
@@ -421,7 +420,19 @@ h3 {
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 3000; /* 🔥 di atas sidebar */
+  height: 60px;
+
+  background: #7c3aed; /* 🔥 INI YANG HILANG */
+  color: white;
+
+  display: flex;
+  justify-content: space-between; /* 🔥 kiri & kanan */
+  align-items: center;
+
+  padding: 0 20px;
+  box-sizing: border-box;
+
+  z-index: 3000;
 }
 
 /* CONTENT */
