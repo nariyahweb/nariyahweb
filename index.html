@@ -1971,7 +1971,8 @@ document.addEventListener("click", function(e){
 
   document.addEventListener("mousemove", (e) => {
   if(!isMobile()){
-    if(e.clientX <= 10){
+    // 🔥 jika kursor sangat kiri
+    if(e.clientX <= 15){
       sidebar.classList.add("active");
     }
   }
@@ -1983,6 +1984,18 @@ document.addEventListener("click", function(e){
       sidebar.classList.remove("active");
     }, 300); // 🔥 lebih smooth
   }
+});
+
+      document.addEventListener("click", function(e){
+
+  // jika klik bukan di sidebar & bukan tombol ☰
+  if(
+    !e.target.closest(".sidebar") &&
+    !e.target.closest(".toggle-btn")
+  ){
+    sidebar.classList.remove("active");
+  }
+
 });
   
 </script>
