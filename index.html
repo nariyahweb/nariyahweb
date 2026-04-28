@@ -308,9 +308,23 @@ h3 {
   color: white;
   padding: 15px;
 
-  transform: translateX(-100%); /* 🔥 sembunyi */
+  transform: translateX(-100%);
   transition: transform 0.3s ease;
   z-index: 1000;
+}
+
+.sidebar.active {
+  transform: translateX(0);
+}
+
+/* area trigger kiri */
+#hoverZone {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 100vh;
+  z-index: 999;
 }
 
 /* 🔥 saat aktif */
@@ -341,15 +355,6 @@ h3 {
 .menu-item.logout {
   margin-top: 20px;
   background: #ef4444;
-}
-
-  #hoverZone {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: 10px;
-  height: 100vh;
-  z-index: 999;
 }
 
 /* MAIN */
@@ -487,6 +492,21 @@ h3 {
   color: white;
   font-size: 18px;
   cursor: pointer;
+}
+
+  .toggle-btn {
+  display: none;
+}
+
+/* tampil hanya di mobile */
+@media (max-width: 768px){
+  .toggle-btn {
+    display: block;
+  }
+
+  #hoverZone {
+    display: none; /* hover dimatikan di mobile */
+  }
 }
 
 /* NOTIF DROPDOWN */
@@ -1876,20 +1896,44 @@ function updateNotifCount(){
 // SIDEBAR COLLAPSE
 // =======================
 let sidebar = document.querySelector(".sidebar");
+let hoverZone = document.getElementById("hoverZone");
 
-function toggleSidebar(){
-  sidebar.classList.toggle("active");
+// deteksi mobile
+function isMobile(){
+  return window.innerWidth <= 768;
 }
-  let hoverZone = document.getElementById("hoverZone");
 
-// muncul saat hover kiri
-  let timeout;
-  
-sidebar.addEventListener("mouseleave", () => {
-  timeout = setTimeout(() => {
-    sidebar.classList.remove("active");
-  }, 200);
+// =======================
+// DESKTOP (AUTO HOVER)
+// =======================
+hoverZone.addEventListener("mouseenter", () => {
+  if(!isMobile()){
+    sidebar.classList.add("active");
+  }
 });
+
+let timeout;
+
+sidebar.addEventListener("mouseleave", () => {
+  if(!isMobile()){
+    timeout = setTimeout(()=>{
+      sidebar.classList.remove("active");
+    }, 200);
+  }
+});
+
+sidebar.addEventListener("mouseenter", () => {
+  clearTimeout(timeout);
+});
+
+// =======================
+// MOBILE (PAKAI TOMBOL)
+// =======================
+function toggleSidebar(){
+  if(isMobile()){
+    sidebar.classList.toggle("active");
+  }
+}
 
 // hilang saat keluar dari sidebar
 sidebar.addEventListener("mouseenter", () => {
