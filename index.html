@@ -311,6 +311,7 @@ h3 {
   transform: translateX(-100%);
   transition: transform 0.35s cubic-bezier(.4,0,.2,1);
   z-index: 1000;
+  will-change: transform;
 }
 
 .sidebar.active {
@@ -557,6 +558,8 @@ h3 {
 </head>
 
 <body>
+  
+  <div id="hoverZone"></div>
 
 <!-- LOGIN -->
 <div id="loginPage">
@@ -865,14 +868,6 @@ window.login = function(){
     alert("ERROR: " + e.message);
   });
 }
-
-  document.addEventListener("click", function(e){
-  let menu = document.getElementById("dropdownMenu");
-
-  if(!e.target.closest(".menu-container")){
-    menu.style.display = "none";
-  }
-});
 
   function toggleMenu(){
   let menu = document.getElementById("dropdownMenu");
@@ -1959,36 +1954,7 @@ function toggleProfile(){
 // CLOSE CLICK OUTSIDE
 document.addEventListener("click", function(e){
 
-  if(!e.target.closest(".notif")){
-    document.getElementById("notifDropdown").style.display = "none";
-  }
-
-  if(!e.target.closest(".profile")){
-    document.getElementById("profileDropdown").style.display = "none";
-  }
-
-});
-
-  document.addEventListener("mousemove", (e) => {
-  if(!isMobile()){
-    // 🔥 jika kursor sangat kiri
-    if(e.clientX <= 15){
-      sidebar.classList.add("active");
-    }
-  }
-});
-
-  sidebar.addEventListener("mouseleave", () => {
-  if(!isMobile()){
-    timeout = setTimeout(()=>{
-      sidebar.classList.remove("active");
-    }, 300); // 🔥 lebih smooth
-  }
-});
-
-      document.addEventListener("click", function(e){
-
-  // jika klik bukan di sidebar & bukan tombol ☰
+  // SIDEBAR CLOSE
   if(
     !e.target.closest(".sidebar") &&
     !e.target.closest(".toggle-btn")
@@ -1996,8 +1962,30 @@ document.addEventListener("click", function(e){
     sidebar.classList.remove("active");
   }
 
+  // NOTIF
+  if(!e.target.closest(".notif")){
+    document.getElementById("notifDropdown").style.display = "none";
+  }
+
+  // PROFILE
+  if(!e.target.closest(".profile")){
+    document.getElementById("profileDropdown").style.display = "none";
+  }
+
 });
-  
+
+hoverZone.addEventListener("mouseenter", () => {
+  if(!isMobile()){
+    sidebar.classList.add("active");
+  }
+});
+
+sidebar.addEventListener("mouseleave", () => {
+  if(!isMobile()){
+    sidebar.classList.remove("active");
+  }
+});
+
 </script>
 
     <!-- NOTIF -->
@@ -2009,5 +1997,4 @@ z-index:9999;
 "></div>
 
 </body>
-    <div id="hoverZone"></div>
 </html>
