@@ -679,15 +679,22 @@ h3 {
     </div>
 
     <!-- PROFILE -->
-    <div class="profile" onclick="toggleProfile()">
-      <img src="https://i.pravatar.cc/40">
-      <span>CS Agent</span>
+<div class="modal" id="modalProfile">
+  <div class="modal-box">
+    <h3>Profile CS</h3>
 
-      <div id="profileDropdown" class="profile-dropdown">
-        <button onclick="logout()">🚪 Logout</button>
-      </div>
-    </div>
+    <center>
+      <img id="previewImg" src="https://i.pravatar.cc/100" 
+           style="width:80px;height:80px;border-radius:50%;margin-bottom:10px;">
+      <br>
+      <input type="file" id="uploadImg">
+    </center>
 
+    <input id="cs_nama" placeholder="Nama">
+    <input id="cs_email" placeholder="Email">
+
+    <button onclick="saveProfile()">Simpan</button>
+    <button onclick="closeProfile()">Tutup</button>
   </div>
 </div>
 
@@ -2001,13 +2008,55 @@ function toggleNotif(){
 }
 
 // =======================
-// PROFILE DROPDOWN
+// PROFILE POPUP
 // =======================
+// buka modal profile
 function toggleProfile(){
-  let el = document.getElementById("profileDropdown");
-  el.style.display = el.style.display === "block" ? "none" : "block";
+  modalProfile.style.display = "flex";
 }
 
+// tutup
+function closeProfile(){
+  modalProfile.style.display = "none";
+}
+
+// preview foto
+document.getElementById("uploadImg").addEventListener("change", function(e){
+  let file = e.target.files[0];
+  if(file){
+    let reader = new FileReader();
+    reader.onload = function(ev){
+      document.getElementById("previewImg").src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// simpan (sementara local saja)
+function saveProfile(){
+
+  let nama = document.getElementById("cs_nama").value;
+  let email = document.getElementById("cs_email").value;
+  let foto = document.getElementById("previewImg").src;
+
+  if(!nama){
+    alert("Nama wajib diisi!");
+    return;
+  }
+
+  // tampilkan ke header
+  document.getElementById("profileName").innerText = nama;
+  document.getElementById("profileImg").src = foto;
+
+  closeProfile();
+}
+
+  modalProfile.addEventListener("click", function(e){
+  if(e.target === modalProfile){
+    closeProfile();
+  }
+});
+  
 // CLOSE CLICK OUTSIDE
 document.addEventListener("click", function(e){
 
