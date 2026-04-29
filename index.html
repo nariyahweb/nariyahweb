@@ -766,6 +766,50 @@ h3 {
   font-size: 12px;
 }
 
+  /* ICON BULAT */
+.icon-circle{
+  width:45px;
+  height:45px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  color:white;
+  box-shadow:0 5px 15px rgba(0,0,0,0.15);
+}
+
+/* GRADIENT WARNA */
+.icon-circle.purple{
+  background: linear-gradient(135deg,#7c3aed,#a78bfa);
+}
+.icon-circle.green{
+  background: linear-gradient(135deg,#22c55e,#4ade80);
+}
+.icon-circle.blue{
+  background: linear-gradient(135deg,#3b82f6,#60a5fa);
+}
+.icon-circle.orange{
+  background: linear-gradient(135deg,#f59e0b,#fbbf24);
+}
+
+/* HOVER CARD */
+.stat-modern{
+  transition: all 0.25s ease;
+  cursor:pointer;
+}
+
+.stat-modern:hover{
+  transform: translateY(-5px) scale(1.02);
+  box-shadow:0 10px 25px rgba(0,0,0,0.12);
+}
+
+/* ICON IKUT GERAK */
+.stat-modern:hover .icon-circle{
+  transform: rotate(8deg) scale(1.1);
+  transition: 0.25s;
+}
+
 </style>
 </head>
 
@@ -924,7 +968,7 @@ h3 {
 
   <!-- CHART -->
   
-  <div class="stats-modern">
+<div class="stats-modern">
 
   <div class="stat-modern">
     <div>
@@ -932,6 +976,7 @@ h3 {
       <p id="total">0</p>
       <small>Semua Data</small>
     </div>
+    <div class="icon-circle purple">👥</div>
   </div>
 
   <div class="stat-modern">
@@ -940,6 +985,7 @@ h3 {
       <p id="closingCount">0</p>
       <small>Data Closing</small>
     </div>
+    <div class="icon-circle green">✔</div>
   </div>
 
   <div class="stat-modern">
@@ -948,6 +994,7 @@ h3 {
       <p id="rateText">0%</p>
       <small>Dari Total Data</small>
     </div>
+    <div class="icon-circle blue">📊</div>
   </div>
 
   <div class="stat-modern">
@@ -956,6 +1003,7 @@ h3 {
       <p id="prospekAktif">0</p>
       <small>Dalam Proses</small>
     </div>
+    <div class="icon-circle orange">👤</div>
   </div>
 
 </div>
@@ -1625,17 +1673,19 @@ function loadChartCustomer(total, closing, pending, followup){
 
   if(chartCustomer) chartCustomer.destroy();
 
+  let dataArr = [
+    closing,
+    pending,
+    followup,
+    total - (closing + pending + followup)
+  ];
+
   chartCustomer = new Chart(document.getElementById("chartCustomer"), {
     type: 'doughnut',
     data: {
       labels: ['Closing','Pending','Follow Up','Baru'],
       datasets: [{
-        data: [
-          closing,
-          pending,
-          followup,
-          total - (closing + pending + followup)
-        ],
+        data: dataArr,
         backgroundColor: [
           '#22c55e',
           '#f59e0b',
@@ -1650,9 +1700,29 @@ function loadChartCustomer(total, closing, pending, followup){
       cutout: '70%',
       plugins: {
         legend: {
-          position: 'right', // 🔥 pindah kanan biar mirip
+          position: 'right',
           labels:{
-            usePointStyle:true
+            usePointStyle:true,
+
+            // 🔥 MAGIC DI SINI
+            generateLabels: function(chart){
+              let data = chart.data;
+              let total = data.datasets[0].data.reduce((a,b)=>a+b,0);
+
+              return data.labels.map((label, i)=>{
+                let value = data.datasets[0].data[i];
+                let percent = total ? ((value/total)*100).toFixed(1) : 0;
+
+                return {
+                  text: `${label} (${percent}%)`,
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  strokeStyle: data.datasets[0].backgroundColor[i],
+                  lineWidth: 1,
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
           }
         }
       }
