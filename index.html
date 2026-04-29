@@ -1376,8 +1376,6 @@ const titleMap = {
   closing:"Closing"
 };
 
-    let prospekAktif = total - closing;
-document.getElementById("prospekAktif").innerText = prospekAktif;
 Object.keys(titleMap).forEach(id=>{
   document.getElementById(id).innerHTML = "<h3>" + titleMap[id] + "</h3>";
 });
@@ -1402,22 +1400,21 @@ snap.forEach(doc=>{
 
   card.onclick = () => openDetailCustomer(doc.id);
 
- card.innerHTML = `
-  <b>
-    ${d.nama || '-'}
-    ${d.isNew ? '<span class="new-badge">NEW</span>' : ''}
-  </b>
-  <br>
-  <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
-    WhatsApp
-  </button>
-`;
+  card.innerHTML = `
+    <b>${d.nama || '-'}</b><br>
+    <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
+      WhatsApp
+    </button>
+  `;
 
   document.getElementById(d.status).appendChild(card);
 });
-
     // ✅ TARUH DI SINI (SETELAH LOOP)
-    document.getElementById("total").innerText = total;
+// ✅ SETELAH SEMUA DATA KEHITUNG
+let prospekAktif = total - closing;
+
+document.getElementById("prospekAktif").innerText = prospekAktif;
+document.getElementById("total").innerText = total;
 document.getElementById("closingCount").innerText = closing;
 
 let rate = total ? Math.round((closing/total)*100) : 0;
