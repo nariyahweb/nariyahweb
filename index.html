@@ -524,19 +524,32 @@ h3 {
 /* profile */
 .profile {
   display: flex;
+  position: relative;
   align-items: center;
   gap: 8px;
+  min-width: 0; /* 🔥 WAJIB biar flex bisa shrink */
+}
 
-  max-width: 200px; /* 🔥 batas biar gak nabrak */
+ .profile span:hover {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  background: white;
+  color: black;
+  padding: 6px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
 }
 
 .profile span {
-  white-space: nowrap;       /* 🔥 jangan turun */
-  overflow: hidden;          
-  text-overflow: ellipsis;   /* 🔥 jadi ... kalau kepanjangan */
-  display: block;
+  flex: 1;              /* 🔥 ambil sisa ruang */
+  min-width: 0;         /* 🔥 biar ellipsis jalan */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
+  
 .profile img {
   width: 35px;
   height: 35px;
@@ -588,16 +601,6 @@ h3 {
   padding: 10px;
   border-bottom: 1px solid #eee;
   font-size: 12px;
-}
-
-.profile span:hover {
-  position: absolute;
-  background: white;
-  color: black;
-  padding: 4px 8px;
-  border-radius: 6px;
-  white-space: normal;
-  z-index: 999;
 }
 
 </style>
