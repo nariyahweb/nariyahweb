@@ -911,6 +911,8 @@ h3 {
 </div>
   
 <script>
+  let loginPage = document.getElementById("loginPage");
+let app = document.getElementById("app");
 if(typeof Sortable === "undefined"){
   console.error("Sortable gagal load!");
 }
@@ -951,8 +953,15 @@ window.login = function(){
 window.logout = function(){ auth.signOut(); }
 
 // AUTH
+const loginPage = document.getElementById("loginPage");
+const app = document.getElementById("app");
+
 auth.onAuthStateChanged(user=>{
   if(user){
+
+    loginPage.style.display = "none";
+    app.style.display = "flex";
+
     db.collection("users").doc(user.uid).get().then(doc=>{
       let nama = "CS Agent";
       let foto = "https://i.pravatar.cc/40";
@@ -974,14 +983,12 @@ auth.onAuthStateChanged(user=>{
       document.getElementById("topCenterName").innerText = nama;
       document.querySelector(".profile img").src = foto;
     });
-  }
-});
 
-    loadData(); // 🔥 penting biar data jalan
+    loadData(); // ✅ taruh di dalam if(user)
 
   } else {
-    loginPage.style.display="flex";
-    app.style.display="none";
+    loginPage.style.display = "flex";
+    app.style.display = "none";
   }
 });
   
@@ -2117,22 +2124,23 @@ window.saveProfile = async function(){
   modalProfile.style.display = "none";
 }
 
-  profile_foto.addEventListener("change", function(){
+profile_foto.addEventListener("change", function(){
   let file = this.files[0];
-  if(file){
-    previewFoto.src = URL.createObjectURL(file);
-  }
-});
+
+  if(!file) return;
 
   if(file.size > 1024 * 1024){
-  alert("Max 1MB");
-  return;
-}
+    alert("Max 1MB");
+    return;
+  }
 
   if(!file.type.startsWith("image/")){
-  alert("Harus gambar!");
-  return;
-}
+    alert("Harus gambar!");
+    return;
+  }
+
+  previewFoto.src = URL.createObjectURL(file);
+});
 
 </script>
 
