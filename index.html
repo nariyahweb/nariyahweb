@@ -2023,6 +2023,8 @@ document.getElementById("previewFoto").addEventListener("click", function(e){
   document.getElementById("profile_foto").click();
 });
 
+ document.addEventListener("click", function(e){
+
   // SIDEBAR CLOSE
   if(
     !e.target.closest(".sidebar") &&
@@ -2091,34 +2093,37 @@ window.saveProfile = async function(){
 
   let fotoURL = null;
   let file = profile_foto.files[0];
-  if(fotoURL){
-  document.getElementById("topProfileImg").src = fotoURL;
-  document.getElementById("previewFoto").src = fotoURL;
-}
 
-document.getElementById("topCenterName").innerText = profile_nama.value;
-
+  // upload foto kalau ada
   if(file){
     let ref = storage.ref("profile/" + user.uid);
     await ref.put(file);
     fotoURL = await ref.getDownloadURL();
   }
 
-  db.collection("users").doc(user.uid).set({
-    let updateData = {
-  nama: profile_nama.value,
-  hp: profile_hp.value,
-  email: user.email,
-  role: currentRole || "cs"
-};
+  // data yang mau disimpan
+  let updateData = {
+    nama: profile_nama.value,
+    hp: profile_hp.value,
+    email: user.email,
+    role: currentRole || "cs"
+  };
 
-// hanya update foto kalau ada file baru
-if(fotoURL){
-  updateData.foto = fotoURL;
-}
+  if(fotoURL){
+    updateData.foto = fotoURL;
+  }
 
-db.collection("users").doc(user.uid).set(updateData, { merge: true });
-  
+  // simpan ke firestore
+  await db.collection("users").doc(user.uid).set(updateData, { merge: true });
+
+  // update tampilan langsung
+  document.getElementById("topCenterName").innerText = profile_nama.value;
+
+  if(fotoURL){
+    document.getElementById("topProfileImg").src = fotoURL;
+    document.getElementById("previewFoto").src = fotoURL;
+  }
+
   alert("Profile berhasil disimpan");
   closeProfile();
 }
