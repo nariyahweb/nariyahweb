@@ -830,17 +830,26 @@ h3 {
   <div class="import-content">
 
     <!-- STEP 1 -->
-    <div class="step-card upload-area" onclick="document.getElementById('excelFile').click()">
-      <h4>1. Pilih File Excel</h4>
+<div class="step-card upload-area" onclick="document.getElementById('excelFile').click()">
 
-      <div class="drop-box">
-        <p>⬆️ Drag & Drop file di sini</p>
-        <small>atau klik untuk pilih file</small>
-      </div>
+  <h4>1. Pilih File Excel</h4>
 
-      <input type="file" id="excelFile" hidden>
-      <small class="format">Format: xlsx, xls, csv (Maks. 10MB)</small>
+  <div class="drop-box" id="dropBox">
+
+    <p id="uploadText">⬆️ Drag & Drop file di sini</p>
+    <small>atau klik untuk pilih file</small>
+
+    <!-- 🔥 INPUT FILE HARUS DI SINI -->
+    <input type="file" id="excelFile" hidden>
+
+    <!-- 🔥 INFO FILE -->
+    <div id="fileInfo"
+         style="margin-top:10px;font-size:12px;color:#6d28d9;">
     </div>
+
+  </div>
+
+</div>
 
     <!-- STEP 2 -->
     <div class="step-card">
@@ -2352,6 +2361,24 @@ document.getElementById("profile_foto").addEventListener("change", function(){
     reader.readAsDataURL(file);
   });
 }
+
+  document.getElementById("excelFile").addEventListener("change", function(){
+
+  let file = this.files[0];
+  if(!file) return;
+
+  // tampilkan nama file
+  document.getElementById("fileInfo").innerHTML =
+    "📄 " + file.name + "<br>📦 " + (file.size / 1024).toFixed(1) + " KB";
+
+  // ubah tampilan box
+  let box = document.getElementById("dropBox");
+  box.style.border = "2px solid #7c3aed";
+  box.style.background = "#ede9fe";
+
+  // ubah text
+  document.getElementById("uploadText").innerText = "✅ File siap diimport";
+});
   
 </script>
 
