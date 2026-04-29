@@ -911,8 +911,6 @@ h3 {
 </div>
   
 <script>
-  let loginPage = document.getElementById("loginPage");
-let app = document.getElementById("app");
 if(typeof Sortable === "undefined"){
   console.error("Sortable gagal load!");
 }
@@ -1755,23 +1753,6 @@ window.openTidakTertarikConfirm = function(id){
   }
 }
 
-function saveToTidakTertarikDB(id){
-  db.collection("prospek").doc(id).get().then(doc=>{
-    let d = doc.data();
-
-    db.collection("db_tidak_tertarik").add({
-      ...d,
-      tanggal: new Date().toISOString()
-    });
-
-    db.collection("prospek").doc(id).update({
-      status: "Tidak Tertarik"
-    });
-
-    alert("Masuk database Tidak Tertarik!");
-  });
-}
-
   window.openClosingChoice = function(id){
 
   let pilih = confirm(
@@ -1999,10 +1980,6 @@ sidebar.addEventListener("mouseleave", () => {
       sidebar.classList.remove("active");
     }, 200);
   }
-});
-
-sidebar.addEventListener("mouseenter", () => {
-  clearTimeout(timeout);
 });
 
 // =======================
