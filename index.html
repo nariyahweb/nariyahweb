@@ -1208,7 +1208,7 @@ let currentCustomer = null;
   let myChart = null;
 
 // LOGIN
-function login(){
+window.login = function(){
   auth.signInWithEmailAndPassword(email.value, password.value)
   .then((res)=>{
     console.log("Login sukses:", res.user.uid);
@@ -1498,6 +1498,7 @@ snap.forEach(doc=>{
       document.getElementById(col).appendChild(card);
     });
 
+    console.log("DATA PROSPEK:", count);
     loadChartProspek(count);
     setTimeout(initProspekDrag, 300);
   });
@@ -1767,24 +1768,24 @@ function loadChartProspek(data){
 
   if(chartProspek) chartProspek.destroy();
 
+  let arr = [
+    data.baru,
+    data.hubungi,
+    data.tertarik,
+    data.tidak
+  ];
+
+  // kalau semua 0
+  if(arr.every(v => v === 0)){
+    arr = [1,0,0,0];
+  }
+
   chartProspek = new Chart(document.getElementById("chartProspek"), {
     type: 'doughnut',
     data: {
       labels: ['Baru','Dihubungi','Tertarik','Tidak'],
       datasets: [{
-       let arr = [
-  data.baru,
-  data.hubungi,
-  data.tertarik,
-  data.tidak
-];
-
-// 🔥 kalau semua 0, kasih dummy
-if(arr.every(v => v === 0)){
-  arr = [1,0,0,0];
-}
-
-data: arr,
+        data: arr,
         backgroundColor: [
           '#6366f1',
           '#0ea5e9',
@@ -1793,6 +1794,7 @@ data: arr,
         ]
       }]
     },
+    
     options: {
       responsive: true,
       maintainAspectRatio: true,
