@@ -429,6 +429,8 @@ h3 {
 
 /* 🔥 CENTER ABSOLUTE */
 .top-center {
+  pointer-events: none; /* biar gak ganggu klik */
+  text-align: center;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -436,7 +438,7 @@ h3 {
   font-weight: bold;
   font-size: 14px;
 
-  max-width: 50%;
+  max-width: 250px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -947,6 +949,10 @@ window.logout = function(){ auth.signOut(); }
 // AUTH
 auth.onAuthStateChanged(user=>{
   if(user){
+
+    loginPage.style.display="none";
+    app.style.display="block";
+
     db.collection("users").doc(user.uid).get().then(doc=>{
       let nama = "CS Agent";
 
@@ -959,18 +965,22 @@ auth.onAuthStateChanged(user=>{
         } else if(d.role){
           nama = d.role.toUpperCase();
         }
+
+        // 🔥 SIMPAN ROLE KE GLOBAL
+        currentRole = d.role || "cs";
       }
 
       document.getElementById("topCenterName").innerText = nama;
     });
-  }
-});
+
+    loadData(); // 🔥 penting biar data jalan
 
   } else {
     loginPage.style.display="flex";
     app.style.display="none";
   }
 });
+  
 // CUSTOMER
 window.openModal = ()=>{
   closeAllModal();
