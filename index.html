@@ -1768,6 +1768,25 @@ function loadChartProspek(data){
 
   if(chartProspek) chartProspek.destroy();
 
+  const ctx = document.getElementById("chartProspek").getContext("2d");
+
+  // 🔥 GRADIENT (BIAR SAMA STYLE)
+  const gradBaru = ctx.createLinearGradient(0,0,0,200);
+  gradBaru.addColorStop(0,"#818cf8");
+  gradBaru.addColorStop(1,"#6366f1");
+
+  const gradHub = ctx.createLinearGradient(0,0,0,200);
+  gradHub.addColorStop(0,"#38bdf8");
+  gradHub.addColorStop(1,"#0ea5e9");
+
+  const gradTertarik = ctx.createLinearGradient(0,0,0,200);
+  gradTertarik.addColorStop(0,"#4ade80");
+  gradTertarik.addColorStop(1,"#22c55e");
+
+  const gradTidak = ctx.createLinearGradient(0,0,0,200);
+  gradTidak.addColorStop(0,"#f87171");
+  gradTidak.addColorStop(1,"#ef4444");
+
   let arr = [
     data.baru,
     data.hubungi,
@@ -1775,72 +1794,54 @@ function loadChartProspek(data){
     data.tidak
   ];
 
-  // kalau semua 0
   if(arr.every(v => v === 0)){
     arr = [1,0,0,0];
   }
 
-  chartProspek = new Chart(document.getElementById("chartProspek"), {
+  chartProspek = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['Baru','Dihubungi','Tertarik','Tidak'],
       datasets: [{
         data: arr,
-        backgroundColor: [
-          '#6366f1',
-          '#0ea5e9',
-          '#22c55e',
-          '#ef4444'
-        ]
+        backgroundColor: [gradBaru, gradHub, gradTertarik, gradTidak],
+        borderWidth: 0,
+        hoverOffset: 12
       }]
     },
-    
     options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      cutout: '65%',
+      cutout: '70%', // 🔥 sama kayak kiri
       plugins: {
         legend: {
-          position: 'bottom'
+          position: 'right', // 🔥 PINDAH KE KANAN
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+
+            // 🔥 TAMPILIN ANGKA + PERSEN
+            generateLabels: function(chart){
+              let data = chart.data;
+              let total = data.datasets[0].data.reduce((a,b)=>a+b,0);
+
+              return data.labels.map((label, i)=>{
+                let value = data.datasets[0].data[i];
+                let percent = total ? ((value/total)*100).toFixed(1) : 0;
+
+                return {
+                  text: `${label}  ${value} (${percent}%)`,
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  strokeStyle: data.datasets[0].backgroundColor[i],
+                  lineWidth: 0,
+                  hidden: false,
+                  index: i
+                };
+              });
+            }
+          }
         }
       }
     }
   });
-}
-  window.openProspek = ()=>{
-  closeAllModal();
-  modalProspek.style.display="flex";
-}
-window.closeProspek = ()=> modalProspek.style.display="none";
-
-  window.saveProspek = function(){
-
-    if(p_nama.value.length > 25){
-    alert("Nama maksimal 25 karakter");
-    return;
-  }
-
-  if(p_hp.value.length > 15){
-    alert("Nomor maksimal 15 digit");
-    return;
-  }
-    if(!p_nama.value || !p_hp.value){
-    alert("Nama & HP wajib diisi!");
-    return;
-  }
-
-  db.collection("prospek").add({
-    nama: p_nama.value,
-    hp: p_hp.value,
-    status: p_status.value,
-    user_id: auth.currentUser.uid,
-    created: new Date().toISOString()
-  });
-
-  p_nama.value = "";
-  p_hp.value = "+62";
-
-  closeProspek();
 }
 
 window.convertToCustomer = function(id){
