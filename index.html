@@ -2083,49 +2083,52 @@ sidebar.addEventListener("mouseleave", () => {
 }
 
 window.saveProfile = async function(){
+  try{
+    let user = auth.currentUser;
 
-  let user = auth.currentUser;
+    if(!profile_nama.value){
+      alert("Nama wajib diisi");
+      return;
+    }
 
-  if(!profile_nama.value){
-    alert("Nama wajib diisi");
-    return;
+    let fotoURL = null;
+    let file = profile_foto.files[0];
+
+    if(file){
+      let ref = storage.ref("profile/" + user.uid);
+      let ref = storage.ref("profile/" + user.uid + "_" + Date.now());
+      await ref.put(file);
+      fotoURL = await ref.getDownloadURL();
+    }
+
+    let updateData = {
+      nama: profile_nama.value,
+      hp: profile_hp.value,
+      email: user.email,
+      role: currentRole || "cs"
+    };
+
+    if(fotoURL){
+      updateData.foto = fotoURL;
+    }
+
+    await db.collection("users").doc(user.uid).set(updateData, { merge: true });
+
+    document.getElementById("topCenterName").innerText = profile_nama.value;
+
+    if(fotoURL){
+      document.getElementById("topProfileImg").src = fotoURL;
+      document.getElementById("previewFoto").src = fotoURL;
+    }
+
+    alert("Profile berhasil disimpan");
+
+    closeProfile(); // 🔥 pasti jalan
+
+  } catch(e){
+    console.error(e);
+    alert("Gagal simpan profile");
   }
-
-  let fotoURL = null;
-  let file = profile_foto.files[0];
-
-  // upload foto kalau ada
-  if(file){
-    let ref = storage.ref("profile/" + user.uid);
-    await ref.put(file);
-    fotoURL = await ref.getDownloadURL();
-  }
-
-  // data yang mau disimpan
-  let updateData = {
-    nama: profile_nama.value,
-    hp: profile_hp.value,
-    email: user.email,
-    role: currentRole || "cs"
-  };
-
-  if(fotoURL){
-    updateData.foto = fotoURL;
-  }
-
-  // simpan ke firestore
-  await db.collection("users").doc(user.uid).set(updateData, { merge: true });
-
-  // update tampilan langsung
-  document.getElementById("topCenterName").innerText = profile_nama.value;
-
-  if(fotoURL){
-    document.getElementById("topProfileImg").src = fotoURL;
-    document.getElementById("previewFoto").src = fotoURL;
-  }
-
-  alert("Profile berhasil disimpan");
-  closeProfile();
 }
 
   window.closeProfile = function(){
