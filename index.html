@@ -946,7 +946,7 @@ let currentCustomer = null;
   let myChart = null;
 
 // LOGIN
-window.login = function(){
+function login(){
   auth.signInWithEmailAndPassword(email.value, password.value)
   .then((res)=>{
     console.log("Login sukses:", res.user.uid);
@@ -2040,12 +2040,6 @@ document.getElementById("previewFoto").addEventListener("click", function(e){
 
 });
 
-hoverZone.addEventListener("mouseenter", () => {
-  if(!isMobile()){
-    sidebar.classList.add("active");
-  }
-});
-
 sidebar.addEventListener("mouseleave", () => {
   if(!isMobile()){
     sidebar.classList.remove("active");
@@ -2091,41 +2085,41 @@ window.saveProfile = async function(){
       return;
     }
 
-    let fotoURL = null;
     let file = profile_foto.files[0];
+    let foto = null;
 
+    // 🔥 COMPRESS
     if(file){
-  let ref = storage.ref("profile/" + user.uid + "_" + Date.now());
-  await ref.put(file);
-  fotoURL = await ref.getDownloadURL();
-}
+      foto = await compressImage(file);
+    }
+
     let updateData = {
       nama: profile_nama.value,
       hp: profile_hp.value,
       email: user.email,
-      role: currentRole || "cs"
+      role: "cs"
     };
 
-    if(fotoURL){
-      updateData.foto = fotoURL;
+    if(foto){
+      updateData.foto = foto;
     }
 
     await db.collection("users").doc(user.uid).set(updateData, { merge: true });
 
+    // UI update
     document.getElementById("topCenterName").innerText = profile_nama.value;
 
-    if(fotoURL){
-      document.getElementById("topProfileImg").src = fotoURL;
-      document.getElementById("previewFoto").src = fotoURL;
+    if(foto){
+      document.getElementById("topProfileImg").src = foto;
+      document.getElementById("previewFoto").src = foto;
     }
 
     alert("Profile berhasil disimpan");
+    closeProfile();
 
-    closeProfile(); // 🔥 pasti jalan
-
-  } catch(e){
+  }catch(e){
     console.error(e);
-    alert("Gagal simpan profile");
+    alert("Gagal simpan");
   }
 }
 
@@ -2153,6 +2147,60 @@ document.getElementById("profile_foto").addEventListener("change", function(){
   document.getElementById("previewFoto").src = url;
   document.getElementById("topProfileImg").src = url;
 });
+
+  function toBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+
+  async function compressImage(file){
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = e => {
+      img.src = e.target.result;
+    };
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+
+      // 🔥 resize max 300px
+      const MAX = 300;
+      let width = img.width;
+      let height = img.height;
+
+      if(width > height){
+        if(width > MAX){
+          height *= MAX / width;
+          width = MAX;
+        }
+      } else {
+        if(height > MAX){
+          width *= MAX / height;
+          height = MAX;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // 🔥 compress kualitas 0.7
+      const base64 = canvas.toDataURL("image/jpeg", 0.7);
+
+      resolve(base64);
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
   
 </script>
 
