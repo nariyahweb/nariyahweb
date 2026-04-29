@@ -2025,8 +2025,6 @@ document.addEventListener("click", function(e){
     document.getElementById("profile_foto").click();
   }
 
-});
-  
   // SIDEBAR CLOSE
   if(
     !e.target.closest(".sidebar") &&
@@ -2035,11 +2033,11 @@ document.addEventListener("click", function(e){
     sidebar.classList.remove("active");
   }
 
-  // NOTIF
+  // NOTIF CLOSE
   if(!e.target.closest(".notif")){
     document.getElementById("notifDropdown").style.display = "none";
   }
-  
+
 });
 
 hoverZone.addEventListener("mouseenter", () => {
