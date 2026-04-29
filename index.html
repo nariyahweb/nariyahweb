@@ -118,6 +118,9 @@ input, select { width:100%; padding:8px; margin:5px 0; }
 /* info */
 .step-card.info{
   background:#fff7ed;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
 }
 
 /* button */
@@ -856,26 +859,26 @@ h3 {
 
     <!-- STEP 3 -->
     <div class="step-card info">
-      <h4>3. Informasi Import</h4>
+  <h4>3. Informasi Import</h4>
 
-      <ul>
-        <li>✔ Import ribuan data sekaligus (batch)</li>
-        <li>✔ Validasi nomor otomatis</li>
-        <li>✔ Data tidak valid akan dilewati</li>
-        <li>✔ Proses cepat & aman</li>
-      </ul>
-    </div>
+  <ul>
+    <li>✔ Import ribuan data sekaligus (batch)</li>
+    <li>✔ Validasi nomor otomatis</li>
+    <li>✔ Data tidak valid akan dilewati</li>
+    <li>✔ Proses cepat & aman</li>
+  </ul>
 
-  </div>
-
-  <!-- BUTTON -->
+  <!-- 🔥 PINDAH KE SINI -->
   <button class="btn-import-modern" onclick="importExcel()">
     🚀 Import Data Sekarang
   </button>
 
   <small class="secure">🔒 Data Anda aman dan terenkripsi</small>
-
 </div>
+
+  </div>
+
+  <!-- BUTTON -->
   
   <div style="padding:10px">
     <b>Rate:</b> <span id="rate">0%</span>
