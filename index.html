@@ -2095,12 +2095,10 @@ window.saveProfile = async function(){
     let file = profile_foto.files[0];
 
     if(file){
-      let ref = storage.ref("profile/" + user.uid);
-      let ref = storage.ref("profile/" + user.uid + "_" + Date.now());
-      await ref.put(file);
-      fotoURL = await ref.getDownloadURL();
-    }
-
+  let ref = storage.ref("profile/" + user.uid + "_" + Date.now());
+  await ref.put(file);
+  fotoURL = await ref.getDownloadURL();
+}
     let updateData = {
       nama: profile_nama.value,
       hp: profile_hp.value,
