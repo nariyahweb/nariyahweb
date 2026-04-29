@@ -689,10 +689,8 @@ h3 {
 
     <!-- PROFILE -->
     <div class="profile" onclick="openProfileModal()">
-      <img src="https://i.pravatar.cc/40">
-      <input type="file" id="profile_foto" accept="image/*">
-      <img id="previewFoto" style="width:60px; border-radius:50%; margin-top:10px;">
-    </div>
+  <img id="topProfileImg" src="https://i.pravatar.cc/40">
+</div>
 
   </div>
 </div>
@@ -897,9 +895,20 @@ h3 {
   </div>
 </div>
 
-    <div class="modal" id="modalProfile">
+   <div class="modal" id="modalProfile">
   <div class="modal-box">
     <h3>Profile CS Agent</h3>
+
+    <!-- FOTO -->
+    <div style="text-align:center; margin-bottom:15px;">
+      <img id="previewFoto"
+           src="https://i.pravatar.cc/100"
+           style="width:80px;height:80px;border-radius:50%;cursor:pointer;object-fit:cover;">
+
+      <input type="file" id="profile_foto" accept="image/*" hidden>
+
+      <p style="font-size:12px;color:#888;">Klik foto untuk ganti</p>
+    </div>
 
     <input id="profile_nama" placeholder="Nama">
     <input id="profile_email" placeholder="Email" disabled>
@@ -979,7 +988,8 @@ auth.onAuthStateChanged(user=>{
       }
 
       document.getElementById("topCenterName").innerText = nama;
-      document.querySelector(".profile img").src = foto;
+      document.getElementById("topProfileImg").src = foto;
+document.getElementById("previewFoto").src = foto;
     });
 
     loadData(); // ✅ taruh di dalam if(user)
@@ -2101,7 +2111,7 @@ window.saveProfile = async function(){
   modalProfile.style.display = "none";
 }
 
-profile_foto.addEventListener("change", function(){
+document.getElementById("profile_foto").addEventListener("change", function(){
   let file = this.files[0];
 
   if(!file) return;
@@ -2116,9 +2126,11 @@ profile_foto.addEventListener("change", function(){
     return;
   }
 
-  previewFoto.src = URL.createObjectURL(file);
-});
+  let url = URL.createObjectURL(file);
 
+  document.getElementById("previewFoto").src = url;
+});
+  
 </script>
 
     <!-- NOTIF -->
