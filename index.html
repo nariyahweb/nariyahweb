@@ -2020,6 +2020,13 @@ function toggleNotif(){
 // CLOSE CLICK OUTSIDE
 document.addEventListener("click", function(e){
 
+  // klik foto → buka file
+  if(e.target && e.target.id === "previewFoto"){
+    document.getElementById("profile_foto").click();
+  }
+
+});
+  
   // SIDEBAR CLOSE
   if(
     !e.target.closest(".sidebar") &&
@@ -2112,8 +2119,8 @@ window.saveProfile = async function(){
 }
 
 document.getElementById("profile_foto").addEventListener("change", function(){
-  let file = this.files[0];
 
+  let file = this.files[0];
   if(!file) return;
 
   if(file.size > 1024 * 1024){
