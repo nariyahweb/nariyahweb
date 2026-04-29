@@ -2018,12 +2018,10 @@ function toggleNotif(){
 // =======================
 
 // CLOSE CLICK OUTSIDE
-document.addEventListener("click", function(e){
-
-  // klik foto → buka file
-  if(e.target && e.target.id === "previewFoto"){
-    document.getElementById("profile_foto").click();
-  }
+document.getElementById("previewFoto").addEventListener("click", function(e){
+  e.stopPropagation(); // 🔥 penting
+  document.getElementById("profile_foto").click();
+});
 
   // SIDEBAR CLOSE
   if(
@@ -2093,6 +2091,12 @@ window.saveProfile = async function(){
 
   let fotoURL = null;
   let file = profile_foto.files[0];
+  if(fotoURL){
+  document.getElementById("topProfileImg").src = fotoURL;
+  document.getElementById("previewFoto").src = fotoURL;
+}
+
+document.getElementById("topCenterName").innerText = profile_nama.value;
 
   if(file){
     let ref = storage.ref("profile/" + user.uid);
@@ -2101,13 +2105,20 @@ window.saveProfile = async function(){
   }
 
   db.collection("users").doc(user.uid).set({
-    nama: profile_nama.value,
-    hp: profile_hp.value,
-    email: user.email,
-    role: currentRole || "cs",
-    foto: fotoURL || null
-  }, { merge: true });
+    let updateData = {
+  nama: profile_nama.value,
+  hp: profile_hp.value,
+  email: user.email,
+  role: currentRole || "cs"
+};
 
+// hanya update foto kalau ada file baru
+if(fotoURL){
+  updateData.foto = fotoURL;
+}
+
+db.collection("users").doc(user.uid).set(updateData, { merge: true });
+  
   alert("Profile berhasil disimpan");
   closeProfile();
 }
@@ -2134,6 +2145,7 @@ document.getElementById("profile_foto").addEventListener("change", function(){
   let url = URL.createObjectURL(file);
 
   document.getElementById("previewFoto").src = url;
+  document.getElementById("topProfileImg").src = url;
 });
   
 </script>
