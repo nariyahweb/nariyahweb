@@ -690,6 +690,8 @@ h3 {
     <!-- PROFILE -->
     <div class="profile" onclick="openProfileModal()">
       <img src="https://i.pravatar.cc/40">
+      <input type="file" id="profile_foto" accept="image/*">
+      <img id="previewFoto" style="width:60px; border-radius:50%; margin-top:10px;">
     </div>
 
   </div>
@@ -868,9 +870,10 @@ h3 {
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
   <div class="modal" id="modalDetail">
   <div class="modal-box" id="detailContent"></div>
@@ -925,8 +928,9 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const storage = firebase.storage();
 
 let currentCustomer = null;
   let currentRole = null;
@@ -949,29 +953,29 @@ window.logout = function(){ auth.signOut(); }
 // AUTH
 auth.onAuthStateChanged(user=>{
   if(user){
-
-    loginPage.style.display="none";
-    app.style.display="block";
-
     db.collection("users").doc(user.uid).get().then(doc=>{
       let nama = "CS Agent";
+      let foto = "https://i.pravatar.cc/40";
 
       if(doc.exists){
         let d = doc.data();
 
-        // 🔥 PRIORITAS: nama → role → default
         if(d.nama && d.nama.trim() !== ""){
           nama = d.nama;
         } else if(d.role){
           nama = d.role.toUpperCase();
         }
 
-        // 🔥 SIMPAN ROLE KE GLOBAL
-        currentRole = d.role || "cs";
+        if(d.foto){
+          foto = d.foto;
+        }
       }
 
       document.getElementById("topCenterName").innerText = nama;
+      document.querySelector(".profile img").src = foto;
     });
+  }
+});
 
     loadData(); // 🔥 penting biar data jalan
 
@@ -2079,9 +2083,8 @@ sidebar.addEventListener("mouseleave", () => {
   });
 }
 
-  window.saveProfile = function(){
+window.saveProfile = async function(){
 
-    document.getElementById("profileName").innerText = profile_nama.value;
   let user = auth.currentUser;
 
   if(!profile_nama.value){
@@ -2089,11 +2092,21 @@ sidebar.addEventListener("mouseleave", () => {
     return;
   }
 
+  let fotoURL = null;
+  let file = profile_foto.files[0];
+
+  if(file){
+    let ref = storage.ref("profile/" + user.uid);
+    await ref.put(file);
+    fotoURL = await ref.getDownloadURL();
+  }
+
   db.collection("users").doc(user.uid).set({
     nama: profile_nama.value,
     hp: profile_hp.value,
     email: user.email,
-    role: currentRole || "cs"
+    role: currentRole || "cs",
+    foto: fotoURL || null
   }, { merge: true });
 
   alert("Profile berhasil disimpan");
@@ -2102,6 +2115,23 @@ sidebar.addEventListener("mouseleave", () => {
 
   window.closeProfile = function(){
   modalProfile.style.display = "none";
+}
+
+  profile_foto.addEventListener("change", function(){
+  let file = this.files[0];
+  if(file){
+    previewFoto.src = URL.createObjectURL(file);
+  }
+});
+
+  if(file.size > 1024 * 1024){
+  alert("Max 1MB");
+  return;
+}
+
+  if(!file.type.startsWith("image/")){
+  alert("Harus gambar!");
+  return;
 }
 
 </script>
