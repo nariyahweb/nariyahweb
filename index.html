@@ -1455,24 +1455,32 @@ function loadProspek(){
       el.innerHTML = "<h3>" + title + "</h3>";
     });
 
-    snap.forEach(doc=>{
-      let d = doc.data();
+snap.forEach(doc=>{
+  let d = doc.data();
 
-      let col = "prospekBaru";
+  let status = (d.status || "").trim(); // 🔥 normalize
 
-      if(d.status === "Baru") count.baru++;
-      if(d.status === "Sudah Dihubungi"){
-        count.hubungi++;
-        col = "prospekHubungi";
-      }
-      if(d.status === "Tertarik"){
-        count.tertarik++;
-        col = "prospekTertarik";
-      }
-      if(d.status === "Tidak Tertarik"){
-        count.tidak++;
-        col = "prospekTidak";
-      }
+  let col = "prospekBaru";
+
+  if(status === "Baru"){
+    count.baru++;
+  }
+  else if(status === "Sudah Dihubungi"){
+    count.hubungi++;
+    col = "prospekHubungi";
+  }
+  else if(status === "Tertarik"){
+    count.tertarik++;
+    col = "prospekTertarik";
+  }
+  else if(status === "Tidak Tertarik"){
+    count.tidak++;
+    col = "prospekTidak";
+  } 
+  else {
+    // 🔥 fallback biar tetap kebaca
+    count.baru++;
+  }
 
       let card = document.createElement("div");
       card.className = "card";
@@ -1764,12 +1772,19 @@ function loadChartProspek(data){
     data: {
       labels: ['Baru','Dihubungi','Tertarik','Tidak'],
       datasets: [{
-        data: [
-          data.baru,
-          data.hubungi,
-          data.tertarik,
-          data.tidak
-        ],
+       let arr = [
+  data.baru,
+  data.hubungi,
+  data.tertarik,
+  data.tidak
+];
+
+// 🔥 kalau semua 0, kasih dummy
+if(arr.every(v => v === 0)){
+  arr = [1,0,0,0];
+}
+
+data: arr,
         backgroundColor: [
           '#6366f1',
           '#0ea5e9',
