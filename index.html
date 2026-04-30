@@ -92,13 +92,14 @@
                         🔔
                         <span class="badge" id="notifCount">0</span>
                     </div>
-                    <div class="profile-avatar" id="profileAvatar">👤</div>
+                    <img class="profile-img" id="profileImg" src="https://i.pravatar.cc/40" alt="Profile">
                 </div>
             </div>
 
             <div class="content-area">
                 <!-- DASHBOARD PAGE -->
                 <div id="dashboardPage" class="page-content">
+                    <!-- STATS CARDS -->
                     <div class="stats-grid">
                         <div class="stat-card"><div class="stat-info"><h4>Total Data</h4><div class="value" id="totalData">0</div><small>Semua Data</small></div><div class="stat-icon bg-purple">👥</div></div>
                         <div class="stat-card"><div class="stat-info"><h4>Closing</h4><div class="value" id="closingTotal">0</div><small>Data Closing</small></div><div class="stat-icon bg-green">✔</div></div>
@@ -106,12 +107,13 @@
                         <div class="stat-card"><div class="stat-info"><h4>Prospek Aktif</h4><div class="value" id="activeProspek">0</div><small>Dalam Proses</small></div><div class="stat-icon bg-orange">👤</div></div>
                     </div>
 
+                    <!-- CHARTS -->
                     <div class="charts-row">
                         <div class="chart-card"><h3>Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
                         <div class="chart-card"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
                     </div>
 
-                    <!-- WRAPPER UNTUK SIDE BY SIDE -->
+                    <!-- FOLLOWUP & PROSPEK AGEN - SIDE BY SIDE -->
                     <div class="boards-wrapper">
                         <!-- FOLLOWUP AGEN BOARD -->
                         <div class="board-section">
