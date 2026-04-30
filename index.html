@@ -837,6 +837,72 @@ h3 {
 .chart-box canvas{
   margin-top:10px;
 }
+
+  .board-section {
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  margin-top: 25px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.add-btn {
+  background: #7c3aed;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.mini-board {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 18px;
+}
+
+.mini-column {
+  background: #fafafa;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.mini-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.purple { background:#f3e8ff; color:#7c3aed; }
+.blue { background:#eff6ff; color:#2563eb; }
+.orange { background:#fff7ed; color:#ea580c; }
+.green { background:#ecfdf5; color:#16a34a; }
+.red { background:#fef2f2; color:#dc2626; }
+
+.mini-card {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.mini-phone {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
   
 </style>
 </head>
@@ -1052,33 +1118,93 @@ h3 {
 <!-- ========================= -->
 <!-- ✅ FOLLOWUP AGEN -->
 <!-- ========================= -->
-<div style="padding:10px">
-  <h3>Followup Agen</h3>
-  <button onclick="openModal()">+ Followup Agen</button>
+<div class="board-section">
+  <div class="board-header">
+    <h2>Followup Agen</h2>
+    <button class="add-btn" onclick="openModal()">＋ Tambah Data</button>
+  </div>
 
-  <div class="board">
-    <div class="column" id="baru"><h3>Baru</h3></div>
-    <div class="column" id="followup"><h3>Follow Up</h3></div>
-    <div class="column" id="pending"><h3>Pending</h3></div>
-    <div class="column" id="closing"><h3>Closing</h3></div>
+  <div class="mini-board">
+
+    <div class="mini-column">
+      <div class="mini-head purple">
+        <span>Baru</span>
+        <b id="countBaru">0</b>
+      </div>
+      <div id="baru" class="mini-list"></div>
+    </div>
+
+    <div class="mini-column">
+      <div class="mini-head blue">
+        <span>Follow Up</span>
+        <b id="countFollowup">0</b>
+      </div>
+      <div id="followup" class="mini-list"></div>
+    </div>
+
+    <div class="mini-column">
+      <div class="mini-head orange">
+        <span>Pending</span>
+        <b id="countPending">0</b>
+      </div>
+      <div id="pending" class="mini-list"></div>
+    </div>
+
+    <div class="mini-column">
+      <div class="mini-head green">
+        <span>Closing</span>
+        <b id="countClosing">0</b>
+      </div>
+      <div id="closing" class="mini-list"></div>
+    </div>
+
   </div>
 </div>
 
   <!-- ========================= -->
   <!-- ✅ PROSPEK (DI BAWAH) -->
   <!-- ========================= -->
-  <div style="padding:10px">
-    <h3>Prospek Agen</h3>
-    <button onclick="openProspek()">+ Tambah Prospek</button>
-
-    <div class="board">
-      <div class="column" id="prospekBaru"><h3>Baru</h3></div>
-      <div class="column" id="prospekHubungi"><h3>Sudah Dihubungi</h3></div>
-      <div class="column" id="prospekTertarik"><h3>Tertarik</h3></div>
-      <div class="column" id="prospekTidak"><h3>Tidak Tertarik</h3></div>
-    </div>
+  <div class="board-section">
+  <div class="board-header">
+    <h2>Prospek Agen</h2>
+    <button class="add-btn" onclick="openProspek()">＋ Tambh Data</button>
   </div>
 
+  <div class="mini-board">
+
+    <div class="mini-column">
+      <div class="mini-head purple">
+        <span>Baru</span>
+        <b id="countProspekBaru">0</b>
+      </div>
+      <div id="prospekBaru" class="mini-list"></div>
+    </div>
+
+    <div class="mini-column">
+      <div class="mini-head blue">
+        <span>Dihubungi</span>
+        <b id="countHubungi">0</b>
+      </div>
+      <div id="prospekHubungi" class="mini-list"></div>
+    </div>
+
+    <div class="mini-column">
+      <div class="mini-head green">
+        <span>Tertarik</span>
+        <b id="countTertarik">0</b>
+      </div>
+      <div id="prospekTertarik" class="mini-list"></div>
+    </div>
+
+    <div class="mini-column">
+      <div class="mini-head red">
+        <span>Tidak Tertarik</span>
+        <b id="countTidak">0</b>
+      </div>
+      <div id="prospekTidak" class="mini-list"></div>
+    </div>
+
+  </div>
 </div>
     
 <!-- MODAL CUSTOMER -->
@@ -1497,17 +1623,20 @@ snap.forEach(doc=>{
   }
 
       let card = document.createElement("div");
-      card.className = "card";
+      card.className = "mini-card";
       card.setAttribute("data-id", doc.id);
 
       card.onclick = () => openDetailProspek(doc.id);
 
       card.innerHTML = `
-        <b>${d.nama || '-'}</b><br>
-        <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
-          WhatsApp
-        </button>
-      `;
+  <b>${d.nama || '-'}</b>
+  <div class="mini-phone">
+    <span>${d.hp || '-'}</span>
+    <span onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
+      🟢
+    </span>
+  </div>
+`;
 
       document.getElementById(col).appendChild(card);
     });
