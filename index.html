@@ -150,9 +150,10 @@ input, select { width:100%; padding:8px; margin:5px 0; }
 
 .chart-container {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 🔥 PAKSA SEBELAHAN */
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
-  padding: 15px;
+  margin-top: 20px;
+  align-items: stretch;
 }
 
   .stats-modern{
@@ -195,25 +196,11 @@ input, select { width:100%; padding:8px; margin:5px 0; }
   padding: 20px;
   border-radius: 16px;
   box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  height: 100%; /* 🔥 BIAR SAMA TINGGI */
 }
 
 .chart-box:hover {
   transform: translateY(-4px);
   transition: 0.2s;
-}
-
-.chart-box canvas {
-  width: 100% !important;
-  max-width: 300px;
-  height: auto !important;
-
-  margin: auto; /* 🔥 CENTER */
 }
 
 #app { display:none; }
@@ -238,21 +225,12 @@ input, select { width:100%; padding:8px; margin:5px 0; }
   min-width:250px;
 }
 
-.chart-box {
-  flex: 1;
-  background: white;
-  padding: 10px;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  .chart-box canvas {
+  width: 100% !important;
+  height: 320px !important;
+  max-width: 100%;
 }
-
-.chart-box canvas {
-  max-width: 250px;   /* 🔥 ukuran kecil */
-  max-height: 250px;
-}
-
+  
 .modal {
   position:fixed;
   top:0;left:0;
@@ -1558,10 +1536,6 @@ card.setAttribute("data-id", doc.id);
 });
     // ✅ TARUH DI SINI (SETELAH LOOP)
 // ✅ SETELAH SEMUA DATA KEHITUNG
-document.getElementById("countProspekBaru").innerText = count.baru;
-document.getElementById("countHubungi").innerText = count.hubungi;
-document.getElementById("countTertarik").innerText = count.tertarik;
-document.getElementById("countTidak").innerText = count.tidak;
     
 document.getElementById("countBaru").innerText =
   total - (closing + pending + followup);
@@ -1663,7 +1637,13 @@ snap.forEach(doc=>{
       document.getElementById(col).appendChild(card);
     });
 
-    console.log("DATA PROSPEK:", count);
+    document.getElementById("countProspekBaru").innerText = count.baru;
+document.getElementById("countHubungi").innerText = count.hubungi;
+document.getElementById("countTertarik").innerText = count.tertarik;
+document.getElementById("countTidak").innerText = count.tidak;
+
+console.log("DATA PROSPEK:", count);
+loadChartProspek(count);
     loadChartProspek(count);
     isProspekDragInit = false;
     setTimeout(initProspekDrag, 300);
