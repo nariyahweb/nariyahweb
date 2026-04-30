@@ -706,10 +706,56 @@ body {
     border: 1px solid #e5e7eb;
 }
 
-.db-section h3 {
-    font-size: 20px;
+.db-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.db-header h3 {
+    font-size: 20px;
     color: #1f2937;
+    margin: 0;
+}
+
+.db-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.db-select-all, .db-delete-selected {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.db-select-all {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.db-select-all:hover {
+    background: #e0e7ff;
+    transform: translateY(-1px);
+}
+
+.db-delete-selected {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.db-delete-selected:hover {
+    background: #fee2e2;
+    transform: translateY(-1px);
 }
 
 .db-list {
@@ -721,8 +767,8 @@ body {
     padding: 16px;
     border-bottom: 1px solid #e5e7eb;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 16px;
     transition: background 0.2s;
 }
 
@@ -732,6 +778,17 @@ body {
 
 .db-item:last-child {
     border-bottom: none;
+}
+
+.db-item-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #4f46e5;
+}
+
+.db-item-info {
+    flex: 1;
 }
 
 .db-item-info h4 {
@@ -751,18 +808,37 @@ body {
     color: #9ca3af;
 }
 
-.db-item button {
+.db-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.db-item-actions button {
     padding: 6px 12px;
-    background: #25D366;
-    color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     font-size: 12px;
-    transition: transform 0.2s;
+    transition: all 0.2s;
 }
 
-.db-item button:hover {
+.db-item-wa {
+    background: #25D366;
+    color: white;
+}
+
+.db-item-wa:hover {
+    background: #20b85a;
+    transform: scale(1.05);
+}
+
+.db-item-delete {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.db-item-delete:hover {
+    background: #fee2e2;
     transform: scale(1.05);
 }
 
