@@ -764,14 +764,14 @@
     <div class="login-container">
         <h2>🚀 FLOUPYUD</h2>
         <div class="input-group">
-            <label>Email</label>
-            <input type="email" id="loginEmail" placeholder="contoh@email.com">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" name="loginEmail" placeholder="contoh@email.com">
         </div>
         <div class="input-group">
-            <label>Password</label>
+            <label for="loginPassword">Password</label>
             <div class="password-wrapper">
-                <input type="password" id="loginPassword" placeholder="******">
-                <button type="button" class="toggle-password" id="togglePasswordBtn">👁️</button>
+                <input type="password" id="loginPassword" name="loginPassword" placeholder="******">
+                <button type="button" class="toggle-password" id="togglePasswordBtn" aria-label="Tampilkan password">👁️</button>
             </div>
         </div>
         <button class="login-btn" id="loginBtn">Masuk</button>
@@ -820,12 +820,12 @@
         <div class="main-content">
             <div class="topbar">
                 <div class="topbar-left">
-                    <button class="toggle-btn" id="toggleSidebarBtn">☰</button>
+                    <button class="toggle-btn" id="toggleSidebarBtn" aria-label="Toggle sidebar">☰</button>
                     <span class="logo">FLOUPYUD</span>
                 </div>
                 <div class="topbar-center" id="topUserName">CS Agent</div>
                 <div class="topbar-right">
-                    <div class="notif-icon" id="notifBtn">
+                    <div class="notif-icon" id="notifBtn" aria-label="Notifikasi">
                         🔔
                         <span class="badge" id="notifCount">0</span>
                     </div>
@@ -890,10 +890,77 @@
 </div>
 
 <!-- MODALS -->
-<div class="modal" id="customerModal"><div class="modal-content"><h3>Tambah Customer</h3><input type="text" id="customerName" placeholder="Nama Lengkap"><input type="tel" id="customerPhone" placeholder="No HP" value="+62"><input type="date" id="customerDate"><div class="modal-buttons"><button id="saveCustomerBtn">Simpan</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div></div></div>
-<div class="modal" id="prospekModal"><div class="modal-content"><h3>Tambah Prospek</h3><input type="text" id="prospekName" placeholder="Nama Agen"><input type="tel" id="prospekPhone" placeholder="No HP" value="+62"><select id="prospekStatusSelect"><option value="Baru">Baru</option><option value="Sudah Dihubungi">Sudah Dihubungi</option><option value="Tertarik">Tertarik</option><option value="Tidak Tertarik">Tidak Tertarik</option></select><div class="modal-buttons"><button id="saveProspekBtn">Simpan</button><button class="closeModalBtn" data-modal="prospekModal">Batal</button></div></div></div>
-<div class="modal" id="profileModal"><div class="modal-content"><h3>Profile CS Agent</h3><div class="profile-photo"><img id="previewFoto" src="https://i.pravatar.cc/80"><input type="file" id="profileFoto" hidden accept="image/*"></div><input type="text" id="profileName" placeholder="Nama"><input type="email" id="profileEmail" placeholder="Email" disabled><input type="tel" id="profilePhone" placeholder="No HP" value="+62"><div class="modal-buttons"><button id="saveProfileBtn">Simpan</button><button class="closeModalBtn" data-modal="profileModal">Batal</button></div></div></div>
-<div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
+<div class="modal" id="customerModal">
+    <div class="modal-content">
+        <h3>Tambah Customer</h3>
+        <label for="customerName" style="display:block; font-size:13px; margin-top:10px;">Nama Lengkap</label>
+        <input type="text" id="customerName" placeholder="Nama Lengkap">
+        
+        <label for="customerPhone" style="display:block; font-size:13px; margin-top:10px;">No HP</label>
+        <input type="tel" id="customerPhone" placeholder="No HP" value="+62">
+        
+        <label for="customerDate" style="display:block; font-size:13px; margin-top:10px;">Tanggal</label>
+        <input type="date" id="customerDate">
+        
+        <div class="modal-buttons">
+            <button id="saveCustomerBtn">Simpan</button>
+            <button class="closeModalBtn" data-modal="customerModal">Batal</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="prospekModal">
+    <div class="modal-content">
+        <h3>Tambah Prospek</h3>
+        <label for="prospekName" style="display:block; font-size:13px; margin-top:10px;">Nama Agen</label>
+        <input type="text" id="prospekName" placeholder="Nama Agen">
+        
+        <label for="prospekPhone" style="display:block; font-size:13px; margin-top:10px;">No HP</label>
+        <input type="tel" id="prospekPhone" placeholder="No HP" value="+62">
+        
+        <label for="prospekStatusSelect" style="display:block; font-size:13px; margin-top:10px;">Status</label>
+        <select id="prospekStatusSelect">
+            <option value="Baru">Baru</option>
+            <option value="Sudah Dihubungi">Sudah Dihubungi</option>
+            <option value="Tertarik">Tertarik</option>
+            <option value="Tidak Tertarik">Tidak Tertarik</option>
+        </select>
+        
+        <div class="modal-buttons">
+            <button id="saveProspekBtn">Simpan</button>
+            <button class="closeModalBtn" data-modal="prospekModal">Batal</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="profileModal">
+    <div class="modal-content">
+        <h3>Profile CS Agent</h3>
+        <div class="profile-photo">
+            <img id="previewFoto" src="https://i.pravatar.cc/80" alt="Profile Photo">
+            <input type="file" id="profileFoto" hidden accept="image/*">
+            <p style="font-size:12px; color:#888; margin-top:8px;">Klik foto untuk ganti</p>
+        </div>
+        
+        <label for="profileName" style="display:block; font-size:13px; margin-top:10px;">Nama</label>
+        <input type="text" id="profileName" placeholder="Nama">
+        
+        <label for="profileEmail" style="display:block; font-size:13px; margin-top:10px;">Email</label>
+        <input type="email" id="profileEmail" placeholder="Email" disabled>
+        
+        <label for="profilePhone" style="display:block; font-size:13px; margin-top:10px;">No HP</label>
+        <input type="tel" id="profilePhone" placeholder="No HP" value="+62">
+        
+        <div class="modal-buttons">
+            <button id="saveProfileBtn">Simpan</button>
+            <button class="closeModalBtn" data-modal="profileModal">Batal</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="detailModal">
+    <div class="modal-content" id="detailContent"></div>
+</div>
 
 <div id="notifBox"></div>
 
