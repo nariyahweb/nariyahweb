@@ -629,31 +629,245 @@ if (importBtn) {
 }
 
 // ========== DATABASE ARCHIVES ==========
+let selectedClosingIds = new Map(); // Map untuk simpan id dan checkbox state
+let selectedTidakIds = new Map();
+
 function loadDBClosing() {
     if (!currentUser) return;
-    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
+    
+    db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let html = '';
+        let items = [];
+        
         snap.forEach(doc => {
             const d = doc.data();
-            html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
+            const isChecked = selectedClosingIds.get(doc.id) || false;
+            items.push({
+                id: doc.id,
+                nama: d.nama,
+                hp: d.hp,
+                closing_date: d.closing_date,
+                checked: isChecked
+            });
         });
+        
+        // Sort berdasarkan tanggal (descending)
+        items.sort((a, b) => new Date(b.closing_date) - new Date(a.closing_date));
+        
+        html = items.map(item => `
+            <div class="db-item" data-id="${item.id}">
+                <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" data-type="closing" ${item.checked ? 'checked' : ''}>
+                <div class="db-item-info">
+                    <h4>${escapeHtml(item.nama)}</h4>
+                    <p>${item.hp}</p>
+                    <small>Closing: ${new Date(item.closing_date).toLocaleDateString('id-ID')}</small>
+                </div>
+                <div class="db-item-actions">
+                    <button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button>
+                    <button class="db-item-delete" onclick="deleteDBItem('closing', '${item.id}')">🗑️ Hapus</button>
+                </div>
+            </div>
+        `).join('');
+        
         const dbClosingList = document.getElementById('dbClosingList');
-        if (dbClosingList) dbClosingList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
+        if (dbClosingList) {
+            dbClosingList.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data closing</p>';
+            
+            // Attach event listeners ke checkbox
+            document.querySelectorAll('#dbClosingList .db-item-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const id = cb.dataset.id;
+                    if (cb.checked) {
+                        selectedClosingIds.set(id, true);
+                    } else {
+                        selectedClosingIds.delete(id);
+                    }
+                    updateSelectAllButton('closing');
+                });
+            });
+        }
+        updateSelectAllButton('closing');
     });
 }
 
 function loadDBTidak() {
     if (!currentUser) return;
-    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then(snap => {
+    
+    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let html = '';
+        let items = [];
+        
         snap.forEach(doc => {
             const d = doc.data();
-            html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
+            const isChecked = selectedTidakIds.get(doc.id) || false;
+            items.push({
+                id: doc.id,
+                nama: d.nama,
+                hp: d.hp,
+                tanggal: d.tanggal,
+                checked: isChecked
+            });
         });
+        
+        // Sort berdasarkan tanggal (descending)
+        items.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+        
+        html = items.map(item => `
+            <div class="db-item" data-id="${item.id}">
+                <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" data-type="tidak" ${item.checked ? 'checked' : ''}>
+                <div class="db-item-info">
+                    <h4>${escapeHtml(item.nama)}</h4>
+                    <p>${item.hp}</p>
+                    <small>Tanggal: ${new Date(item.tanggal).toLocaleDateString('id-ID')}</small>
+                </div>
+                <div class="db-item-actions">
+                    <button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button>
+                    <button class="db-item-delete" onclick="deleteDBItem('tidak', '${item.id}')">🗑️ Hapus</button>
+                </div>
+            </div>
+        `).join('');
+        
         const dbTidakList = document.getElementById('dbTidakList');
-        if (dbTidakList) dbTidakList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
+        if (dbTidakList) {
+            dbTidakList.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data tidak tertarik</p>';
+            
+            // Attach event listeners ke checkbox
+            document.querySelectorAll('#dbTidakList .db-item-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const id = cb.dataset.id;
+                    if (cb.checked) {
+                        selectedTidakIds.set(id, true);
+                    } else {
+                        selectedTidakIds.delete(id);
+                    }
+                    updateSelectAllButton('tidak');
+                });
+            });
+        }
+        updateSelectAllButton('tidak');
     });
 }
+
+function updateSelectAllButton(type) {
+    if (type === 'closing') {
+        const checkboxes = document.querySelectorAll('#dbClosingList .db-item-checkbox');
+        const selectAllBtn = document.getElementById('selectAllClosing');
+        if (selectAllBtn) {
+            const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+            selectAllBtn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+        }
+    } else {
+        const checkboxes = document.querySelectorAll('#dbTidakList .db-item-checkbox');
+        const selectAllBtn = document.getElementById('selectAllTidak');
+        if (selectAllBtn) {
+            const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+            selectAllBtn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+        }
+    }
+}
+
+// Select All function
+window.selectAllClosing = function() {
+    const checkboxes = document.querySelectorAll('#dbClosingList .db-item-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+        const id = cb.dataset.id;
+        if (!allChecked) {
+            selectedClosingIds.set(id, true);
+        } else {
+            selectedClosingIds.delete(id);
+        }
+    });
+    updateSelectAllButton('closing');
+};
+
+window.selectAllTidak = function() {
+    const checkboxes = document.querySelectorAll('#dbTidakList .db-item-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+        const id = cb.dataset.id;
+        if (!allChecked) {
+            selectedTidakIds.set(id, true);
+        } else {
+            selectedTidakIds.delete(id);
+        }
+    });
+    updateSelectAllButton('tidak');
+};
+
+// Delete single item
+window.deleteDBItem = async function(type, id) {
+    if (!confirm('Yakin hapus data ini?')) return;
+    
+    try {
+        if (type === 'closing') {
+            await db.collection('db_closing').doc(id).delete();
+            selectedClosingIds.delete(id);
+            showNotif('Data closing berhasil dihapus');
+        } else {
+            await db.collection('db_tidak_tertarik').doc(id).delete();
+            selectedTidakIds.delete(id);
+            showNotif('Data tidak tertarik berhasil dihapus');
+        }
+    } catch (error) {
+        showNotif('Gagal hapus: ' + error.message, true);
+    }
+};
+
+// Delete selected items
+window.deleteSelectedClosing = async function() {
+    const selectedIds = Array.from(selectedClosingIds.keys());
+    if (selectedIds.length === 0) {
+        showNotif('Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data closing yang dipilih?`)) return;
+    
+    try {
+        const batch = db.batch();
+        selectedIds.forEach(id => {
+            batch.delete(db.collection('db_closing').doc(id));
+        });
+        await batch.commit();
+        selectedClosingIds.clear();
+        showNotif(`${selectedIds.length} data closing berhasil dihapus`);
+    } catch (error) {
+        showNotif('Gagal hapus: ' + error.message, true);
+    }
+};
+
+window.deleteSelectedTidak = async function() {
+    const selectedIds = Array.from(selectedTidakIds.keys());
+    if (selectedIds.length === 0) {
+        showNotif('Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data tidak tertarik yang dipilih?`)) return;
+    
+    try {
+        const batch = db.batch();
+        selectedIds.forEach(id => {
+            batch.delete(db.collection('db_tidak_tertarik').doc(id));
+        });
+        await batch.commit();
+        selectedTidakIds.clear();
+        showNotif(`${selectedIds.length} data tidak tertarik berhasil dihapus`);
+    } catch (error) {
+        showNotif('Gagal hapus: ' + error.message, true);
+    }
+};
+
+// Attach button event listeners
+document.getElementById('selectAllClosing')?.addEventListener('click', selectAllClosing);
+document.getElementById('deleteSelectedClosing')?.addEventListener('click', deleteSelectedClosing);
+document.getElementById('selectAllTidak')?.addEventListener('click', selectAllTidak);
+document.getElementById('deleteSelectedTidak')?.addEventListener('click', deleteSelectedTidak);
 
 // ========== CHARTS ==========
 function updateChartCustomer(total, closing, pending, followup) {
