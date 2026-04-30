@@ -25,7 +25,8 @@ function showNotif(msg, isError = false) {
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
 }
 
 function openWA(hp) {
@@ -49,20 +50,15 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
-// Inisialisasi sidebar setelah DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const hoverZone = document.getElementById('hoverZone');
     const toggleBtn = document.getElementById('toggleSidebarBtn');
     
-    console.log('Sidebar init - sidebar exists:', !!sidebar);
-    console.log('Is Mobile:', isMobile());
-    
-    // Desktop: Hover to open sidebar
     if (hoverZone) {
         hoverZone.addEventListener('mouseenter', function() {
             if (!isMobile() && sidebar) {
-                console.log('Hover zone enter - opening sidebar');
+                clearTimeout(sidebarTimeout);
                 sidebar.classList.add('active');
             }
         });
@@ -71,24 +67,26 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sidebar) {
         sidebar.addEventListener('mouseleave', function() {
             if (!isMobile()) {
-                console.log('Sidebar leave - closing sidebar');
-                sidebar.classList.remove('active');
+                sidebarTimeout = setTimeout(function() {
+                    sidebar.classList.remove('active');
+                }, 200);
             }
+        });
+        
+        sidebar.addEventListener('mouseenter', function() {
+            clearTimeout(sidebarTimeout);
         });
     }
     
-    // Mobile: Toggle button
     if (toggleBtn) {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (sidebar) {
-                console.log('Toggle button clicked - toggling sidebar');
                 sidebar.classList.toggle('active');
             }
         });
     }
     
-    // Close sidebar when clicking outside (mobile only)
     document.addEventListener('click', function(e) {
         if (isMobile() && sidebar && toggleBtn) {
             if (!sidebar.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
@@ -97,10 +95,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Handle window resize
     window.addEventListener('resize', function() {
         if (!isMobile() && sidebar) {
-            // Di desktop, pastikan sidebar tertutup saat resize
             sidebar.classList.remove('active');
         } else if (isMobile() && sidebar) {
             sidebar.classList.remove('active');
@@ -169,27 +165,15 @@ auth.onAuthStateChanged(user => {
         loginPage.style.display = 'none';
         app.style.display = 'block';
         
-        console.log('User logged in:', user.uid);
-        
         db.collection('users').doc(user.uid).get().then(doc => {
             let nama = 'CS Agent';
-            let foto = 'https://i.pravatar.cc/40';
-            if (doc.exists) {
-                const data = doc.data();
-                if (data.nama) nama = data.nama;
-                if (data.foto) foto = data.foto;
-                console.log('Loaded user data - nama:', nama, 'foto:', foto.substring(0, 50));
-            }
+            if (doc.exists && doc.data().nama) nama = doc.data().nama;
             
             const topUserName = document.getElementById('topUserName');
             const profileName = document.getElementById('profileName');
-            const topProfileImg = document.getElementById('topProfileImg');
-            const previewFoto = document.getElementById('previewFoto');
             
             if (topUserName) topUserName.innerText = nama;
             if (profileName) profileName.value = nama;
-            if (topProfileImg) topProfileImg.src = foto;
-            if (previewFoto) previewFoto.src = foto;
         });
         
         const profileEmail = document.getElementById('profileEmail');
@@ -231,7 +215,6 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         
-        // Close sidebar on mobile after click
         if (window.innerWidth <= 768) {
             const sidebarEl = document.getElementById('sidebar');
             if (sidebarEl) sidebarEl.classList.remove('active');
@@ -251,16 +234,12 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 
 // ========== PROFILE ==========
-// Event klik foto profile di header
-const profileImg = document.getElementById('profileImg');
-if (profileImg) {
-    profileImg.addEventListener('click', () => {
-        console.log('Profile image clicked');
+const profileAvatar = document.getElementById('profileAvatar');
+if (profileAvatar) {
+    profileAvatar.addEventListener('click', () => {
         const profileModal = document.getElementById('profileModal');
-        if (profileModal) {
-            profileModal.style.display = 'flex';
-        }
-        // Load data user saat ini
+        if (profileModal) profileModal.style.display = 'flex';
+        
         db.collection('users').doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
@@ -274,22 +253,18 @@ if (profileImg) {
     });
 }
 
-// Event klik foto di dalam modal untuk ganti foto
 const previewFoto = document.getElementById('previewFoto');
 if (previewFoto) {
     previewFoto.addEventListener('click', () => {
-        console.log('Preview foto clicked');
         const profileFotoInput = document.getElementById('profileFoto');
         if (profileFotoInput) profileFotoInput.click();
     });
 }
 
-// Event ketika memilih file foto
 const profileFotoInput = document.getElementById('profileFoto');
 if (profileFotoInput) {
     profileFotoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
-        console.log('File selected:', file ? file.name : 'no file');
         if (file && file.type.startsWith('image/')) {
             if (file.size > 1024 * 1024) {
                 showNotif('Ukuran foto maksimal 1MB', true);
@@ -298,21 +273,16 @@ if (profileFotoInput) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('previewFoto');
-                if (preview) {
-                    preview.src = e.target.result;
-                    console.log('Preview foto updated');
-                }
+                if (preview) preview.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
     });
 }
 
-// Event tombol simpan profile
 const saveProfileBtn = document.getElementById('saveProfileBtn');
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', async () => {
-        console.log('Save profile clicked');
         const nama = document.getElementById('profileName').value;
         const hp = document.getElementById('profilePhone').value;
         const foto = document.getElementById('previewFoto').src;
@@ -323,7 +293,6 @@ if (saveProfileBtn) {
         }
         
         try {
-            console.log('Saving profile to Firestore...');
             await db.collection('users').doc(currentUser.uid).set({
                 nama: nama,
                 hp: hp,
@@ -332,24 +301,12 @@ if (saveProfileBtn) {
                 updated_at: new Date().toISOString()
             }, { merge: true });
             
-            // Update nama di header
             const topUserName = document.getElementById('topUserName');
-            if (topUserName) {
-                topUserName.innerText = nama;
-                console.log('Nama header updated to:', nama);
-            }
-            
-            // Update foto di header
-            const topProfileImg = document.getElementById('topProfileImg');
-            if (topProfileImg) {
-                topProfileImg.src = foto;
-                console.log('Foto header updated to:', foto.substring(0, 50) + '...');
-            }
+            if (topUserName) topUserName.innerText = nama;
             
             closeModal('profileModal');
             showNotif('Profile tersimpan');
         } catch (e) {
-            console.error('Error saving profile:', e);
             showNotif('Gagal: ' + e.message, true);
         }
     });
@@ -359,8 +316,7 @@ if (saveProfileBtn) {
 const addCustomerBtn = document.getElementById('addCustomerBtn');
 if (addCustomerBtn) {
     addCustomerBtn.addEventListener('click', () => {
-        const customerModal = document.getElementById('customerModal');
-        if (customerModal) customerModal.style.display = 'flex';
+        document.getElementById('customerModal').style.display = 'flex';
     });
 }
 
@@ -397,8 +353,7 @@ if (saveCustomerBtn) {
 const addProspekBtn = document.getElementById('addProspekBtn');
 if (addProspekBtn) {
     addProspekBtn.addEventListener('click', () => {
-        const prospekModal = document.getElementById('prospekModal');
-        if (prospekModal) prospekModal.style.display = 'flex';
+        document.getElementById('prospekModal').style.display = 'flex';
     });
 }
 
@@ -433,10 +388,8 @@ if (saveProspekBtn) {
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(doc => {
         const d = doc.data();
-        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        
-        if (!modal || !content) return;
+        if (!content) return;
         
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
@@ -452,17 +405,15 @@ function openDetailCustomer(id) {
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
         `;
-        modal.style.display = 'flex';
+        document.getElementById('detailModal').style.display = 'flex';
     });
 }
 
 function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
-        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        
-        if (!modal || !content) return;
+        if (!content) return;
         
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
@@ -478,7 +429,7 @@ function openDetailProspek(id) {
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
         `;
-        modal.style.display = 'flex';
+        document.getElementById('detailModal').style.display = 'flex';
     });
 }
 
@@ -699,17 +650,13 @@ function updateChartCustomer(total, closing, pending, followup) {
     if (chartCustomer) chartCustomer.destroy();
     
     const baru = total - (closing + pending + followup);
-    const dataArr = [closing, pending, followup, baru];
-    const labels = ['Closing', 'Pending', 'Follow Up', 'Baru'];
-    const colors = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
-    
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
             datasets: [{
-                data: dataArr,
-                backgroundColor: colors,
+                data: [closing, pending, followup, baru],
+                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
                 borderWidth: 0,
                 hoverOffset: 15,
                 cutout: '65%'
@@ -718,46 +665,8 @@ function updateChartCustomer(total, closing, pending, followup) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            layout: {
-                padding: 10
-            },
             plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 12,
-                        font: { size: 11, weight: 'normal' },
-                        generateLabels: function(chart) {
-                            const data = chart.data;
-                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            return data.labels.map((label, i) => {
-                                const value = data.datasets[0].data[i];
-                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                                return {
-                                    text: `${label} : ${value} (${percent}%)`,
-                                    fillStyle: data.datasets[0].backgroundColor[i],
-                                    strokeStyle: data.datasets[0].backgroundColor[i],
-                                    lineWidth: 0,
-                                    hidden: false,
-                                    index: i
-                                };
-                            });
-                        }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${label}: ${value} (${percent}%)`;
-                        }
-                    }
-                }
+                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
             }
         }
     });
@@ -769,18 +678,15 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     if (chartProspek) chartProspek.destroy();
     
     let dataArr = [baru, dihubungi, tertarik, tidak];
-    const labels = ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'];
-    const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'];
-    
     if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
     
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'],
             datasets: [{
                 data: dataArr,
-                backgroundColor: colors,
+                backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'],
                 borderWidth: 0,
                 hoverOffset: 15,
                 cutout: '65%'
@@ -789,53 +695,15 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            layout: {
-                padding: 10
-            },
             plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 12,
-                        font: { size: 11, weight: 'normal' },
-                        generateLabels: function(chart) {
-                            const data = chart.data;
-                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            return data.labels.map((label, i) => {
-                                const value = data.datasets[0].data[i];
-                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                                return {
-                                    text: `${label} : ${value} (${percent}%)`,
-                                    fillStyle: data.datasets[0].backgroundColor[i],
-                                    strokeStyle: data.datasets[0].backgroundColor[i],
-                                    lineWidth: 0,
-                                    hidden: false,
-                                    index: i
-                                };
-                            });
-                        }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${label}: ${value} (${percent}%)`;
-                        }
-                    }
-                }
+                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
             }
         }
     });
 }
+
 // ========== DRAG AND DROP ==========
 function initDragAndDrop() {
-    // Customer drag and drop
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
     const customerStatusMap = { baruList: 'baru', followupList: 'followup', pendingList: 'pending', closingList: 'closing' };
     customerGroups.forEach(groupId => {
@@ -856,7 +724,6 @@ function initDragAndDrop() {
         }
     });
     
-    // Prospek drag and drop
     const prospekGroups = ['prospekBaruList', 'prospekDihubungiList', 'prospekTertarikList', 'prospekTidakList'];
     const prospekStatusMap = { prospekBaruList: 'Baru', prospekDihubungiList: 'Sudah Dihubungi', prospekTertarikList: 'Tertarik', prospekTidakList: 'Tidak Tertarik' };
     prospekGroups.forEach(groupId => {
@@ -886,6 +753,7 @@ function loadAllData() {
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
+        
         snap.forEach(doc => {
             const d = doc.data();
             total++;
@@ -893,6 +761,7 @@ function loadAllData() {
             else if (d.status === 'pending') pending++;
             else if (d.status === 'followup') followup++;
             else lists.baru.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            
             if (d.status === 'followup') lists.followup.push({ id: doc.id, nama: d.nama, hp: d.hp });
             if (d.status === 'pending') lists.pending.push({ id: doc.id, nama: d.nama, hp: d.hp });
             if (d.status === 'closing') lists.closing.push({ id: doc.id, nama: d.nama, hp: d.hp });
@@ -910,9 +779,22 @@ function loadAllData() {
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
-                container.innerHTML = lists[status].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div></div>`).join('');
+                container.innerHTML = lists[status].map(item => `
+                    <div class="card-item" data-id="${item.id}">
+                        <div class="card-name">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone">
+                            <span>${item.hp}</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
+                        </div>
+                    </div>
+                `).join('');
+                
                 container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
+                    card.addEventListener('click', (e) => { 
+                        if (!e.target.classList.contains('whatsapp-icon')) {
+                            openDetailCustomer(card.dataset.id);
+                        }
+                    });
                 });
             }
         }
@@ -924,6 +806,7 @@ function loadAllData() {
     db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let baru = 0, dihubungi = 0, tertarik = 0, tidak = 0;
         const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
+        
         snap.forEach(doc => {
             const d = doc.data();
             const st = d.status || 'Baru';
@@ -941,9 +824,22 @@ function loadAllData() {
         for (let col in lists) {
             const container = document.getElementById(col + 'List');
             if (container) {
-                container.innerHTML = lists[col].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div></div>`).join('');
+                container.innerHTML = lists[col].map(item => `
+                    <div class="card-item" data-id="${item.id}">
+                        <div class="card-name">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone">
+                            <span>${item.hp}</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
+                        </div>
+                    </div>
+                `).join('');
+                
                 container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
+                    card.addEventListener('click', (e) => { 
+                        if (!e.target.classList.contains('whatsapp-icon')) {
+                            openDetailProspek(card.dataset.id);
+                        }
+                    });
                 });
             }
         }
