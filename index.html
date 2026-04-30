@@ -1509,15 +1509,8 @@ function loadData(){
   .where("user_id","==",auth.currentUser.uid)
   .onSnapshot(snap=>{
 
-const titleMap = {
-  baru:"Baru",
-  followup:"Follow Up",
-  pending:"Pending",
-  closing:"Closing"
-};
-
-Object.keys(titleMap).forEach(id=>{
-  document.getElementById(id).innerHTML = "<h3>" + titleMap[id] + "</h3>";
+["baru","followup","pending","closing"].forEach(id=>{
+  document.getElementById(id).innerHTML = "";
 });
     
 let total = 0;
@@ -1551,6 +1544,18 @@ snap.forEach(doc=>{
 });
     // ✅ TARUH DI SINI (SETELAH LOOP)
 // ✅ SETELAH SEMUA DATA KEHITUNG
+document.getElementById("countProspekBaru").innerText = count.baru;
+document.getElementById("countHubungi").innerText = count.hubungi;
+document.getElementById("countTertarik").innerText = count.tertarik;
+document.getElementById("countTidak").innerText = count.tidak;
+    
+document.getElementById("countBaru").innerText =
+  total - (closing + pending + followup);
+
+document.getElementById("countFollowup").innerText = followup;
+document.getElementById("countPending").innerText = pending;
+document.getElementById("countClosing").innerText = closing;
+    
 let prospekAktif = total - closing;
 
 document.getElementById("prospekAktif").innerText = prospekAktif;
@@ -1564,6 +1569,7 @@ document.getElementById("rateText").innerText = rate + "%";
 updateNotifCount();
 loadChartCustomer(total, closing, pending, followup);
 checkReminder();
+isDragInit = false;
 setTimeout(initDrag, 300);
 
 });
@@ -1588,12 +1594,14 @@ function loadProspek(){
       tidak:0
     };
 
-    ["prospekBaru","prospekHubungi","prospekTertarik","prospekTidak"]
-    .forEach(id=>{
-      let el = document.getElementById(id);
-      let title = el.querySelector("h3").innerText;
-      el.innerHTML = "<h3>" + title + "</h3>";
-    });
+    [
+  "prospekBaru",
+  "prospekHubungi",
+  "prospekTertarik",
+  "prospekTidak"
+].forEach(id=>{
+  document.getElementById(id).innerHTML = "";
+});
 
 snap.forEach(doc=>{
   let d = doc.data();
@@ -1643,6 +1651,7 @@ snap.forEach(doc=>{
 
     console.log("DATA PROSPEK:", count);
     loadChartProspek(count);
+    isProspekDragInit = false;
     setTimeout(initProspekDrag, 300);
   });
 
@@ -1717,7 +1726,7 @@ window.saveCustomer = function(){
   location.reload();
 }
 }
-    
+
 let isDragInit = false;
 
 function initDrag(){
@@ -1728,8 +1737,8 @@ function initDrag(){
       group: "shared",
       animation: 150,
       draggable: ".card",
-      filter: "h3",
-      preventOnFilter: true,
+     filter: ".mini-head",
+preventOnFilter: true,
 
 onAdd: function(evt){
   let id = evt.item.getAttribute("data-id");
@@ -1769,8 +1778,8 @@ function initProspekDrag(){
       group: "prospek",
       animation: 150,
       draggable: ".card",
-      filter: "h3",
-      preventOnFilter: true,
+      filter: ".mini-head",
+preventOnFilter: true,
 
       onAdd: function(evt){
         let id = evt.item.getAttribute("data-id");
