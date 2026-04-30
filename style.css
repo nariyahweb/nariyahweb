@@ -770,6 +770,7 @@ body {
 .db-section h3 {
     font-size: 20px;
     margin-bottom: 20px;
+    color: #1f2937;
 }
 
 .db-list {
@@ -783,16 +784,32 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background 0.2s;
+}
+
+.db-item:hover {
+    background: #f9fafb;
+}
+
+.db-item:last-child {
+    border-bottom: none;
 }
 
 .db-item-info h4 {
     font-size: 16px;
     margin-bottom: 4px;
+    color: #1f2937;
 }
 
 .db-item-info p {
     font-size: 13px;
     color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.db-item-info small {
+    font-size: 11px;
+    color: #9ca3af;
 }
 
 .db-item button {
@@ -802,6 +819,12 @@ body {
     border: none;
     border-radius: 8px;
     cursor: pointer;
+    font-size: 12px;
+    transition: transform 0.2s;
+}
+
+.db-item button:hover {
+    transform: scale(1.05);
 }
 
 /* Modals */
