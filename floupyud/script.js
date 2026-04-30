@@ -15,8 +15,8 @@ let chartCustomer = null;
 let chartProspek = null;
 let sidebarTimeout = null;
 
-// ========== SIDEBAR FUNCTION ==========
-document.addEventListener('DOMContentLoaded', function() {
+// ========== SIDEBAR FUNGSI ==========
+function initSidebar() {
     const sidebar = document.getElementById('sidebar');
     const hoverZone = document.getElementById('hoverZone');
     const toggleBtn = document.getElementById('toggleSidebarBtn');
@@ -51,7 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Mobile: Toggle button
     if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
             if (sidebar) {
                 sidebar.classList.toggle('active');
             }
@@ -61,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Close sidebar when clicking outside (mobile only)
     document.addEventListener('click', function(e) {
         if (isMobile() && sidebar && toggleBtn) {
-            if (!sidebar.contains(e.target) && e.target !== toggleBtn) {
+            if (!sidebar.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
                 sidebar.classList.remove('active');
             }
         }
@@ -75,7 +76,10 @@ document.addEventListener('DOMContentLoaded', function() {
             sidebar.classList.remove('active');
         }
     });
-});
+}
+
+// Jalankan sidebar
+initSidebar();
 
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
@@ -98,6 +102,16 @@ function openWA(hp) {
     if (!hp) return;
     let nomor = hp.toString().replace('+', '').replace(/^0/, '62');
     window.open('https://wa.me/' + nomor, '_blank');
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    return text.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
 // ========== TOGGLE PASSWORD ==========
@@ -163,11 +177,20 @@ auth.onAuthStateChanged(user => {
         
         db.collection('users').doc(user.uid).get().then(doc => {
             let nama = 'CS Agent';
-            if (doc.exists && doc.data().nama) nama = doc.data().nama;
+            let foto = 'https://i.pravatar.cc/40';
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.nama) nama = data.nama;
+                if (data.foto) foto = data.foto;
+            }
             const topUserName = document.getElementById('topUserName');
             const profileName = document.getElementById('profileName');
+            const topProfileImg = document.getElementById('topProfileImg');
+            const previewFoto = document.getElementById('previewFoto');
             if (topUserName) topUserName.innerText = nama;
             if (profileName) profileName.value = nama;
+            if (topProfileImg) topProfileImg.src = foto;
+            if (previewFoto) previewFoto.src = foto;
         });
         
         const profileEmail = document.getElementById('profileEmail');
@@ -249,10 +272,31 @@ if (previewFoto) {
     });
 }
 
+// Upload foto profile
+const profileFoto = document.getElementById('profileFoto');
+if (profileFoto) {
+    profileFoto.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('previewFoto');
+                const topImg = document.getElementById('topProfileImg');
+                if (preview) preview.src = e.target.result;
+                if (topImg) topImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
 const saveProfileBtn = document.getElementById('saveProfileBtn');
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', async () => {
         const nama = document.getElementById('profileName').value;
+        const hp = document.getElementById('profilePhone').value;
+        const foto = document.getElementById('previewFoto').src;
+        
         if (!nama) {
             showNotif('Nama wajib diisi', true);
             return;
@@ -261,6 +305,8 @@ if (saveProfileBtn) {
         try {
             await db.collection('users').doc(currentUser.uid).set({
                 nama: nama,
+                hp: hp,
+                foto: foto,
                 email: currentUser.email
             }, { merge: true });
             
@@ -401,4 +447,430 @@ function openDetailProspek(id) {
     });
 }
 
-window
+window.updateStatus = function(id, status) {
+    db.collection('customers').doc(id).update({ status: status });
+    closeModal('detailModal');
+    showNotif('Status berhasil diupdate');
+};
+
+window.updateProspekStatus = function(id, status) {
+    db.collection('prospek').doc(id).update({ status: status });
+    closeModal('detailModal');
+    showNotif('Status berhasil diupdate');
+};
+
+window.deleteCustomer = function(id) {
+    if (confirm('Yakin hapus customer ini?')) {
+        db.collection('customers').doc(id).delete();
+        closeModal('detailModal');
+        showNotif('Data dihapus');
+    }
+};
+
+window.deleteProspek = function(id) {
+    if (confirm('Yakin hapus prospek ini?')) {
+        db.collection('prospek').doc(id).delete();
+        closeModal('detailModal');
+        showNotif('Data dihapus');
+    }
+};
+
+window.convertToCustomer = function(id) {
+    if (confirm('Yakin jadikan customer?')) {
+        db.collection('prospek').doc(id).get().then(doc => {
+            const d = doc.data();
+            db.collection('customers').add({
+                nama: d.nama,
+                hp: d.hp,
+                tanggal: new Date().toISOString().split('T')[0],
+                status: 'baru',
+                user_id: currentUser.uid,
+                created_at: new Date().toISOString()
+            });
+            db.collection('prospek').doc(id).delete();
+            closeModal('detailModal');
+            showNotif('Berhasil jadi customer!');
+        });
+    }
+};
+
+// ========== IMPORT EXCEL ==========
+const dropZone = document.getElementById('dropZone');
+const excelFile = document.getElementById('excelFile');
+if (dropZone) {
+    dropZone.addEventListener('click', () => {
+        if (excelFile) excelFile.click();
+    });
+}
+
+if (excelFile) {
+    excelFile.addEventListener('change', function(e) {
+        if (e.target.files[0]) {
+            const fileInfo = document.getElementById('fileInfo');
+            if (fileInfo) fileInfo.innerHTML = '📄 ' + e.target.files[0].name;
+        }
+    });
+}
+
+document.querySelectorAll('.radio-option').forEach(opt => {
+    opt.addEventListener('click', function() {
+        importType = this.dataset.import;
+        document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+
+const importBtn = document.getElementById('importBtn');
+if (importBtn) {
+    importBtn.addEventListener('click', async () => {
+        const file = excelFile ? excelFile.files[0] : null;
+        if (!file) {
+            showNotif('Pilih file dulu!', true);
+            return;
+        }
+        
+        importBtn.textContent = 'Memproses...';
+        importBtn.disabled = true;
+        
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            
+            let success = 0, failed = 0;
+            for (let row of json) {
+                let nama = row.nama || row.Nama;
+                let hp = row.hp || row.HP;
+                if (!nama || !hp) {
+                    failed++;
+                    continue;
+                }
+                
+                hp = hp.toString();
+                if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
+                
+                if (importType === 'prospek') {
+                    await db.collection('prospek').add({
+                        nama: nama,
+                        hp: hp,
+                        status: 'Baru',
+                        user_id: currentUser.uid,
+                        created_at: new Date().toISOString()
+                    });
+                } else {
+                    await db.collection('customers').add({
+                        nama: nama,
+                        hp: hp,
+                        tanggal: new Date().toISOString().split('T')[0],
+                        status: 'baru',
+                        user_id: currentUser.uid,
+                        created_at: new Date().toISOString()
+                    });
+                }
+                success++;
+            }
+            
+            alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+            if (excelFile) excelFile.value = '';
+            const fileInfo = document.getElementById('fileInfo');
+            if (fileInfo) fileInfo.innerHTML = '';
+            importBtn.textContent = '🚀 Import Data Sekarang';
+            importBtn.disabled = false;
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
+
+// ========== DATABASE ARCHIVES ==========
+function loadDBClosing() {
+    if (!currentUser) return;
+    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
+        let html = '';
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `
+                <div class="db-item">
+                    <div class="db-item-info">
+                        <h4>${escapeHtml(d.nama)}</h4>
+                        <p>${d.hp}</p>
+                    </div>
+                    <button onclick="openWA('${d.hp}')">WhatsApp</button>
+                </div>
+            `;
+        });
+        const dbClosingList = document.getElementById('dbClosingList');
+        if (dbClosingList) dbClosingList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
+    });
+}
+
+function loadDBTidak() {
+    if (!currentUser) return;
+    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then(snap => {
+        let html = '';
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `
+                <div class="db-item">
+                    <div class="db-item-info">
+                        <h4>${escapeHtml(d.nama)}</h4>
+                        <p>${d.hp}</p>
+                    </div>
+                    <button onclick="openWA('${d.hp}')">WhatsApp</button>
+                </div>
+            `;
+        });
+        const dbTidakList = document.getElementById('dbTidakList');
+        if (dbTidakList) dbTidakList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
+    });
+}
+
+// ========== CHARTS ==========
+function updateChartCustomer(total, closing, pending, followup) {
+    const ctx = document.getElementById('chartCustomer');
+    if (!ctx) return;
+    
+    if (chartCustomer) chartCustomer.destroy();
+    
+    const dataArr = [closing, pending, followup, total - (closing + pending + followup)];
+    
+    chartCustomer = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
+            datasets: [{
+                data: dataArr,
+                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                borderWidth: 0,
+                hoverOffset: 12
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, pointStyle: 'circle' }
+                }
+            }
+        }
+    });
+}
+
+function updateChartProspek(baru, dihubungi, tertarik, tidak) {
+    const ctx = document.getElementById('chartProspek');
+    if (!ctx) return;
+    
+    if (chartProspek) chartProspek.destroy();
+    
+    const dataArr = [baru, dihubungi, tertarik, tidak];
+    if (dataArr.every(v => v === 0)) dataArr[0] = 1;
+    
+    chartProspek = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak'],
+            datasets: [{
+                data: dataArr,
+                backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 12
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, pointStyle: 'circle' }
+                }
+            }
+        }
+    });
+}
+
+// ========== DRAG AND DROP ==========
+function initDragAndDrop() {
+    // Customer drag and drop
+    const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
+    const customerStatusMap = {
+        baruList: 'baru',
+        followupList: 'followup',
+        pendingList: 'pending',
+        closingList: 'closing'
+    };
+    
+    customerGroups.forEach(groupId => {
+        const el = document.getElementById(groupId);
+        if (el && !el.hasAttribute('data-sortable')) {
+            new Sortable(el, {
+                group: 'customers',
+                animation: 200,
+                draggable: '.card-item',
+                onEnd: function(evt) {
+                    const id = evt.item.dataset.id;
+                    const newStatus = customerStatusMap[evt.to.id];
+                    if (id && newStatus && currentUser) {
+                        db.collection('customers').doc(id).update({ status: newStatus });
+                    }
+                }
+            });
+            el.setAttribute('data-sortable', 'true');
+        }
+    });
+    
+    // Prospek drag and drop
+    const prospekGroups = ['prospekBaruList', 'prospekDihubungiList', 'prospekTertarikList', 'prospekTidakList'];
+    const prospekStatusMap = {
+        prospekBaruList: 'Baru',
+        prospekDihubungiList: 'Sudah Dihubungi',
+        prospekTertarikList: 'Tertarik',
+        prospekTidakList: 'Tidak Tertarik'
+    };
+    
+    prospekGroups.forEach(groupId => {
+        const el = document.getElementById(groupId);
+        if (el && !el.hasAttribute('data-sortable')) {
+            new Sortable(el, {
+                group: 'prospek',
+                animation: 200,
+                draggable: '.card-item',
+                onEnd: function(evt) {
+                    const id = evt.item.dataset.id;
+                    const newStatus = prospekStatusMap[evt.to.id];
+                    if (id && newStatus && currentUser) {
+                        db.collection('prospek').doc(id).update({ status: newStatus });
+                    }
+                }
+            });
+            el.setAttribute('data-sortable', 'true');
+        }
+    });
+}
+
+// ========== LOAD ALL DATA ==========
+function loadAllData() {
+    if (!currentUser) return;
+    
+    // Load customers
+    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+        let total = 0, closing = 0, pending = 0, followup = 0;
+        const lists = { baru: [], followup: [], pending: [], closing: [] };
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            total++;
+            if (d.status === 'closing') closing++;
+            else if (d.status === 'pending') pending++;
+            else if (d.status === 'followup') followup++;
+            else lists.baru.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            
+            if (d.status === 'followup') lists.followup.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            if (d.status === 'pending') lists.pending.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            if (d.status === 'closing') lists.closing.push({ id: doc.id, nama: d.nama, hp: d.hp });
+        });
+        
+        // Update UI
+        document.getElementById('countBaru').innerText = total - (closing + pending + followup);
+        document.getElementById('countFollowup').innerText = followup;
+        document.getElementById('countPending').innerText = pending;
+        document.getElementById('countClosing').innerText = closing;
+        document.getElementById('totalData').innerText = total;
+        document.getElementById('closingTotal').innerText = closing;
+        document.getElementById('activeProspek').innerText = total - closing;
+        document.getElementById('rateClosing').innerText = total ? Math.round((closing / total) * 100) + '%' : '0%';
+        
+        // Render cards
+        for (let status in lists) {
+            const container = document.getElementById(status + 'List');
+            if (container) {
+                container.innerHTML = lists[status].map(item => `
+                    <div class="card-item" data-id="${item.id}">
+                        <div class="card-name">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone">
+                            <span>${item.hp}</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+                container.querySelectorAll('.card-item').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('whatsapp-icon')) {
+                            openDetailCustomer(card.dataset.id);
+                        }
+                    });
+                });
+            }
+        }
+        
+        updateChartCustomer(total, closing, pending, followup);
+        initDragAndDrop();
+    });
+    
+    // Load prospek
+    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+        let baru = 0, dihubungi = 0, tertarik = 0, tidak = 0;
+        const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            const st = d.status || 'Baru';
+            if (st === 'Baru') {
+                baru++;
+                lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            } else if (st === 'Sudah Dihubungi') {
+                dihubungi++;
+                lists.prospekDihubungi.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            } else if (st === 'Tertarik') {
+                tertarik++;
+                lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            } else {
+                tidak++;
+                lists.prospekTidak.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            }
+        });
+        
+        document.getElementById('countProspekBaru').innerText = baru;
+        document.getElementById('countDihubungi').innerText = dihubungi;
+        document.getElementById('countTertarik').innerText = tertarik;
+        document.getElementById('countTidakTertarik').innerText = tidak;
+        
+        for (let col in lists) {
+            const container = document.getElementById(col + 'List');
+            if (container) {
+                container.innerHTML = lists[col].map(item => `
+                    <div class="card-item" data-id="${item.id}">
+                        <div class="card-name">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone">
+                            <span>${item.hp}</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+                container.querySelectorAll('.card-item').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('whatsapp-icon')) {
+                            openDetailProspek(card.dataset.id);
+                        }
+                    });
+                });
+            }
+        }
+        
+        updateChartProspek(baru, dihubungi, tertarik, tidak);
+        initDragAndDrop();
+    });
+}
+
+// Notifikasi
+const notifBtn = document.getElementById('notifBtn');
+if (notifBtn) {
+    notifBtn.addEventListener('click', () => {
+        showNotif('Fitur notifikasi dalam pengembangan');
+    });
+}
