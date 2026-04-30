@@ -167,13 +167,20 @@ auth.onAuthStateChanged(user => {
         
         db.collection('users').doc(user.uid).get().then(doc => {
             let nama = 'CS Agent';
+            let foto = 'https://i.pravatar.cc/40';
+            
             if (doc.exists && doc.data().nama) nama = doc.data().nama;
+            if (doc.exists && doc.data().foto) foto = doc.data().foto;
             
             const topUserName = document.getElementById('topUserName');
             const profileName = document.getElementById('profileName');
+            const topProfileImg = document.getElementById('profileImg');
+            const previewFoto = document.getElementById('previewFoto');
             
             if (topUserName) topUserName.innerText = nama;
             if (profileName) profileName.value = nama;
+            if (topProfileImg) topProfileImg.src = foto;
+            if (previewFoto) previewFoto.src = foto;
         });
         
         const profileEmail = document.getElementById('profileEmail');
@@ -234,9 +241,9 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 
 // ========== PROFILE ==========
-const profileAvatar = document.getElementById('profileAvatar');
-if (profileAvatar) {
-    profileAvatar.addEventListener('click', () => {
+const profileImg = document.getElementById('profileImg');
+if (profileImg) {
+    profileImg.addEventListener('click', () => {
         const profileModal = document.getElementById('profileModal');
         if (profileModal) profileModal.style.display = 'flex';
         
@@ -274,6 +281,8 @@ if (profileFotoInput) {
             reader.onload = function(e) {
                 const preview = document.getElementById('previewFoto');
                 if (preview) preview.src = e.target.result;
+                const headerImg = document.getElementById('profileImg');
+                if (headerImg) headerImg.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -303,6 +312,9 @@ if (saveProfileBtn) {
             
             const topUserName = document.getElementById('topUserName');
             if (topUserName) topUserName.innerText = nama;
+            
+            const topProfileImg = document.getElementById('profileImg');
+            if (topProfileImg) topProfileImg.src = foto;
             
             closeModal('profileModal');
             showNotif('Profile tersimpan');
@@ -650,13 +662,17 @@ function updateChartCustomer(total, closing, pending, followup) {
     if (chartCustomer) chartCustomer.destroy();
     
     const baru = total - (closing + pending + followup);
+    const dataArr = [closing, pending, followup, baru];
+    const labels = ['Closing', 'Pending', 'Follow Up', 'Baru'];
+    const colors = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
+    
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
+            labels: labels,
             datasets: [{
-                data: [closing, pending, followup, baru],
-                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                data: dataArr,
+                backgroundColor: colors,
                 borderWidth: 0,
                 hoverOffset: 15,
                 cutout: '65%'
@@ -666,7 +682,32 @@ function updateChartCustomer(total, closing, pending, followup) {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
+                legend: {
+                    position: 'right',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 12,
+                        font: { size: 11 },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            const dataset = data.datasets[0];
+                            const total = dataset.data.reduce((a, b) => a + b, 0);
+                            return data.labels.map((label, i) => {
+                                const value = dataset.data[i];
+                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                                return {
+                                    text: `${label}: ${value} (${percent}%)`,
+                                    fillStyle: dataset.backgroundColor[i],
+                                    strokeStyle: dataset.backgroundColor[i],
+                                    lineWidth: 0,
+                                    hidden: false,
+                                    index: i
+                                };
+                            });
+                        }
+                    }
+                }
             }
         }
     });
@@ -678,15 +719,18 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     if (chartProspek) chartProspek.destroy();
     
     let dataArr = [baru, dihubungi, tertarik, tidak];
+    const labels = ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'];
+    const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'];
+    
     if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
     
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'],
+            labels: labels,
             datasets: [{
                 data: dataArr,
-                backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'],
+                backgroundColor: colors,
                 borderWidth: 0,
                 hoverOffset: 15,
                 cutout: '65%'
@@ -696,7 +740,32 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
+                legend: {
+                    position: 'right',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 12,
+                        font: { size: 11 },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            const dataset = data.datasets[0];
+                            const total = dataset.data.reduce((a, b) => a + b, 0);
+                            return data.labels.map((label, i) => {
+                                const value = dataset.data[i];
+                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                                return {
+                                    text: `${label}: ${value} (${percent}%)`,
+                                    fillStyle: dataset.backgroundColor[i],
+                                    strokeStyle: dataset.backgroundColor[i],
+                                    lineWidth: 0,
+                                    hidden: false,
+                                    index: i
+                                };
+                            });
+                        }
+                    }
+                }
             }
         }
     });
