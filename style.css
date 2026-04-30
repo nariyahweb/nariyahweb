@@ -303,6 +303,7 @@ body {
     border-radius: 50%;
 }
 
+/* Profile di header */
 .profile-img {
     width: 40px;
     height: 40px;
@@ -310,6 +311,14 @@ body {
     cursor: pointer;
     object-fit: cover;
     border: 2px solid white;
+}
+
+/* Foto di modal */
+#previewFoto {
+    transition: transform 0.2s;
+}
+#previewFoto:hover {
+    transform: scale(1.05);
 }
 
 /* ========== MAIN CONTENT ========== */
