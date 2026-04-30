@@ -397,6 +397,23 @@ if (saveProspekBtn) {
 }
 
 // ========== DETAIL MODAL ==========
+// Fungsi untuk menampilkan modal dengan mencegah scroll body
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+}
+
 function getStatusBadge(status) {
     const statusMap = {
         'baru': 'status-baru',
@@ -423,7 +440,6 @@ function openDetailCustomer(id) {
         
         if (!modal || !content) return;
         
-        // Pilih icon berdasarkan status
         const statusIcon = d.status === 'closing' ? '🎉' : 
                           d.status === 'pending' ? '⏳' : 
                           d.status === 'followup' ? '📞' : '🆕';
@@ -462,23 +478,23 @@ function openDetailCustomer(id) {
                     <button class="btn-success" onclick="openWA('${d.hp}')">
                         💬 WhatsApp
                     </button>
-                    <button class="btn-primary" onclick="updateStatus('${id}','followup')">
+                    <button class="btn-primary" onclick="updateStatusWithClose('${id}','followup')">
                         📞 Follow Up
                     </button>
-                    <button class="btn-warning" onclick="updateStatus('${id}','pending')">
+                    <button class="btn-warning" onclick="updateStatusWithClose('${id}','pending')">
                         ⏳ Pending
                     </button>
-                    <button class="btn-success" onclick="confirmClosing('${id}')">
+                    <button class="btn-success" onclick="confirmClosingWithClose('${id}')">
                         🎉 Closing
                     </button>
                 </div>
             </div>
             <div class="detail-footer">
                 <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
-                <button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button>
+                <button class="btn-danger" onclick="deleteCustomerWithClose('${id}')">🗑️ Hapus</button>
             </div>
         `;
-        modal.style.display = 'flex';
+        showModal('detailModal');
     });
 }
 
@@ -490,18 +506,16 @@ function openDetailProspek(id) {
         
         if (!modal || !content) return;
         
-        // Pilih icon berdasarkan status
         let statusIcon = '🆕';
-        let statusClass = 'status-baru';
-        if (d.status === 'Sudah Dihubungi') { statusIcon = '📞'; statusClass = 'status-dihubungi'; }
-        else if (d.status === 'Tertarik') { statusIcon = '⭐'; statusClass = 'status-tertarik'; }
-        else if (d.status === 'Tidak Tertarik') { statusIcon = '❌'; statusClass = 'status-tidak'; }
+        if (d.status === 'Sudah Dihubungi') statusIcon = '📞';
+        else if (d.status === 'Tertarik') statusIcon = '⭐';
+        else if (d.status === 'Tidak Tertarik') statusIcon = '❌';
         
         content.innerHTML = `
             <div class="detail-header">
                 <div class="detail-avatar">${statusIcon}</div>
                 <h3>${escapeHtml(d.nama)}</h3>
-                <div class="detail-status ${statusClass}">${d.status}</div>
+                <div class="detail-status ${getStatusBadge(d.status)}">${d.status}</div>
             </div>
             <div class="detail-body">
                 <div class="detail-info">
@@ -516,7 +530,7 @@ function openDetailProspek(id) {
                         <div class="detail-info-icon">📅</div>
                         <div class="detail-info-content">
                             <label>Tanggal Input</label>
-                            <div class="value">${new Date(d.created_at).toLocaleDateString('id-ID') || '-'}</div>
+                            <div class="value">${d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID') : '-'}</div>
                         </div>
                     </div>
                     <div class="detail-info-item">
@@ -531,19 +545,19 @@ function openDetailProspek(id) {
                     <button class="btn-success" onclick="openWA('${d.hp}')">
                         💬 WhatsApp
                     </button>
-                    <button class="btn-primary" onclick="updateProspekStatus('${id}','Sudah Dihubungi')">
+                    <button class="btn-primary" onclick="updateProspekStatusWithClose('${id}','Sudah Dihubungi')">
                         📞 Dihubungi
                     </button>
-                    <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">
+                    <button class="btn-success" onclick="updateProspekStatusWithClose('${id}','Tertarik')">
                         ⭐ Tertarik
                     </button>
-                    <button class="btn-danger" onclick="confirmTidakTertarik('${id}')">
+                    <button class="btn-danger" onclick="confirmTidakTertarikWithClose('${id}')">
                         ❌ Tidak Tertarik
                     </button>
                 </div>
                 ${d.status === 'Tertarik' ? `
                 <div style="margin-top: 16px;">
-                    <button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">
+                    <button class="btn-primary" style="width:100%;" onclick="convertToCustomerWithClose('${id}')">
                         🔄 Jadikan Customer
                     </button>
                 </div>
@@ -551,12 +565,79 @@ function openDetailProspek(id) {
             </div>
             <div class="detail-footer">
                 <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
-                <button class="btn-danger" onclick="deleteProspek('${id}')">🗑️ Hapus</button>
+                <button class="btn-danger" onclick="deleteProspekWithClose('${id}')">🗑️ Hapus</button>
             </div>
         `;
-        modal.style.display = 'flex';
+        showModal('detailModal');
     });
 }
+
+// Fungsi dengan close modal
+window.updateStatusWithClose = function(id, status) {
+    db.collection('customers').doc(id).update({ status: status });
+    closeModal('detailModal');
+    showNotif('Status berhasil diupdate');
+};
+
+window.updateProspekStatusWithClose = function(id, status) {
+    db.collection('prospek').doc(id).update({ status: status });
+    closeModal('detailModal');
+    showNotif('Status berhasil diupdate');
+};
+
+window.confirmClosingWithClose = async function(id) {
+    closeModal('detailModal');
+    await window.confirmClosing(id);
+};
+
+window.confirmTidakTertarikWithClose = async function(id) {
+    closeModal('detailModal');
+    await window.confirmTidakTertarik(id);
+};
+
+window.deleteCustomerWithClose = function(id) {
+    closeModal('detailModal');
+    if (confirm('Yakin hapus customer ini?')) {
+        db.collection('customers').doc(id).delete();
+        showNotif('Data dihapus');
+    }
+};
+
+window.deleteProspekWithClose = function(id) {
+    closeModal('detailModal');
+    if (confirm('Yakin hapus prospek ini?')) {
+        db.collection('prospek').doc(id).delete();
+        showNotif('Data dihapus');
+    }
+};
+
+window.convertToCustomerWithClose = function(id) {
+    closeModal('detailModal');
+    if (confirm('Yakin jadikan customer?')) {
+        db.collection('prospek').doc(id).get().then(doc => {
+            const d = doc.data();
+            db.collection('customers').add({
+                nama: d.nama,
+                hp: d.hp,
+                tanggal: new Date().toISOString().split('T')[0],
+                status: 'baru',
+                user_id: currentUser.uid,
+                created_at: new Date().toISOString()
+            });
+            db.collection('prospek').doc(id).delete();
+            showNotif('Berhasil jadi customer!');
+        });
+    }
+};
+
+// Tutup modal saat klik di luar modal
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal(modal.id);
+        }
+    });
+});
 
 // ========== CLOSING & TIDAK TERTARIK ==========
 async function saveToClosingDB(id, data) {
