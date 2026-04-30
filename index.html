@@ -111,26 +111,84 @@
                         <div class="chart-card"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
                     </div>
 
-                    <div class="board-section">
-                        <div class="board-header"><h3>📞 Followup Agen</h3><button class="add-btn" id="addCustomerBtn">+ Tambah Data</button></div>
-                        <div class="kanban-board">
-                            <div class="kanban-column"><div class="column-header purple-header"><span>Baru</span><span class="count" id="countBaru">0</span></div><div class="kanban-cards" id="baruList"></div></div>
-                            <div class="kanban-column"><div class="column-header blue-header"><span>Follow Up</span><span class="count" id="countFollowup">0</span></div><div class="kanban-cards" id="followupList"></div></div>
-                            <div class="kanban-column"><div class="column-header orange-header"><span>Pending</span><span class="count" id="countPending">0</span></div><div class="kanban-cards" id="pendingList"></div></div>
-                            <div class="kanban-column"><div class="column-header green-header"><span>Closing</span><span class="count" id="countClosing">0</span></div><div class="kanban-cards" id="closingList"></div></div>
-                        </div>
-                    </div>
-
-                    <div class="board-section">
-                        <div class="board-header"><h3>🎯 Prospek Agen</h3><button class="add-btn" id="addProspekBtn">+ Tambah Data</button></div>
-                        <div class="kanban-board">
-                            <div class="kanban-column"><div class="column-header purple-header"><span>Baru</span><span class="count" id="countProspekBaru">0</span></div><div class="kanban-cards" id="prospekBaruList"></div></div>
-                            <div class="kanban-column"><div class="column-header blue-header"><span>Dihubungi</span><span class="count" id="countDihubungi">0</span></div><div class="kanban-cards" id="prospekDihubungiList"></div></div>
-                            <div class="kanban-column"><div class="column-header green-header"><span>Tertarik</span><span class="count" id="countTertarik">0</span></div><div class="kanban-cards" id="prospekTertarikList"></div></div>
-                            <div class="kanban-column"><div class="column-header red-header"><span>Tidak Tertarik</span><span class="count" id="countTidakTertarik">0</span></div><div class="kanban-cards" id="prospekTidakList"></div></div>
-                        </div>
-                    </div>
+                    <!-- FOLLOWUP & PROSPEK AGEN - SIDE BY SIDE -->
+<div class="boards-wrapper">
+    <!-- FOLLOWUP AGEN BOARD -->
+    <div class="board-section">
+        <div class="board-header">
+            <h3>📞 Followup Agen</h3>
+            <button class="add-btn" id="addCustomerBtn">+ Tambah Data</button>
+        </div>
+        <div class="kanban-board">
+            <div class="kanban-column">
+                <div class="column-header purple-header">
+                    <span>Baru</span>
+                    <span class="count" id="countBaru">0</span>
                 </div>
+                <div class="kanban-cards" id="baruList"></div>
+            </div>
+            <div class="kanban-column">
+                <div class="column-header blue-header">
+                    <span>Follow Up</span>
+                    <span class="count" id="countFollowup">0</span>
+                </div>
+                <div class="kanban-cards" id="followupList"></div>
+            </div>
+            <div class="kanban-column">
+                <div class="column-header orange-header">
+                    <span>Pending</span>
+                    <span class="count" id="countPending">0</span>
+                </div>
+                <div class="kanban-cards" id="pendingList"></div>
+            </div>
+            <div class="kanban-column">
+                <div class="column-header green-header">
+                    <span>Closing</span>
+                    <span class="count" id="countClosing">0</span>
+                </div>
+                <div class="kanban-cards" id="closingList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROSPEK AGEN BOARD -->
+    <div class="board-section">
+        <div class="board-header">
+            <h3>🎯 Prospek Agen</h3>
+            <button class="add-btn" id="addProspekBtn">+ Tambah Data</button>
+        </div>
+        <div class="kanban-board">
+            <div class="kanban-column">
+                <div class="column-header purple-header">
+                    <span>Baru</span>
+                    <span class="count" id="countProspekBaru">0</span>
+                </div>
+                <div class="kanban-cards" id="prospekBaruList"></div>
+            </div>
+            <div class="kanban-column">
+                <div class="column-header blue-header">
+                    <span>Dihubungi</span>
+                    <span class="count" id="countDihubungi">0</span>
+                </div>
+                <div class="kanban-cards" id="prospekDihubungiList"></div>
+            </div>
+            <div class="kanban-column">
+                <div class="column-header green-header">
+                    <span>Tertarik</span>
+                    <span class="count" id="countTertarik">0</span>
+                </div>
+                <div class="kanban-cards" id="prospekTertarikList"></div>
+            </div>
+            <div class="kanban-column">
+                <div class="column-header red-header">
+                    <span>Tidak Tertarik</span>
+                    <span class="count" id="countTidakTertarik">0</span>
+                </div>
+                <div class="kanban-cards" id="prospekTidakList"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
                 <!-- IMPORT PAGE -->
                 <div id="importPage" class="page-content" style="display:none">
