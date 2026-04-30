@@ -238,14 +238,6 @@ input, select { width:100%; padding:8px; margin:5px 0; }
   min-width:250px;
 }
 
-.card {
-  color:white;
-  padding:10px;
-  margin:8px 0;
-  border-radius:8px;
-  cursor:grab;
-}
-
 .chart-box {
   flex: 1;
   background: white;
@@ -324,10 +316,6 @@ h3 {
 
   .card {
   transition: 0.2s;
-}
-.card:hover {
-  transform: scale(1.03);
-  background:#6d28d9;
 }
 
   .new-badge {
@@ -908,6 +896,24 @@ h3 {
   justify-content: space-between;
   font-size: 13px;
 }
+
+  .mini-list {
+  min-height: 180px;
+  padding: 5px;
+  border-radius: 12px;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+}
+
+.sortable-chosen {
+  transform: scale(1.02);
+}
+
+.sortable-drag {
+  opacity: 1 !important;
+}
   
 </style>
 </head>
@@ -1172,7 +1178,7 @@ h3 {
   <div class="board-section">
   <div class="board-header">
     <h2>Prospek Agen</h2>
-    <button class="add-btn" onclick="openProspek()">＋ Tambh Data</button>
+    <button class="add-btn" onclick="openProspek()">＋ Tambah Data</button>
   </div>
 
   <div class="mini-board">
@@ -1533,17 +1539,20 @@ snap.forEach(doc=>{
   if(d.status === "followup") followup++;
 
   let card = document.createElement("div");
-  card.className="card";
-  card.setAttribute("data-id", doc.id);
-
+card.className = "mini-card";
+card.setAttribute("data-id", doc.id);
+  
   card.onclick = () => openDetailCustomer(doc.id);
 
   card.innerHTML = `
-    <b>${d.nama || '-'}</b><br>
-    <button onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
-      WhatsApp
-    </button>
-  `;
+  <b>${d.nama || '-'}</b>
+  <div class="mini-phone">
+    <span>${d.hp || '-'}</span>
+    <span onclick="event.stopPropagation(); openWA('${d.hp || ''}')">
+      🟢
+    </span>
+  </div>
+`;
 
   document.getElementById(d.status).appendChild(card);
 });
@@ -1638,7 +1647,7 @@ snap.forEach(doc=>{
       let card = document.createElement("div");
       card.className = "mini-card";
       card.setAttribute("data-id", doc.id);
-
+  
       card.onclick = () => openDetailProspek(doc.id);
 
       card.innerHTML = `
@@ -2714,6 +2723,15 @@ document.getElementById("profile_foto").addEventListener("change", function(){
   // ubah text
   document.getElementById("uploadText").innerText = "✅ File siap diimport";
 });
+
+  window.openProspek = function(){
+  closeAllModal();
+  modalProspek.style.display = "flex";
+}
+
+window.closeProspek = function(){
+  modalProspek.style.display = "none";
+}
   
 </script>
 
