@@ -626,10 +626,10 @@ body {
             <label>Password</label>
             <div class="password-wrapper">
                 <input type="password" id="loginPassword" placeholder="Password">
-                <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+                <button type="button" class="toggle-password" id="togglePasswordBtn">👁️</button>
             </div>
         </div>
-        <button class="login-btn" onclick="handleLogin()">Masuk</button>
+        <button class="login-btn" id="loginBtn">Masuk</button>
         <div id="loginError" class="error-msg"></div>
     </div>
 </div>
@@ -643,28 +643,28 @@ body {
                 <h2>🚀 FLOUPYUD</h2>
             </div>
             <div class="sidebar-menu">
-                <div class="menu-item active" onclick="showPage('dashboard')">
+                <div class="menu-item active" id="menuDashboard">
                     <span class="icon">📊</span>
                     <span>Dashboard</span>
                 </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
-                <div class="menu-item" onclick="openDBClosing()">
+                <div class="menu-item" id="menuDBClosing">
                     <span class="icon">📁</span>
                     <span>DB Closing</span>
                 </div>
-                <div class="menu-item" onclick="openDBTidak()">
+                <div class="menu-item" id="menuDBTidak">
                     <span class="icon">📁</span>
                     <span>DB Tidak Tertarik</span>
                 </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">IMPORT</div>
-                <div class="menu-item" onclick="showPage('import')">
+                <div class="menu-item" id="menuImport">
                     <span class="icon">📥</span>
                     <span>Import Data</span>
                 </div>
                 <div class="menu-divider"></div>
-                <div class="menu-item" onclick="logout()">
+                <div class="menu-item" id="menuLogout">
                     <span class="icon">🚪</span>
                     <span>Logout</span>
                 </div>
@@ -674,17 +674,17 @@ body {
         <!-- MAIN CONTENT -->
         <div class="main-content">
             <div class="topbar">
-                <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+                <button class="mobile-toggle" id="mobileToggleBtn">☰</button>
                 <div class="topbar-left">
                     <span class="logo">FLOUPYUD</span>
                 </div>
                 <div class="topbar-center" id="topUserName">CS Agent</div>
                 <div class="topbar-right">
-                    <div class="notif-icon" onclick="showNotif()">
+                    <div class="notif-icon" id="notifBtn">
                         🔔
                         <span class="badge" id="notifCount">0</span>
                     </div>
-                    <img class="profile-img" id="profileImg" src="https://i.pravatar.cc/40" onclick="openProfileModal()">
+                    <img class="profile-img" id="profileImg" src="https://i.pravatar.cc/40">
                 </div>
             </div>
 
@@ -731,7 +731,7 @@ body {
                     <div class="board-section">
                         <div class="board-header">
                             <h3>📞 Followup Agen</h3>
-                            <button class="add-btn" onclick="openModal('customer')">+ Tambah Data</button>
+                            <button class="add-btn" id="addCustomerBtn">+ Tambah Data</button>
                         </div>
                         <div class="kanban-board">
                             <div class="kanban-column">
@@ -769,7 +769,7 @@ body {
                     <div class="board-section">
                         <div class="board-header">
                             <h3>🎯 Prospek Agen</h3>
-                            <button class="add-btn" onclick="openModal('prospek')">+ Tambah Data</button>
+                            <button class="add-btn" id="addProspekBtn">+ Tambah Data</button>
                         </div>
                         <div class="kanban-board">
                             <div class="kanban-column">
@@ -814,7 +814,7 @@ body {
                         <div class="import-grid">
                             <div class="import-card">
                                 <h4>1. Pilih File Excel</h4>
-                                <div class="drop-zone" onclick="document.getElementById('excelFile').click()">
+                                <div class="drop-zone" id="dropZone">
                                     <p>📂 Drag & Drop file di sini</p>
                                     <small>atau klik untuk pilih file</small>
                                     <input type="file" id="excelFile" hidden accept=".xlsx,.xls,.csv">
@@ -823,11 +823,11 @@ body {
                             </div>
                             <div class="import-card">
                                 <h4>2. Pilih Tujuan Import</h4>
-                                <div class="radio-option active" onclick="selectImportType('prospek')">
+                                <div class="radio-option active" data-import="prospek">
                                     <b>Import ke Prospek</b>
                                     <p>Data akan masuk ke Prospek Agen</p>
                                 </div>
-                                <div class="radio-option" onclick="selectImportType('customer')">
+                                <div class="radio-option" data-import="customer">
                                     <b>Import ke Customer</b>
                                     <p>Data akan masuk ke Followup Agen</p>
                                 </div>
@@ -840,7 +840,7 @@ body {
                                     <li>✔ Data tidak valid akan dilewati</li>
                                     <li>✔ Proses cepat & aman</li>
                                 </ul>
-                                <button class="login-btn" style="margin-top: 15px;" onclick="importExcel()">🚀 Import Data Sekarang</button>
+                                <button class="login-btn" id="importBtn" style="margin-top: 15px;">🚀 Import Data Sekarang</button>
                                 <small style="display: block; text-align: center; margin-top: 10px;">🔒 Data Anda aman dan terenkripsi</small>
                             </div>
                         </div>
@@ -859,8 +859,8 @@ body {
         <input type="tel" id="customerPhone" placeholder="No HP" value="+62">
         <input type="date" id="customerDate">
         <div class="modal-buttons">
-            <button onclick="saveCustomer()">Simpan</button>
-            <button onclick="closeModal('customerModal')">Batal</button>
+            <button id="saveCustomerBtn">Simpan</button>
+            <button class="closeModalBtn" data-modal="customerModal">Batal</button>
         </div>
     </div>
 </div>
@@ -877,8 +877,8 @@ body {
             <option>Tidak Tertarik</option>
         </select>
         <div class="modal-buttons">
-            <button onclick="saveProspek()">Simpan</button>
-            <button onclick="closeModal('prospekModal')">Batal</button>
+            <button id="saveProspekBtn">Simpan</button>
+            <button class="closeModalBtn" data-modal="prospekModal">Batal</button>
         </div>
     </div>
 </div>
@@ -887,15 +887,14 @@ body {
     <div class="modal-content">
         <h3>Profile CS Agent</h3>
         <div style="text-align: center; margin-bottom: 15px;">
-            <img id="previewFoto" src="https://i.pravatar.cc/80" style="width: 80px; height: 80px; border-radius: 50%; cursor: pointer;" onclick="document.getElementById('profileFoto').click()">
-            <input type="file" id="profileFoto" hidden accept="image/*">
+            <img id="previewFoto" src="https://i.pravatar.cc/80" style="width: 80px; height: 80px; border-radius: 50%; cursor: pointer;">
         </div>
         <input type="text" id="profileName" placeholder="Nama">
         <input type="email" id="profileEmail" placeholder="Email" disabled>
         <input type="tel" id="profilePhone" placeholder="No HP" value="+62">
         <div class="modal-buttons">
-            <button onclick="saveProfile()">Simpan</button>
-            <button onclick="closeModal('profileModal')">Batal</button>
+            <button id="saveProfileBtn">Simpan</button>
+            <button class="closeModalBtn" data-modal="profileModal">Batal</button>
         </div>
     </div>
 </div>
@@ -905,7 +904,7 @@ body {
         <h3>Database Closing</h3>
         <div id="dbClosingList" style="max-height: 400px; overflow-y: auto;"></div>
         <div class="modal-buttons">
-            <button onclick="closeModal('dbClosingModal')">Tutup</button>
+            <button class="closeModalBtn" data-modal="dbClosingModal">Tutup</button>
         </div>
     </div>
 </div>
@@ -915,7 +914,7 @@ body {
         <h3>Database Tidak Tertarik</h3>
         <div id="dbTidakList" style="max-height: 400px; overflow-y: auto;"></div>
         <div class="modal-buttons">
-            <button onclick="closeModal('dbTidakModal')">Tutup</button>
+            <button class="closeModalBtn" data-modal="dbTidakModal">Tutup</button>
         </div>
     </div>
 </div>
@@ -935,119 +934,199 @@ const db = firebase.firestore();
 let currentUser = null;
 let importType = "prospek";
 
-// ========== TOGGLE PASSWORD ==========
-function togglePassword() {
-    const input = document.getElementById('loginPassword');
-    const btn = event.currentTarget;
-    if(input.type === 'password') {
-        input.type = 'text';
-        btn.textContent = '🙈';
-    } else {
-        input.type = 'password';
-        btn.textContent = '👁️';
-    }
-}
-
-// ========== LOGIN ==========
-function handleLogin() {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const errorDiv = document.getElementById('loginError');
-    const btn = event.currentTarget;
+// ========== DOM ELEMENTS ==========
+document.addEventListener('DOMContentLoaded', function() {
+    // Login elements
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    const loginBtn = document.getElementById('loginBtn');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const loginError = document.getElementById('loginError');
     
-    if(!email || !password) {
-        errorDiv.textContent = 'Email dan password harus diisi!';
-        return;
+    // Toggle Password
+    if(togglePasswordBtn) {
+        togglePasswordBtn.addEventListener('click', function() {
+            if(loginPassword.type === 'password') {
+                loginPassword.type = 'text';
+                this.textContent = '🙈';
+            } else {
+                loginPassword.type = 'password';
+                this.textContent = '👁️';
+            }
+        });
     }
     
-    errorDiv.textContent = '';
-    btn.textContent = 'Loading...';
-    btn.disabled = true;
-    
-    auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-            btn.textContent = 'Masuk';
-            btn.disabled = false;
-        })
-        .catch(err => {
-            errorDiv.textContent = 'Login gagal: ' + err.message;
-            btn.textContent = 'Masuk';
-            btn.disabled = false;
+    // Login
+    if(loginBtn) {
+        loginBtn.addEventListener('click', function() {
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            
+            if(!email || !password) {
+                loginError.textContent = 'Email dan password harus diisi!';
+                return;
+            }
+            
+            loginError.textContent = '';
+            this.textContent = 'Loading...';
+            this.disabled = true;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    this.textContent = 'Masuk';
+                    this.disabled = false;
+                })
+                .catch(err => {
+                    loginError.textContent = 'Login gagal: ' + err.message;
+                    this.textContent = 'Masuk';
+                    this.disabled = false;
+                });
         });
-}
-
-function logout() {
-    auth.signOut();
-}
-
-// ========== AUTH STATE ==========
-auth.onAuthStateChanged(user => {
-    const loginPage = document.getElementById('loginPage');
-    const app = document.getElementById('app');
+    }
     
-    if(user) {
-        currentUser = user;
-        loginPage.style.display = 'none';
-        app.style.display = 'block';
-        
-        db.collection('users').doc(user.uid).get().then(doc => {
-            let nama = 'CS Agent';
-            if(doc.exists && doc.data().nama) nama = doc.data().nama;
-            document.getElementById('topUserName').innerText = nama;
-            document.getElementById('profileName').value = nama;
+    // Menu navigation
+    const menuDashboard = document.getElementById('menuDashboard');
+    const menuImport = document.getElementById('menuImport');
+    const menuDBClosing = document.getElementById('menuDBClosing');
+    const menuDBTidak = document.getElementById('menuDBTidak');
+    const menuLogout = document.getElementById('menuLogout');
+    const dashboardPage = document.getElementById('dashboardPage');
+    const importPage = document.getElementById('importPage');
+    
+    if(menuDashboard) {
+        menuDashboard.addEventListener('click', function() {
+            dashboardPage.style.display = 'block';
+            importPage.style.display = 'none';
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            this.classList.add('active');
         });
-        
-        document.getElementById('profileEmail').value = user.email;
-        loadAllData();
-    } else {
-        loginPage.style.display = 'flex';
-        app.style.display = 'none';
-        currentUser = null;
+    }
+    
+    if(menuImport) {
+        menuImport.addEventListener('click', function() {
+            dashboardPage.style.display = 'none';
+            importPage.style.display = 'block';
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            this.classList.add('active');
+        });
+    }
+    
+    if(menuDBClosing) {
+        menuDBClosing.addEventListener('click', openDBClosing);
+    }
+    
+    if(menuDBTidak) {
+        menuDBTidak.addEventListener('click', openDBTidak);
+    }
+    
+    if(menuLogout) {
+        menuLogout.addEventListener('click', function() {
+            auth.signOut();
+        });
+    }
+    
+    // Sidebar toggle
+    const mobileToggleBtn = document.getElementById('mobileToggleBtn');
+    const sidebar = document.getElementById('sidebar');
+    
+    if(mobileToggleBtn) {
+        mobileToggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('active');
+        });
+    }
+    
+    // Close modals
+    document.querySelectorAll('.closeModalBtn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modalId = this.getAttribute('data-modal');
+            document.getElementById(modalId).style.display = 'none';
+        });
+    });
+    
+    // Add Customer
+    const addCustomerBtn = document.getElementById('addCustomerBtn');
+    const customerModal = document.getElementById('customerModal');
+    
+    if(addCustomerBtn) {
+        addCustomerBtn.addEventListener('click', function() {
+            customerModal.style.display = 'flex';
+        });
+    }
+    
+    const saveCustomerBtn = document.getElementById('saveCustomerBtn');
+    if(saveCustomerBtn) {
+        saveCustomerBtn.addEventListener('click', saveCustomer);
+    }
+    
+    // Add Prospek
+    const addProspekBtn = document.getElementById('addProspekBtn');
+    const prospekModal = document.getElementById('prospekModal');
+    
+    if(addProspekBtn) {
+        addProspekBtn.addEventListener('click', function() {
+            prospekModal.style.display = 'flex';
+        });
+    }
+    
+    const saveProspekBtn = document.getElementById('saveProspekBtn');
+    if(saveProspekBtn) {
+        saveProspekBtn.addEventListener('click', saveProspek);
+    }
+    
+    // Profile
+    const profileImg = document.getElementById('profileImg');
+    const profileModal = document.getElementById('profileModal');
+    
+    if(profileImg) {
+        profileImg.addEventListener('click', function() {
+            profileModal.style.display = 'flex';
+        });
+    }
+    
+    const saveProfileBtn = document.getElementById('saveProfileBtn');
+    if(saveProfileBtn) {
+        saveProfileBtn.addEventListener('click', saveProfile);
+    }
+    
+    // Import Excel
+    const dropZone = document.getElementById('dropZone');
+    const excelFile = document.getElementById('excelFile');
+    const importBtn = document.getElementById('importBtn');
+    
+    if(dropZone) {
+        dropZone.addEventListener('click', function() {
+            excelFile.click();
+        });
+    }
+    
+    if(excelFile) {
+        excelFile.addEventListener('change', function(e) {
+            if(e.target.files[0]) {
+                document.getElementById('fileInfo').innerHTML = '📄 ' + e.target.files[0].name;
+            }
+        });
+    }
+    
+    document.querySelectorAll('.radio-option').forEach(opt => {
+        opt.addEventListener('click', function() {
+            importType = this.getAttribute('data-import');
+            document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    if(importBtn) {
+        importBtn.addEventListener('click', importExcel);
+    }
+    
+    // Notif
+    const notifBtn = document.getElementById('notifBtn');
+    if(notifBtn) {
+        notifBtn.addEventListener('click', function() {
+            alert('Fitur notifikasi dalam pengembangan');
+        });
     }
 });
-
-// ========== UI FUNCTIONS ==========
-function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('active');
-}
-
-function showPage(page) {
-    document.getElementById('dashboardPage').style.display = page === 'dashboard' ? 'block' : 'none';
-    document.getElementById('importPage').style.display = page === 'import' ? 'block' : 'none';
-    
-    document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
-    if(page === 'dashboard') {
-        document.querySelector('.menu-item:first-child').classList.add('active');
-    } else if(page === 'import') {
-        document.querySelectorAll('.menu-item')[5].classList.add('active');
-    }
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-}
-
-function openModal(type) {
-    if(type === 'customer') {
-        document.getElementById('customerModal').style.display = 'flex';
-    } else if(type === 'prospek') {
-        document.getElementById('prospekModal').style.display = 'flex';
-    }
-}
-
-function openProfileModal() {
-    document.getElementById('profileModal').style.display = 'flex';
-}
-
-function showNotif() {
-    alert('Fitur notifikasi dalam pengembangan');
-}
-
-function selectImportType(type) {
-    importType = type;
-    document.querySelectorAll('.radio-option').forEach(el => el.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-}
 
 // ========== WHATSAPP ==========
 function openWA(hp) {
@@ -1060,56 +1139,4 @@ function openWA(hp) {
 function saveCustomer() {
     const nama = document.getElementById('customerName').value;
     const hp = document.getElementById('customerPhone').value;
-    const tanggal = document.getElementById('customerDate').value;
-    
-    if(!nama || !hp) { alert('Lengkapi data!'); return; }
-    
-    db.collection('customers').add({
-        nama, hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
-        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
-    }).then(() => {
-        closeModal('customerModal');
-        document.getElementById('customerName').value = '';
-        document.getElementById('customerPhone').value = '+62';
-        document.getElementById('customerDate').value = '';
-        alert('Customer berhasil ditambahkan!');
-    }).catch(err => alert('Error: ' + err.message));
-}
-
-function saveProspek() {
-    const nama = document.getElementById('prospekName').value;
-    const hp = document.getElementById('prospekPhone').value;
-    const status = document.getElementById('prospekStatus').value;
-    
-    if(!nama || !hp) { alert('Lengkapi data!'); return; }
-    
-    db.collection('prospek').add({
-        nama, hp, status, user_id: currentUser.uid, created_at: new Date().toISOString()
-    }).then(() => {
-        closeModal('prospekModal');
-        document.getElementById('prospekName').value = '';
-        document.getElementById('prospekPhone').value = '+62';
-        alert('Prospek berhasil ditambahkan!');
-    }).catch(err => alert('Error: ' + err.message));
-}
-
-function saveProfile() {
-    const nama = document.getElementById('profileName').value;
-    if(!nama) { alert('Nama wajib diisi'); return; }
-    
-    db.collection('users').doc(currentUser.uid).set({ nama, email: currentUser.email }, { merge: true })
-        .then(() => {
-            document.getElementById('topUserName').innerText = nama;
-            closeModal('profileModal');
-            alert('Profile tersimpan!');
-        }).catch(err => alert('Error: ' + err.message));
-}
-
-// ========== DATABASE ARCHIVES ==========
-function openDBClosing() {
-    document.getElementById('dbClosingModal').style.display = 'flex';
-    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
-        let html = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            html
+    const tanggal = document.getElementById('customerDate
