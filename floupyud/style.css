@@ -223,7 +223,6 @@ body {
 }
 
 .toggle-btn {
-    display: block;
     background: none;
     border: none;
     font-size: 20px;
@@ -819,6 +818,54 @@ body {
     }
 }
 
-/* Responsive */
+/* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
-    .stats-grid
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .charts-row {
+        grid-template-columns: 1fr;
+    }
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .import-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+    .toggle-btn {
+        display: block;
+    }
+    #hoverZone {
+        display: none;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+    .content-area {
+        padding: 16px;
+    }
+    .topbar-center {
+        display: none;
+    }
+}
+
+@media (min-width: 769px) {
+    .sidebar {
+        transform: translateX(0);
+    }
+    .toggle-btn {
+        display: none;
+    }
+}
