@@ -169,21 +169,20 @@ auth.onAuthStateChanged(user => {
         loginPage.style.display = 'none';
         app.style.display = 'block';
         
-        console.log('User logged in:', user.uid);
-        
         db.collection('users').doc(user.uid).get().then(doc => {
             let nama = 'CS Agent';
             let foto = 'https://i.pravatar.cc/40';
+            
             if (doc.exists) {
                 const data = doc.data();
                 if (data.nama) nama = data.nama;
                 if (data.foto) foto = data.foto;
-                console.log('Loaded user data - nama:', nama, 'foto:', foto.substring(0, 50));
             }
             
+            // Update header
             const topUserName = document.getElementById('topUserName');
             const profileName = document.getElementById('profileName');
-            const topProfileImg = document.getElementById('topProfileImg');
+            const topProfileImg = document.getElementById('profileImg');
             const previewFoto = document.getElementById('previewFoto');
             
             if (topUserName) topUserName.innerText = nama;
@@ -195,6 +194,7 @@ auth.onAuthStateChanged(user => {
         const profileEmail = document.getElementById('profileEmail');
         if (profileEmail) profileEmail.value = user.email;
         loadAllData();
+        
     } else {
         loginPage.style.display = 'flex';
         app.style.display = 'none';
@@ -251,15 +251,13 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 
 // ========== PROFILE ==========
-// Event klik foto profile di header
+// Klik foto profile di header
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
     profileImg.addEventListener('click', () => {
-        console.log('Profile image clicked');
         const profileModal = document.getElementById('profileModal');
-        if (profileModal) {
-            profileModal.style.display = 'flex';
-        }
+        if (profileModal) profileModal.style.display = 'flex';
+        
         // Load data user saat ini
         db.collection('users').doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
@@ -268,17 +266,19 @@ if (profileImg) {
                 document.getElementById('profilePhone').value = data.hp || '+62';
                 if (data.foto) {
                     document.getElementById('previewFoto').src = data.foto;
+                    document.getElementById('profileImg').src = data.foto;
+                } else {
+                    document.getElementById('previewFoto').src = 'https://i.pravatar.cc/80';
                 }
             }
         });
     });
 }
 
-// Event klik foto di dalam modal untuk ganti foto
+// Klik foto di modal untuk ganti foto
 const previewFoto = document.getElementById('previewFoto');
 if (previewFoto) {
     previewFoto.addEventListener('click', () => {
-        console.log('Preview foto clicked');
         const profileFotoInput = document.getElementById('profileFoto');
         if (profileFotoInput) profileFotoInput.click();
     });
@@ -289,7 +289,6 @@ const profileFotoInput = document.getElementById('profileFoto');
 if (profileFotoInput) {
     profileFotoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
-        console.log('File selected:', file ? file.name : 'no file');
         if (file && file.type.startsWith('image/')) {
             if (file.size > 1024 * 1024) {
                 showNotif('Ukuran foto maksimal 1MB', true);
@@ -297,22 +296,19 @@ if (profileFotoInput) {
             }
             const reader = new FileReader();
             reader.onload = function(e) {
+                // Update preview di modal
                 const preview = document.getElementById('previewFoto');
-                if (preview) {
-                    preview.src = e.target.result;
-                    console.log('Preview foto updated');
-                }
+                if (preview) preview.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
     });
 }
 
-// Event tombol simpan profile
+// Tombol simpan profile
 const saveProfileBtn = document.getElementById('saveProfileBtn');
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', async () => {
-        console.log('Save profile clicked');
         const nama = document.getElementById('profileName').value;
         const hp = document.getElementById('profilePhone').value;
         const foto = document.getElementById('previewFoto').src;
@@ -323,7 +319,7 @@ if (saveProfileBtn) {
         }
         
         try {
-            console.log('Saving profile to Firestore...');
+            // Simpan ke database
             await db.collection('users').doc(currentUser.uid).set({
                 nama: nama,
                 hp: hp,
@@ -334,22 +330,17 @@ if (saveProfileBtn) {
             
             // Update nama di header
             const topUserName = document.getElementById('topUserName');
-            if (topUserName) {
-                topUserName.innerText = nama;
-                console.log('Nama header updated to:', nama);
-            }
+            if (topUserName) topUserName.innerText = nama;
             
             // Update foto di header
-            const topProfileImg = document.getElementById('topProfileImg');
-            if (topProfileImg) {
-                topProfileImg.src = foto;
-                console.log('Foto header updated to:', foto.substring(0, 50) + '...');
-            }
+            const topProfileImg = document.getElementById('profileImg');
+            if (topProfileImg) topProfileImg.src = foto;
             
             closeModal('profileModal');
             showNotif('Profile tersimpan');
+            
         } catch (e) {
-            console.error('Error saving profile:', e);
+            console.error('Error:', e);
             showNotif('Gagal: ' + e.message, true);
         }
     });
