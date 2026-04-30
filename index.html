@@ -422,8 +422,6 @@ small { font-size: 11px; color: #888; }
 </head>
 <body>
 
-<div id="hoverZone"></div>
-
 <!-- LOGIN PAGE -->
 <div id="loginPage">
     <div class="login-box">
@@ -432,7 +430,7 @@ small { font-size: 11px; color: #888; }
         <input type="password" id="password" placeholder="Password">
         <button onclick="handleLogin()">Masuk</button>
         <p style="text-align:center; margin-top:15px; font-size:12px; color:#888;">
-            Demo: demo@floupyud.com / demo123
+            Gunakan email yang sudah terdaftar di Firebase
         </p>
     </div>
 </div>
@@ -457,7 +455,7 @@ small { font-size: 11px; color: #888; }
         </div>
         
         <!-- MAIN CONTENT -->
-        <div class="main" style="flex:1; width:100%;">
+        <div style="flex:1; width:100%;">
             
             <!-- TOPBAR -->
             <div class="topbar">
@@ -539,14 +537,14 @@ small { font-size: 11px; color: #888; }
                 <!-- IMPORT SECTION -->
                 <div id="importSection" style="display:none;">
                     <div class="import-modern">
-                        <div class="import-header"><div class="icon">📥</div><div><h2>Import Data Excel</h2><p>Import data dengan mudah dan cepat</p></div></div>
+                        <div class="import-header"><div style="font-size:30px;">📥</div><div><h2>Import Data Excel</h2><p>Import data dengan mudah dan cepat</p></div></div>
                         <div class="import-content">
-                            <div class="step-card upload-area" onclick="document.getElementById('excelFile').click()">
+                            <div class="step-card" onclick="document.getElementById('excelFile').click()">
                                 <h4>1. Pilih File Excel</h4>
                                 <div class="drop-box" id="dropBox">
-                                    <p id="uploadText">⬆️ Drag & Drop file di sini</p>
-                                    <small>atau klik untuk pilih file</small>
-                                    <input type="file" id="excelFile" hidden>
+                                    <p id="uploadText">⬆️ Klik untuk pilih file</p>
+                                    <small>Format: .xlsx, .xls</small>
+                                    <input type="file" id="excelFile" hidden accept=".xlsx,.xls">
                                     <div id="fileInfo" style="margin-top:10px;font-size:12px;color:#6d28d9;"></div>
                                 </div>
                             </div>
@@ -555,11 +553,11 @@ small { font-size: 11px; color: #888; }
                                 <div class="radio-box active" onclick="selectType('prospek')"><b>Import ke Prospek</b><p>Data akan masuk ke Prospek Agen</p></div>
                                 <div class="radio-box" onclick="selectType('customer')"><b>Import ke Customer</b><p>Data akan masuk ke Followup Agen</p></div>
                             </div>
-                            <div class="step-card info">
+                            <div class="step-card">
                                 <h4>3. Informasi Import</h4>
                                 <ul><li>✔ Import ribuan data sekaligus</li><li>✔ Validasi nomor otomatis</li><li>✔ Data tidak valid akan dilewati</li></ul>
                                 <button class="btn-import-modern" onclick="importExcel()">🚀 Import Data Sekarang</button>
-                                <small class="secure">🔒 Data Anda aman</small>
+                                <small style="display:block; text-align:center; margin-top:8px;">🔒 Data Anda aman</small>
                             </div>
                         </div>
                     </div>
@@ -576,7 +574,6 @@ small { font-size: 11px; color: #888; }
 <div class="modal" id="modalDBClosing"><div class="modal-box"><h3>Database Closing</h3><div id="dbClosingList"></div><button onclick="closeModal('modalDBClosing')">Tutup</button></div></div>
 <div class="modal" id="modalDBTidak"><div class="modal-box"><h3>Database Tidak Tertarik</h3><div id="dbTidakList"></div><button onclick="closeModal('modalDBTidak')">Tutup</button></div></div>
 <div class="modal" id="modalProfile"><div class="modal-box"><h3>Profile CS Agent</h3><div style="text-align:center;"><img id="previewFoto" src="https://i.pravatar.cc/100" style="width:80px;border-radius:50%;cursor:pointer;"><input type="file" id="profile_foto" accept="image/*" hidden></div><input id="profile_nama" placeholder="Nama"><input id="profile_email" placeholder="Email" disabled><input id="profile_hp" placeholder="No HP"><button onclick="saveProfile()">Simpan</button><button onclick="closeModal('modalProfile')">Tutup</button></div></div>
-<div class="modal" id="modalFU"><div class="modal-box"><h3>Follow Up</h3><select id="media"><option>Whatsapp Chat</option><option>Whatsapp Call</option></select><select id="respon"><option>Ya</option><option>Tidak</option><option>Menunggu</option></select><input id="jenis_respon" placeholder="Isi balasan"><input id="reminder" type="datetime-local"><button onclick="saveFollowUp()">Simpan</button><button onclick="closeModal('modalFU')">Tutup</button></div></div>
 
 <div id="notifBox"></div>
 
@@ -595,7 +592,6 @@ const db = firebase.firestore();
 
 // ========== GLOBAL VARIABLES ==========
 let currentUser = null;
-let currentCustomerId = null;
 let importType = "prospek";
 let chartCustomer = null;
 let chartProspek = null;
@@ -675,7 +671,9 @@ window.showSection = function(section) {
     document.querySelectorAll('.menu-item').forEach(item => {
         item.classList.remove('active');
     });
-    event.target.classList.add('active');
+    if(event && event.target) {
+        event.target.classList.add('active');
+    }
 }
 
 // ========== SIDEBAR ==========
@@ -771,97 +769,160 @@ window.openWA = function(hp) {
     window.open('https://wa.me/' + nomor, '_blank');
 }
 
-// ========== LOAD DATA ==========
-function loadAllData() {
+// ========== PROFILE FUNCTIONS ==========
+window.openProfileModal = function() {
     if(!currentUser) return;
+    document.getElementById('modalProfile').style.display = 'flex';
+    document.getElementById('profile_email').value = currentUser.email;
     
-    // Load customers
-    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot((snapshot) => {
-        let total = 0, closing = 0, pending = 0, followup = 0;
-        const baruList = [], followupList = [], pendingList = [], closingList = [];
-        
-        snapshot.forEach((doc) => {
+    db.collection('users').doc(currentUser.uid).get().then((doc) => {
+        if(doc.exists) {
             const data = doc.data();
-            total++;
-            if(data.status === 'closing') closing++;
-            else if(data.status === 'pending') pending++;
-            else if(data.status === 'followup') followup++;
-            else baruList.push({id: doc.id, ...data});
-            
-            if(data.status === 'followup') followupList.push({id: doc.id, ...data});
-            if(data.status === 'pending') pendingList.push({id: doc.id, ...data});
-            if(data.status === 'closing') closingList.push({id: doc.id, ...data});
-        });
-        
-        // Update UI
-        document.getElementById('countBaru').innerText = total - (closing + pending + followup);
-        document.getElementById('countFollowup').innerText = followup;
-        document.getElementById('countPending').innerText = pending;
-        document.getElementById('countClosing').innerText = closing;
-        document.getElementById('total').innerText = total;
-        document.getElementById('closingCount').innerText = closing;
-        document.getElementById('prospekAktif').innerText = total - closing;
-        
-        const rate = total ? Math.round((closing/total)*100) : 0;
-        document.getElementById('rateText').innerText = rate + '%';
-        
-        renderCustomerCards('baru', baruList);
-        renderCustomerCards('followup', followupList);
-        renderCustomerCards('pending', pendingList);
-        renderCustomerCards('closing', closingList);
-        
-        updateChartCustomer(total, closing, pending, followup);
-    });
-    
-    // Load prospek
-    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot((snapshot) => {
-        let baru = 0, hubungi = 0, tertarik = 0, tidak = 0;
-        const baruList = [], hubungiList = [], tertarikList = [], tidakList = [];
-        
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            const status = data.status || 'Baru';
-            
-            if(status === 'Baru') { baru++; baruList.push({id: doc.id, ...data}); }
-            else if(status === 'Sudah Dihubungi') { hubungi++; hubungiList.push({id: doc.id, ...data}); }
-            else if(status === 'Tertarik') { tertarik++; tertarikList.push({id: doc.id, ...data}); }
-            else if(status === 'Tidak Tertarik') { tidak++; tidakList.push({id: doc.id, ...data}); }
-            else { baru++; baruList.push({id: doc.id, ...data}); }
-        });
-        
-        document.getElementById('countProspekBaru').innerText = baru;
-        document.getElementById('countHubungi').innerText = hubungi;
-        document.getElementById('countTertarik').innerText = tertarik;
-        document.getElementById('countTidak').innerText = tidak;
-        
-        renderProspekCards('prospekBaru', baruList);
-        renderProspekCards('prospekHubungi', hubungiList);
-        renderProspekCards('prospekTertarik', tertarikList);
-        renderProspekCards('prospekTidak', tidakList);
-        
-        updateChartProspek(baru, hubungi, tertarik, tidak);
+            document.getElementById('profile_nama').value = data.nama || '';
+            document.getElementById('profile_hp').value = data.hp || '+62';
+        }
     });
 }
 
-function renderCustomerCards(containerId, items) {
-    const container = document.getElementById(containerId);
-    if(!container) return;
-    container.innerHTML = '';
-    items.forEach((item) => {
-        const card = document.createElement('div');
-        card.className = 'mini-card';
-        card.setAttribute('data-id', item.id);
-        card.innerHTML = `<b>${item.nama || '-'}</b><div class="mini-phone"><span>${item.hp || '-'}</span><span onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div>`;
-        container.appendChild(card);
+window.saveProfile = async function() {
+    const nama = document.getElementById('profile_nama').value;
+    const hp = document.getElementById('profile_hp').value;
+    
+    if(!nama) {
+        alert('Nama wajib diisi');
+        return;
+    }
+    
+    try {
+        await db.collection('users').doc(currentUser.uid).set({
+            nama: nama,
+            hp: hp,
+            email: currentUser.email,
+            updated_at: new Date().toISOString()
+        }, { merge: true });
+        
+        document.getElementById('topCenterName').innerText = nama;
+        alert('Profile berhasil disimpan');
+        closeModal('modalProfile');
+    } catch(error) {
+        alert('Gagal simpan: ' + error.message);
+    }
+}
+
+// ========== NOTIFICATION ==========
+window.toggleNotif = function() {
+    const dropdown = document.getElementById('notifDropdown');
+    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+}
+
+// ========== IMPORT EXCEL ==========
+window.selectType = function(type) {
+    importType = type;
+    document.querySelectorAll('.radio-box').forEach(el => {
+        el.classList.remove('active');
+    });
+    if(event && event.currentTarget) {
+        event.currentTarget.classList.add('active');
+    }
+}
+
+window.importExcel = async function() {
+    const file = document.getElementById('excelFile').files[0];
+    if(!file) {
+        alert('Pilih file Excel terlebih dahulu!');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet);
+        
+        let success = 0;
+        let failed = 0;
+        
+        for(const row of json) {
+            let nama = row.nama || row.Nama || row.NAMA;
+            let hp = row.hp || row.HP || row.no_hp;
+            
+            if(!nama || !hp) {
+                failed++;
+                continue;
+            }
+            
+            // Format nomor
+            hp = hp.toString();
+            if(!hp.startsWith('+62')) {
+                hp = hp.replace(/^0/, '62');
+                if(!hp.startsWith('62')) hp = '62' + hp;
+                hp = '+' + hp;
+            }
+            
+            if(importType === 'prospek') {
+                await db.collection('prospek').add({
+                    nama: nama,
+                    hp: hp,
+                    status: 'Baru',
+                    user_id: currentUser.uid,
+                    created_at: new Date().toISOString()
+                });
+            } else {
+                await db.collection('customers').add({
+                    nama: nama,
+                    hp: hp,
+                    tanggal: new Date().toISOString().split('T')[0],
+                    status: 'baru',
+                    user_id: currentUser.uid,
+                    created_at: new Date().toISOString()
+                });
+            }
+            success++;
+        }
+        
+        alert(`Import selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+        document.getElementById('excelFile').value = '';
+        document.getElementById('fileInfo').innerHTML = '';
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// File upload handler
+document.getElementById('excelFile').addEventListener('change', function() {
+    const file = this.files[0];
+    if(file) {
+        document.getElementById('fileInfo').innerHTML = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+        document.getElementById('uploadText').innerText = '✅ File siap diimport';
+    }
+});
+
+// ========== DATABASE ARCHIVES ==========
+window.openDBClosing = function() {
+    const modal = document.getElementById('modalDBClosing');
+    modal.style.display = 'flex';
+    
+    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then((snapshot) => {
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `<div style="border-bottom:1px solid #eee; padding:10px;">
+                        <b>${data.nama}</b><br>
+                        ${data.hp}<br>
+                        <button onclick="openWA('${data.hp}')">WhatsApp</button>
+                     </div>`;
+        });
+        document.getElementById('dbClosingList').innerHTML = html || 'Tidak ada data';
     });
 }
 
-function renderProspekCards(containerId, items) {
-    const container = document.getElementById(containerId);
-    if(!container) return;
-    container.innerHTML = '';
-    items.forEach((item) => {
-        const card = document.createElement('div');
-        card.className = 'mini-card';
-        card.setAttribute('data-id', item.id);
-        card.innerHTML = `<b>${item.nama || '-'}</b><div class="mini-phone"><span>${item.hp || '-'}</span><span onclick="event.stopPropagation(); openWA('${item.hp}')">
+window.openDBTidak = function() {
+    const modal = document.getElementById('modalDBTidak');
+    modal.style.display = 'flex';
+    
+    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then((snapshot) => {
+        let html = '';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            html += `<div style="border-bottom:1px solid #eee; padding:10px;">
+                        <b>${data
