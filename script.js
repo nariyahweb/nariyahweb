@@ -494,62 +494,108 @@ window.convertToCustomer = function(id) {
 
 // ========== CLOSING & TIDAK TERTARIK ==========
 async function saveToClosingDB(id, data) {
+    console.log('saveToClosingDB called with id:', id, 'data:', data);
+    
     try {
-        await db.collection('db_closing').add({
+        const closingData = {
             nama: data.nama,
             hp: data.hp,
             tanggal: data.tanggal || new Date().toISOString().split('T')[0],
             closing_date: new Date().toISOString(),
-            user_id: currentUser.uid
-        });
+            user_id: currentUser.uid,
+            created_at: new Date().toISOString()
+        };
+        console.log('Saving to db_closing:', closingData);
+        
+        await db.collection('db_closing').add(closingData);
+        console.log('Success saved to db_closing');
+        
         await db.collection('customers').doc(id).delete();
+        console.log('Customer deleted from customers collection');
+        
         showNotif('✅ Data berhasil masuk Database Closing!');
         return true;
     } catch (error) {
+        console.error('Error in saveToClosingDB:', error);
         showNotif('❌ Gagal: ' + error.message, true);
         return false;
     }
 }
 
 async function saveToTidakTertarikDB(id, data) {
+    console.log('saveToTidakTertarikDB called with id:', id, 'data:', data);
+    
     try {
-        await db.collection('db_tidak_tertarik').add({
+        const tidakData = {
             nama: data.nama,
             hp: data.hp,
+            status: data.status || 'Tidak Tertarik',
             tanggal: new Date().toISOString(),
-            user_id: currentUser.uid
-        });
+            user_id: currentUser.uid,
+            created_at: new Date().toISOString()
+        };
+        console.log('Saving to db_tidak_tertarik:', tidakData);
+        
+        await db.collection('db_tidak_tertarik').add(tidakData);
+        console.log('Success saved to db_tidak_tertarik');
+        
         await db.collection('prospek').doc(id).delete();
+        console.log('Prospek deleted from prospek collection');
+        
         showNotif('✅ Data berhasil masuk Database Tidak Tertarik!');
         return true;
     } catch (error) {
+        console.error('Error in saveToTidakTertarikDB:', error);
         showNotif('❌ Gagal: ' + error.message, true);
         return false;
     }
 }
 
 window.confirmClosing = async function(id) {
+    console.log('confirmClosing called for id:', id);
+    
     const result = confirm("⚠️ PERHATIAN!\n\nAnda akan memindahkan data ini ke DATABASE CLOSING.\n\n✅ OK = Pindahkan ke DB Closing\n❌ CANCEL = Tetap di kolom Closing\n\nApakah Anda yakin?");
+    
     if (result) {
+        console.log('User clicked OK, proceeding to save...');
         const doc = await db.collection('customers').doc(id).get();
-        if (doc.exists) await saveToClosingDB(id, doc.data());
+        console.log('Customer document:', doc.exists ? doc.data() : 'not found');
+        
+        if (doc.exists) {
+            await saveToClosingDB(id, doc.data());
+        } else {
+            console.error('Customer document not found!');
+            showNotif('❌ Data customer tidak ditemukan!', true);
+        }
     } else {
+        console.log('User clicked CANCEL, only updating status');
         await db.collection('customers').doc(id).update({ status: 'closing' });
-        showNotif('📌 Data tetap di kolom Closing');
+        showNotif('📌 Data tetap di kolom Closing (tidak diarsipkan)');
     }
 };
 
 window.confirmTidakTertarik = async function(id) {
+    console.log('confirmTidakTertarik called for id:', id);
+    
     const result = confirm("⚠️ PERHATIAN!\n\nAnda akan memindahkan data ini ke DATABASE TIDAK TERTARIK.\n\n✅ OK = Pindahkan ke DB Tidak Tertarik\n❌ CANCEL = Tetap di kolom Tidak Tertarik\n\nApakah Anda yakin?");
+    
     if (result) {
+        console.log('User clicked OK, proceeding to save...');
         const doc = await db.collection('prospek').doc(id).get();
-        if (doc.exists) await saveToTidakTertarikDB(id, doc.data());
+        console.log('Prospek document:', doc.exists ? doc.data() : 'not found');
+        
+        if (doc.exists) {
+            await saveToTidakTertarikDB(id, doc.data());
+        } else {
+            console.error('Prospek document not found!');
+            showNotif('❌ Data prospek tidak ditemukan!', true);
+        }
     } else {
+        console.log('User clicked CANCEL, only updating status');
         await db.collection('prospek').doc(id).update({ status: 'Tidak Tertarik' });
-        showNotif('📌 Data tetap di kolom Tidak Tertarik');
+        showNotif('📌 Data tetap di kolom Tidak Tertarik (tidak diarsipkan)');
     }
 };
-
 // ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
@@ -631,11 +677,21 @@ if (importBtn) {
 function loadDBClosing() {
     if (!currentUser) return;
     
+    console.log('Loading DB Closing...');
+    
     // Gunakan onSnapshot untuk realtime update
     db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+        console.log('DB Closing snapshot size:', snap.size);
+        
         let html = '';
         if (snap.empty) {
-            html = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Belum ada data closing</p>';
+            html = `
+                <div style="text-align:center;padding:40px;">
+                    <p style="font-size:48px; margin-bottom:10px;">📭</p>
+                    <p style="color:#9ca3af;">Belum ada data closing</p>
+                    <p style="font-size:12px; color:#cbd5e1; margin-top:8px;">Drag card ke kolom Closing dan pilih OK</p>
+                </div>
+            `;
         } else {
             snap.forEach(doc => {
                 const d = doc.data();
@@ -653,16 +709,30 @@ function loadDBClosing() {
         }
         const dbClosingList = document.getElementById('dbClosingList');
         if (dbClosingList) dbClosingList.innerHTML = html;
+    }, error => {
+        console.error('Error loading DB Closing:', error);
+        const dbClosingList = document.getElementById('dbClosingList');
+        if (dbClosingList) dbClosingList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
     });
 }
 
 function loadDBTidak() {
     if (!currentUser) return;
     
+    console.log('Loading DB Tidak Tertarik...');
+    
     db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+        console.log('DB Tidak Tertarik snapshot size:', snap.size);
+        
         let html = '';
         if (snap.empty) {
-            html = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Belum ada data tidak tertarik</p>';
+            html = `
+                <div style="text-align:center;padding:40px;">
+                    <p style="font-size:48px; margin-bottom:10px;">📭</p>
+                    <p style="color:#9ca3af;">Belum ada data tidak tertarik</p>
+                    <p style="font-size:12px; color:#cbd5e1; margin-top:8px;">Drag card ke kolom Tidak Tertarik dan pilih OK</p>
+                </div>
+            `;
         } else {
             snap.forEach(doc => {
                 const d = doc.data();
@@ -680,9 +750,12 @@ function loadDBTidak() {
         }
         const dbTidakList = document.getElementById('dbTidakList');
         if (dbTidakList) dbTidakList.innerHTML = html;
+    }, error => {
+        console.error('Error loading DB Tidak Tertarik:', error);
+        const dbTidakList = document.getElementById('dbTidakList');
+        if (dbTidakList) dbTidakList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
     });
 }
-
 // ========== CHARTS ==========
 function updateChartCustomer(total, closing, pending, followup) {
     const ctx = document.getElementById('chartCustomer');
