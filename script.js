@@ -49,15 +49,20 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
+// Inisialisasi sidebar setelah DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const hoverZone = document.getElementById('hoverZone');
     const toggleBtn = document.getElementById('toggleSidebarBtn');
     
+    console.log('Sidebar init - sidebar exists:', !!sidebar);
+    console.log('Is Mobile:', isMobile());
+    
+    // Desktop: Hover to open sidebar
     if (hoverZone) {
         hoverZone.addEventListener('mouseenter', function() {
             if (!isMobile() && sidebar) {
-                clearTimeout(sidebarTimeout);
+                console.log('Hover zone enter - opening sidebar');
                 sidebar.classList.add('active');
             }
         });
@@ -66,26 +71,24 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sidebar) {
         sidebar.addEventListener('mouseleave', function() {
             if (!isMobile()) {
-                sidebarTimeout = setTimeout(function() {
-                    sidebar.classList.remove('active');
-                }, 200);
+                console.log('Sidebar leave - closing sidebar');
+                sidebar.classList.remove('active');
             }
-        });
-        
-        sidebar.addEventListener('mouseenter', function() {
-            clearTimeout(sidebarTimeout);
         });
     }
     
+    // Mobile: Toggle button
     if (toggleBtn) {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (sidebar) {
+                console.log('Toggle button clicked - toggling sidebar');
                 sidebar.classList.toggle('active');
             }
         });
     }
     
+    // Close sidebar when clicking outside (mobile only)
     document.addEventListener('click', function(e) {
         if (isMobile() && sidebar && toggleBtn) {
             if (!sidebar.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
@@ -94,8 +97,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Handle window resize
     window.addEventListener('resize', function() {
         if (!isMobile() && sidebar) {
+            // Di desktop, pastikan sidebar tertutup saat resize
             sidebar.classList.remove('active');
         } else if (isMobile() && sidebar) {
             sidebar.classList.remove('active');
@@ -164,19 +169,21 @@ auth.onAuthStateChanged(user => {
         loginPage.style.display = 'none';
         app.style.display = 'block';
         
+        console.log('User logged in:', user.uid);
+        
         db.collection('users').doc(user.uid).get().then(doc => {
             let nama = 'CS Agent';
             let foto = 'https://i.pravatar.cc/40';
-            
             if (doc.exists) {
                 const data = doc.data();
                 if (data.nama) nama = data.nama;
                 if (data.foto) foto = data.foto;
+                console.log('Loaded user data - nama:', nama, 'foto:', foto.substring(0, 50));
             }
             
             const topUserName = document.getElementById('topUserName');
             const profileName = document.getElementById('profileName');
-            const topProfileImg = document.getElementById('profileImg');
+            const topProfileImg = document.getElementById('topProfileImg');
             const previewFoto = document.getElementById('previewFoto');
             
             if (topUserName) topUserName.innerText = nama;
@@ -188,7 +195,6 @@ auth.onAuthStateChanged(user => {
         const profileEmail = document.getElementById('profileEmail');
         if (profileEmail) profileEmail.value = user.email;
         loadAllData();
-        
     } else {
         loginPage.style.display = 'flex';
         app.style.display = 'none';
@@ -225,6 +231,7 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         
+        // Close sidebar on mobile after click
         if (window.innerWidth <= 768) {
             const sidebarEl = document.getElementById('sidebar');
             if (sidebarEl) sidebarEl.classList.remove('active');
@@ -244,12 +251,16 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 
 // ========== PROFILE ==========
+// Event klik foto profile di header
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
     profileImg.addEventListener('click', () => {
+        console.log('Profile image clicked');
         const profileModal = document.getElementById('profileModal');
-        if (profileModal) profileModal.style.display = 'flex';
-        
+        if (profileModal) {
+            profileModal.style.display = 'flex';
+        }
+        // Load data user saat ini
         db.collection('users').doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
@@ -257,25 +268,28 @@ if (profileImg) {
                 document.getElementById('profilePhone').value = data.hp || '+62';
                 if (data.foto) {
                     document.getElementById('previewFoto').src = data.foto;
-                    document.getElementById('profileImg').src = data.foto;
                 }
             }
         });
     });
 }
 
+// Event klik foto di dalam modal untuk ganti foto
 const previewFoto = document.getElementById('previewFoto');
 if (previewFoto) {
     previewFoto.addEventListener('click', () => {
+        console.log('Preview foto clicked');
         const profileFotoInput = document.getElementById('profileFoto');
         if (profileFotoInput) profileFotoInput.click();
     });
 }
 
+// Event ketika memilih file foto
 const profileFotoInput = document.getElementById('profileFoto');
 if (profileFotoInput) {
     profileFotoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
+        console.log('File selected:', file ? file.name : 'no file');
         if (file && file.type.startsWith('image/')) {
             if (file.size > 1024 * 1024) {
                 showNotif('Ukuran foto maksimal 1MB', true);
@@ -284,16 +298,21 @@ if (profileFotoInput) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('previewFoto');
-                if (preview) preview.src = e.target.result;
+                if (preview) {
+                    preview.src = e.target.result;
+                    console.log('Preview foto updated');
+                }
             };
             reader.readAsDataURL(file);
         }
     });
 }
 
+// Event tombol simpan profile
 const saveProfileBtn = document.getElementById('saveProfileBtn');
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', async () => {
+        console.log('Save profile clicked');
         const nama = document.getElementById('profileName').value;
         const hp = document.getElementById('profilePhone').value;
         const foto = document.getElementById('previewFoto').src;
@@ -304,6 +323,7 @@ if (saveProfileBtn) {
         }
         
         try {
+            console.log('Saving profile to Firestore...');
             await db.collection('users').doc(currentUser.uid).set({
                 nama: nama,
                 hp: hp,
@@ -312,17 +332,24 @@ if (saveProfileBtn) {
                 updated_at: new Date().toISOString()
             }, { merge: true });
             
+            // Update nama di header
             const topUserName = document.getElementById('topUserName');
-            if (topUserName) topUserName.innerText = nama;
+            if (topUserName) {
+                topUserName.innerText = nama;
+                console.log('Nama header updated to:', nama);
+            }
             
-            const topProfileImg = document.getElementById('profileImg');
-            if (topProfileImg) topProfileImg.src = foto;
+            // Update foto di header
+            const topProfileImg = document.getElementById('topProfileImg');
+            if (topProfileImg) {
+                topProfileImg.src = foto;
+                console.log('Foto header updated to:', foto.substring(0, 50) + '...');
+            }
             
             closeModal('profileModal');
             showNotif('Profile tersimpan');
-            
         } catch (e) {
-            console.error('Error:', e);
+            console.error('Error saving profile:', e);
             showNotif('Gagal: ' + e.message, true);
         }
     });
@@ -332,7 +359,8 @@ if (saveProfileBtn) {
 const addCustomerBtn = document.getElementById('addCustomerBtn');
 if (addCustomerBtn) {
     addCustomerBtn.addEventListener('click', () => {
-        document.getElementById('customerModal').style.display = 'flex';
+        const customerModal = document.getElementById('customerModal');
+        if (customerModal) customerModal.style.display = 'flex';
     });
 }
 
@@ -369,7 +397,8 @@ if (saveCustomerBtn) {
 const addProspekBtn = document.getElementById('addProspekBtn');
 if (addProspekBtn) {
     addProspekBtn.addEventListener('click', () => {
-        document.getElementById('prospekModal').style.display = 'flex';
+        const prospekModal = document.getElementById('prospekModal');
+        if (prospekModal) prospekModal.style.display = 'flex';
     });
 }
 
@@ -404,8 +433,10 @@ if (saveProspekBtn) {
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(doc => {
         const d = doc.data();
+        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        if (!content) return;
+        
+        if (!modal || !content) return;
         
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
@@ -421,15 +452,17 @@ function openDetailCustomer(id) {
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
         `;
-        document.getElementById('detailModal').style.display = 'flex';
+        modal.style.display = 'flex';
     });
 }
 
 function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
+        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        if (!content) return;
+        
+        if (!modal || !content) return;
         
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
@@ -445,7 +478,7 @@ function openDetailProspek(id) {
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
         `;
-        document.getElementById('detailModal').style.display = 'flex';
+        modal.style.display = 'flex';
     });
 }
 
@@ -557,8 +590,6 @@ window.confirmTidakTertarik = async function(id) {
 // ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
-const fileInfo = document.getElementById('fileInfo');
-
 if (dropZone) {
     dropZone.addEventListener('click', () => {
         if (excelFileInput) excelFileInput.click();
@@ -567,255 +598,97 @@ if (dropZone) {
 
 if (excelFileInput) {
     excelFileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            console.log('File selected:', file.name);
-            if (fileInfo) {
-                fileInfo.innerHTML = `📄 ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-                fileInfo.style.color = '#10b981';
-            }
-        } else {
-            if (fileInfo) fileInfo.innerHTML = '';
+        if (e.target.files[0]) {
+            const fileInfo = document.getElementById('fileInfo');
+            if (fileInfo) fileInfo.innerHTML = '📄 ' + e.target.files[0].name;
         }
     });
 }
 
-// Radio option untuk pilih tujuan import
 document.querySelectorAll('.radio-option').forEach(opt => {
     opt.addEventListener('click', function() {
         importType = this.dataset.import;
         document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active'));
         this.classList.add('active');
-        console.log('Import type changed to:', importType);
     });
 });
 
-// Tombol import
 const importBtn = document.getElementById('importBtn');
 if (importBtn) {
     importBtn.addEventListener('click', async () => {
         const file = excelFileInput ? excelFileInput.files[0] : null;
-        
-        console.log('Import button clicked, file:', file ? file.name : 'no file');
-        
         if (!file) {
-            showNotif('Pilih file Excel dulu!', true);
+            showNotif('Pilih file dulu!', true);
             return;
         }
         
-        // Cek ekstensi file
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        if (!['xlsx', 'xls', 'csv'].includes(fileExt)) {
-            showNotif('Format file harus .xlsx, .xls, atau .csv', true);
-            return;
-        }
-        
-        importBtn.textContent = '📥 Memproses...';
+        importBtn.textContent = 'Memproses...';
         importBtn.disabled = true;
         
         const reader = new FileReader();
-        
         reader.onload = async function(e) {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(sheet);
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            
+            let success = 0, failed = 0;
+            for (let row of json) {
+                let nama = row.nama || row.Nama;
+                let hp = row.hp || row.HP;
+                if (!nama || !hp) { failed++; continue; }
                 
-                console.log('Data dari Excel:', json);
-                console.log('Jumlah data:', json.length);
-                console.log('Tipe import:', importType);
+                hp = hp.toString();
+                if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
                 
-                if (json.length === 0) {
-                    showNotif('File Excel kosong!', true);
-                    importBtn.textContent = '🚀 Import Data Sekarang';
-                    importBtn.disabled = false;
-                    return;
+                if (importType === 'prospek') {
+                    await db.collection('prospek').add({
+                        nama: nama, hp: hp, status: 'Baru',
+                        user_id: currentUser.uid, created_at: new Date().toISOString()
+                    });
+                } else {
+                    await db.collection('customers').add({
+                        nama: nama, hp: hp,
+                        tanggal: new Date().toISOString().split('T')[0],
+                        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+                    });
                 }
-                
-                let success = 0;
-                let failed = 0;
-                let errors = [];
-                
-                for (let i = 0; i < json.length; i++) {
-                    const row = json[i];
-                    let nama = row.nama || row.Nama || row.NAMA || row.name || row.Name;
-                    let hp = row.hp || row.HP || row.no_hp || row.phone || row.telp;
-                    
-                    console.log(`Row ${i + 1}:`, { nama, hp });
-                    
-                    if (!nama || !hp) {
-                        failed++;
-                        errors.push(`Baris ${i + 1}: Nama atau HP kosong`);
-                        continue;
-                    }
-                    
-                    // Format nomor HP
-                    hp = hp.toString().trim();
-                    // Hapus semua karakter non-digit
-                    let cleanHp = hp.replace(/\D/g, '');
-                    
-                    // Format ke +62
-                    if (cleanHp.startsWith('0')) {
-                        cleanHp = '62' + cleanHp.substring(1);
-                    } else if (cleanHp.startsWith('62')) {
-                        cleanHp = cleanHp;
-                    } else if (cleanHp.startsWith('8')) {
-                        cleanHp = '62' + cleanHp;
-                    }
-                    
-                    // Pastikan ada +62 di depan
-                    const formattedHp = '+' + cleanHp;
-                    
-                    console.log(`Formatted HP: ${formattedHp}`);
-                    
-                    if (importType === 'prospek') {
-                        await db.collection('prospek').add({
-                            nama: nama,
-                            hp: formattedHp,
-                            status: 'Baru',
-                            user_id: currentUser.uid,
-                            created_at: new Date().toISOString()
-                        });
-                    } else {
-                        await db.collection('customers').add({
-                            nama: nama,
-                            hp: formattedHp,
-                            tanggal: new Date().toISOString().split('T')[0],
-                            status: 'baru',
-                            user_id: currentUser.uid,
-                            created_at: new Date().toISOString()
-                        });
-                    }
-                    success++;
-                }
-                
-                let message = `✅ Import selesai!\n📊 Berhasil: ${success}\n❌ Gagal: ${failed}`;
-                if (errors.length > 0 && errors.length <= 5) {
-                    message += '\n\nDetail error:\n' + errors.join('\n');
-                } else if (errors.length > 5) {
-                    message += `\n\n${errors.length} data gagal diimport (format tidak valid)`;
-                }
-                alert(message);
-                
-                // Reset file input
-                excelFileInput.value = '';
-                if (fileInfo) fileInfo.innerHTML = '';
-                
-            } catch (error) {
-                console.error('Error processing Excel:', error);
-                showNotif('Gagal memproses file: ' + error.message, true);
-            } finally {
-                importBtn.textContent = '🚀 Import Data Sekarang';
-                importBtn.disabled = false;
+                success++;
             }
-        };
-        
-        reader.onerror = function(error) {
-            console.error('FileReader error:', error);
-            showNotif('Gagal membaca file', true);
+            
+            alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+            if (excelFileInput) excelFileInput.value = '';
+            const fileInfo = document.getElementById('fileInfo');
+            if (fileInfo) fileInfo.innerHTML = '';
             importBtn.textContent = '🚀 Import Data Sekarang';
             importBtn.disabled = false;
         };
-        
         reader.readAsArrayBuffer(file);
     });
 }
 
 // ========== DATABASE ARCHIVES ==========
 function loadDBClosing() {
-    if (!currentUser) {
-        console.log('No user, skipping loadDBClosing');
-        return;
-    }
-    
-    console.log('Loading DB Closing...');
-    const dbClosingList = document.getElementById('dbClosingList');
-    if (!dbClosingList) {
-        console.error('dbClosingList element not found!');
-        return;
-    }
-    
-    db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
-        console.log('DB Closing snapshot size:', snap.size);
-        
+    if (!currentUser) return;
+    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
         let html = '';
-        if (snap.empty) {
-            html = `
-                <div style="text-align:center;padding:40px;">
-                    <p style="font-size:48px; margin-bottom:10px;">📭</p>
-                    <p style="color:#9ca3af;">Belum ada data closing</p>
-                    <p style="font-size:12px; color:#cbd5e1; margin-top:8px;">Drag card ke kolom Closing dan pilih OK</p>
-                </div>
-            `;
-        } else {
-            snap.forEach(doc => {
-                const d = doc.data();
-                html += `
-                    <div class="db-item">
-                        <div class="db-item-info">
-                            <h4>${escapeHtml(d.nama)}</h4>
-                            <p>${escapeHtml(d.hp)}</p>
-                            <small style="font-size: 11px; color: #9ca3af;">Closing: ${d.closing_date ? new Date(d.closing_date).toLocaleDateString('id-ID') : '-'}</small>
-                        </div>
-                        <button onclick="openWA('${escapeHtml(d.hp)}')" style="background:#25D366;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">💬 WA</button>
-                    </div>
-                `;
-            });
-        }
-        dbClosingList.innerHTML = html;
-        console.log('DB Closing HTML updated, length:', html.length);
-    }, error => {
-        console.error('Error loading DB Closing:', error);
-        dbClosingList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
+        });
+        const dbClosingList = document.getElementById('dbClosingList');
+        if (dbClosingList) dbClosingList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
     });
 }
 
 function loadDBTidak() {
-    if (!currentUser) {
-        console.log('No user, skipping loadDBTidak');
-        return;
-    }
-    
-    console.log('Loading DB Tidak Tertarik...');
-    const dbTidakList = document.getElementById('dbTidakList');
-    if (!dbTidakList) {
-        console.error('dbTidakList element not found!');
-        return;
-    }
-    
-    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
-        console.log('DB Tidak Tertarik snapshot size:', snap.size);
-        
+    if (!currentUser) return;
+    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then(snap => {
         let html = '';
-        if (snap.empty) {
-            html = `
-                <div style="text-align:center;padding:40px;">
-                    <p style="font-size:48px; margin-bottom:10px;">📭</p>
-                    <p style="color:#9ca3af;">Belum ada data tidak tertarik</p>
-                    <p style="font-size:12px; color:#cbd5e1; margin-top:8px;">Drag card ke kolom Tidak Tertarik dan pilih OK</p>
-                </div>
-            `;
-        } else {
-            snap.forEach(doc => {
-                const d = doc.data();
-                html += `
-                    <div class="db-item">
-                        <div class="db-item-info">
-                            <h4>${escapeHtml(d.nama)}</h4>
-                            <p>${escapeHtml(d.hp)}</p>
-                            <small style="font-size: 11px; color: #9ca3af;">Tanggal: ${d.tanggal ? new Date(d.tanggal).toLocaleDateString('id-ID') : '-'}</small>
-                        </div>
-                        <button onclick="openWA('${escapeHtml(d.hp)}')" style="background:#25D366;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">💬 WA</button>
-                    </div>
-                `;
-            });
-        }
-        dbTidakList.innerHTML = html;
-        console.log('DB Tidak HTML updated, length:', html.length);
-    }, error => {
-        console.error('Error loading DB Tidak Tertarik:', error);
-        dbTidakList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
+        });
+        const dbTidakList = document.getElementById('dbTidakList');
+        if (dbTidakList) dbTidakList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
     });
 }
 
@@ -826,13 +699,17 @@ function updateChartCustomer(total, closing, pending, followup) {
     if (chartCustomer) chartCustomer.destroy();
     
     const baru = total - (closing + pending + followup);
+    const dataArr = [closing, pending, followup, baru];
+    const labels = ['Closing', 'Pending', 'Follow Up', 'Baru'];
+    const colors = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
+    
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
+            labels: labels,
             datasets: [{
-                data: [closing, pending, followup, baru],
-                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                data: dataArr,
+                backgroundColor: colors,
                 borderWidth: 0,
                 hoverOffset: 15,
                 cutout: '65%'
@@ -841,8 +718,46 @@ function updateChartCustomer(total, closing, pending, followup) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            layout: {
+                padding: 10
+            },
             plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
+                legend: {
+                    position: 'right',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 12,
+                        font: { size: 11, weight: 'normal' },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            return data.labels.map((label, i) => {
+                                const value = data.datasets[0].data[i];
+                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                                return {
+                                    text: `${label} : ${value} (${percent}%)`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].backgroundColor[i],
+                                    lineWidth: 0,
+                                    hidden: false,
+                                    index: i
+                                };
+                            });
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value} (${percent}%)`;
+                        }
+                    }
+                }
             }
         }
     });
@@ -854,15 +769,18 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     if (chartProspek) chartProspek.destroy();
     
     let dataArr = [baru, dihubungi, tertarik, tidak];
+    const labels = ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'];
+    const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'];
+    
     if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
     
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'],
+            labels: labels,
             datasets: [{
                 data: dataArr,
-                backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'],
+                backgroundColor: colors,
                 borderWidth: 0,
                 hoverOffset: 15,
                 cutout: '65%'
@@ -871,15 +789,53 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            layout: {
+                padding: 10
+            },
             plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
+                legend: {
+                    position: 'right',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 12,
+                        font: { size: 11, weight: 'normal' },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            return data.labels.map((label, i) => {
+                                const value = data.datasets[0].data[i];
+                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                                return {
+                                    text: `${label} : ${value} (${percent}%)`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].backgroundColor[i],
+                                    lineWidth: 0,
+                                    hidden: false,
+                                    index: i
+                                };
+                            });
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value} (${percent}%)`;
+                        }
+                    }
+                }
             }
         }
     });
 }
-
 // ========== DRAG AND DROP ==========
 function initDragAndDrop() {
+    // Customer drag and drop
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
     const customerStatusMap = { baruList: 'baru', followupList: 'followup', pendingList: 'pending', closingList: 'closing' };
     customerGroups.forEach(groupId => {
@@ -900,6 +856,7 @@ function initDragAndDrop() {
         }
     });
     
+    // Prospek drag and drop
     const prospekGroups = ['prospekBaruList', 'prospekDihubungiList', 'prospekTertarikList', 'prospekTidakList'];
     const prospekStatusMap = { prospekBaruList: 'Baru', prospekDihubungiList: 'Sudah Dihubungi', prospekTertarikList: 'Tertarik', prospekTidakList: 'Tidak Tertarik' };
     prospekGroups.forEach(groupId => {
@@ -929,7 +886,6 @@ function loadAllData() {
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
-        
         snap.forEach(doc => {
             const d = doc.data();
             total++;
@@ -937,7 +893,6 @@ function loadAllData() {
             else if (d.status === 'pending') pending++;
             else if (d.status === 'followup') followup++;
             else lists.baru.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            
             if (d.status === 'followup') lists.followup.push({ id: doc.id, nama: d.nama, hp: d.hp });
             if (d.status === 'pending') lists.pending.push({ id: doc.id, nama: d.nama, hp: d.hp });
             if (d.status === 'closing') lists.closing.push({ id: doc.id, nama: d.nama, hp: d.hp });
@@ -955,22 +910,9 @@ function loadAllData() {
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
-                container.innerHTML = lists[status].map(item => `
-                    <div class="card-item" data-id="${item.id}">
-                        <div class="card-name">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone">
-                            <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
-                        </div>
-                    </div>
-                `).join('');
-                
+                container.innerHTML = lists[status].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div></div>`).join('');
                 container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { 
-                        if (!e.target.classList.contains('whatsapp-icon')) {
-                            openDetailCustomer(card.dataset.id);
-                        }
-                    });
+                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
                 });
             }
         }
@@ -982,7 +924,6 @@ function loadAllData() {
     db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let baru = 0, dihubungi = 0, tertarik = 0, tidak = 0;
         const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
-        
         snap.forEach(doc => {
             const d = doc.data();
             const st = d.status || 'Baru';
@@ -1000,22 +941,9 @@ function loadAllData() {
         for (let col in lists) {
             const container = document.getElementById(col + 'List');
             if (container) {
-                container.innerHTML = lists[col].map(item => `
-                    <div class="card-item" data-id="${item.id}">
-                        <div class="card-name">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone">
-                            <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
-                        </div>
-                    </div>
-                `).join('');
-                
+                container.innerHTML = lists[col].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div></div>`).join('');
                 container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { 
-                        if (!e.target.classList.contains('whatsapp-icon')) {
-                            openDetailProspek(card.dataset.id);
-                        }
-                    });
+                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
                 });
             }
         }
@@ -1030,13 +958,4 @@ if (notifBtn) {
     notifBtn.addEventListener('click', () => {
         showNotif('Fitur notifikasi dalam pengembangan');
     });
-}
-
-// Detail Modal element (create if not exists)
-if (!document.getElementById('detailModal')) {
-    const detailModal = document.createElement('div');
-    detailModal.id = 'detailModal';
-    detailModal.className = 'modal';
-    detailModal.innerHTML = '<div class="modal-content" id="detailContent"></div>';
-    document.body.appendChild(detailModal);
 }
