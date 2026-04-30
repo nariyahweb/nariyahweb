@@ -660,10 +660,6 @@ function updateChartCustomer(total, closing, pending, followup) {
     const labels = ['Closing', 'Pending', 'Follow Up', 'Baru'];
     const colors = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
     
-    // Hitung persentase
-    const totalData = dataArr.reduce((a, b) => a + b, 0);
-    const percentages = dataArr.map(val => totalData ? ((val / totalData) * 100).toFixed(1) : 0);
-    
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -679,14 +675,17 @@ function updateChartCustomer(total, closing, pending, followup) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            layout: {
+                padding: 10
+            },
             plugins: {
                 legend: {
                     position: 'right',
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'circle',
-                        padding: 15,
-                        font: { size: 12 },
+                        padding: 12,
+                        font: { size: 11, weight: 'normal' },
                         generateLabels: function(chart) {
                             const data = chart.data;
                             const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
@@ -694,7 +693,7 @@ function updateChartCustomer(total, closing, pending, followup) {
                                 const value = data.datasets[0].data[i];
                                 const percent = total ? ((value / total) * 100).toFixed(1) : 0;
                                 return {
-                                    text: `${label}: ${value} (${percent}%)`,
+                                    text: `${label} : ${value} (${percent}%)`,
                                     fillStyle: data.datasets[0].backgroundColor[i],
                                     strokeStyle: data.datasets[0].backgroundColor[i],
                                     lineWidth: 0,
@@ -715,14 +714,6 @@ function updateChartCustomer(total, closing, pending, followup) {
                             return `${label}: ${value} (${percent}%)`;
                         }
                     }
-                }
-            },
-            onClick: function(e, activeElements) {
-                if (activeElements.length > 0) {
-                    const index = activeElements[0].dataIndex;
-                    const label = this.data.labels[index];
-                    const value = this.data.datasets[0].data[index];
-                    showNotif(`${label}: ${value} data`, false);
                 }
             }
         }
@@ -740,10 +731,6 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     
     if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
     
-    // Hitung persentase
-    const totalData = dataArr.reduce((a, b) => a + b, 0);
-    const percentages = dataArr.map(val => totalData ? ((val / totalData) * 100).toFixed(1) : 0);
-    
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -759,14 +746,17 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            layout: {
+                padding: 10
+            },
             plugins: {
                 legend: {
                     position: 'right',
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'circle',
-                        padding: 15,
-                        font: { size: 12 },
+                        padding: 12,
+                        font: { size: 11, weight: 'normal' },
                         generateLabels: function(chart) {
                             const data = chart.data;
                             const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
@@ -774,7 +764,7 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
                                 const value = data.datasets[0].data[i];
                                 const percent = total ? ((value / total) * 100).toFixed(1) : 0;
                                 return {
-                                    text: `${label}: ${value} (${percent}%)`,
+                                    text: `${label} : ${value} (${percent}%)`,
                                     fillStyle: data.datasets[0].backgroundColor[i],
                                     strokeStyle: data.datasets[0].backgroundColor[i],
                                     lineWidth: 0,
@@ -795,14 +785,6 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
                             return `${label}: ${value} (${percent}%)`;
                         }
                     }
-                }
-            },
-            onClick: function(e, activeElements) {
-                if (activeElements.length > 0) {
-                    const index = activeElements[0].dataIndex;
-                    const label = this.data.labels[index];
-                    const value = this.data.datasets[0].data[index];
-                    showNotif(`${label}: ${value} prospek`, false);
                 }
             }
         }
