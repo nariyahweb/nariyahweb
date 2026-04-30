@@ -250,6 +250,18 @@ if (profileImg) {
     profileImg.addEventListener('click', () => {
         const profileModal = document.getElementById('profileModal');
         if (profileModal) profileModal.style.display = 'flex';
+        // Load data terbaru saat modal dibuka
+        db.collection('users').doc(currentUser.uid).get().then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                if (data.nama) document.getElementById('profileName').value = data.nama;
+                if (data.hp) document.getElementById('profilePhone').value = data.hp;
+                if (data.foto) {
+                    document.getElementById('previewFoto').src = data.foto;
+                    document.getElementById('topProfileImg').src = data.foto;
+                }
+            }
+        });
     });
 }
 
@@ -273,9 +285,8 @@ if (profileFotoInput) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('previewFoto');
-                const topImg = document.getElementById('topProfileImg');
                 if (preview) preview.src = e.target.result;
-                if (topImg) topImg.src = e.target.result;
+                // Langsung update preview, tapi belum simpan ke database
             };
             reader.readAsDataURL(file);
         }
@@ -302,8 +313,18 @@ if (saveProfileBtn) {
                 email: currentUser.email
             }, { merge: true });
             
+            // Update nama di header
             const topUserName = document.getElementById('topUserName');
             if (topUserName) topUserName.innerText = nama;
+            
+            // Update foto di header
+            const topProfileImg = document.getElementById('topProfileImg');
+            if (topProfileImg) topProfileImg.src = foto;
+            
+            // Update foto di preview modal untuk下次
+            const previewFoto = document.getElementById('previewFoto');
+            if (previewFoto) previewFoto.src = foto;
+            
             closeModal('profileModal');
             showNotif('Profile tersimpan');
         } catch (e) {
