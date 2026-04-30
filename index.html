@@ -8,7 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +15,6 @@
 
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
 
 /* Login Page */
@@ -27,7 +25,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     align-items: center; 
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
-
 .login-box { 
     background: white; 
     padding: 30px; 
@@ -35,14 +32,12 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     width: 320px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
-
 .login-box h3 {
     text-align: center;
     margin-bottom: 20px;
     color: #7c3aed;
     font-size: 24px;
 }
-
 .login-box input {
     width: 100%;
     padding: 12px;
@@ -51,7 +46,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     border-radius: 8px;
     font-size: 14px;
 }
-
 .login-box button {
     width: 100%;
     padding: 12px;
@@ -64,13 +58,10 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     cursor: pointer;
     margin-top: 10px;
 }
-
 .login-box button:hover { background: #6d28d9; }
 
 /* App Container */
 #app { display: none; }
-
-/* Layout */
 .layout { display: flex; height: 100vh; }
 
 /* Sidebar */
@@ -88,10 +79,8 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     overflow-y: auto;
 }
-
 .sidebar.active { transform: translateX(0); }
 .sidebar h2 { color: #7c3aed; margin-bottom: 20px; font-size: 20px; }
-
 .menu-item {
     padding: 12px;
     border-radius: 8px;
@@ -100,11 +89,9 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     color: #444;
     transition: all 0.2s;
 }
-
 .menu-item:hover { background: #f3e8ff; }
 .menu-item.active { background: #7c3aed; color: white; }
 .menu-item.logout { background: #ef4444; color: white; margin-top: 20px; }
-.menu-item.logout:hover { background: #dc2626; }
 
 /* Topbar */
 .topbar {
@@ -120,14 +107,11 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     align-items: center;
     padding: 0 20px;
     z-index: 999;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
-
 .top-left { display: flex; align-items: center; gap: 15px; }
 .toggle-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
 .top-center { position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; }
 .top-right { display: flex; align-items: center; gap: 20px; }
-
 .notif { position: relative; cursor: pointer; }
 .notif span {
     position: absolute;
@@ -139,7 +123,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     padding: 2px 6px;
     border-radius: 50%;
 }
-
 .profile img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; cursor: pointer; }
 
 /* Content */
@@ -157,7 +140,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     gap: 20px;
     margin-bottom: 20px;
 }
-
 .stat-modern {
     background: white;
     padding: 20px;
@@ -166,11 +148,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    cursor: pointer;
-    transition: transform 0.2s;
 }
-
-.stat-modern:hover { transform: translateY(-3px); }
 .stat-modern h4 { color: #888; font-size: 12px; margin-bottom: 5px; }
 .stat-modern p { font-size: 24px; font-weight: bold; color: #7c3aed; }
 
@@ -181,31 +159,26 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     gap: 20px;
     margin-bottom: 20px;
 }
-
 .chart-box {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
-
 .chart-box canvas { max-height: 250px; }
 
-/* Board Sections */
+/* Boards */
 .board-section {
     background: white;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
 }
-
 .board-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
 }
-
 .add-btn {
     background: #7c3aed;
     color: white;
@@ -214,19 +187,16 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     border-radius: 8px;
     cursor: pointer;
 }
-
 .mini-board {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 15px;
 }
-
 .mini-column {
     background: #fafafa;
     border-radius: 12px;
     padding: 15px;
 }
-
 .mini-head {
     display: flex;
     justify-content: space-between;
@@ -235,28 +205,19 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     font-weight: bold;
     margin-bottom: 10px;
 }
-
 .mini-head.purple { background: #f3e8ff; color: #7c3aed; }
 .mini-head.blue { background: #eff6ff; color: #2563eb; }
 .mini-head.orange { background: #fff7ed; color: #ea580c; }
 .mini-head.green { background: #ecfdf5; color: #16a34a; }
 .mini-head.red { background: #fef2f2; color: #dc2626; }
-
 .mini-card {
     background: white;
     border-radius: 10px;
     padding: 12px;
     margin-bottom: 10px;
-    cursor: grab;
+    cursor: pointer;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    transition: all 0.2s;
 }
-
-.mini-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
 .mini-phone {
     display: flex;
     justify-content: space-between;
@@ -264,31 +225,26 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     font-size: 12px;
     color: #666;
 }
-
 .mini-list { min-height: 200px; }
 
-/* Import Section */
+/* Import */
 .import-modern {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    margin-bottom: 20px;
 }
-
 .import-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     margin-top: 20px;
 }
-
 .step-card {
     background: #fafafa;
     padding: 20px;
     border-radius: 12px;
     border: 1px solid #eee;
 }
-
 .drop-box {
     border: 2px dashed #c4b5fd;
     padding: 30px;
@@ -297,7 +253,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     background: #faf5ff;
     cursor: pointer;
 }
-
 .radio-box {
     border: 1px solid #ddd;
     padding: 15px;
@@ -305,16 +260,14 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     margin-bottom: 10px;
     cursor: pointer;
 }
-
 .radio-box.active {
     border: 2px solid #7c3aed;
     background: #ede9fe;
 }
-
 .btn-import-modern {
     width: 100%;
     padding: 12px;
-    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    background: #7c3aed;
     color: white;
     border: none;
     border-radius: 8px;
@@ -336,17 +289,13 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     align-items: center;
     z-index: 2000;
 }
-
 .modal-box {
     background: white;
     padding: 25px;
     border-radius: 12px;
     width: 90%;
     max-width: 400px;
-    max-height: 80vh;
-    overflow-y: auto;
 }
-
 .modal-box input, .modal-box select {
     width: 100%;
     padding: 10px;
@@ -354,7 +303,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     border: 1px solid #ddd;
     border-radius: 6px;
 }
-
 .modal-box button {
     padding: 10px 20px;
     margin: 5px;
@@ -362,38 +310,8 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     border-radius: 6px;
     cursor: pointer;
 }
-
 .modal-box button:first-of-type { background: #7c3aed; color: white; }
 
-/* Notif Box */
-#notifBox {
-    position: fixed;
-    top: 70px;
-    right: 20px;
-    z-index: 9999;
-}
-
-.notif-dropdown {
-    position: absolute;
-    right: 0;
-    top: 35px;
-    width: 280px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    display: none;
-    max-height: 300px;
-    overflow-y: auto;
-    z-index: 1000;
-}
-
-.notif-item {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-    font-size: 12px;
-}
-
-/* Icon Circle */
 .icon-circle {
     width: 45px;
     height: 45px;
@@ -403,7 +321,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     justify-content: center;
     color: white;
 }
-
 .icon-circle.purple { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
 .icon-circle.green { background: linear-gradient(135deg, #22c55e, #4ade80); }
 .icon-circle.blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
@@ -415,8 +332,6 @@ small { font-size: 11px; color: #888; }
 @media (max-width: 768px) {
     .mini-board { grid-template-columns: 1fr; }
     .stats-modern { grid-template-columns: 1fr 1fr; }
-    .chart-container { grid-template-columns: 1fr; }
-    .import-content { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -426,11 +341,11 @@ small { font-size: 11px; color: #888; }
 <div id="loginPage">
     <div class="login-box">
         <h3>🚀 FLOUPYUD</h3>
-        <input type="email" id="email" placeholder="Email" autocomplete="off">
+        <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Password">
-        <button onclick="handleLogin()">Masuk</button>
+        <button id="loginBtn">Masuk</button>
         <p style="text-align:center; margin-top:15px; font-size:12px; color:#888;">
-            Gunakan email yang sudah terdaftar di Firebase
+            Gunakan akun Firebase yang sudah terdaftar
         </p>
     </div>
 </div>
@@ -438,79 +353,55 @@ small { font-size: 11px; color: #888; }
 <!-- MAIN APP -->
 <div id="app">
     <div class="layout">
-        
-        <!-- SIDEBAR -->
         <div class="sidebar">
             <h2>📋 FLOUPYUD</h2>
             <div class="menu">
-                <div class="menu-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
-                <div class="menu-item" onclick="showSection('import')">📥 Import Data</div>
+                <div class="menu-item active" data-section="dashboard">📊 Dashboard</div>
+                <div class="menu-item" data-section="import">📥 Import Data</div>
                 <hr>
                 <small>DATABASE</small>
-                <div class="menu-item" onclick="openDBClosing()">📁 DB Closing</div>
-                <div class="menu-item" onclick="openDBTidak()">📁 DB Tidak Tertarik</div>
+                <div class="menu-item" id="openDBClosing">📁 DB Closing</div>
+                <div class="menu-item" id="openDBTidak">📁 DB Tidak Tertarik</div>
                 <hr>
-                <div class="menu-item logout" onclick="handleLogout()">🚪 Logout</div>
+                <div class="menu-item logout" id="logoutBtn">🚪 Logout</div>
             </div>
         </div>
         
-        <!-- MAIN CONTENT -->
         <div style="flex:1; width:100%;">
-            
-            <!-- TOPBAR -->
             <div class="topbar">
                 <div class="top-left">
-                    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+                    <button class="toggle-btn" id="toggleSidebarBtn">☰</button>
                     <span>FLOUPYUD</span>
                 </div>
                 <div class="top-center" id="topCenterName">CS Agent</div>
                 <div class="top-right">
-                    <div class="notif" onclick="toggleNotif()">
+                    <div class="notif" id="notifBtn">
                         🔔
                         <span id="notifCount">0</span>
-                        <div id="notifDropdown" class="notif-dropdown"></div>
+                        <div id="notifDropdown" class="notif-dropdown" style="display:none; position:absolute; right:0; top:35px; width:250px; background:white; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
                     </div>
-                    <div class="profile" onclick="openProfileModal()">
-                        <img id="topProfileImg" src="https://i.pravatar.cc/40" alt="profile">
+                    <div class="profile" id="profileBtn">
+                        <img id="topProfileImg" src="https://i.pravatar.cc/40">
                     </div>
                 </div>
             </div>
             
-            <!-- CONTENT AREA -->
             <div class="content">
                 <div id="dashboardSection">
-                    <!-- STATS -->
                     <div class="stats-modern">
-                        <div class="stat-modern">
-                            <div><h4>Total Data</h4><p id="total">0</p><small>Semua Data</small></div>
-                            <div class="icon-circle purple">👥</div>
-                        </div>
-                        <div class="stat-modern">
-                            <div><h4>Closing</h4><p id="closingCount">0</p><small>Data Closing</small></div>
-                            <div class="icon-circle green">✔</div>
-                        </div>
-                        <div class="stat-modern">
-                            <div><h4>Rate Closing</h4><p id="rateText">0%</p><small>Dari Total</small></div>
-                            <div class="icon-circle blue">📊</div>
-                        </div>
-                        <div class="stat-modern">
-                            <div><h4>Prospek Aktif</h4><p id="prospekAktif">0</p><small>Dalam Proses</small></div>
-                            <div class="icon-circle orange">👤</div>
-                        </div>
+                        <div class="stat-modern"><div><h4>Total Data</h4><p id="total">0</p></div><div class="icon-circle purple">👥</div></div>
+                        <div class="stat-modern"><div><h4>Closing</h4><p id="closingCount">0</p></div><div class="icon-circle green">✔</div></div>
+                        <div class="stat-modern"><div><h4>Rate Closing</h4><p id="rateText">0%</p></div><div class="icon-circle blue">📊</div></div>
+                        <div class="stat-modern"><div><h4>Prospek Aktif</h4><p id="prospekAktif">0</p></div><div class="icon-circle orange">👤</div></div>
                     </div>
                     
-                    <!-- CHARTS -->
                     <div class="chart-container">
                         <div class="chart-box"><h3>Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
                         <div class="chart-box"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
                     </div>
                     
-                    <!-- FOLLOWUP BOARD -->
                     <div class="board-section">
-                        <div class="board-header">
-                            <h2>📞 Followup Agen</h2>
-                            <button class="add-btn" onclick="openModalCustomer()">+ Tambah</button>
-                        </div>
+                        <div class="board-header"><h2>📞 Followup Agen</h2><button class="add-btn" id="addCustomerBtn">+ Tambah</button></div>
                         <div class="mini-board">
                             <div class="mini-column"><div class="mini-head purple">Baru <b id="countBaru">0</b></div><div id="baru" class="mini-list"></div></div>
                             <div class="mini-column"><div class="mini-head blue">Follow Up <b id="countFollowup">0</b></div><div id="followup" class="mini-list"></div></div>
@@ -519,12 +410,8 @@ small { font-size: 11px; color: #888; }
                         </div>
                     </div>
                     
-                    <!-- PROSPEK BOARD -->
                     <div class="board-section">
-                        <div class="board-header">
-                            <h2>🎯 Prospek Agen</h2>
-                            <button class="add-btn" onclick="openModalProspek()">+ Tambah</button>
-                        </div>
+                        <div class="board-header"><h2>🎯 Prospek Agen</h2><button class="add-btn" id="addProspekBtn">+ Tambah</button></div>
                         <div class="mini-board">
                             <div class="mini-column"><div class="mini-head purple">Baru <b id="countProspekBaru">0</b></div><div id="prospekBaru" class="mini-list"></div></div>
                             <div class="mini-column"><div class="mini-head blue">Dihubungi <b id="countHubungi">0</b></div><div id="prospekHubungi" class="mini-list"></div></div>
@@ -534,30 +421,25 @@ small { font-size: 11px; color: #888; }
                     </div>
                 </div>
                 
-                <!-- IMPORT SECTION -->
                 <div id="importSection" style="display:none;">
                     <div class="import-modern">
-                        <div class="import-header"><div style="font-size:30px;">📥</div><div><h2>Import Data Excel</h2><p>Import data dengan mudah dan cepat</p></div></div>
+                        <div><h2>Import Data Excel</h2></div>
                         <div class="import-content">
-                            <div class="step-card" onclick="document.getElementById('excelFile').click()">
+                            <div class="step-card">
                                 <h4>1. Pilih File Excel</h4>
-                                <div class="drop-box" id="dropBox">
-                                    <p id="uploadText">⬆️ Klik untuk pilih file</p>
-                                    <small>Format: .xlsx, .xls</small>
+                                <div class="drop-box" id="dropZone">
+                                    <p>⬆️ Klik untuk pilih file</p>
                                     <input type="file" id="excelFile" hidden accept=".xlsx,.xls">
-                                    <div id="fileInfo" style="margin-top:10px;font-size:12px;color:#6d28d9;"></div>
                                 </div>
                             </div>
                             <div class="step-card">
-                                <h4>2. Pilih Tujuan Import</h4>
-                                <div class="radio-box active" onclick="selectType('prospek')"><b>Import ke Prospek</b><p>Data akan masuk ke Prospek Agen</p></div>
-                                <div class="radio-box" onclick="selectType('customer')"><b>Import ke Customer</b><p>Data akan masuk ke Followup Agen</p></div>
+                                <h4>2. Pilih Tujuan</h4>
+                                <div class="radio-box active" data-import="prospek"><b>Import ke Prospek</b></div>
+                                <div class="radio-box" data-import="customer"><b>Import ke Customer</b></div>
                             </div>
                             <div class="step-card">
-                                <h4>3. Informasi Import</h4>
-                                <ul><li>✔ Import ribuan data sekaligus</li><li>✔ Validasi nomor otomatis</li><li>✔ Data tidak valid akan dilewati</li></ul>
-                                <button class="btn-import-modern" onclick="importExcel()">🚀 Import Data Sekarang</button>
-                                <small style="display:block; text-align:center; margin-top:8px;">🔒 Data Anda aman</small>
+                                <h4>3. Import</h4>
+                                <button class="btn-import-modern" id="importBtn">🚀 Import Data</button>
                             </div>
                         </div>
                     </div>
@@ -568,38 +450,69 @@ small { font-size: 11px; color: #888; }
 </div>
 
 <!-- MODALS -->
-<div class="modal" id="modalCustomer"><div class="modal-box"><h3>Tambah Customer</h3><input id="nama" placeholder="Nama" maxlength="25"><input id="hp" placeholder="No HP" maxlength="15" value="+62"><input id="tanggal" type="date"><button onclick="saveCustomer()">Simpan</button><button onclick="closeModal('modalCustomer')">Tutup</button></div></div>
-<div class="modal" id="modalProspek"><div class="modal-box"><h3>Tambah Prospek</h3><input id="p_nama" placeholder="Nama" maxlength="25"><input id="p_hp" placeholder="No HP" maxlength="15" value="+62"><button onclick="saveProspek()">Simpan</button><button onclick="closeModal('modalProspek')">Tutup</button></div></div>
-<div class="modal" id="modalDetail"><div class="modal-box" id="detailContent"></div></div>
+<div class="modal" id="modalCustomer"><div class="modal-box"><h3>Tambah Customer</h3><input id="nama" placeholder="Nama"><input id="hp" placeholder="No HP" value="+62"><input id="tanggal" type="date"><button id="saveCustomerBtn">Simpan</button><button onclick="closeModal('modalCustomer')">Tutup</button></div></div>
+<div class="modal" id="modalProspek"><div class="modal-box"><h3>Tambah Prospek</h3><input id="p_nama" placeholder="Nama"><input id="p_hp" placeholder="No HP" value="+62"><button id="saveProspekBtn">Simpan</button><button onclick="closeModal('modalProspek')">Tutup</button></div></div>
+<div class="modal" id="modalProfile"><div class="modal-box"><h3>Profile</h3><input id="profile_nama" placeholder="Nama"><input id="profile_email" placeholder="Email" disabled><button id="saveProfileBtn">Simpan</button><button onclick="closeModal('modalProfile')">Tutup</button></div></div>
 <div class="modal" id="modalDBClosing"><div class="modal-box"><h3>Database Closing</h3><div id="dbClosingList"></div><button onclick="closeModal('modalDBClosing')">Tutup</button></div></div>
 <div class="modal" id="modalDBTidak"><div class="modal-box"><h3>Database Tidak Tertarik</h3><div id="dbTidakList"></div><button onclick="closeModal('modalDBTidak')">Tutup</button></div></div>
-<div class="modal" id="modalProfile"><div class="modal-box"><h3>Profile CS Agent</h3><div style="text-align:center;"><img id="previewFoto" src="https://i.pravatar.cc/100" style="width:80px;border-radius:50%;cursor:pointer;"><input type="file" id="profile_foto" accept="image/*" hidden></div><input id="profile_nama" placeholder="Nama"><input id="profile_email" placeholder="Email" disabled><input id="profile_hp" placeholder="No HP"><button onclick="saveProfile()">Simpan</button><button onclick="closeModal('modalProfile')">Tutup</button></div></div>
 
 <div id="notifBox"></div>
 
 <script>
-// ========== FIREBASE CONFIG ==========
+// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyCfj2Xdj6et3fThyA2gg-GWG8yZOhoqREA",
     authDomain: "floupyud.firebaseapp.com",
     projectId: "floupyud"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// ========== GLOBAL VARIABLES ==========
 let currentUser = null;
 let importType = "prospek";
 let chartCustomer = null;
 let chartProspek = null;
 
-// ========== LOGIN FUNCTIONS ==========
-window.handleLogin = function() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+// ========== DOM ELEMENTS ==========
+const loginPage = document.getElementById('loginPage');
+const app = document.getElementById('app');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+const sidebar = document.querySelector('.sidebar');
+const profileBtn = document.getElementById('profileBtn');
+const addCustomerBtn = document.getElementById('addCustomerBtn');
+const addProspekBtn = document.getElementById('addProspekBtn');
+const saveCustomerBtn = document.getElementById('saveCustomerBtn');
+const saveProspekBtn = document.getElementById('saveProspekBtn');
+const saveProfileBtn = document.getElementById('saveProfileBtn');
+const importBtn = document.getElementById('importBtn');
+const openDBClosing = document.getElementById('openDBClosing');
+const openDBTidak = document.getElementById('openDBTidak');
+const dropZone = document.getElementById('dropZone');
+const excelFile = document.getElementById('excelFile');
+
+// ========== HELPER FUNCTIONS ==========
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function showNotif(msg) {
+    const notif = document.createElement('div');
+    notif.textContent = msg;
+    notif.style.cssText = 'position:fixed; top:70px; right:20px; background:#7c3aed; color:white; padding:10px; border-radius:8px; z-index:9999;';
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 3000);
+}
+
+// ========== LOGIN ==========
+loginBtn.onclick = function() {
+    const email = emailInput.value;
+    const password = passwordInput.value;
     
     if(!email || !password) {
         alert('Email dan password harus diisi!');
@@ -607,45 +520,27 @@ window.handleLogin = function() {
     }
     
     auth.signInWithEmailAndPassword(email, password)
-        .then((result) => {
-            console.log('Login sukses:', result.user.uid);
-        })
-        .catch((error) => {
-            alert('Login gagal: ' + error.message);
-        });
+        .then(() => {})
+        .catch(err => alert('Login gagal: ' + err.message));
 }
 
-window.handleLogout = function() {
+logoutBtn.onclick = function() {
     auth.signOut();
 }
 
-// ========== AUTH STATE LISTENER ==========
+// ========== AUTH STATE ==========
 auth.onAuthStateChanged((user) => {
-    const loginPage = document.getElementById('loginPage');
-    const app = document.getElementById('app');
-    
     if(user) {
         currentUser = user;
         loginPage.style.display = 'none';
         app.style.display = 'block';
         
-        // Load user profile
-        db.collection('users').doc(user.uid).get().then((doc) => {
+        db.collection('users').doc(user.uid).get().then(doc => {
             let nama = 'CS Agent';
-            let foto = 'https://i.pravatar.cc/40';
-            
-            if(doc.exists) {
-                const data = doc.data();
-                if(data.nama) nama = data.nama;
-                if(data.foto) foto = data.foto;
-            }
-            
+            if(doc.exists && doc.data().nama) nama = doc.data().nama;
             document.getElementById('topCenterName').innerText = nama;
-            document.getElementById('topProfileImg').src = foto;
-            document.getElementById('previewFoto').src = foto;
         });
         
-        // Load all data
         loadAllData();
     } else {
         loginPage.style.display = 'flex';
@@ -654,275 +549,248 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// ========== NAVIGATION ==========
-window.showSection = function(section) {
-    const dashboardSection = document.getElementById('dashboardSection');
-    const importSection = document.getElementById('importSection');
-    
-    if(section === 'dashboard') {
-        dashboardSection.style.display = 'block';
-        importSection.style.display = 'none';
-    } else {
-        dashboardSection.style.display = 'none';
-        importSection.style.display = 'block';
-    }
-    
-    // Update active menu
-    document.querySelectorAll('.menu-item').forEach(item => {
-        item.classList.remove('active');
-    });
-    if(event && event.target) {
-        event.target.classList.add('active');
-    }
-}
-
 // ========== SIDEBAR ==========
-window.toggleSidebar = function() {
-    document.querySelector('.sidebar').classList.toggle('active');
+toggleSidebarBtn.onclick = function() {
+    sidebar.classList.toggle('active');
 }
 
-// Close sidebar when clicking outside
 document.addEventListener('click', function(e) {
-    const sidebar = document.querySelector('.sidebar');
-    const toggleBtn = document.querySelector('.toggle-btn');
-    if(sidebar && toggleBtn && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+    if(sidebar && !sidebar.contains(e.target) && e.target !== toggleSidebarBtn) {
         sidebar.classList.remove('active');
     }
 });
 
-// ========== MODAL FUNCTIONS ==========
-window.closeModal = function(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-}
+// ========== NAVIGATION ==========
+document.querySelectorAll('.menu-item[data-section]').forEach(item => {
+    item.onclick = function() {
+        const section = this.dataset.section;
+        document.getElementById('dashboardSection').style.display = section === 'dashboard' ? 'block' : 'none';
+        document.getElementById('importSection').style.display = section === 'import' ? 'block' : 'none';
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+        this.classList.add('active');
+    }
+});
 
-// ========== CUSTOMER FUNCTIONS ==========
-window.openModalCustomer = function() {
-    document.getElementById('modalCustomer').style.display = 'flex';
-}
-
-window.saveCustomer = function() {
+// ========== CUSTOMER ==========
+addCustomerBtn.onclick = () => document.getElementById('modalCustomer').style.display = 'flex';
+saveCustomerBtn.onclick = function() {
     const nama = document.getElementById('nama').value;
     const hp = document.getElementById('hp').value;
     const tanggal = document.getElementById('tanggal').value;
     
-    if(!nama || !hp) {
-        alert('Nama dan No HP wajib diisi!');
-        return;
-    }
+    if(!nama || !hp) { alert('Lengkapi data!'); return; }
     
     db.collection('customers').add({
-        nama: nama,
-        hp: hp,
-        tanggal: tanggal || new Date().toISOString().split('T')[0],
-        status: 'baru',
-        user_id: currentUser.uid,
-        created_at: new Date().toISOString()
+        nama, hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
+        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
     }).then(() => {
+        closeModal('modalCustomer');
         document.getElementById('nama').value = '';
         document.getElementById('hp').value = '+62';
         document.getElementById('tanggal').value = '';
-        closeModal('modalCustomer');
-        alert('Data berhasil disimpan!');
-    }).catch((error) => {
-        alert('Gagal menyimpan: ' + error.message);
+        showNotif('Customer berhasil ditambahkan');
     });
 }
 
-// ========== PROSPEK FUNCTIONS ==========
-window.openModalProspek = function() {
-    document.getElementById('modalProspek').style.display = 'flex';
-}
-
-window.saveProspek = function() {
+// ========== PROSPEK ==========
+addProspekBtn.onclick = () => document.getElementById('modalProspek').style.display = 'flex';
+saveProspekBtn.onclick = function() {
     const nama = document.getElementById('p_nama').value;
     const hp = document.getElementById('p_hp').value;
     
-    if(!nama || !hp) {
-        alert('Nama dan No HP wajib diisi!');
-        return;
-    }
+    if(!nama || !hp) { alert('Lengkapi data!'); return; }
     
     db.collection('prospek').add({
-        nama: nama,
-        hp: hp,
-        status: 'Baru',
-        user_id: currentUser.uid,
-        created_at: new Date().toISOString()
+        nama, hp, status: 'Baru', user_id: currentUser.uid, created_at: new Date().toISOString()
     }).then(() => {
+        closeModal('modalProspek');
         document.getElementById('p_nama').value = '';
         document.getElementById('p_hp').value = '+62';
-        closeModal('modalProspek');
-        alert('Data berhasil disimpan!');
-    }).catch((error) => {
-        alert('Gagal menyimpan: ' + error.message);
+        showNotif('Prospek berhasil ditambahkan');
     });
+}
+
+// ========== PROFILE ==========
+profileBtn.onclick = () => {
+    document.getElementById('modalProfile').style.display = 'flex';
+    document.getElementById('profile_email').value = currentUser.email;
+    db.collection('users').doc(currentUser.uid).get().then(doc => {
+        if(doc.exists) document.getElementById('profile_nama').value = doc.data().nama || '';
+    });
+}
+saveProfileBtn.onclick = function() {
+    const nama = document.getElementById('profile_nama').value;
+    if(!nama) { alert('Nama wajib diisi'); return; }
+    
+    db.collection('users').doc(currentUser.uid).set({ nama, email: currentUser.email }, { merge: true })
+        .then(() => {
+            document.getElementById('topCenterName').innerText = nama;
+            closeModal('modalProfile');
+            showNotif('Profile tersimpan');
+        });
 }
 
 // ========== WHATSAPP ==========
 window.openWA = function(hp) {
-    if(!hp) {
-        alert('Nomor tidak tersedia');
-        return;
-    }
-    let nomor = hp.replace('+', '');
-    if(nomor.startsWith('0')) nomor = '62' + nomor.substring(1);
+    if(!hp) return;
+    let nomor = hp.replace('+', '').replace(/^0/, '62');
     window.open('https://wa.me/' + nomor, '_blank');
 }
 
-// ========== PROFILE FUNCTIONS ==========
-window.openProfileModal = function() {
-    if(!currentUser) return;
-    document.getElementById('modalProfile').style.display = 'flex';
-    document.getElementById('profile_email').value = currentUser.email;
-    
-    db.collection('users').doc(currentUser.uid).get().then((doc) => {
-        if(doc.exists) {
-            const data = doc.data();
-            document.getElementById('profile_nama').value = data.nama || '';
-            document.getElementById('profile_hp').value = data.hp || '+62';
-        }
-    });
-}
-
-window.saveProfile = async function() {
-    const nama = document.getElementById('profile_nama').value;
-    const hp = document.getElementById('profile_hp').value;
-    
-    if(!nama) {
-        alert('Nama wajib diisi');
-        return;
-    }
-    
-    try {
-        await db.collection('users').doc(currentUser.uid).set({
-            nama: nama,
-            hp: hp,
-            email: currentUser.email,
-            updated_at: new Date().toISOString()
-        }, { merge: true });
-        
-        document.getElementById('topCenterName').innerText = nama;
-        alert('Profile berhasil disimpan');
-        closeModal('modalProfile');
-    } catch(error) {
-        alert('Gagal simpan: ' + error.message);
-    }
-}
-
-// ========== NOTIFICATION ==========
-window.toggleNotif = function() {
-    const dropdown = document.getElementById('notifDropdown');
-    dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-}
-
 // ========== IMPORT EXCEL ==========
-window.selectType = function(type) {
-    importType = type;
-    document.querySelectorAll('.radio-box').forEach(el => {
-        el.classList.remove('active');
-    });
-    if(event && event.currentTarget) {
-        event.currentTarget.classList.add('active');
-    }
+dropZone.onclick = () => excelFile.click();
+excelFile.onchange = function(e) {
+    if(e.target.files[0]) showNotif('File siap: ' + e.target.files[0].name);
 }
 
-window.importExcel = async function() {
-    const file = document.getElementById('excelFile').files[0];
-    if(!file) {
-        alert('Pilih file Excel terlebih dahulu!');
-        return;
+document.querySelectorAll('.radio-box[data-import]').forEach(el => {
+    el.onclick = function() {
+        importType = this.dataset.import;
+        document.querySelectorAll('.radio-box').forEach(r => r.classList.remove('active'));
+        this.classList.add('active');
     }
+});
+
+importBtn.onclick = async function() {
+    const file = excelFile.files[0];
+    if(!file) { alert('Pilih file dulu!'); return; }
     
     const reader = new FileReader();
     reader.onload = async function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(sheet);
+        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
         
-        let success = 0;
-        let failed = 0;
-        
+        let success = 0, failed = 0;
         for(const row of json) {
-            let nama = row.nama || row.Nama || row.NAMA;
-            let hp = row.hp || row.HP || row.no_hp;
+            let nama = row.nama || row.Nama;
+            let hp = row.hp || row.HP;
+            if(!nama || !hp) { failed++; continue; }
             
-            if(!nama || !hp) {
-                failed++;
-                continue;
-            }
-            
-            // Format nomor
             hp = hp.toString();
-            if(!hp.startsWith('+62')) {
-                hp = hp.replace(/^0/, '62');
-                if(!hp.startsWith('62')) hp = '62' + hp;
-                hp = '+' + hp;
-            }
+            if(!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
             
-            if(importType === 'prospek') {
-                await db.collection('prospek').add({
-                    nama: nama,
-                    hp: hp,
-                    status: 'Baru',
-                    user_id: currentUser.uid,
-                    created_at: new Date().toISOString()
-                });
-            } else {
-                await db.collection('customers').add({
-                    nama: nama,
-                    hp: hp,
-                    tanggal: new Date().toISOString().split('T')[0],
-                    status: 'baru',
-                    user_id: currentUser.uid,
-                    created_at: new Date().toISOString()
-                });
-            }
+            const collection = importType === 'prospek' ? 'prospek' : 'customers';
+            const data = { nama, hp, user_id: currentUser.uid, created_at: new Date().toISOString() };
+            if(collection === 'prospek') data.status = 'Baru';
+            else data.status = 'baru', data.tanggal = new Date().toISOString().split('T')[0];
+            
+            await db.collection(collection).add(data);
             success++;
         }
-        
-        alert(`Import selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
-        document.getElementById('excelFile').value = '';
-        document.getElementById('fileInfo').innerHTML = '';
+        alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+        excelFile.value = '';
     };
     reader.readAsArrayBuffer(file);
 }
 
-// File upload handler
-document.getElementById('excelFile').addEventListener('change', function() {
-    const file = this.files[0];
-    if(file) {
-        document.getElementById('fileInfo').innerHTML = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-        document.getElementById('uploadText').innerText = '✅ File siap diimport';
-    }
-});
-
 // ========== DATABASE ARCHIVES ==========
-window.openDBClosing = function() {
-    const modal = document.getElementById('modalDBClosing');
-    modal.style.display = 'flex';
-    
-    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then((snapshot) => {
+openDBClosing.onclick = function() {
+    document.getElementById('modalDBClosing').style.display = 'flex';
+    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
         let html = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            html += `<div style="border-bottom:1px solid #eee; padding:10px;">
-                        <b>${data.nama}</b><br>
-                        ${data.hp}<br>
-                        <button onclick="openWA('${data.hp}')">WhatsApp</button>
-                     </div>`;
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.nama}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
         });
-        document.getElementById('dbClosingList').innerHTML = html || 'Tidak ada data';
+        document.getElementById('dbClosingList').innerHTML = html || 'Kosong';
     });
 }
 
-window.openDBTidak = function() {
-    const modal = document.getElementById('modalDBTidak');
-    modal.style.display = 'flex';
-    
-    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then((snapshot) => {
+openDBTidak.onclick = function() {
+    document.getElementById('modalDBTidak').style.display = 'flex';
+    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then(snap => {
         let html = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            html += `<div style="border-bottom:1px solid #eee; padding:10px;">
-                        <b>${data
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.nama}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
+        });
+        document.getElementById('dbTidakList').innerHTML = html || 'Kosong';
+    });
+}
+
+// ========== LOAD DATA ==========
+function loadAllData() {
+    if(!currentUser) return;
+    
+    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+        let total = 0, closing = 0, pending = 0, followup = 0;
+        const lists = { baru: [], followup: [], pending: [], closing: [] };
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            total++;
+            if(d.status === 'closing') closing++;
+            else if(d.status === 'pending') pending++;
+            else if(d.status === 'followup') followup++;
+            else lists.baru.push({id: doc.id, ...d});
+            
+            if(d.status === 'followup') lists.followup.push({id: doc.id, ...d});
+            if(d.status === 'pending') lists.pending.push({id: doc.id, ...d});
+            if(d.status === 'closing') lists.closing.push({id: doc.id, ...d});
+        });
+        
+        document.getElementById('countBaru').innerText = total - (closing + pending + followup);
+        document.getElementById('countFollowup').innerText = followup;
+        document.getElementById('countPending').innerText = pending;
+        document.getElementById('countClosing').innerText = closing;
+        document.getElementById('total').innerText = total;
+        document.getElementById('closingCount').innerText = closing;
+        document.getElementById('prospekAktif').innerText = total - closing;
+        document.getElementById('rateText').innerText = total ? Math.round((closing/total)*100) + '%' : '0%';
+        
+        for(const [status, items] of Object.entries(lists)) {
+            const container = document.getElementById(status);
+            if(container) {
+                container.innerHTML = items.map(item => `
+                    <div class="mini-card" onclick="openWA('${item.hp}')">
+                        <b>${item.nama}</b>
+                        <div class="mini-phone"><span>${item.hp}</span><span>🟢</span></div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        updateChartCustomer(total, closing, pending, followup);
+    });
+    
+    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+        let baru = 0, hubungi = 0, tertarik = 0, tidak = 0;
+        const lists = { prospekBaru: [], prospekHubungi: [], prospekTertarik: [], prospekTidak: [] };
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            const status = d.status || 'Baru';
+            if(status === 'Baru') { baru++; lists.prospekBaru.push({id: doc.id, ...d}); }
+            else if(status === 'Sudah Dihubungi') { hubungi++; lists.prospekHubungi.push({id: doc.id, ...d}); }
+            else if(status === 'Tertarik') { tertarik++; lists.prospekTertarik.push({id: doc.id, ...d}); }
+            else { tidak++; lists.prospekTidak.push({id: doc.id, ...d}); }
+        });
+        
+        document.getElementById('countProspekBaru').innerText = baru;
+        document.getElementById('countHubungi').innerText = hubungi;
+        document.getElementById('countTertarik').innerText = tertarik;
+        document.getElementById('countTidak').innerText = tidak;
+        
+        for(const [colId, items] of Object.entries(lists)) {
+            const container = document.getElementById(colId);
+            if(container) {
+                container.innerHTML = items.map(item => `
+                    <div class="mini-card" onclick="openWA('${item.hp}')">
+                        <b>${item.nama}</b>
+                        <div class="mini-phone"><span>${item.hp}</span><span>🟢</span></div>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        updateChartProspek(baru, hubungi, tertarik, tidak);
+    });
+}
+
+// ========== CHARTS ==========
+function updateChartCustomer(total, closing, pending, followup) {
+    const ctx = document.getElementById('chartCustomer').getContext('2d');
+    if(chartCustomer) chartCustomer.destroy();
+    chartCustomer = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: [closing, pending, followup, total - (closing + pending + followup)], backgroundColor: ['#22c55e', '#f59e0b', '#3b82
