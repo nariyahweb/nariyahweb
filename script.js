@@ -405,6 +405,8 @@ function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(doc => {
         const d = doc.data();
         const content = document.getElementById('detailContent');
+        if (!content) return;
+        
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
             <p><strong>No HP:</strong> ${d.hp}</p>
@@ -427,6 +429,8 @@ function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
         const content = document.getElementById('detailContent');
+        if (!content) return;
+        
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
             <p><strong>No HP:</strong> ${d.hp}</p>
@@ -494,108 +498,62 @@ window.convertToCustomer = function(id) {
 
 // ========== CLOSING & TIDAK TERTARIK ==========
 async function saveToClosingDB(id, data) {
-    console.log('saveToClosingDB called with id:', id, 'data:', data);
-    
     try {
-        const closingData = {
+        await db.collection('db_closing').add({
             nama: data.nama,
             hp: data.hp,
             tanggal: data.tanggal || new Date().toISOString().split('T')[0],
             closing_date: new Date().toISOString(),
-            user_id: currentUser.uid,
-            created_at: new Date().toISOString()
-        };
-        console.log('Saving to db_closing:', closingData);
-        
-        await db.collection('db_closing').add(closingData);
-        console.log('Success saved to db_closing');
-        
+            user_id: currentUser.uid
+        });
         await db.collection('customers').doc(id).delete();
-        console.log('Customer deleted from customers collection');
-        
         showNotif('✅ Data berhasil masuk Database Closing!');
         return true;
     } catch (error) {
-        console.error('Error in saveToClosingDB:', error);
         showNotif('❌ Gagal: ' + error.message, true);
         return false;
     }
 }
 
 async function saveToTidakTertarikDB(id, data) {
-    console.log('saveToTidakTertarikDB called with id:', id, 'data:', data);
-    
     try {
-        const tidakData = {
+        await db.collection('db_tidak_tertarik').add({
             nama: data.nama,
             hp: data.hp,
-            status: data.status || 'Tidak Tertarik',
             tanggal: new Date().toISOString(),
-            user_id: currentUser.uid,
-            created_at: new Date().toISOString()
-        };
-        console.log('Saving to db_tidak_tertarik:', tidakData);
-        
-        await db.collection('db_tidak_tertarik').add(tidakData);
-        console.log('Success saved to db_tidak_tertarik');
-        
+            user_id: currentUser.uid
+        });
         await db.collection('prospek').doc(id).delete();
-        console.log('Prospek deleted from prospek collection');
-        
         showNotif('✅ Data berhasil masuk Database Tidak Tertarik!');
         return true;
     } catch (error) {
-        console.error('Error in saveToTidakTertarikDB:', error);
         showNotif('❌ Gagal: ' + error.message, true);
         return false;
     }
 }
 
 window.confirmClosing = async function(id) {
-    console.log('confirmClosing called for id:', id);
-    
     const result = confirm("⚠️ PERHATIAN!\n\nAnda akan memindahkan data ini ke DATABASE CLOSING.\n\n✅ OK = Pindahkan ke DB Closing\n❌ CANCEL = Tetap di kolom Closing\n\nApakah Anda yakin?");
-    
     if (result) {
-        console.log('User clicked OK, proceeding to save...');
         const doc = await db.collection('customers').doc(id).get();
-        console.log('Customer document:', doc.exists ? doc.data() : 'not found');
-        
-        if (doc.exists) {
-            await saveToClosingDB(id, doc.data());
-        } else {
-            console.error('Customer document not found!');
-            showNotif('❌ Data customer tidak ditemukan!', true);
-        }
+        if (doc.exists) await saveToClosingDB(id, doc.data());
     } else {
-        console.log('User clicked CANCEL, only updating status');
         await db.collection('customers').doc(id).update({ status: 'closing' });
-        showNotif('📌 Data tetap di kolom Closing (tidak diarsipkan)');
+        showNotif('📌 Data tetap di kolom Closing');
     }
 };
 
 window.confirmTidakTertarik = async function(id) {
-    console.log('confirmTidakTertarik called for id:', id);
-    
     const result = confirm("⚠️ PERHATIAN!\n\nAnda akan memindahkan data ini ke DATABASE TIDAK TERTARIK.\n\n✅ OK = Pindahkan ke DB Tidak Tertarik\n❌ CANCEL = Tetap di kolom Tidak Tertarik\n\nApakah Anda yakin?");
-    
     if (result) {
-        console.log('User clicked OK, proceeding to save...');
         const doc = await db.collection('prospek').doc(id).get();
-        console.log('Prospek document:', doc.exists ? doc.data() : 'not found');
-        
-        if (doc.exists) {
-            await saveToTidakTertarikDB(id, doc.data());
-        } else {
-            console.error('Prospek document not found!');
-            showNotif('❌ Data prospek tidak ditemukan!', true);
-        }
+        if (doc.exists) await saveToTidakTertarikDB(id, doc.data());
     } else {
-        console.log('User clicked CANCEL, only updating status');
         await db.collection('prospek').doc(id).update({ status: 'Tidak Tertarik' });
-        showNotif('📌 Data tetap di kolom Tidak Tertarik (tidak diarsipkan)');
+        showNotif('📌 Data tetap di kolom Tidak Tertarik');
     }
 };
+
 // ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
@@ -675,18 +633,20 @@ if (importBtn) {
 
 // ========== DATABASE ARCHIVES ==========
 function loadDBClosing() {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('No user, skipping loadDBClosing');
+        return;
+    }
     
     console.log('Loading DB Closing...');
+    const dbClosingList = document.getElementById('dbClosingList');
+    if (!dbClosingList) {
+        console.error('dbClosingList element not found!');
+        return;
+    }
     
-    // Gunakan onSnapshot untuk realtime update
     db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         console.log('DB Closing snapshot size:', snap.size);
-        
-        // Debug: tampilkan semua data di console
-        snap.forEach(doc => {
-            console.log('DB Closing data:', doc.id, doc.data());
-        });
         
         let html = '';
         if (snap.empty) {
@@ -700,7 +660,6 @@ function loadDBClosing() {
         } else {
             snap.forEach(doc => {
                 const d = doc.data();
-                console.log('Rendering closing item:', d.nama);
                 html += `
                     <div class="db-item">
                         <div class="db-item-info">
@@ -713,33 +672,29 @@ function loadDBClosing() {
                 `;
             });
         }
-        
-        const dbClosingList = document.getElementById('dbClosingList');
-        if (dbClosingList) {
-            console.log('Updating dbClosingList innerHTML, length:', html.length);
-            dbClosingList.innerHTML = html;
-        } else {
-            console.error('dbClosingList element not found!');
-        }
+        dbClosingList.innerHTML = html;
+        console.log('DB Closing HTML updated, length:', html.length);
     }, error => {
         console.error('Error loading DB Closing:', error);
-        const dbClosingList = document.getElementById('dbClosingList');
-        if (dbClosingList) dbClosingList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
+        dbClosingList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
     });
 }
 
 function loadDBTidak() {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('No user, skipping loadDBTidak');
+        return;
+    }
     
     console.log('Loading DB Tidak Tertarik...');
+    const dbTidakList = document.getElementById('dbTidakList');
+    if (!dbTidakList) {
+        console.error('dbTidakList element not found!');
+        return;
+    }
     
     db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         console.log('DB Tidak Tertarik snapshot size:', snap.size);
-        
-        // Debug: tampilkan semua data di console
-        snap.forEach(doc => {
-            console.log('DB Tidak data:', doc.id, doc.data());
-        });
         
         let html = '';
         if (snap.empty) {
@@ -753,7 +708,6 @@ function loadDBTidak() {
         } else {
             snap.forEach(doc => {
                 const d = doc.data();
-                console.log('Rendering tidak item:', d.nama);
                 html += `
                     <div class="db-item">
                         <div class="db-item-info">
@@ -766,18 +720,11 @@ function loadDBTidak() {
                 `;
             });
         }
-        
-        const dbTidakList = document.getElementById('dbTidakList');
-        if (dbTidakList) {
-            console.log('Updating dbTidakList innerHTML, length:', html.length);
-            dbTidakList.innerHTML = html;
-        } else {
-            console.error('dbTidakList element not found!');
-        }
+        dbTidakList.innerHTML = html;
+        console.log('DB Tidak HTML updated, length:', html.length);
     }, error => {
         console.error('Error loading DB Tidak Tertarik:', error);
-        const dbTidakList = document.getElementById('dbTidakList');
-        if (dbTidakList) dbTidakList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
+        dbTidakList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
     });
 }
 
@@ -788,17 +735,13 @@ function updateChartCustomer(total, closing, pending, followup) {
     if (chartCustomer) chartCustomer.destroy();
     
     const baru = total - (closing + pending + followup);
-    const dataArr = [closing, pending, followup, baru];
-    const labels = ['Closing', 'Pending', 'Follow Up', 'Baru'];
-    const colors = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
-    
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
             datasets: [{
-                data: dataArr,
-                backgroundColor: colors,
+                data: [closing, pending, followup, baru],
+                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
                 borderWidth: 0,
                 hoverOffset: 15,
                 cutout: '65%'
@@ -808,43 +751,7 @@ function updateChartCustomer(total, closing, pending, followup) {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 12,
-                        font: { size: 11 },
-                        generateLabels: function(chart) {
-                            const data = chart.data;
-                            const dataset = data.datasets[0];
-                            const total = dataset.data.reduce((a, b) => a + b, 0);
-                            return data.labels.map((label, i) => {
-                                const value = dataset.data[i];
-                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                                return {
-                                    text: `${label} : ${value} (${percent}%)`,
-                                    fillStyle: dataset.backgroundColor[i],
-                                    strokeStyle: dataset.backgroundColor[i],
-                                    lineWidth: 0,
-                                    hidden: false,
-                                    index: i
-                                };
-                            });
-                        }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${label}: ${value} (${percent}%)`;
-                        }
-                    }
-                }
+                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
             }
         }
     });
@@ -856,18 +763,15 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     if (chartProspek) chartProspek.destroy();
     
     let dataArr = [baru, dihubungi, tertarik, tidak];
-    const labels = ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'];
-    const colors = ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'];
-    
     if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
     
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: labels,
+            labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'],
             datasets: [{
                 data: dataArr,
-                backgroundColor: colors,
+                backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'],
                 borderWidth: 0,
                 hoverOffset: 15,
                 cutout: '65%'
@@ -877,43 +781,7 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
             responsive: true,
             maintainAspectRatio: true,
             plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 12,
-                        font: { size: 11 },
-                        generateLabels: function(chart) {
-                            const data = chart.data;
-                            const dataset = data.datasets[0];
-                            const total = dataset.data.reduce((a, b) => a + b, 0);
-                            return data.labels.map((label, i) => {
-                                const value = dataset.data[i];
-                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                                return {
-                                    text: `${label} : ${value} (${percent}%)`,
-                                    fillStyle: dataset.backgroundColor[i],
-                                    strokeStyle: dataset.backgroundColor[i],
-                                    lineWidth: 0,
-                                    hidden: false,
-                                    index: i
-                                };
-                            });
-                        }
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                            return `${label}: ${value} (${percent}%)`;
-                        }
-                    }
-                }
+                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', font: { size: 11 } } }
             }
         }
     });
@@ -1001,13 +869,7 @@ function loadAllData() {
                         <div class="card-name">${escapeHtml(item.nama)}</div>
                         <div class="card-phone">
                             <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 6.46 17.5 2 12.04 2Z" fill="#25D366"/>
-                                    <path d="M12.04 3.5C16.77 3.5 20.7 7.42 20.7 12.15C20.7 16.88 16.77 20.8 12.04 20.8C10.5 20.8 9.02 20.42 7.7 19.7L7.3 19.45L4.5 20.2L5.28 17.53L5.02 17.11C4.24 15.75 3.82 14.22 3.82 12.65C3.82 7.92 7.75 4 12.04 4Z" fill="white"/>
-                                    <path d="M16.5 14.5C16.5 14.5 15.5 15.2 15 15.5C14.5 15.8 13.8 15.8 13 15.5C11.5 15 9.5 13.5 9 13C8.5 12.5 8 11.5 8 11C8 10.5 8.5 10 9 9.5C9.2 9.3 9.5 9 9.5 8.5C9.5 8 9.2 7.5 8.8 7.2C8.5 7 8 6.8 7.5 6.8C7 6.8 6.5 7 6 7.5C5 8.5 5 10 5.5 11.5C6 13 7.5 15 9.5 16.5C11.5 18 13 18.5 14.5 18C15 17.8 15.5 17.5 16 17C16.5 16.5 16.5 16 16.5 15.5C16.5 15 16.5 14.5 16.5 14.5Z" fill="#25D366"/>
-                                </svg>
-                            </span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
                         </div>
                     </div>
                 `).join('');
@@ -1033,19 +895,10 @@ function loadAllData() {
         snap.forEach(doc => {
             const d = doc.data();
             const st = d.status || 'Baru';
-            if (st === 'Baru') { 
-                baru++; 
-                lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else if (st === 'Sudah Dihubungi') { 
-                dihubungi++; 
-                lists.prospekDihubungi.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else if (st === 'Tertarik') { 
-                tertarik++; 
-                lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else { 
-                tidak++; 
-                lists.prospekTidak.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            }
+            if (st === 'Baru') { baru++; lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
+            else if (st === 'Sudah Dihubungi') { dihubungi++; lists.prospekDihubungi.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
+            else if (st === 'Tertarik') { tertarik++; lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
+            else { tidak++; lists.prospekTidak.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
         });
         
         document.getElementById('countProspekBaru').innerText = baru;
@@ -1061,13 +914,7 @@ function loadAllData() {
                         <div class="card-name">${escapeHtml(item.nama)}</div>
                         <div class="card-phone">
                             <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 6.46 17.5 2 12.04 2Z" fill="#25D366"/>
-                                    <path d="M12.04 3.5C16.77 3.5 20.7 7.42 20.7 12.15C20.7 16.88 16.77 20.8 12.04 20.8C10.5 20.8 9.02 20.42 7.7 19.7L7.3 19.45L4.5 20.2L5.28 17.53L5.02 17.11C4.24 15.75 3.82 14.22 3.82 12.65C3.82 7.92 7.75 4 12.04 4Z" fill="white"/>
-                                    <path d="M16.5 14.5C16.5 14.5 15.5 15.2 15 15.5C14.5 15.8 13.8 15.8 13 15.5C11.5 15 9.5 13.5 9 13C8.5 12.5 8 11.5 8 11C8 10.5 8.5 10 9 9.5C9.2 9.3 9.5 9 9.5 8.5C9.5 8 9.2 7.5 8.8 7.2C8.5 7 8 6.8 7.5 6.8C7 6.8 6.5 7 6 7.5C5 8.5 5 10 5.5 11.5C6 13 7.5 15 9.5 16.5C11.5 18 13 18.5 14.5 18C15 17.8 15.5 17.5 16 17C16.5 16.5 16.5 16 16.5 15.5C16.5 15 16.5 14.5 16.5 14.5Z" fill="#25D366"/>
-                                </svg>
-                            </span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
                         </div>
                     </div>
                 `).join('');
@@ -1092,4 +939,13 @@ if (notifBtn) {
     notifBtn.addEventListener('click', () => {
         showNotif('Fitur notifikasi dalam pengembangan');
     });
+}
+
+// Detail Modal element (create if not exists)
+if (!document.getElementById('detailModal')) {
+    const detailModal = document.createElement('div');
+    detailModal.id = 'detailModal';
+    detailModal.className = 'modal';
+    detailModal.innerHTML = '<div class="modal-content" id="detailContent"></div>';
+    document.body.appendChild(detailModal);
 }
