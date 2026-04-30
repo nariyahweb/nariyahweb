@@ -155,8 +155,32 @@
 <!-- MODALS -->
 <div class="modal" id="customerModal"><div class="modal-content"><h3>Tambah Customer</h3><input type="text" id="customerName" placeholder="Nama Lengkap"><input type="tel" id="customerPhone" placeholder="No HP" value="+62"><input type="date" id="customerDate"><div class="modal-buttons"><button id="saveCustomerBtn">Simpan</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div></div></div>
 <div class="modal" id="prospekModal"><div class="modal-content"><h3>Tambah Prospek</h3><input type="text" id="prospekName" placeholder="Nama Agen"><input type="tel" id="prospekPhone" placeholder="No HP" value="+62"><select id="prospekStatusSelect"><option value="Baru">Baru</option><option value="Sudah Dihubungi">Sudah Dihubungi</option><option value="Tertarik">Tertarik</option><option value="Tidak Tertarik">Tidak Tertarik</option></select><div class="modal-buttons"><button id="saveProspekBtn">Simpan</button><button class="closeModalBtn" data-modal="prospekModal">Batal</button></div></div></div>
-<div class="modal" id="profileModal"><div class="modal-content"><h3>Profile CS Agent</h3><div class="profile-photo"><img id="previewFoto" src="https://i.pravatar.cc/80"><input type="file" id="profileFoto" hidden accept="image/*"><p>Klik foto untuk ganti</p></div><input type="text" id="profileName" placeholder="Nama"><input type="email" id="profileEmail" placeholder="Email" disabled><input type="tel" id="profilePhone" placeholder="No HP" value="+62"><div class="modal-buttons"><button id="saveProfileBtn">Simpan</button><button class="closeModalBtn" data-modal="profileModal">Batal</button></div></div></div>
-<div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
+<div class="modal" id="profileModal">
+    <div class="modal-content">
+        <h3>Profile CS Agent</h3>
+        
+        <!-- Foto Profile dengan upload -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img id="previewFoto" src="https://i.pravatar.cc/80" style="width: 80px; height: 80px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 3px solid #4f46e5;">
+            <input type="file" id="profileFoto" hidden accept="image/*">
+            <p style="font-size: 12px; color: #888; margin-top: 8px;">Klik foto untuk ganti</p>
+        </div>
+        
+        <label style="display: block; font-size: 13px; margin-top: 10px;">Nama</label>
+        <input type="text" id="profileName" placeholder="Nama">
+        
+        <label style="display: block; font-size: 13px; margin-top: 10px;">Email</label>
+        <input type="email" id="profileEmail" placeholder="Email" disabled>
+        
+        <label style="display: block; font-size: 13px; margin-top: 10px;">No HP</label>
+        <input type="tel" id="profilePhone" placeholder="No HP" value="+62">
+        
+        <div class="modal-buttons">
+            <button id="saveProfileBtn">Simpan</button>
+            <button class="closeModalBtn" data-modal="profileModal">Batal</button>
+        </div>
+    </div>
+</div>
 
 <div id="notifBox"></div>
 
