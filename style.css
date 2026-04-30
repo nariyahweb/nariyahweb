@@ -130,7 +130,7 @@ body {
     transform: translateX(0);
 }
 
-/* Untuk Desktop - sidebar tertutup default, hover untuk buka */
+/* Hanya untuk desktop - sidebar tetap tertutup, hover untuk buka */
 @media (min-width: 769px) {
     .sidebar {
         transform: translateX(-100%);
@@ -140,7 +140,7 @@ body {
     }
 }
 
-/* Untuk Mobile - sidebar tertutup default, toggle untuk buka */
+/* Untuk mobile */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
@@ -149,6 +149,7 @@ body {
         transform: translateX(0);
     }
 }
+
 
 .sidebar-header {
     padding: 20px;
@@ -209,10 +210,26 @@ body {
     position: fixed;
     left: 0;
     top: 60px;
-    width: 15px;
+    width: 20px;
     height: calc(100vh - 60px);
     z-index: 2000;
     background: transparent;
+}
+
+/* Tombol toggle di topbar */
+.toggle-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    display: block;
+}
+
+.toggle-btn:hover {
+    background: rgba(255,255,255,0.3);
 }
 
 /* ========== TOPBAR ========== */
