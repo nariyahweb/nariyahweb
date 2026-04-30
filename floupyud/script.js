@@ -110,7 +110,6 @@ function escapeHtml(text) {
 }
 
 // ========== FUNGSI CLOSING & TIDAK TERTARIK ==========
-// Fungsi untuk menyimpan ke database closing
 async function saveToClosingDB(id, data) {
     try {
         await db.collection('db_closing').add({
@@ -120,18 +119,15 @@ async function saveToClosingDB(id, data) {
             closing_date: new Date().toISOString(),
             user_id: currentUser.uid
         });
-        
         await db.collection('customers').doc(id).delete();
         showNotif('✅ Data berhasil masuk Database Closing!');
         return true;
     } catch (error) {
-        console.error('Error saving to closing DB:', error);
-        showNotif('❌ Gagal menyimpan ke DB Closing: ' + error.message, true);
+        showNotif('❌ Gagal: ' + error.message, true);
         return false;
     }
 }
 
-// Fungsi untuk menyimpan ke database tidak tertarik
 async function saveToTidakTertarikDB(id, data) {
     try {
         await db.collection('db_tidak_tertarik').add({
@@ -140,60 +136,36 @@ async function saveToTidakTertarikDB(id, data) {
             tanggal: new Date().toISOString(),
             user_id: currentUser.uid
         });
-        
         await db.collection('prospek').doc(id).delete();
         showNotif('✅ Data berhasil masuk Database Tidak Tertarik!');
         return true;
     } catch (error) {
-        console.error('Error saving to tidak tertarik DB:', error);
-        showNotif('❌ Gagal menyimpan ke DB Tidak Tertarik: ' + error.message, true);
+        showNotif('❌ Gagal: ' + error.message, true);
         return false;
     }
 }
 
-// Fungsi konfirmasi untuk closing (dipanggil dari drag drop)
 window.confirmClosing = async function(id) {
     if (!id) return;
-    
-    const result = confirm(
-        "⚠️ PERHATIAN!\n\n" +
-        "Anda akan memindahkan data ini ke DATABASE CLOSING.\n\n" +
-        "✅ OK = Pindahkan ke DB Closing (data akan diarsipkan)\n" +
-        "❌ CANCEL = Tetap di kolom Closing (tidak diarsipkan)\n\n" +
-        "Apakah Anda yakin?"
-    );
-    
+    const result = confirm("⚠️ PERHATIAN!\n\nAnda akan memindahkan data ini ke DATABASE CLOSING.\n\n✅ OK = Pindahkan ke DB Closing\n❌ CANCEL = Tetap di kolom Closing\n\nApakah Anda yakin?");
     if (result) {
         const doc = await db.collection('customers').doc(id).get();
-        if (doc.exists) {
-            await saveToClosingDB(id, doc.data());
-        }
+        if (doc.exists) await saveToClosingDB(id, doc.data());
     } else {
         await db.collection('customers').doc(id).update({ status: 'closing' });
-        showNotif('📌 Data tetap di kolom Closing (tidak diarsipkan)');
+        showNotif('📌 Data tetap di kolom Closing');
     }
 };
 
-// Fungsi konfirmasi untuk tidak tertarik (dipanggil dari drag drop)
 window.confirmTidakTertarik = async function(id) {
     if (!id) return;
-    
-    const result = confirm(
-        "⚠️ PERHATIAN!\n\n" +
-        "Anda akan memindahkan data ini ke DATABASE TIDAK TERTARIK.\n\n" +
-        "✅ OK = Pindahkan ke DB Tidak Tertarik (data akan diarsipkan)\n" +
-        "❌ CANCEL = Tetap di kolom Tidak Tertarik (tidak diarsipkan)\n\n" +
-        "Apakah Anda yakin?"
-    );
-    
+    const result = confirm("⚠️ PERHATIAN!\n\nAnda akan memindahkan data ini ke DATABASE TIDAK TERTARIK.\n\n✅ OK = Pindahkan ke DB Tidak Tertarik\n❌ CANCEL = Tetap di kolom Tidak Tertarik\n\nApakah Anda yakin?");
     if (result) {
         const doc = await db.collection('prospek').doc(id).get();
-        if (doc.exists) {
-            await saveToTidakTertarikDB(id, doc.data());
-        }
+        if (doc.exists) await saveToTidakTertarikDB(id, doc.data());
     } else {
         await db.collection('prospek').doc(id).update({ status: 'Tidak Tertarik' });
-        showNotif('📌 Data tetap di kolom Tidak Tertarik (tidak diarsipkan)');
+        showNotif('📌 Data tetap di kolom Tidak Tertarik');
     }
 };
 
@@ -290,7 +262,6 @@ auth.onAuthStateChanged(user => {
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
-        
         const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage'];
         pages.forEach(p => {
             const el = document.getElementById(p);
@@ -343,9 +314,9 @@ if (profileImg) {
     });
 }
 
-const previewFoto = document.getElementById('previewFoto');
-if (previewFoto) {
-    previewFoto.addEventListener('click', () => {
+const previewFotoEl = document.getElementById('previewFoto');
+if (previewFotoEl) {
+    previewFotoEl.addEventListener('click', () => {
         const profileFotoInput = document.getElementById('profileFoto');
         if (profileFotoInput) profileFotoInput.click();
     });
@@ -666,16 +637,7 @@ function loadDBClosing() {
         let html = '';
         snap.forEach(doc => {
             const d = doc.data();
-            html += `
-                <div class="db-item">
-                    <div class="db-item-info">
-                        <h4>${escapeHtml(d.nama)}</h4>
-                        <p>${d.hp}</p>
-                        <small>Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small>
-                    </div>
-                    <button onclick="openWA('${d.hp}')">WhatsApp</button>
-                </div>
-            `;
+            html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
         });
         const dbClosingList = document.getElementById('dbClosingList');
         if (dbClosingList) dbClosingList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
@@ -688,16 +650,7 @@ function loadDBTidak() {
         let html = '';
         snap.forEach(doc => {
             const d = doc.data();
-            html += `
-                <div class="db-item">
-                    <div class="db-item-info">
-                        <h4>${escapeHtml(d.nama)}</h4>
-                        <p>${d.hp}</p>
-                        <small>Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small>
-                    </div>
-                    <button onclick="openWA('${d.hp}')">WhatsApp</button>
-                </div>
-            `;
+            html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
         });
         const dbTidakList = document.getElementById('dbTidakList');
         if (dbTidakList) dbTidakList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
@@ -708,137 +661,68 @@ function loadDBTidak() {
 function updateChartCustomer(total, closing, pending, followup) {
     const ctx = document.getElementById('chartCustomer');
     if (!ctx) return;
-    
     if (chartCustomer) chartCustomer.destroy();
-    
     const dataArr = [closing, pending, followup, total - (closing + pending + followup)];
-    
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
-            datasets: [{
-                data: dataArr,
-                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
-                borderWidth: 0,
-                hoverOffset: 12
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            cutout: '65%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { usePointStyle: true, pointStyle: 'circle' }
-                }
-            }
-        }
+        data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: dataArr, backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'], borderWidth: 0, hoverOffset: 12 }] },
+        options: { responsive: true, maintainAspectRatio: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle' } } } }
     });
 }
 
 function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     const ctx = document.getElementById('chartProspek');
     if (!ctx) return;
-    
     if (chartProspek) chartProspek.destroy();
-    
     const dataArr = [baru, dihubungi, tertarik, tidak];
     if (dataArr.every(v => v === 0)) dataArr[0] = 1;
-    
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-            labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak'],
-            datasets: [{
-                data: dataArr,
-                backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'],
-                borderWidth: 0,
-                hoverOffset: 12
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            cutout: '65%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { usePointStyle: true, pointStyle: 'circle' }
-                }
-            }
-        }
+        data: { labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak'], datasets: [{ data: dataArr, backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'], borderWidth: 0, hoverOffset: 12 }] },
+        options: { responsive: true, maintainAspectRatio: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle' } } } }
     });
 }
 
-// ========== DRAG AND DROP DENGAN KONFIRMASI ==========
+// ========== DRAG AND DROP ==========
 function initDragAndDrop() {
-    // Customer drag and drop
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
-    const customerStatusMap = {
-        baruList: 'baru',
-        followupList: 'followup',
-        pendingList: 'pending',
-        closingList: 'closing'
-    };
-    
+    const customerStatusMap = { baruList: 'baru', followupList: 'followup', pendingList: 'pending', closingList: 'closing' };
     customerGroups.forEach(groupId => {
         const el = document.getElementById(groupId);
         if (el && !el.hasAttribute('data-sortable')) {
-            new Sortable(el, {
-                group: 'customers',
-                animation: 200,
-                draggable: '.card-item',
-                onEnd: async function(evt) {
-                    const id = evt.item.dataset.id;
-                    const newStatus = customerStatusMap[evt.to.id];
-                    
-                    if (id && newStatus && currentUser) {
-                        if (newStatus === 'closing') {
-                            // Panggil fungsi konfirmasi
-                            await window.confirmClosing(id);
-                        } else {
-                            await db.collection('customers').doc(id).update({ status: newStatus });
-                            showNotif(`Status diubah menjadi ${newStatus}`);
-                        }
+            new Sortable(el, { group: 'customers', animation: 200, draggable: '.card-item', onEnd: async function(evt) {
+                const id = evt.item.dataset.id;
+                const newStatus = customerStatusMap[evt.to.id];
+                if (id && newStatus && currentUser) {
+                    if (newStatus === 'closing') {
+                        await window.confirmClosing(id);
+                    } else {
+                        await db.collection('customers').doc(id).update({ status: newStatus });
+                        showNotif(`Status diubah menjadi ${newStatus}`);
                     }
                 }
-            });
+            } });
             el.setAttribute('data-sortable', 'true');
         }
     });
     
-    // Prospek drag and drop
     const prospekGroups = ['prospekBaruList', 'prospekDihubungiList', 'prospekTertarikList', 'prospekTidakList'];
-    const prospekStatusMap = {
-        prospekBaruList: 'Baru',
-        prospekDihubungiList: 'Sudah Dihubungi',
-        prospekTertarikList: 'Tertarik',
-        prospekTidakList: 'Tidak Tertarik'
-    };
-    
+    const prospekStatusMap = { prospekBaruList: 'Baru', prospekDihubungiList: 'Sudah Dihubungi', prospekTertarikList: 'Tertarik', prospekTidakList: 'Tidak Tertarik' };
     prospekGroups.forEach(groupId => {
         const el = document.getElementById(groupId);
         if (el && !el.hasAttribute('data-sortable')) {
-            new Sortable(el, {
-                group: 'prospek',
-                animation: 200,
-                draggable: '.card-item',
-                onEnd: async function(evt) {
-                    const id = evt.item.dataset.id;
-                    const newStatus = prospekStatusMap[evt.to.id];
-                    
-                    if (id && newStatus && currentUser) {
-                        if (newStatus === 'Tidak Tertarik') {
-                            await window.confirmTidakTertarik(id);
-                        } else {
-                            await db.collection('prospek').doc(id).update({ status: newStatus });
-                            showNotif(`Status diubah menjadi ${newStatus}`);
-                        }
+            new Sortable(el, { group: 'prospek', animation: 200, draggable: '.card-item', onEnd: async function(evt) {
+                const id = evt.item.dataset.id;
+                const newStatus = prospekStatusMap[evt.to.id];
+                if (id && newStatus && currentUser) {
+                    if (newStatus === 'Tidak Tertarik') {
+                        await window.confirmTidakTertarik(id);
+                    } else {
+                        await db.collection('prospek').doc(id).update({ status: newStatus });
+                        showNotif(`Status diubah menjadi ${newStatus}`);
                     }
                 }
-            });
+            } });
             el.setAttribute('data-sortable', 'true');
         }
     });
@@ -848,11 +732,9 @@ function initDragAndDrop() {
 function loadAllData() {
     if (!currentUser) return;
     
-    // Load customers
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
-        
         snap.forEach(doc => {
             const d = doc.data();
             total++;
@@ -860,12 +742,10 @@ function loadAllData() {
             else if (d.status === 'pending') pending++;
             else if (d.status === 'followup') followup++;
             else lists.baru.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            
             if (d.status === 'followup') lists.followup.push({ id: doc.id, nama: d.nama, hp: d.hp });
             if (d.status === 'pending') lists.pending.push({ id: doc.id, nama: d.nama, hp: d.hp });
             if (d.status === 'closing') lists.closing.push({ id: doc.id, nama: d.nama, hp: d.hp });
         });
-        
         document.getElementById('countBaru').innerText = total - (closing + pending + followup);
         document.getElementById('countFollowup').innerText = followup;
         document.getElementById('countPending').innerText = pending;
@@ -878,53 +758,27 @@ function loadAllData() {
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
-                container.innerHTML = lists[status].map(item => `
-                    <div class="card-item" data-id="${item.id}">
-                        <div class="card-name">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone">
-                            <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span>
-                        </div>
-                    </div>
-                `).join('');
-                
+                container.innerHTML = lists[status].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div></div>`).join('');
                 container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => {
-                        if (!e.target.classList.contains('whatsapp-icon')) {
-                            openDetailCustomer(card.dataset.id);
-                        }
-                    });
+                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
                 });
             }
         }
-        
         updateChartCustomer(total, closing, pending, followup);
         initDragAndDrop();
     });
     
-    // Load prospek
     db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let baru = 0, dihubungi = 0, tertarik = 0, tidak = 0;
         const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
-        
         snap.forEach(doc => {
             const d = doc.data();
             const st = d.status || 'Baru';
-            if (st === 'Baru') {
-                baru++;
-                lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else if (st === 'Sudah Dihubungi') {
-                dihubungi++;
-                lists.prospekDihubungi.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else if (st === 'Tertarik') {
-                tertarik++;
-                lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else {
-                tidak++;
-                lists.prospekTidak.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            }
+            if (st === 'Baru') { baru++; lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
+            else if (st === 'Sudah Dihubungi') { dihubungi++; lists.prospekDihubungi.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
+            else if (st === 'Tertarik') { tertarik++; lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
+            else { tidak++; lists.prospekTidak.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
         });
-        
         document.getElementById('countProspekBaru').innerText = baru;
         document.getElementById('countDihubungi').innerText = dihubungi;
         document.getElementById('countTertarik').innerText = tertarik;
@@ -933,4 +787,19 @@ function loadAllData() {
         for (let col in lists) {
             const container = document.getElementById(col + 'List');
             if (container) {
-                container.innerHTML = lists[col].
+                container.innerHTML = lists[col].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div></div>`).join('');
+                container.querySelectorAll('.card-item').forEach(card => {
+                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
+                });
+            }
+        }
+        updateChartProspek(baru, dihubungi, tertarik, tidak);
+        initDragAndDrop();
+    });
+}
+
+// Notifikasi
+const notifBtn = document.getElementById('notifBtn');
+if (notifBtn) {
+    notifBtn.addEventListener('click', () => showNotif('Fitur notifikasi dalam pengembangan'));
+}
