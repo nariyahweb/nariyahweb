@@ -683,6 +683,11 @@ function loadDBClosing() {
     db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         console.log('DB Closing snapshot size:', snap.size);
         
+        // Debug: tampilkan semua data di console
+        snap.forEach(doc => {
+            console.log('DB Closing data:', doc.id, doc.data());
+        });
+        
         let html = '';
         if (snap.empty) {
             html = `
@@ -695,20 +700,27 @@ function loadDBClosing() {
         } else {
             snap.forEach(doc => {
                 const d = doc.data();
+                console.log('Rendering closing item:', d.nama);
                 html += `
                     <div class="db-item">
                         <div class="db-item-info">
                             <h4>${escapeHtml(d.nama)}</h4>
-                            <p>${d.hp}</p>
-                            <small style="font-size: 11px; color: #9ca3af;">Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small>
+                            <p>${escapeHtml(d.hp)}</p>
+                            <small style="font-size: 11px; color: #9ca3af;">Closing: ${d.closing_date ? new Date(d.closing_date).toLocaleDateString('id-ID') : '-'}</small>
                         </div>
-                        <button onclick="openWA('${d.hp}')" style="background:#25D366;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">💬 WA</button>
+                        <button onclick="openWA('${escapeHtml(d.hp)}')" style="background:#25D366;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">💬 WA</button>
                     </div>
                 `;
             });
         }
+        
         const dbClosingList = document.getElementById('dbClosingList');
-        if (dbClosingList) dbClosingList.innerHTML = html;
+        if (dbClosingList) {
+            console.log('Updating dbClosingList innerHTML, length:', html.length);
+            dbClosingList.innerHTML = html;
+        } else {
+            console.error('dbClosingList element not found!');
+        }
     }, error => {
         console.error('Error loading DB Closing:', error);
         const dbClosingList = document.getElementById('dbClosingList');
@@ -724,6 +736,11 @@ function loadDBTidak() {
     db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         console.log('DB Tidak Tertarik snapshot size:', snap.size);
         
+        // Debug: tampilkan semua data di console
+        snap.forEach(doc => {
+            console.log('DB Tidak data:', doc.id, doc.data());
+        });
+        
         let html = '';
         if (snap.empty) {
             html = `
@@ -736,26 +753,34 @@ function loadDBTidak() {
         } else {
             snap.forEach(doc => {
                 const d = doc.data();
+                console.log('Rendering tidak item:', d.nama);
                 html += `
                     <div class="db-item">
                         <div class="db-item-info">
                             <h4>${escapeHtml(d.nama)}</h4>
-                            <p>${d.hp}</p>
-                            <small style="font-size: 11px; color: #9ca3af;">Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small>
+                            <p>${escapeHtml(d.hp)}</p>
+                            <small style="font-size: 11px; color: #9ca3af;">Tanggal: ${d.tanggal ? new Date(d.tanggal).toLocaleDateString('id-ID') : '-'}</small>
                         </div>
-                        <button onclick="openWA('${d.hp}')" style="background:#25D366;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">💬 WA</button>
+                        <button onclick="openWA('${escapeHtml(d.hp)}')" style="background:#25D366;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">💬 WA</button>
                     </div>
                 `;
             });
         }
+        
         const dbTidakList = document.getElementById('dbTidakList');
-        if (dbTidakList) dbTidakList.innerHTML = html;
+        if (dbTidakList) {
+            console.log('Updating dbTidakList innerHTML, length:', html.length);
+            dbTidakList.innerHTML = html;
+        } else {
+            console.error('dbTidakList element not found!');
+        }
     }, error => {
         console.error('Error loading DB Tidak Tertarik:', error);
         const dbTidakList = document.getElementById('dbTidakList');
         if (dbTidakList) dbTidakList.innerHTML = '<p style="text-align:center;padding:40px;color:red;">Error loading data</p>';
     });
 }
+
 // ========== CHARTS ==========
 function updateChartCustomer(total, closing, pending, followup) {
     const ctx = document.getElementById('chartCustomer');
