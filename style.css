@@ -349,6 +349,13 @@ body {
     justify-content: space-between;
     align-items: center;
     border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
 
 .stat-info h4 {
@@ -377,6 +384,11 @@ body {
     justify-content: center;
     font-size: 24px;
     color: white;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
 }
 
 .bg-purple { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
