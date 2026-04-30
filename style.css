@@ -130,6 +130,26 @@ body {
     transform: translateX(0);
 }
 
+/* Untuk Desktop - sidebar tertutup default, hover untuk buka */
+@media (min-width: 769px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+}
+
+/* Untuk Mobile - sidebar tertutup default, toggle untuk buka */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .sidebar.active {
+        transform: translateX(0);
+    }
+}
+
 .sidebar-header {
     padding: 20px;
     border-bottom: 1px solid #f0f0f0;
@@ -730,14 +750,8 @@ body {
 }
 
 @media (max-width: 768px) {
-    .sidebar { transform: translateX(-100%); }
-    .sidebar.active { transform: translateX(0); }
     .stats-grid { grid-template-columns: 1fr; }
     .kanban-board { grid-template-columns: 1fr; }
     .content-area { padding: 16px; }
     .topbar-center { display: none; }
-}
-
-@media (min-width: 769px) {
-    .sidebar { transform: translateX(0); }
 }
