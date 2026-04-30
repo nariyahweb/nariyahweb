@@ -842,6 +842,219 @@ body {
     transform: scale(1.05);
 }
 
+/* Detail Modal - Popup Agent yang Menarik */
+#detailModal .modal-content {
+    max-width: 450px;
+    padding: 0;
+    overflow: hidden;
+    border-radius: 28px;
+    animation: modalPopup 0.3s ease;
+}
+
+@keyframes modalPopup {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.detail-header {
+    background: linear-gradient(135deg, #4f46e5, #8b5cf6);
+    padding: 24px;
+    text-align: center;
+    color: white;
+    position: relative;
+}
+
+.detail-avatar {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 40px;
+    border: 3px solid white;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.detail-header h3 {
+    font-size: 22px;
+    margin-bottom: 4px;
+    color: white;
+}
+
+.detail-header .detail-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: rgba(255,255,255,0.2);
+    margin-top: 8px;
+}
+
+.detail-body {
+    padding: 24px;
+}
+
+.detail-info {
+    background: #f9fafb;
+    border-radius: 20px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.detail-info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-info-item:last-child {
+    border-bottom: none;
+}
+
+.detail-info-icon {
+    width: 36px;
+    height: 36px;
+    background: #eef2ff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.detail-info-content {
+    flex: 1;
+}
+
+.detail-info-content label {
+    font-size: 11px;
+    color: #9ca3af;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.detail-info-content .value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.detail-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.detail-actions button {
+    padding: 12px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.detail-actions button:hover {
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: #4f46e5;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #4338ca;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-outline {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-outline:hover {
+    background: #e5e7eb;
+}
+
+.detail-footer {
+    padding: 16px 24px 24px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 12px;
+}
+
+.detail-footer button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Status badge colors */
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-baru { background: #f3e8ff; color: #9333ea; }
+.status-followup { background: #eff6ff; color: #2563eb; }
+.status-pending { background: #fff7ed; color: #ea580c; }
+.status-closing { background: #ecfdf5; color: #16a34a; }
+.status-tertarik { background: #ecfdf5; color: #16a34a; }
+.status-tidak { background: #fef2f2; color: #dc2626; }
+.status-dihubungi { background: #eff6ff; color: #2563eb; }
+
 /* Modals */
 .modal {
     position: fixed;
