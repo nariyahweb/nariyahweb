@@ -55,11 +55,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const hoverZone = document.getElementById('hoverZone');
     const toggleBtn = document.getElementById('toggleSidebarBtn');
     
+    console.log('Sidebar init - sidebar exists:', !!sidebar);
+    console.log('Is Mobile:', isMobile());
+    
     // Desktop: Hover to open sidebar
     if (hoverZone) {
         hoverZone.addEventListener('mouseenter', function() {
             if (!isMobile() && sidebar) {
-                clearTimeout(sidebarTimeout);
+                console.log('Hover zone enter - opening sidebar');
                 sidebar.classList.add('active');
             }
         });
@@ -68,14 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sidebar) {
         sidebar.addEventListener('mouseleave', function() {
             if (!isMobile()) {
-                sidebarTimeout = setTimeout(function() {
-                    sidebar.classList.remove('active');
-                }, 200);
+                console.log('Sidebar leave - closing sidebar');
+                sidebar.classList.remove('active');
             }
-        });
-        
-        sidebar.addEventListener('mouseenter', function() {
-            clearTimeout(sidebarTimeout);
         });
     }
     
@@ -84,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (sidebar) {
+                console.log('Toggle button clicked - toggling sidebar');
                 sidebar.classList.toggle('active');
             }
         });
@@ -101,7 +100,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle window resize
     window.addEventListener('resize', function() {
         if (!isMobile() && sidebar) {
-            sidebar.classList.add('active');
+            // Di desktop, pastikan sidebar tertutup saat resize
+            sidebar.classList.remove('active');
         } else if (isMobile() && sidebar) {
             sidebar.classList.remove('active');
         }
