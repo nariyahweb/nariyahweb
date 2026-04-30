@@ -494,13 +494,27 @@ body {
 .chart-card:hover canvas {
     transform: scale(1.02);
 }
-/* Board Sections */
+
+/* Board Sections - Side by Side */
+.boards-wrapper {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+
 .board-section {
     background: white;
     border-radius: 20px;
     padding: 20px;
-    margin-bottom: 28px;
+    flex: 1;
+    min-width: 300px;
     border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.board-section:hover {
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 .board-header {
@@ -509,7 +523,7 @@ body {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 16px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 2px solid #f0f0f0;
 }
 
 .board-header h3 {
@@ -526,18 +540,31 @@ body {
     border-radius: 10px;
     cursor: pointer;
     font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
 }
 
+.add-btn:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+/* Kanban Board - 4 columns */
 .kanban-board {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: 16px;
 }
 
 .kanban-column {
     background: #f9fafb;
     border-radius: 16px;
     padding: 12px;
+    transition: all 0.2s;
+}
+
+.kanban-column:hover {
+    background: #f3f4f6;
 }
 
 .column-header {
@@ -552,12 +579,13 @@ body {
 }
 
 .column-header .count {
-    background: rgba(0,0,0,0.08);
+    background: rgba(0, 0, 0, 0.08);
     padding: 2px 8px;
     border-radius: 20px;
     font-size: 12px;
 }
 
+/* Header Warna */
 .purple-header { background: #f3e8ff; color: #9333ea; }
 .blue-header { background: #eff6ff; color: #2563eb; }
 .orange-header { background: #fff7ed; color: #ea580c; }
@@ -568,18 +596,22 @@ body {
     min-height: 320px;
 }
 
+/* Card Item */
 .card-item {
     background: white;
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 10px;
-    cursor: grab;
+    cursor: pointer;
     border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+    position: relative;
 }
 
 .card-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #c7d2fe;
 }
 
 .card-name {
@@ -592,13 +624,50 @@ body {
 .card-phone {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     font-size: 12px;
     color: #6b7280;
 }
 
+/* Logo WhatsApp Hijau */
 .whatsapp-icon {
     cursor: pointer;
+    font-size: 16px;
     color: #25D366;
+    transition: transform 0.2s;
+}
+
+.whatsapp-icon:hover {
+    transform: scale(1.2);
+}
+
+/* Sorting ghost effect */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #e0e7ff;
+}
+
+.sortable-drag {
+    cursor: grabbing;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .boards-wrapper {
+        flex-direction: column;
+    }
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+    .board-section {
+        min-width: 100%;
+    }
 }
 
 /* Import Section */
