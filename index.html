@@ -81,9 +81,10 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    font-size: 18px;
+    font-size: 20px;
     color: #888;
     user-select: none;
+    transition: color 0.2s;
 }
 .toggle-password:hover {
     color: #7c3aed;
@@ -375,7 +376,7 @@ small { font-size: 11px; color: #888; }
         <!-- Password with toggle eye -->
         <div class="password-wrapper">
             <input type="password" id="password" placeholder="Password" autocomplete="current-password">
-            <span class="toggle-password" onclick="togglePassword()">👁️</span>
+            <span class="toggle-password" onclick="togglePasswordVisibility()">👁️</span>
         </div>
         
         <button id="loginBtn">Masuk</button>
@@ -551,18 +552,43 @@ let importType = "prospek";
 let chartCustomer = null;
 let chartProspek = null;
 
-// ========== TOGGLE PASSWORD ==========
-window.togglePassword = function() {
+// ========== TOGGLE PASSWORD FUNCTION ==========
+window.togglePasswordVisibility = function() {
     const passwordInput = document.getElementById('password');
     const toggleIcon = document.querySelector('.toggle-password');
     
     if(passwordInput.type === 'password') {
         passwordInput.type = 'text';
         toggleIcon.textContent = '🙈';
+        toggleIcon.style.opacity = '0.7';
     } else {
         passwordInput.type = 'password';
         toggleIcon.textContent = '👁️';
+        toggleIcon.style.opacity = '1';
     }
+}
+
+// ========== HELPER FUNCTIONS ==========
+window.closeModal = function(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+function showNotif(msg) {
+    const notif = document.createElement('div');
+    notif.textContent = msg;
+    notif.style.cssText = 'position:fixed; top:70px; right:20px; background:#7c3aed; color:white; padding:10px; border-radius:8px; z-index:9999;';
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 3000);
+}
+
+function escapeHtml(text) {
+    if(!text) return '';
+    return text.replace(/[&<>]/g, function(m) {
+        if(m === '&') return '&amp;';
+        if(m === '<') return '&lt;';
+        if(m === '>') return '&gt;';
+        return m;
+    });
 }
 
 // ========== DOM ELEMENTS ==========
@@ -586,19 +612,6 @@ const openDBTidak = document.getElementById('openDBTidak');
 const dropZone = document.getElementById('dropZone');
 const excelFile = document.getElementById('excelFile');
 
-// ========== HELPER FUNCTIONS ==========
-window.closeModal = function(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-}
-
-function showNotif(msg) {
-    const notif = document.createElement('div');
-    notif.textContent = msg;
-    notif.style.cssText = 'position:fixed; top:70px; right:20px; background:#7c3aed; color:white; padding:10px; border-radius:8px; z-index:9999;';
-    document.body.appendChild(notif);
-    setTimeout(() => notif.remove(), 3000);
-}
-
 // ========== LOGIN ==========
 loginBtn.onclick = function() {
     const email = emailInput.value;
@@ -609,7 +622,6 @@ loginBtn.onclick = function() {
         return;
     }
     
-    // Tampilkan loading
     loginBtn.textContent = 'Loading...';
     loginBtn.disabled = true;
     
@@ -648,11 +660,13 @@ auth.onAuthStateChanged((user) => {
         app.style.display = 'none';
         currentUser = null;
         
-        // Reset form login
         emailInput.value = '';
         passwordInput.value = '';
         const toggleIcon = document.querySelector('.toggle-password');
-        if(toggleIcon) toggleIcon.textContent = '👁️';
+        if(toggleIcon) {
+            toggleIcon.textContent = '👁️';
+            if(passwordInput) passwordInput.type = 'password';
+        }
     }
 });
 
@@ -696,7 +710,7 @@ saveCustomerBtn.onclick = function() {
         document.getElementById('hp').value = '+62';
         document.getElementById('tanggal').value = '';
         showNotif('Customer berhasil ditambahkan');
-    });
+    }).catch(err => alert('Error: ' + err.message));
 }
 
 // ========== PROSPEK ==========
@@ -714,7 +728,7 @@ saveProspekBtn.onclick = function() {
         document.getElementById('p_nama').value = '';
         document.getElementById('p_hp').value = '+62';
         showNotif('Prospek berhasil ditambahkan');
-    });
+    }).catch(err => alert('Error: ' + err.message));
 }
 
 // ========== PROFILE ==========
@@ -734,13 +748,13 @@ saveProfileBtn.onclick = function() {
             document.getElementById('topCenterName').innerText = nama;
             closeModal('modalProfile');
             showNotif('Profile tersimpan');
-        });
+        }).catch(err => alert('Error: ' + err.message));
 }
 
 // ========== WHATSAPP ==========
 window.openWA = function(hp) {
     if(!hp) return;
-    let nomor = hp.replace('+', '').replace(/^0/, '62');
+    let nomor = hp.toString().replace('+', '').replace(/^0/, '62');
     window.open('https://wa.me/' + nomor, '_blank');
 }
 
@@ -802,9 +816,9 @@ openDBClosing.onclick = function() {
         let html = '';
         snap.forEach(doc => {
             const d = doc.data();
-            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.nama}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
+            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${escapeHtml(d.nama)}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
         });
-        document.getElementById('dbClosingList').innerHTML = html || 'Kosong';
+        document.getElementById('dbClosingList').innerHTML = html || '<p style="text-align:center; padding:20px;">Kosong</p>';
     });
 }
 
@@ -814,9 +828,9 @@ openDBTidak.onclick = function() {
         let html = '';
         snap.forEach(doc => {
             const d = doc.data();
-            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.nama}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
+            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${escapeHtml(d.nama)}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
         });
-        document.getElementById('dbTidakList').innerHTML = html || 'Kosong';
+        document.getElementById('dbTidakList').innerHTML = html || '<p style="text-align:center; padding:20px;">Kosong</p>';
     });
 }
 
@@ -847,22 +861,4 @@ function loadAllData() {
         document.getElementById('countClosing').innerText = closing;
         document.getElementById('total').innerText = total;
         document.getElementById('closingCount').innerText = closing;
-        document.getElementById('prospekAktif').innerText = total - closing;
-        document.getElementById('rateText').innerText = total ? Math.round((closing/total)*100) + '%' : '0%';
-        
-        for(const [status, items] of Object.entries(lists)) {
-            const container = document.getElementById(status);
-            if(container) {
-                container.innerHTML = items.map(item => `
-                    <div class="mini-card" onclick="openWA('${item.hp}')">
-                        <b>${escapeHtml(item.nama)}</b>
-                        <div class="mini-phone"><span>${item.hp}</span><span>🟢</span></div>
-                    </div>
-                `).join('');
-            }
-        }
-        
-        updateChartCustomer(total, closing, pending, followup);
-    });
-    
-    db.collection('prospek').where('user_id', '==', current
+        document.getElementById('pro
