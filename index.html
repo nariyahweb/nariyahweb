@@ -85,6 +85,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     color: #888;
     user-select: none;
     transition: color 0.2s;
+    z-index: 10;
 }
 .toggle-password:hover {
     color: #7c3aed;
@@ -485,7 +486,7 @@ small { font-size: 11px; color: #888; }
     </div>
 </div>
 
-<!-- MODALS -->
+<!-- MODALS dengan autocomplete standar -->
 <div class="modal" id="modalCustomer">
     <div class="modal-box">
         <h3>Tambah Customer</h3>
@@ -557,26 +558,29 @@ window.togglePasswordVisibility = function() {
     const passwordInput = document.getElementById('password');
     const toggleIcon = document.querySelector('.toggle-password');
     
-    if(passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        toggleIcon.textContent = '🙈';
-        toggleIcon.style.opacity = '0.7';
-    } else {
-        passwordInput.type = 'password';
-        toggleIcon.textContent = '👁️';
-        toggleIcon.style.opacity = '1';
+    if(passwordInput && toggleIcon) {
+        if(passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.textContent = '🙈';
+            toggleIcon.style.opacity = '0.7';
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.textContent = '👁️';
+            toggleIcon.style.opacity = '1';
+        }
     }
 }
 
 // ========== HELPER FUNCTIONS ==========
 window.closeModal = function(modalId) {
-    document.getElementById(modalId).style.display = 'none';
+    const modal = document.getElementById(modalId);
+    if(modal) modal.style.display = 'none';
 }
 
 function showNotif(msg) {
     const notif = document.createElement('div');
     notif.textContent = msg;
-    notif.style.cssText = 'position:fixed; top:70px; right:20px; background:#7c3aed; color:white; padding:10px; border-radius:8px; z-index:9999;';
+    notif.style.cssText = 'position:fixed; top:70px; right:20px; background:#7c3aed; color:white; padding:10px 15px; border-radius:8px; z-index:9999; box-shadow:0 2px 10px rgba(0,0,0,0.2);';
     document.body.appendChild(notif);
     setTimeout(() => notif.remove(), 3000);
 }
@@ -613,70 +617,79 @@ const dropZone = document.getElementById('dropZone');
 const excelFile = document.getElementById('excelFile');
 
 // ========== LOGIN ==========
-loginBtn.onclick = function() {
-    const email = emailInput.value;
-    const password = passwordInput.value;
-    
-    if(!email || !password) {
-        alert('Email dan password harus diisi!');
-        return;
+if(loginBtn) {
+    loginBtn.onclick = function() {
+        const email = emailInput ? emailInput.value : '';
+        const password = passwordInput ? passwordInput.value : '';
+        
+        if(!email || !password) {
+            alert('Email dan password harus diisi!');
+            return;
+        }
+        
+        loginBtn.textContent = 'Loading...';
+        loginBtn.disabled = true;
+        
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => {
+                loginBtn.textContent = 'Masuk';
+                loginBtn.disabled = false;
+            })
+            .catch(err => {
+                loginBtn.textContent = 'Masuk';
+                loginBtn.disabled = false;
+                alert('Login gagal: ' + err.message);
+            });
     }
-    
-    loginBtn.textContent = 'Loading...';
-    loginBtn.disabled = true;
-    
-    auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-            loginBtn.textContent = 'Masuk';
-            loginBtn.disabled = false;
-        })
-        .catch(err => {
-            loginBtn.textContent = 'Masuk';
-            loginBtn.disabled = false;
-            alert('Login gagal: ' + err.message);
-        });
 }
 
-logoutBtn.onclick = function() {
-    auth.signOut();
+if(logoutBtn) {
+    logoutBtn.onclick = function() {
+        auth.signOut();
+    }
 }
 
 // ========== AUTH STATE ==========
 auth.onAuthStateChanged((user) => {
     if(user) {
         currentUser = user;
-        loginPage.style.display = 'none';
-        app.style.display = 'block';
+        if(loginPage) loginPage.style.display = 'none';
+        if(app) app.style.display = 'block';
         
         db.collection('users').doc(user.uid).get().then(doc => {
             let nama = 'CS Agent';
             if(doc.exists && doc.data().nama) nama = doc.data().nama;
-            document.getElementById('topCenterName').innerText = nama;
+            const topCenter = document.getElementById('topCenterName');
+            if(topCenter) topCenter.innerText = nama;
         });
         
         loadAllData();
     } else {
-        loginPage.style.display = 'flex';
-        app.style.display = 'none';
+        if(loginPage) loginPage.style.display = 'flex';
+        if(app) app.style.display = 'none';
         currentUser = null;
         
-        emailInput.value = '';
-        passwordInput.value = '';
+        if(emailInput) emailInput.value = '';
+        if(passwordInput) {
+            passwordInput.value = '';
+            passwordInput.type = 'password';
+        }
         const toggleIcon = document.querySelector('.toggle-password');
         if(toggleIcon) {
             toggleIcon.textContent = '👁️';
-            if(passwordInput) passwordInput.type = 'password';
         }
     }
 });
 
 // ========== SIDEBAR ==========
-toggleSidebarBtn.onclick = function() {
-    sidebar.classList.toggle('active');
+if(toggleSidebarBtn) {
+    toggleSidebarBtn.onclick = function() {
+        if(sidebar) sidebar.classList.toggle('active');
+    }
 }
 
 document.addEventListener('click', function(e) {
-    if(sidebar && !sidebar.contains(e.target) && e.target !== toggleSidebarBtn) {
+    if(sidebar && toggleSidebarBtn && !sidebar.contains(e.target) && e.target !== toggleSidebarBtn) {
         sidebar.classList.remove('active');
     }
 });
@@ -685,70 +698,112 @@ document.addEventListener('click', function(e) {
 document.querySelectorAll('.menu-item[data-section]').forEach(item => {
     item.onclick = function() {
         const section = this.dataset.section;
-        document.getElementById('dashboardSection').style.display = section === 'dashboard' ? 'block' : 'none';
-        document.getElementById('importSection').style.display = section === 'import' ? 'block' : 'none';
+        const dashboardSection = document.getElementById('dashboardSection');
+        const importSection = document.getElementById('importSection');
+        
+        if(dashboardSection) dashboardSection.style.display = section === 'dashboard' ? 'block' : 'none';
+        if(importSection) importSection.style.display = section === 'import' ? 'block' : 'none';
+        
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         this.classList.add('active');
     }
 });
 
 // ========== CUSTOMER ==========
-addCustomerBtn.onclick = () => document.getElementById('modalCustomer').style.display = 'flex';
-saveCustomerBtn.onclick = function() {
-    const nama = document.getElementById('nama').value;
-    const hp = document.getElementById('hp').value;
-    const tanggal = document.getElementById('tanggal').value;
-    
-    if(!nama || !hp) { alert('Lengkapi data!'); return; }
-    
-    db.collection('customers').add({
-        nama, hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
-        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
-    }).then(() => {
-        closeModal('modalCustomer');
-        document.getElementById('nama').value = '';
-        document.getElementById('hp').value = '+62';
-        document.getElementById('tanggal').value = '';
-        showNotif('Customer berhasil ditambahkan');
-    }).catch(err => alert('Error: ' + err.message));
+if(addCustomerBtn) {
+    addCustomerBtn.onclick = () => {
+        const modal = document.getElementById('modalCustomer');
+        if(modal) modal.style.display = 'flex';
+    }
+}
+
+if(saveCustomerBtn) {
+    saveCustomerBtn.onclick = function() {
+        const namaInput = document.getElementById('nama');
+        const hpInput = document.getElementById('hp');
+        const tanggalInput = document.getElementById('tanggal');
+        
+        const nama = namaInput ? namaInput.value : '';
+        const hp = hpInput ? hpInput.value : '';
+        const tanggal = tanggalInput ? tanggalInput.value : '';
+        
+        if(!nama || !hp) { alert('Lengkapi data!'); return; }
+        
+        db.collection('customers').add({
+            nama, hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
+            status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+        }).then(() => {
+            closeModal('modalCustomer');
+            if(namaInput) namaInput.value = '';
+            if(hpInput) hpInput.value = '+62';
+            if(tanggalInput) tanggalInput.value = '';
+            showNotif('Customer berhasil ditambahkan');
+        }).catch(err => alert('Error: ' + err.message));
+    }
 }
 
 // ========== PROSPEK ==========
-addProspekBtn.onclick = () => document.getElementById('modalProspek').style.display = 'flex';
-saveProspekBtn.onclick = function() {
-    const nama = document.getElementById('p_nama').value;
-    const hp = document.getElementById('p_hp').value;
-    
-    if(!nama || !hp) { alert('Lengkapi data!'); return; }
-    
-    db.collection('prospek').add({
-        nama, hp, status: 'Baru', user_id: currentUser.uid, created_at: new Date().toISOString()
-    }).then(() => {
-        closeModal('modalProspek');
-        document.getElementById('p_nama').value = '';
-        document.getElementById('p_hp').value = '+62';
-        showNotif('Prospek berhasil ditambahkan');
-    }).catch(err => alert('Error: ' + err.message));
+if(addProspekBtn) {
+    addProspekBtn.onclick = () => {
+        const modal = document.getElementById('modalProspek');
+        if(modal) modal.style.display = 'flex';
+    }
+}
+
+if(saveProspekBtn) {
+    saveProspekBtn.onclick = function() {
+        const pNamaInput = document.getElementById('p_nama');
+        const pHpInput = document.getElementById('p_hp');
+        
+        const nama = pNamaInput ? pNamaInput.value : '';
+        const hp = pHpInput ? pHpInput.value : '';
+        
+        if(!nama || !hp) { alert('Lengkapi data!'); return; }
+        
+        db.collection('prospek').add({
+            nama, hp, status: 'Baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+        }).then(() => {
+            closeModal('modalProspek');
+            if(pNamaInput) pNamaInput.value = '';
+            if(pHpInput) pHpInput.value = '+62';
+            showNotif('Prospek berhasil ditambahkan');
+        }).catch(err => alert('Error: ' + err.message));
+    }
 }
 
 // ========== PROFILE ==========
-profileBtn.onclick = () => {
-    document.getElementById('modalProfile').style.display = 'flex';
-    document.getElementById('profile_email').value = currentUser.email;
-    db.collection('users').doc(currentUser.uid).get().then(doc => {
-        if(doc.exists) document.getElementById('profile_nama').value = doc.data().nama || '';
-    });
+if(profileBtn) {
+    profileBtn.onclick = () => {
+        const modal = document.getElementById('modalProfile');
+        if(modal) modal.style.display = 'flex';
+        const profileEmail = document.getElementById('profile_email');
+        if(profileEmail && currentUser) profileEmail.value = currentUser.email;
+        
+        db.collection('users').doc(currentUser.uid).get().then(doc => {
+            const profileNama = document.getElementById('profile_nama');
+            if(profileNama) {
+                if(doc.exists) profileNama.value = doc.data().nama || '';
+                else profileNama.value = '';
+            }
+        });
+    }
 }
-saveProfileBtn.onclick = function() {
-    const nama = document.getElementById('profile_nama').value;
-    if(!nama) { alert('Nama wajib diisi'); return; }
-    
-    db.collection('users').doc(currentUser.uid).set({ nama, email: currentUser.email }, { merge: true })
-        .then(() => {
-            document.getElementById('topCenterName').innerText = nama;
-            closeModal('modalProfile');
-            showNotif('Profile tersimpan');
-        }).catch(err => alert('Error: ' + err.message));
+
+if(saveProfileBtn) {
+    saveProfileBtn.onclick = function() {
+        const profileNama = document.getElementById('profile_nama');
+        const nama = profileNama ? profileNama.value : '';
+        
+        if(!nama) { alert('Nama wajib diisi'); return; }
+        
+        db.collection('users').doc(currentUser.uid).set({ nama, email: currentUser.email }, { merge: true })
+            .then(() => {
+                const topCenter = document.getElementById('topCenterName');
+                if(topCenter) topCenter.innerText = nama;
+                closeModal('modalProfile');
+                showNotif('Profile tersimpan');
+            }).catch(err => alert('Error: ' + err.message));
+    }
 }
 
 // ========== WHATSAPP ==========
@@ -759,9 +814,16 @@ window.openWA = function(hp) {
 }
 
 // ========== IMPORT EXCEL ==========
-dropZone.onclick = () => excelFile.click();
-excelFile.onchange = function(e) {
-    if(e.target.files[0]) showNotif('File siap: ' + e.target.files[0].name);
+if(dropZone) {
+    dropZone.onclick = () => {
+        if(excelFile) excelFile.click();
+    }
+}
+
+if(excelFile) {
+    excelFile.onchange = function(e) {
+        if(e.target.files[0]) showNotif('File siap: ' + e.target.files[0].name);
+    }
 }
 
 document.querySelectorAll('.radio-box[data-import]').forEach(el => {
@@ -772,93 +834,56 @@ document.querySelectorAll('.radio-box[data-import]').forEach(el => {
     }
 });
 
-importBtn.onclick = async function() {
-    const file = excelFile.files[0];
-    if(!file) { alert('Pilih file dulu!'); return; }
-    
-    importBtn.textContent = 'Memproses...';
-    importBtn.disabled = true;
-    
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+if(importBtn) {
+    importBtn.onclick = async function() {
+        const file = excelFile ? excelFile.files[0] : null;
+        if(!file) { alert('Pilih file dulu!'); return; }
         
-        let success = 0, failed = 0;
-        for(const row of json) {
-            let nama = row.nama || row.Nama;
-            let hp = row.hp || row.HP;
-            if(!nama || !hp) { failed++; continue; }
+        importBtn.textContent = 'Memproses...';
+        importBtn.disabled = true;
+        
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
             
-            hp = hp.toString();
-            if(!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
-            
-            const collection = importType === 'prospek' ? 'prospek' : 'customers';
-            const data = { nama, hp, user_id: currentUser.uid, created_at: new Date().toISOString() };
-            if(collection === 'prospek') data.status = 'Baru';
-            else data.status = 'baru', data.tanggal = new Date().toISOString().split('T')[0];
-            
-            await db.collection(collection).add(data);
-            success++;
-        }
-        alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
-        excelFile.value = '';
-        importBtn.textContent = '🚀 Import Data';
-        importBtn.disabled = false;
-    };
-    reader.readAsArrayBuffer(file);
+            let success = 0, failed = 0;
+            for(const row of json) {
+                let nama = row.nama || row.Nama;
+                let hp = row.hp || row.HP;
+                if(!nama || !hp) { failed++; continue; }
+                
+                hp = hp.toString();
+                if(!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
+                
+                const collection = importType === 'prospek' ? 'prospek' : 'customers';
+                const data = { nama, hp, user_id: currentUser.uid, created_at: new Date().toISOString() };
+                if(collection === 'prospek') data.status = 'Baru';
+                else data.status = 'baru', data.tanggal = new Date().toISOString().split('T')[0];
+                
+                await db.collection(collection).add(data);
+                success++;
+            }
+            alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+            if(excelFile) excelFile.value = '';
+            importBtn.textContent = '🚀 Import Data';
+            importBtn.disabled = false;
+        };
+        reader.readAsArrayBuffer(file);
+    }
 }
 
 // ========== DATABASE ARCHIVES ==========
-openDBClosing.onclick = function() {
-    document.getElementById('modalDBClosing').style.display = 'flex';
-    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
-        let html = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${escapeHtml(d.nama)}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
-        });
-        document.getElementById('dbClosingList').innerHTML = html || '<p style="text-align:center; padding:20px;">Kosong</p>';
-    });
-}
-
-openDBTidak.onclick = function() {
-    document.getElementById('modalDBTidak').style.display = 'flex';
-    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then(snap => {
-        let html = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${escapeHtml(d.nama)}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
-        });
-        document.getElementById('dbTidakList').innerHTML = html || '<p style="text-align:center; padding:20px;">Kosong</p>';
-    });
-}
-
-// ========== LOAD DATA ==========
-function loadAllData() {
-    if(!currentUser) return;
-    
-    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
-        let total = 0, closing = 0, pending = 0, followup = 0;
-        const lists = { baru: [], followup: [], pending: [], closing: [] };
+if(openDBClosing) {
+    openDBClosing.onclick = function() {
+        const modal = document.getElementById('modalDBClosing');
+        if(modal) modal.style.display = 'flex';
         
-        snap.forEach(doc => {
-            const d = doc.data();
-            total++;
-            if(d.status === 'closing') closing++;
-            else if(d.status === 'pending') pending++;
-            else if(d.status === 'followup') followup++;
-            else lists.baru.push({id: doc.id, ...d});
-            
-            if(d.status === 'followup') lists.followup.push({id: doc.id, ...d});
-            if(d.status === 'pending') lists.pending.push({id: doc.id, ...d});
-            if(d.status === 'closing') lists.closing.push({id: doc.id, ...d});
-        });
-        
-        document.getElementById('countBaru').innerText = total - (closing + pending + followup);
-        document.getElementById('countFollowup').innerText = followup;
-        document.getElementById('countPending').innerText = pending;
-        document.getElementById('countClosing').innerText = closing;
-        document.getElementById('total').innerText = total;
-        document.getElementById('closingCount').innerText = closing;
-        document.getElementById('pro
+        db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
+            let html = '';
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${escapeHtml(d.nama)}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')" style="margin-top:5px; padding:5px 10px;">WA</button></div>`;
+            });
+            const dbClosingList = document.getElementById('dbClosingList');
+            if(dbClosingList) dbClosingList.innerHTML = html || '<p style="text-align:center; padding
