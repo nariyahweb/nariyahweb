@@ -901,7 +901,22 @@ function loadAllData() {
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
-                container.innerHTML = lists[status].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div></div>`).join('');
+                // Contoh dari loadAllData:
+container.innerHTML = lists[status].map(item => `
+    <div class="card-item" data-id="${item.id}">
+        <div class="card-name">${escapeHtml(item.nama)}</div>
+        <div class="card-phone">
+            <span>${item.hp}</span>
+            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 6.46 17.5 2 12.04 2Z" fill="#25D366"/>
+                    <path d="M12.04 3.5C16.77 3.5 20.7 7.42 20.7 12.15C20.7 16.88 16.77 20.8 12.04 20.8C10.5 20.8 9.02 20.42 7.7 19.7L7.3 19.45L4.5 20.2L5.28 17.53L5.02 17.11C4.24 15.75 3.82 14.22 3.82 12.65C3.82 7.92 7.75 4 12.04 4Z" fill="white"/>
+                    <path d="M16.5 14.5C16.5 14.5 15.5 15.2 15 15.5C14.5 15.8 13.8 15.8 13 15.5C11.5 15 9.5 13.5 9 13C8.5 12.5 8 11.5 8 11C8 10.5 8.5 10 9 9.5C9.2 9.3 9.5 9 9.5 8.5C9.5 8 9.2 7.5 8.8 7.2C8.5 7 8 6.8 7.5 6.8C7 6.8 6.5 7 6 7.5C5 8.5 5 10 5.5 11.5C6 13 7.5 15 9.5 16.5C11.5 18 13 18.5 14.5 18C15 17.8 15.5 17.5 16 17C16.5 16.5 16.5 16 16.5 15.5C16.5 15 16.5 14.5 16.5 14.5Z" fill="#25D366"/>
+                </svg>
+            </span>
+        </div>
+    </div>
+`).join('');
                 container.querySelectorAll('.card-item').forEach(card => {
                     card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
                 });
@@ -932,7 +947,22 @@ function loadAllData() {
         for (let col in lists) {
             const container = document.getElementById(col + 'List');
             if (container) {
-                container.innerHTML = lists[col].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div></div>`).join('');
+                // Contoh dari loadAllData:
+container.innerHTML = lists[status].map(item => `
+    <div class="card-item" data-id="${item.id}">
+        <div class="card-name">${escapeHtml(item.nama)}</div>
+        <div class="card-phone">
+            <span>${item.hp}</span>
+            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 6.46 17.5 2 12.04 2Z" fill="#25D366"/>
+                    <path d="M12.04 3.5C16.77 3.5 20.7 7.42 20.7 12.15C20.7 16.88 16.77 20.8 12.04 20.8C10.5 20.8 9.02 20.42 7.7 19.7L7.3 19.45L4.5 20.2L5.28 17.53L5.02 17.11C4.24 15.75 3.82 14.22 3.82 12.65C3.82 7.92 7.75 4 12.04 4Z" fill="white"/>
+                    <path d="M16.5 14.5C16.5 14.5 15.5 15.2 15 15.5C14.5 15.8 13.8 15.8 13 15.5C11.5 15 9.5 13.5 9 13C8.5 12.5 8 11.5 8 11C8 10.5 8.5 10 9 9.5C9.2 9.3 9.5 9 9.5 8.5C9.5 8 9.2 7.5 8.8 7.2C8.5 7 8 6.8 7.5 6.8C7 6.8 6.5 7 6 7.5C5 8.5 5 10 5.5 11.5C6 13 7.5 15 9.5 16.5C11.5 18 13 18.5 14.5 18C15 17.8 15.5 17.5 16 17C16.5 16.5 16.5 16 16.5 15.5C16.5 15 16.5 14.5 16.5 14.5Z" fill="#25D366"/>
+                </svg>
+            </span>
+        </div>
+    </div>
+`).join('');
                 container.querySelectorAll('.card-item').forEach(card => {
                     card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
                 });
