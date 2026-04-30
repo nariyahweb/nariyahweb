@@ -397,100 +397,166 @@ if (saveProspekBtn) {
 }
 
 // ========== DETAIL MODAL ==========
+function getStatusBadge(status) {
+    const statusMap = {
+        'baru': 'status-baru',
+        'followup': 'status-followup',
+        'pending': 'status-pending',
+        'closing': 'status-closing',
+        'Baru': 'status-baru',
+        'Sudah Dihubungi': 'status-dihubungi',
+        'Tertarik': 'status-tertarik',
+        'Tidak Tertarik': 'status-tidak'
+    };
+    const className = statusMap[status] || 'status-baru';
+    const displayName = status === 'followup' ? 'Follow Up' : 
+                        status === 'Sudah Dihubungi' ? 'Dihubungi' : 
+                        status === 'Tidak Tertarik' ? 'Tidak Tertarik' : status;
+    return `<span class="status-badge ${className}">${displayName}</span>`;
+}
+
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(doc => {
         const d = doc.data();
+        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        if (!content) return;
+        
+        if (!modal || !content) return;
+        
+        // Pilih icon berdasarkan status
+        const statusIcon = d.status === 'closing' ? '🎉' : 
+                          d.status === 'pending' ? '⏳' : 
+                          d.status === 'followup' ? '📞' : '🆕';
         
         content.innerHTML = `
-            <h3>${escapeHtml(d.nama)}</h3>
-            <p><strong>No HP:</strong> ${d.hp}</p>
-            <p><strong>Status:</strong> ${d.status}</p>
-            <p><strong>Tanggal:</strong> ${d.tanggal || '-'}</p>
-            <div class="modal-buttons" style="margin-top: 20px;">
-                <button onclick="openWA('${d.hp}')">WhatsApp</button>
-                <button onclick="updateStatus('${id}','followup')">Follow Up</button>
-                <button onclick="updateStatus('${id}','pending')">Pending</button>
-                <button onclick="confirmClosing('${id}')" style="background:#10b981;color:white;">Closing</button>
-                <button onclick="deleteCustomer('${id}')" style="background:#ef4444;color:white;">Hapus</button>
-                <button onclick="closeModal('detailModal')">Tutup</button>
+            <div class="detail-header">
+                <div class="detail-avatar">${statusIcon}</div>
+                <h3>${escapeHtml(d.nama)}</h3>
+                <div class="detail-status">${getStatusBadge(d.status)}</div>
+            </div>
+            <div class="detail-body">
+                <div class="detail-info">
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📱</div>
+                        <div class="detail-info-content">
+                            <label>Nomor WhatsApp</label>
+                            <div class="value">${escapeHtml(d.hp)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📅</div>
+                        <div class="detail-info-content">
+                            <label>Tanggal Input</label>
+                            <div class="value">${d.tanggal || '-'}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📌</div>
+                        <div class="detail-info-content">
+                            <label>Status Saat Ini</label>
+                            <div class="value">${d.status === 'followup' ? 'Follow Up' : d.status}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn-success" onclick="openWA('${d.hp}')">
+                        💬 WhatsApp
+                    </button>
+                    <button class="btn-primary" onclick="updateStatus('${id}','followup')">
+                        📞 Follow Up
+                    </button>
+                    <button class="btn-warning" onclick="updateStatus('${id}','pending')">
+                        ⏳ Pending
+                    </button>
+                    <button class="btn-success" onclick="confirmClosing('${id}')">
+                        🎉 Closing
+                    </button>
+                </div>
+            </div>
+            <div class="detail-footer">
+                <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
+                <button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button>
             </div>
         `;
-        document.getElementById('detailModal').style.display = 'flex';
+        modal.style.display = 'flex';
     });
 }
 
 function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
+        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        if (!content) return;
+        
+        if (!modal || !content) return;
+        
+        // Pilih icon berdasarkan status
+        let statusIcon = '🆕';
+        let statusClass = 'status-baru';
+        if (d.status === 'Sudah Dihubungi') { statusIcon = '📞'; statusClass = 'status-dihubungi'; }
+        else if (d.status === 'Tertarik') { statusIcon = '⭐'; statusClass = 'status-tertarik'; }
+        else if (d.status === 'Tidak Tertarik') { statusIcon = '❌'; statusClass = 'status-tidak'; }
         
         content.innerHTML = `
-            <h3>${escapeHtml(d.nama)}</h3>
-            <p><strong>No HP:</strong> ${d.hp}</p>
-            <p><strong>Status:</strong> ${d.status}</p>
-            <div class="modal-buttons" style="margin-top: 20px;">
-                <button onclick="openWA('${d.hp}')">WhatsApp</button>
-                <button onclick="updateProspekStatus('${id}','Sudah Dihubungi')">Dihubungi</button>
-                <button onclick="updateProspekStatus('${id}','Tertarik')">Tertarik</button>
-                <button onclick="confirmTidakTertarik('${id}')" style="background:#ef4444;color:white;">Tidak Tertarik</button>
-                ${d.status === 'Tertarik' ? `<button onclick="convertToCustomer('${id}')">Jadikan Customer</button>` : ''}
-                <button onclick="deleteProspek('${id}')" style="background:#ef4444;color:white;">Hapus</button>
-                <button onclick="closeModal('detailModal')">Tutup</button>
+            <div class="detail-header">
+                <div class="detail-avatar">${statusIcon}</div>
+                <h3>${escapeHtml(d.nama)}</h3>
+                <div class="detail-status ${statusClass}">${d.status}</div>
+            </div>
+            <div class="detail-body">
+                <div class="detail-info">
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📱</div>
+                        <div class="detail-info-content">
+                            <label>Nomor WhatsApp</label>
+                            <div class="value">${escapeHtml(d.hp)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📅</div>
+                        <div class="detail-info-content">
+                            <label>Tanggal Input</label>
+                            <div class="value">${new Date(d.created_at).toLocaleDateString('id-ID') || '-'}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📌</div>
+                        <div class="detail-info-content">
+                            <label>Status Saat Ini</label>
+                            <div class="value">${d.status}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn-success" onclick="openWA('${d.hp}')">
+                        💬 WhatsApp
+                    </button>
+                    <button class="btn-primary" onclick="updateProspekStatus('${id}','Sudah Dihubungi')">
+                        📞 Dihubungi
+                    </button>
+                    <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">
+                        ⭐ Tertarik
+                    </button>
+                    <button class="btn-danger" onclick="confirmTidakTertarik('${id}')">
+                        ❌ Tidak Tertarik
+                    </button>
+                </div>
+                ${d.status === 'Tertarik' ? `
+                <div style="margin-top: 16px;">
+                    <button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">
+                        🔄 Jadikan Customer
+                    </button>
+                </div>
+                ` : ''}
+            </div>
+            <div class="detail-footer">
+                <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
+                <button class="btn-danger" onclick="deleteProspek('${id}')">🗑️ Hapus</button>
             </div>
         `;
-        document.getElementById('detailModal').style.display = 'flex';
+        modal.style.display = 'flex';
     });
 }
-
-window.updateStatus = function(id, status) {
-    db.collection('customers').doc(id).update({ status: status });
-    closeModal('detailModal');
-    showNotif('Status berhasil diupdate');
-};
-
-window.updateProspekStatus = function(id, status) {
-    db.collection('prospek').doc(id).update({ status: status });
-    closeModal('detailModal');
-    showNotif('Status berhasil diupdate');
-};
-
-window.deleteCustomer = function(id) {
-    if (confirm('Yakin hapus customer ini?')) {
-        db.collection('customers').doc(id).delete();
-        closeModal('detailModal');
-        showNotif('Data dihapus');
-    }
-};
-
-window.deleteProspek = function(id) {
-    if (confirm('Yakin hapus prospek ini?')) {
-        db.collection('prospek').doc(id).delete();
-        closeModal('detailModal');
-        showNotif('Data dihapus');
-    }
-};
-
-window.convertToCustomer = function(id) {
-    if (confirm('Yakin jadikan customer?')) {
-        db.collection('prospek').doc(id).get().then(doc => {
-            const d = doc.data();
-            db.collection('customers').add({
-                nama: d.nama,
-                hp: d.hp,
-                tanggal: new Date().toISOString().split('T')[0],
-                status: 'baru',
-                user_id: currentUser.uid,
-                created_at: new Date().toISOString()
-            });
-            db.collection('prospek').doc(id).delete();
-            closeModal('detailModal');
-            showNotif('Berhasil jadi customer!');
-        });
-    }
-};
 
 // ========== CLOSING & TIDAK TERTARIK ==========
 async function saveToClosingDB(id, data) {
