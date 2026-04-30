@@ -60,6 +60,35 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
 }
 .login-box button:hover { background: #6d28d9; }
 
+/* Password wrapper untuk icon mata */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+    margin: 10px 0;
+}
+.password-wrapper input {
+    width: 100%;
+    padding: 12px;
+    padding-right: 45px;
+    margin: 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: #888;
+    user-select: none;
+}
+.toggle-password:hover {
+    color: #7c3aed;
+}
+
 /* App Container */
 #app { display: none; }
 .layout { display: flex; height: 100vh; }
@@ -341,8 +370,14 @@ small { font-size: 11px; color: #888; }
 <div id="loginPage">
     <div class="login-box">
         <h3>🚀 FLOUPYUD</h3>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Password">
+        <input type="email" id="email" placeholder="Email" autocomplete="email">
+        
+        <!-- Password with toggle eye -->
+        <div class="password-wrapper">
+            <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+            <span class="toggle-password" onclick="togglePassword()">👁️</span>
+        </div>
+        
         <button id="loginBtn">Masuk</button>
         <p style="text-align:center; margin-top:15px; font-size:12px; color:#888;">
             Gunakan akun Firebase yang sudah terdaftar
@@ -450,11 +485,52 @@ small { font-size: 11px; color: #888; }
 </div>
 
 <!-- MODALS -->
-<div class="modal" id="modalCustomer"><div class="modal-box"><h3>Tambah Customer</h3><input id="nama" placeholder="Nama"><input id="hp" placeholder="No HP" value="+62"><input id="tanggal" type="date"><button id="saveCustomerBtn">Simpan</button><button onclick="closeModal('modalCustomer')">Tutup</button></div></div>
-<div class="modal" id="modalProspek"><div class="modal-box"><h3>Tambah Prospek</h3><input id="p_nama" placeholder="Nama"><input id="p_hp" placeholder="No HP" value="+62"><button id="saveProspekBtn">Simpan</button><button onclick="closeModal('modalProspek')">Tutup</button></div></div>
-<div class="modal" id="modalProfile"><div class="modal-box"><h3>Profile</h3><input id="profile_nama" placeholder="Nama"><input id="profile_email" placeholder="Email" disabled><button id="saveProfileBtn">Simpan</button><button onclick="closeModal('modalProfile')">Tutup</button></div></div>
-<div class="modal" id="modalDBClosing"><div class="modal-box"><h3>Database Closing</h3><div id="dbClosingList"></div><button onclick="closeModal('modalDBClosing')">Tutup</button></div></div>
-<div class="modal" id="modalDBTidak"><div class="modal-box"><h3>Database Tidak Tertarik</h3><div id="dbTidakList"></div><button onclick="closeModal('modalDBTidak')">Tutup</button></div></div>
+<div class="modal" id="modalCustomer">
+    <div class="modal-box">
+        <h3>Tambah Customer</h3>
+        <input id="nama" placeholder="Nama" autocomplete="name">
+        <input id="hp" placeholder="No HP" value="+62" autocomplete="tel">
+        <input id="tanggal" type="date" autocomplete="bday">
+        <button id="saveCustomerBtn">Simpan</button>
+        <button onclick="closeModal('modalCustomer')">Tutup</button>
+    </div>
+</div>
+
+<div class="modal" id="modalProspek">
+    <div class="modal-box">
+        <h3>Tambah Prospek</h3>
+        <input id="p_nama" placeholder="Nama" autocomplete="name">
+        <input id="p_hp" placeholder="No HP" value="+62" autocomplete="tel">
+        <button id="saveProspekBtn">Simpan</button>
+        <button onclick="closeModal('modalProspek')">Tutup</button>
+    </div>
+</div>
+
+<div class="modal" id="modalProfile">
+    <div class="modal-box">
+        <h3>Profile</h3>
+        <input id="profile_nama" placeholder="Nama" autocomplete="name">
+        <input id="profile_email" placeholder="Email" disabled autocomplete="email">
+        <button id="saveProfileBtn">Simpan</button>
+        <button onclick="closeModal('modalProfile')">Tutup</button>
+    </div>
+</div>
+
+<div class="modal" id="modalDBClosing">
+    <div class="modal-box">
+        <h3>Database Closing</h3>
+        <div id="dbClosingList"></div>
+        <button onclick="closeModal('modalDBClosing')">Tutup</button>
+    </div>
+</div>
+
+<div class="modal" id="modalDBTidak">
+    <div class="modal-box">
+        <h3>Database Tidak Tertarik</h3>
+        <div id="dbTidakList"></div>
+        <button onclick="closeModal('modalDBTidak')">Tutup</button>
+    </div>
+</div>
 
 <div id="notifBox"></div>
 
@@ -474,6 +550,20 @@ let currentUser = null;
 let importType = "prospek";
 let chartCustomer = null;
 let chartProspek = null;
+
+// ========== TOGGLE PASSWORD ==========
+window.togglePassword = function() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.querySelector('.toggle-password');
+    
+    if(passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.textContent = '🙈';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.textContent = '👁️';
+    }
+}
 
 // ========== DOM ELEMENTS ==========
 const loginPage = document.getElementById('loginPage');
@@ -497,7 +587,7 @@ const dropZone = document.getElementById('dropZone');
 const excelFile = document.getElementById('excelFile');
 
 // ========== HELPER FUNCTIONS ==========
-function closeModal(modalId) {
+window.closeModal = function(modalId) {
     document.getElementById(modalId).style.display = 'none';
 }
 
@@ -519,9 +609,20 @@ loginBtn.onclick = function() {
         return;
     }
     
+    // Tampilkan loading
+    loginBtn.textContent = 'Loading...';
+    loginBtn.disabled = true;
+    
     auth.signInWithEmailAndPassword(email, password)
-        .then(() => {})
-        .catch(err => alert('Login gagal: ' + err.message));
+        .then(() => {
+            loginBtn.textContent = 'Masuk';
+            loginBtn.disabled = false;
+        })
+        .catch(err => {
+            loginBtn.textContent = 'Masuk';
+            loginBtn.disabled = false;
+            alert('Login gagal: ' + err.message);
+        });
 }
 
 logoutBtn.onclick = function() {
@@ -546,6 +647,12 @@ auth.onAuthStateChanged((user) => {
         loginPage.style.display = 'flex';
         app.style.display = 'none';
         currentUser = null;
+        
+        // Reset form login
+        emailInput.value = '';
+        passwordInput.value = '';
+        const toggleIcon = document.querySelector('.toggle-password');
+        if(toggleIcon) toggleIcon.textContent = '👁️';
     }
 });
 
@@ -655,6 +762,9 @@ importBtn.onclick = async function() {
     const file = excelFile.files[0];
     if(!file) { alert('Pilih file dulu!'); return; }
     
+    importBtn.textContent = 'Memproses...';
+    importBtn.disabled = true;
+    
     const reader = new FileReader();
     reader.onload = async function(e) {
         const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
@@ -679,6 +789,8 @@ importBtn.onclick = async function() {
         }
         alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
         excelFile.value = '';
+        importBtn.textContent = '🚀 Import Data';
+        importBtn.disabled = false;
     };
     reader.readAsArrayBuffer(file);
 }
@@ -743,7 +855,7 @@ function loadAllData() {
             if(container) {
                 container.innerHTML = items.map(item => `
                     <div class="mini-card" onclick="openWA('${item.hp}')">
-                        <b>${item.nama}</b>
+                        <b>${escapeHtml(item.nama)}</b>
                         <div class="mini-phone"><span>${item.hp}</span><span>🟢</span></div>
                     </div>
                 `).join('');
@@ -753,44 +865,4 @@ function loadAllData() {
         updateChartCustomer(total, closing, pending, followup);
     });
     
-    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
-        let baru = 0, hubungi = 0, tertarik = 0, tidak = 0;
-        const lists = { prospekBaru: [], prospekHubungi: [], prospekTertarik: [], prospekTidak: [] };
-        
-        snap.forEach(doc => {
-            const d = doc.data();
-            const status = d.status || 'Baru';
-            if(status === 'Baru') { baru++; lists.prospekBaru.push({id: doc.id, ...d}); }
-            else if(status === 'Sudah Dihubungi') { hubungi++; lists.prospekHubungi.push({id: doc.id, ...d}); }
-            else if(status === 'Tertarik') { tertarik++; lists.prospekTertarik.push({id: doc.id, ...d}); }
-            else { tidak++; lists.prospekTidak.push({id: doc.id, ...d}); }
-        });
-        
-        document.getElementById('countProspekBaru').innerText = baru;
-        document.getElementById('countHubungi').innerText = hubungi;
-        document.getElementById('countTertarik').innerText = tertarik;
-        document.getElementById('countTidak').innerText = tidak;
-        
-        for(const [colId, items] of Object.entries(lists)) {
-            const container = document.getElementById(colId);
-            if(container) {
-                container.innerHTML = items.map(item => `
-                    <div class="mini-card" onclick="openWA('${item.hp}')">
-                        <b>${item.nama}</b>
-                        <div class="mini-phone"><span>${item.hp}</span><span>🟢</span></div>
-                    </div>
-                `).join('');
-            }
-        }
-        
-        updateChartProspek(baru, hubungi, tertarik, tidak);
-    });
-}
-
-// ========== CHARTS ==========
-function updateChartCustomer(total, closing, pending, followup) {
-    const ctx = document.getElementById('chartCustomer').getContext('2d');
-    if(chartCustomer) chartCustomer.destroy();
-    chartCustomer = new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: [closing, pending, followup, total - (closing + pending + followup)], backgroundColor: ['#22c55e', '#f59e0b', '#3b82
+    db.collection('prospek').where('user_id', '==', current
