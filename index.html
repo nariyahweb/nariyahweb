@@ -29,7 +29,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     background: white; 
     padding: 30px; 
     border-radius: 16px; 
-    width: 320px;
+    width: 340px;
     box-shadow: 0 20px 40px rgba(0,0,0,0.1);
 }
 .login-box h3 {
@@ -39,8 +39,13 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     font-size: 24px;
 }
 .input-group {
-    margin: 15px 0;
-    position: relative;
+    margin-bottom: 15px;
+}
+.input-group label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
 }
 .input-group input {
     width: 100%;
@@ -48,12 +53,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 14px;
-}
-.input-group label {
-    display: block;
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 5px;
 }
 .password-wrapper {
     position: relative;
@@ -76,7 +75,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
 .toggle-password:hover {
     color: #7c3aed;
 }
-.login-box button[type="button"] {
+.login-btn {
     width: 100%;
     padding: 12px;
     background: #7c3aed;
@@ -88,12 +87,18 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     cursor: pointer;
     margin-top: 10px;
 }
-.login-box button[type="button"]:hover { background: #6d28d9; }
+.login-btn:hover { background: #6d28d9; }
 .error-msg {
     color: red;
     font-size: 12px;
     margin-top: 10px;
     text-align: center;
+}
+.info-text {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 12px;
+    color: #888;
 }
 
 /* App Container */
@@ -128,6 +133,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
 .menu-item:hover { background: #f3e8ff; }
 .menu-item.active { background: #7c3aed; color: white; }
 .menu-item.logout { background: #ef4444; color: white; margin-top: 20px; }
+.menu-item.logout:hover { background: #dc2626; }
 
 /* Topbar */
 .topbar {
@@ -200,6 +206,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     padding: 20px;
     border-radius: 12px;
 }
+.chart-box canvas { max-height: 250px; }
 
 /* Boards */
 .board-section {
@@ -379,26 +386,26 @@ small { font-size: 11px; color: #888; }
         
         <div class="input-group">
             <label>Email</label>
-            <input type="email" id="email" placeholder="Email@gmail.com" autocomplete="email">
+            <input type="email" id="loginEmail" placeholder="Email@gmail.com">
         </div>
         
         <div class="input-group">
             <label>Password</label>
             <div class="password-wrapper">
-                <input type="password" id="password" placeholder="Password" autocomplete="current-password">
-                <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+                <input type="password" id="loginPassword" placeholder="Password">
+                <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">👁️</button>
             </div>
         </div>
         
-        <button type="button" onclick="handleLogin()">Masuk</button>
+        <button class="login-btn" onclick="handleLogin()">Masuk</button>
         <div id="loginError" class="error-msg"></div>
-        <p style="text-align:center; margin-top:15px; font-size:12px; color:#888;">
+        <div class="info-text">
             Gunakan akun Firebase yang sudah terdaftar
-        </p>
+        </div>
     </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- MAIN APP (disederhanakan untuk sementara) -->
 <div id="app">
     <div class="layout">
         <div class="sidebar">
@@ -406,10 +413,6 @@ small { font-size: 11px; color: #888; }
             <div class="menu">
                 <div class="menu-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
                 <div class="menu-item" onclick="showSection('import')">📥 Import Data</div>
-                <hr>
-                <small>DATABASE</small>
-                <div class="menu-item" onclick="openDBClosing()">📁 DB Closing</div>
-                <div class="menu-item" onclick="openDBTidak()">📁 DB Tidak Tertarik</div>
                 <hr>
                 <div class="menu-item logout" onclick="logout()">🚪 Logout</div>
             </div>
@@ -423,10 +426,6 @@ small { font-size: 11px; color: #888; }
                 </div>
                 <div class="top-center" id="topCenterName">CS Agent</div>
                 <div class="top-right">
-                    <div class="notif" onclick="toggleNotif()">
-                        🔔
-                        <span id="notifCount">0</span>
-                    </div>
                     <div class="profile" onclick="openProfileModal()">
                         <img id="topProfileImg" src="https://i.pravatar.cc/40">
                     </div>
@@ -440,11 +439,6 @@ small { font-size: 11px; color: #888; }
                         <div class="stat-modern"><div><h4>Closing</h4><p id="closingCount">0</p></div><div class="icon-circle green">✔</div></div>
                         <div class="stat-modern"><div><h4>Rate Closing</h4><p id="rateText">0%</p></div><div class="icon-circle blue">📊</div></div>
                         <div class="stat-modern"><div><h4>Prospek Aktif</h4><p id="prospekAktif">0</p></div><div class="icon-circle orange">👤</div></div>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <div class="chart-box"><h3>Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
-                        <div class="chart-box"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
                     </div>
                     
                     <div class="board-section">
@@ -470,22 +464,21 @@ small { font-size: 11px; color: #888; }
                 
                 <div id="importSection" style="display:none;">
                     <div class="import-modern">
-                        <div><h2>Import Data Excel</h2></div>
+                        <h2>Import Data Excel</h2>
                         <div class="import-content">
                             <div class="step-card">
-                                <h4>1. Pilih File Excel</h4>
+                                <h4>Pilih File Excel</h4>
                                 <div class="drop-box" onclick="document.getElementById('excelFile').click()">
                                     <p>⬆️ Klik untuk pilih file</p>
                                     <input type="file" id="excelFile" hidden accept=".xlsx,.xls">
                                 </div>
                             </div>
                             <div class="step-card">
-                                <h4>2. Pilih Tujuan</h4>
-                                <div class="radio-box active" onclick="selectType('prospek')"><b>Import ke Prospek</b></div>
-                                <div class="radio-box" onclick="selectType('customer')"><b>Import ke Customer</b></div>
+                                <h4>Pilih Tujuan</h4>
+                                <div class="radio-box active" onclick="selectType('prospek')">Import ke Prospek</div>
+                                <div class="radio-box" onclick="selectType('customer')">Import ke Customer</div>
                             </div>
                             <div class="step-card">
-                                <h4>3. Import</h4>
                                 <button class="btn-import-modern" onclick="importExcel()">🚀 Import Data</button>
                             </div>
                         </div>
@@ -500,9 +493,9 @@ small { font-size: 11px; color: #888; }
 <div class="modal" id="modalCustomer">
     <div class="modal-box">
         <h3>Tambah Customer</h3>
-        <input id="nama" placeholder="Nama" autocomplete="name">
-        <input id="hp" placeholder="No HP" value="+62" autocomplete="tel">
-        <input id="tanggal" type="date" autocomplete="bday">
+        <input id="nama" placeholder="Nama">
+        <input id="hp" placeholder="No HP" value="+62">
+        <input id="tanggal" type="date">
         <button onclick="saveCustomer()">Simpan</button>
         <button onclick="closeModal('modalCustomer')">Tutup</button>
     </div>
@@ -511,8 +504,8 @@ small { font-size: 11px; color: #888; }
 <div class="modal" id="modalProspek">
     <div class="modal-box">
         <h3>Tambah Prospek</h3>
-        <input id="p_nama" placeholder="Nama" autocomplete="name">
-        <input id="p_hp" placeholder="No HP" value="+62" autocomplete="tel">
+        <input id="p_nama" placeholder="Nama">
+        <input id="p_hp" placeholder="No HP" value="+62">
         <button onclick="saveProspek()">Simpan</button>
         <button onclick="closeModal('modalProspek')">Tutup</button>
     </div>
@@ -521,26 +514,10 @@ small { font-size: 11px; color: #888; }
 <div class="modal" id="modalProfile">
     <div class="modal-box">
         <h3>Profile</h3>
-        <input id="profile_nama" placeholder="Nama" autocomplete="name">
-        <input id="profile_email" placeholder="Email" disabled autocomplete="email">
+        <input id="profile_nama" placeholder="Nama">
+        <input id="profile_email" placeholder="Email" disabled>
         <button onclick="saveProfile()">Simpan</button>
         <button onclick="closeModal('modalProfile')">Tutup</button>
-    </div>
-</div>
-
-<div class="modal" id="modalDBClosing">
-    <div class="modal-box">
-        <h3>Database Closing</h3>
-        <div id="dbClosingList"></div>
-        <button onclick="closeModal('modalDBClosing')">Tutup</button>
-    </div>
-</div>
-
-<div class="modal" id="modalDBTidak">
-    <div class="modal-box">
-        <h3>Database Tidak Tertarik</h3>
-        <div id="dbTidakList"></div>
-        <button onclick="closeModal('modalDBTidak')">Tutup</button>
     </div>
 </div>
 
@@ -560,12 +537,10 @@ const db = firebase.firestore();
 
 let currentUser = null;
 let importType = "prospek";
-let chartCustomer = null;
-let chartProspek = null;
 
 // ========== TOGGLE PASSWORD ==========
-function togglePassword() {
-    const passwordInput = document.getElementById('password');
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('loginPassword');
     const toggleBtn = event.currentTarget;
     
     if(passwordInput.type === 'password') {
@@ -579,9 +554,10 @@ function togglePassword() {
 
 // ========== LOGIN FUNCTION ==========
 function handleLogin() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
     const errorDiv = document.getElementById('loginError');
+    const loginBtn = event.currentTarget;
     
     if(!email || !password) {
         errorDiv.textContent = 'Email dan password harus diisi!';
@@ -589,13 +565,14 @@ function handleLogin() {
     }
     
     errorDiv.textContent = '';
-    const loginBtn = event.currentTarget;
     loginBtn.textContent = 'Loading...';
     loginBtn.disabled = true;
     
     auth.signInWithEmailAndPassword(email, password)
         .then((userCredential) => {
             console.log('Login sukses:', userCredential.user.uid);
+            loginBtn.textContent = 'Masuk';
+            loginBtn.disabled = false;
         })
         .catch((error) => {
             errorDiv.textContent = 'Login gagal: ' + error.message;
@@ -629,13 +606,6 @@ auth.onAuthStateChanged((user) => {
         loginPage.style.display = 'flex';
         app.style.display = 'none';
         currentUser = null;
-        
-        // Reset form
-        document.getElementById('email').value = '';
-        document.getElementById('password').value = '';
-        document.getElementById('password').type = 'password';
-        const toggleBtn = document.querySelector('.toggle-password');
-        if(toggleBtn) toggleBtn.textContent = '👁️';
     }
 });
 
@@ -780,40 +750,10 @@ function importExcel() {
     reader.readAsArrayBuffer(file);
 }
 
-// ========== DATABASE ARCHIVES ==========
-function openDBClosing() {
-    document.getElementById('modalDBClosing').style.display = 'flex';
-    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
-        let html = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.nama}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
-        });
-        document.getElementById('dbClosingList').innerHTML = html || 'Kosong';
-    });
-}
-
-function openDBTidak() {
-    document.getElementById('modalDBTidak').style.display = 'flex';
-    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then(snap => {
-        let html = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.nama}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
-        });
-        document.getElementById('dbTidakList').innerHTML = html || 'Kosong';
-    });
-}
-
-function toggleNotif() {
-    alert('Fitur notifikasi sedang dalam pengembangan');
-}
-
 // ========== LOAD DATA ==========
 function loadAllData() {
     if(!currentUser) return;
     
-    // Load customers
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
@@ -824,11 +764,11 @@ function loadAllData() {
             if(d.status === 'closing') closing++;
             else if(d.status === 'pending') pending++;
             else if(d.status === 'followup') followup++;
-            else lists.baru.push({id: doc.id, ...d});
+            else lists.baru.push({id: doc.id, nama: d.nama, hp: d.hp});
             
-            if(d.status === 'followup') lists.followup.push({id: doc.id, ...d});
-            if(d.status === 'pending') lists.pending.push({id: doc.id, ...d});
-            if(d.status === 'closing') lists.closing.push({id: doc.id, ...d});
+            if(d.status === 'followup') lists.followup.push({id: doc.id, nama: d.nama, hp: d.hp});
+            if(d.status === 'pending') lists.pending.push({id: doc.id, nama: d.nama, hp: d.hp});
+            if(d.status === 'closing') lists.closing.push({id: doc.id, nama: d.nama, hp: d.hp});
         });
         
         document.getElementById('countBaru').innerText = total - (closing + pending + followup);
@@ -845,17 +785,14 @@ function loadAllData() {
             if(container) {
                 container.innerHTML = lists[status].map(item => `
                     <div class="mini-card" onclick="openWA('${item.hp}')">
-                        <b>${escapeHtml(item.nama)}</b>
+                        <b>${item.nama}</b>
                         <div class="mini-phone"><span>${item.hp}</span><span>🟢</span></div>
                     </div>
                 `).join('');
             }
         }
-        
-        updateChartCustomer(total, closing, pending, followup);
     });
     
-    // Load prospek
     db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let baru = 0, hubungi = 0, tertarik = 0, tidak = 0;
         const lists = { prospekBaru: [], prospekHubungi: [], prospekTertarik: [], prospekTidak: [] };
@@ -863,12 +800,46 @@ function loadAllData() {
         snap.forEach(doc => {
             const d = doc.data();
             const status = d.status || 'Baru';
-            if(status === 'Baru') { baru++; lists.prospekBaru.push({id: doc.id, ...d}); }
-            else if(status === 'Sudah Dihubungi') { hubungi++; lists.prospekHubungi.push({id: doc.id, ...d}); }
-            else if(status === 'Tertarik') { tertarik++; lists.prospekTertarik.push({id: doc.id, ...d}); }
-            else { tidak++; lists.prospekTidak.push({id: doc.id, ...d}); }
+            if(status === 'Baru') { baru++; lists.prospekBaru.push({id: doc.id, nama: d.nama, hp: d.hp}); }
+            else if(status === 'Sudah Dihubungi') { hubungi++; lists.prospekHubungi.push({id: doc.id, nama: d.nama, hp: d.hp}); }
+            else if(status === 'Tertarik') { tertarik++; lists.prospekTertarik.push({id: doc.id, nama: d.nama, hp: d.hp}); }
+            else { tidak++; lists.prospekTidak.push({id: doc.id, nama: d.nama, hp: d.hp}); }
         });
         
         document.getElementById('countProspekBaru').innerText = baru;
         document.getElementById('countHubungi').innerText = hubungi;
-        document.getElementById('countTertarik').innerText
+        document.getElementById('countTertarik').innerText = tertarik;
+        document.getElementById('countTidak').innerText = tidak;
+        
+        for(const colId in lists) {
+            const container = document.getElementById(colId);
+            if(container) {
+                container.innerHTML = lists[colId].map(item => `
+                    <div class="mini-card" onclick="openWA('${item.hp}')">
+                        <b>${item.nama}</b>
+                        <div class="mini-phone"><span>${item.hp}</span><span>🟢</span></div>
+                    </div>
+                `).join('');
+            }
+        }
+    });
+}
+
+// Close modal when clicking outside
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if(e.target === modal) modal.style.display = 'none';
+    });
+});
+
+// Close sidebar when clicking outside
+document.addEventListener('click', function(e) {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = document.querySelector('.toggle-btn');
+    if(sidebar && toggleBtn && !sidebar.contains(e.target) && e.target !== toggleBtn) {
+        sidebar.classList.remove('active');
+    }
+});
+</script>
+</body>
+</html>
