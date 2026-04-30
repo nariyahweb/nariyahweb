@@ -13,6 +13,7 @@ let currentUser = null;
 let importType = "prospek";
 let chartCustomer = null;
 let chartProspek = null;
+let sidebarTimeout = null;
 
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
@@ -43,47 +44,120 @@ function escapeHtml(text) {
     });
 }
 
-// ========== TOGGLE PASSWORD ==========
-document.getElementById('togglePasswordBtn')?.addEventListener('click', function() {
-    const input = document.getElementById('loginPassword');
-    if (input.type === 'password') {
-        input.type = 'text';
-        this.textContent = '🙈';
-    } else {
-        input.type = 'password';
-        this.textContent = '👁️';
+// ========== SIDEBAR FUNCTIONS ==========
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+
+// Inisialisasi sidebar setelah DOM loaded
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const hoverZone = document.getElementById('hoverZone');
+    const toggleBtn = document.getElementById('toggleSidebarBtn');
+    
+    // Desktop: Hover to open sidebar
+    if (hoverZone) {
+        hoverZone.addEventListener('mouseenter', function() {
+            if (!isMobile() && sidebar) {
+                clearTimeout(sidebarTimeout);
+                sidebar.classList.add('active');
+            }
+        });
     }
+    
+    if (sidebar) {
+        sidebar.addEventListener('mouseleave', function() {
+            if (!isMobile()) {
+                sidebarTimeout = setTimeout(function() {
+                    sidebar.classList.remove('active');
+                }, 200);
+            }
+        });
+        
+        sidebar.addEventListener('mouseenter', function() {
+            clearTimeout(sidebarTimeout);
+        });
+    }
+    
+    // Mobile: Toggle button
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (sidebar) {
+                sidebar.classList.toggle('active');
+            }
+        });
+    }
+    
+    // Close sidebar when clicking outside (mobile only)
+    document.addEventListener('click', function(e) {
+        if (isMobile() && sidebar && toggleBtn) {
+            if (!sidebar.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        }
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (!isMobile() && sidebar) {
+            sidebar.classList.add('active');
+        } else if (isMobile() && sidebar) {
+            sidebar.classList.remove('active');
+        }
+    });
 });
+
+// ========== TOGGLE PASSWORD ==========
+const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+const loginPassword = document.getElementById('loginPassword');
+if (togglePasswordBtn && loginPassword) {
+    togglePasswordBtn.addEventListener('click', function() {
+        if (loginPassword.type === 'password') {
+            loginPassword.type = 'text';
+            this.textContent = '🙈';
+        } else {
+            loginPassword.type = 'password';
+            this.textContent = '👁️';
+        }
+    });
+}
 
 // ========== LOGIN ==========
-document.getElementById('loginBtn')?.addEventListener('click', function() {
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-    const errorDiv = document.getElementById('loginError');
-    
-    if (!email || !password) {
-        errorDiv.textContent = 'Email dan password harus diisi!';
-        return;
-    }
-    
-    errorDiv.textContent = '';
-    this.textContent = 'Loading...';
-    this.disabled = true;
-    
-    auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-            this.textContent = 'Masuk';
-            this.disabled = false;
-        })
-        .catch(err => {
-            errorDiv.textContent = 'Login gagal: ' + err.message;
-            this.textContent = 'Masuk';
-            this.disabled = false;
-        });
-});
+const loginBtn = document.getElementById('loginBtn');
+if (loginBtn) {
+    loginBtn.addEventListener('click', function() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const errorDiv = document.getElementById('loginError');
+        
+        if (!email || !password) {
+            errorDiv.textContent = 'Email dan password harus diisi!';
+            return;
+        }
+        
+        errorDiv.textContent = '';
+        this.textContent = 'Loading...';
+        this.disabled = true;
+        
+        auth.signInWithEmailAndPassword(email, password)
+            .then(() => {
+                this.textContent = 'Masuk';
+                this.disabled = false;
+            })
+            .catch(err => {
+                errorDiv.textContent = 'Login gagal: ' + err.message;
+                this.textContent = 'Masuk';
+                this.disabled = false;
+            });
+    });
+}
 
 // ========== LOGOUT ==========
-document.getElementById('logoutBtn')?.addEventListener('click', () => auth.signOut());
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => auth.signOut());
+}
 
 // ========== AUTH STATE ==========
 auth.onAuthStateChanged(user => {
@@ -102,13 +176,18 @@ auth.onAuthStateChanged(user => {
                 if (doc.data().nama) nama = doc.data().nama;
                 if (doc.data().foto) foto = doc.data().foto;
             }
-            document.getElementById('topUserName').innerText = nama;
-            document.getElementById('profileName').value = nama;
-            document.getElementById('topProfileImg').src = foto;
-            document.getElementById('previewFoto').src = foto;
+            const topUserName = document.getElementById('topUserName');
+            const profileName = document.getElementById('profileName');
+            const topProfileImg = document.getElementById('topProfileImg');
+            const previewFoto = document.getElementById('previewFoto');
+            if (topUserName) topUserName.innerText = nama;
+            if (profileName) profileName.value = nama;
+            if (topProfileImg) topProfileImg.src = foto;
+            if (previewFoto) previewFoto.src = foto;
         });
         
-        document.getElementById('profileEmail').value = user.email;
+        const profileEmail = document.getElementById('profileEmail');
+        if (profileEmail) profileEmail.value = user.email;
         loadAllData();
     } else {
         loginPage.style.display = 'flex';
@@ -127,56 +206,31 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
             if (el) el.style.display = 'none';
         });
         
-        if (page === 'dashboard') document.getElementById('dashboardPage').style.display = 'block';
-        else if (page === 'import') document.getElementById('importPage').style.display = 'block';
-        else if (page === 'dbClosing') {
-            document.getElementById('dbClosingPage').style.display = 'block';
+        if (page === 'dashboard') {
+            const dashboardPage = document.getElementById('dashboardPage');
+            if (dashboardPage) dashboardPage.style.display = 'block';
+        } else if (page === 'import') {
+            const importPage = document.getElementById('importPage');
+            if (importPage) importPage.style.display = 'block';
+        } else if (page === 'dbClosing') {
+            const dbClosingPage = document.getElementById('dbClosingPage');
+            if (dbClosingPage) dbClosingPage.style.display = 'block';
             loadDBClosing();
         } else if (page === 'dbTidak') {
-            document.getElementById('dbTidakPage').style.display = 'block';
+            const dbTidakPage = document.getElementById('dbTidakPage');
+            if (dbTidakPage) dbTidakPage.style.display = 'block';
             loadDBTidak();
         }
         
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         
+        // Close sidebar on mobile after click
         if (window.innerWidth <= 768) {
-            document.getElementById('sidebar')?.classList.remove('active');
+            const sidebarEl = document.getElementById('sidebar');
+            if (sidebarEl) sidebarEl.classList.remove('active');
         }
     });
-});
-
-// ========== SIDEBAR FUNCTIONS ==========
-function isMobile() { return window.innerWidth <= 768; }
-
-document.getElementById('hoverZone')?.addEventListener('mouseenter', function() {
-    if (!isMobile()) document.getElementById('sidebar')?.classList.add('active');
-});
-
-const sidebar = document.getElementById('sidebar');
-if (sidebar) {
-    sidebar.addEventListener('mouseleave', function() {
-        if (!isMobile()) {
-            setTimeout(() => sidebar.classList.remove('active'), 200);
-        }
-    });
-    sidebar.addEventListener('mouseenter', () => clearTimeout());
-}
-
-document.getElementById('toggleSidebarBtn')?.addEventListener('click', function(e) {
-    e.stopPropagation();
-    document.getElementById('sidebar')?.classList.toggle('active');
-});
-
-document.addEventListener('click', function(e) {
-    if (isMobile() && sidebar && !sidebar.contains(e.target) && e.target !== document.getElementById('toggleSidebarBtn')) {
-        sidebar.classList.remove('active');
-    }
-});
-
-window.addEventListener('resize', function() {
-    if (!isMobile() && sidebar) sidebar.classList.add('active');
-    else if (isMobile() && sidebar) sidebar.classList.remove('active');
 });
 
 // ========== CLOSE MODALS ==========
@@ -185,125 +239,162 @@ document.querySelectorAll('.closeModalBtn').forEach(btn => {
 });
 
 document.querySelectorAll('.modal').forEach(modal => {
-    modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
 });
 
 // ========== PROFILE ==========
-document.getElementById('profileImg')?.addEventListener('click', () => {
-    document.getElementById('profileModal').style.display = 'flex';
-});
+const profileImg = document.getElementById('profileImg');
+if (profileImg) {
+    profileImg.addEventListener('click', () => {
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal) profileModal.style.display = 'flex';
+    });
+}
 
-document.getElementById('previewFoto')?.addEventListener('click', () => {
-    document.getElementById('profileFoto').click();
-});
+const previewFotoEl = document.getElementById('previewFoto');
+if (previewFotoEl) {
+    previewFotoEl.addEventListener('click', () => {
+        const profileFotoInput = document.getElementById('profileFoto');
+        if (profileFotoInput) profileFotoInput.click();
+    });
+}
 
-document.getElementById('profileFoto')?.addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-        if (file.size > 1024 * 1024) {
-            showNotif('Ukuran foto maksimal 1MB', true);
+const profileFotoInput = document.getElementById('profileFoto');
+if (profileFotoInput) {
+    profileFotoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            if (file.size > 1024 * 1024) {
+                showNotif('Ukuran foto maksimal 1MB', true);
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('previewFoto');
+                const topImg = document.getElementById('topProfileImg');
+                if (preview) preview.src = e.target.result;
+                if (topImg) topImg.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+}
+
+const saveProfileBtn = document.getElementById('saveProfileBtn');
+if (saveProfileBtn) {
+    saveProfileBtn.addEventListener('click', async () => {
+        const nama = document.getElementById('profileName').value;
+        const hp = document.getElementById('profilePhone').value;
+        const foto = document.getElementById('previewFoto').src;
+        
+        if (!nama) {
+            showNotif('Nama wajib diisi', true);
             return;
         }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('previewFoto').src = e.target.result;
-            document.getElementById('topProfileImg').src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-document.getElementById('saveProfileBtn')?.addEventListener('click', async () => {
-    const nama = document.getElementById('profileName').value;
-    const hp = document.getElementById('profilePhone').value;
-    const foto = document.getElementById('previewFoto').src;
-    
-    if (!nama) {
-        showNotif('Nama wajib diisi', true);
-        return;
-    }
-    
-    try {
-        await db.collection('users').doc(currentUser.uid).set({
-            nama: nama,
-            hp: hp,
-            foto: foto,
-            email: currentUser.email
-        }, { merge: true });
         
-        document.getElementById('topUserName').innerText = nama;
-        closeModal('profileModal');
-        showNotif('Profile tersimpan');
-    } catch (e) {
-        showNotif('Gagal: ' + e.message, true);
-    }
-});
+        try {
+            await db.collection('users').doc(currentUser.uid).set({
+                nama: nama,
+                hp: hp,
+                foto: foto,
+                email: currentUser.email
+            }, { merge: true });
+            
+            const topUserName = document.getElementById('topUserName');
+            if (topUserName) topUserName.innerText = nama;
+            closeModal('profileModal');
+            showNotif('Profile tersimpan');
+        } catch (e) {
+            showNotif('Gagal: ' + e.message, true);
+        }
+    });
+}
 
 // ========== CUSTOMER CRUD ==========
-document.getElementById('addCustomerBtn')?.addEventListener('click', () => {
-    document.getElementById('customerModal').style.display = 'flex';
-});
+const addCustomerBtn = document.getElementById('addCustomerBtn');
+if (addCustomerBtn) {
+    addCustomerBtn.addEventListener('click', () => {
+        const customerModal = document.getElementById('customerModal');
+        if (customerModal) customerModal.style.display = 'flex';
+    });
+}
 
-document.getElementById('saveCustomerBtn')?.addEventListener('click', () => {
-    const nama = document.getElementById('customerName').value;
-    const hp = document.getElementById('customerPhone').value;
-    const tanggal = document.getElementById('customerDate').value;
-    
-    if (!nama || !hp) {
-        showNotif('Lengkapi data!', true);
-        return;
-    }
-    
-    db.collection('customers').add({
-        nama: nama,
-        hp: hp,
-        tanggal: tanggal || new Date().toISOString().split('T')[0],
-        status: 'baru',
-        user_id: currentUser.uid,
-        created_at: new Date().toISOString()
-    }).then(() => {
-        closeModal('customerModal');
-        document.getElementById('customerName').value = '';
-        document.getElementById('customerPhone').value = '+62';
-        document.getElementById('customerDate').value = '';
-        showNotif('Customer berhasil ditambahkan');
-    }).catch(e => showNotif('Error: ' + e.message, true));
-});
+const saveCustomerBtn = document.getElementById('saveCustomerBtn');
+if (saveCustomerBtn) {
+    saveCustomerBtn.addEventListener('click', () => {
+        const nama = document.getElementById('customerName').value;
+        const hp = document.getElementById('customerPhone').value;
+        const tanggal = document.getElementById('customerDate').value;
+        
+        if (!nama || !hp) {
+            showNotif('Lengkapi data!', true);
+            return;
+        }
+        
+        db.collection('customers').add({
+            nama: nama,
+            hp: hp,
+            tanggal: tanggal || new Date().toISOString().split('T')[0],
+            status: 'baru',
+            user_id: currentUser.uid,
+            created_at: new Date().toISOString()
+        }).then(() => {
+            closeModal('customerModal');
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '+62';
+            document.getElementById('customerDate').value = '';
+            showNotif('Customer berhasil ditambahkan');
+        }).catch(e => showNotif('Error: ' + e.message, true));
+    });
+}
 
 // ========== PROSPEK CRUD ==========
-document.getElementById('addProspekBtn')?.addEventListener('click', () => {
-    document.getElementById('prospekModal').style.display = 'flex';
-});
+const addProspekBtn = document.getElementById('addProspekBtn');
+if (addProspekBtn) {
+    addProspekBtn.addEventListener('click', () => {
+        const prospekModal = document.getElementById('prospekModal');
+        if (prospekModal) prospekModal.style.display = 'flex';
+    });
+}
 
-document.getElementById('saveProspekBtn')?.addEventListener('click', () => {
-    const nama = document.getElementById('prospekName').value;
-    const hp = document.getElementById('prospekPhone').value;
-    const status = document.getElementById('prospekStatusSelect').value;
-    
-    if (!nama || !hp) {
-        showNotif('Lengkapi data!', true);
-        return;
-    }
-    
-    db.collection('prospek').add({
-        nama: nama,
-        hp: hp,
-        status: status,
-        user_id: currentUser.uid,
-        created_at: new Date().toISOString()
-    }).then(() => {
-        closeModal('prospekModal');
-        document.getElementById('prospekName').value = '';
-        document.getElementById('prospekPhone').value = '+62';
-        showNotif('Prospek berhasil ditambahkan');
-    }).catch(e => showNotif('Error: ' + e.message, true));
-});
+const saveProspekBtn = document.getElementById('saveProspekBtn');
+if (saveProspekBtn) {
+    saveProspekBtn.addEventListener('click', () => {
+        const nama = document.getElementById('prospekName').value;
+        const hp = document.getElementById('prospekPhone').value;
+        const status = document.getElementById('prospekStatusSelect').value;
+        
+        if (!nama || !hp) {
+            showNotif('Lengkapi data!', true);
+            return;
+        }
+        
+        db.collection('prospek').add({
+            nama: nama,
+            hp: hp,
+            status: status,
+            user_id: currentUser.uid,
+            created_at: new Date().toISOString()
+        }).then(() => {
+            closeModal('prospekModal');
+            document.getElementById('prospekName').value = '';
+            document.getElementById('prospekPhone').value = '+62';
+            showNotif('Prospek berhasil ditambahkan');
+        }).catch(e => showNotif('Error: ' + e.message, true));
+    });
+}
 
 // ========== DETAIL MODAL ==========
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(doc => {
         const d = doc.data();
+        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
+        
+        if (!modal || !content) return;
+        
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
             <p><strong>No HP:</strong> ${d.hp}</p>
@@ -318,14 +409,18 @@ function openDetailCustomer(id) {
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
         `;
-        document.getElementById('detailModal').style.display = 'flex';
+        modal.style.display = 'flex';
     });
 }
 
 function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
+        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
+        
+        if (!modal || !content) return;
+        
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
             <p><strong>No HP:</strong> ${d.hp}</p>
@@ -340,7 +435,7 @@ function openDetailProspek(id) {
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
         `;
-        document.getElementById('detailModal').style.display = 'flex';
+        modal.style.display = 'flex';
     });
 }
 
@@ -450,15 +545,22 @@ window.confirmTidakTertarik = async function(id) {
 };
 
 // ========== IMPORT EXCEL ==========
-document.getElementById('dropZone')?.addEventListener('click', () => {
-    document.getElementById('excelFile').click();
-});
+const dropZone = document.getElementById('dropZone');
+const excelFileInput = document.getElementById('excelFile');
+if (dropZone) {
+    dropZone.addEventListener('click', () => {
+        if (excelFileInput) excelFileInput.click();
+    });
+}
 
-document.getElementById('excelFile')?.addEventListener('change', function(e) {
-    if (e.target.files[0]) {
-        document.getElementById('fileInfo').innerHTML = '📄 ' + e.target.files[0].name;
-    }
-});
+if (excelFileInput) {
+    excelFileInput.addEventListener('change', function(e) {
+        if (e.target.files[0]) {
+            const fileInfo = document.getElementById('fileInfo');
+            if (fileInfo) fileInfo.innerHTML = '📄 ' + e.target.files[0].name;
+        }
+    });
+}
 
 document.querySelectorAll('.radio-option').forEach(opt => {
     opt.addEventListener('click', function() {
@@ -468,54 +570,57 @@ document.querySelectorAll('.radio-option').forEach(opt => {
     });
 });
 
-document.getElementById('importBtn')?.addEventListener('click', async () => {
-    const file = document.getElementById('excelFile').files[0];
-    if (!file) {
-        showNotif('Pilih file dulu!', true);
-        return;
-    }
-    
-    const btn = document.getElementById('importBtn');
-    btn.textContent = 'Memproses...';
-    btn.disabled = true;
-    
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-        
-        let success = 0, failed = 0;
-        for (let row of json) {
-            let nama = row.nama || row.Nama;
-            let hp = row.hp || row.HP;
-            if (!nama || !hp) { failed++; continue; }
-            
-            hp = hp.toString();
-            if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
-            
-            if (importType === 'prospek') {
-                await db.collection('prospek').add({
-                    nama: nama, hp: hp, status: 'Baru',
-                    user_id: currentUser.uid, created_at: new Date().toISOString()
-                });
-            } else {
-                await db.collection('customers').add({
-                    nama: nama, hp: hp,
-                    tanggal: new Date().toISOString().split('T')[0],
-                    status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
-                });
-            }
-            success++;
+const importBtn = document.getElementById('importBtn');
+if (importBtn) {
+    importBtn.addEventListener('click', async () => {
+        const file = excelFileInput ? excelFileInput.files[0] : null;
+        if (!file) {
+            showNotif('Pilih file dulu!', true);
+            return;
         }
         
-        alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
-        document.getElementById('excelFile').value = '';
-        document.getElementById('fileInfo').innerHTML = '';
-        btn.textContent = '🚀 Import Data Sekarang';
-        btn.disabled = false;
-    };
-    reader.readAsArrayBuffer(file);
-});
+        importBtn.textContent = 'Memproses...';
+        importBtn.disabled = true;
+        
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            
+            let success = 0, failed = 0;
+            for (let row of json) {
+                let nama = row.nama || row.Nama;
+                let hp = row.hp || row.HP;
+                if (!nama || !hp) { failed++; continue; }
+                
+                hp = hp.toString();
+                if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
+                
+                if (importType === 'prospek') {
+                    await db.collection('prospek').add({
+                        nama: nama, hp: hp, status: 'Baru',
+                        user_id: currentUser.uid, created_at: new Date().toISOString()
+                    });
+                } else {
+                    await db.collection('customers').add({
+                        nama: nama, hp: hp,
+                        tanggal: new Date().toISOString().split('T')[0],
+                        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+                    });
+                }
+                success++;
+            }
+            
+            alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+            if (excelFileInput) excelFileInput.value = '';
+            const fileInfo = document.getElementById('fileInfo');
+            if (fileInfo) fileInfo.innerHTML = '';
+            importBtn.textContent = '🚀 Import Data Sekarang';
+            importBtn.disabled = false;
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
 
 // ========== DATABASE ARCHIVES ==========
 function loadDBClosing() {
@@ -526,7 +631,8 @@ function loadDBClosing() {
             const d = doc.data();
             html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
         });
-        document.getElementById('dbClosingList').innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
+        const dbClosingList = document.getElementById('dbClosingList');
+        if (dbClosingList) dbClosingList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
     });
 }
 
@@ -538,7 +644,8 @@ function loadDBTidak() {
             const d = doc.data();
             html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
         });
-        document.getElementById('dbTidakList').innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
+        const dbTidakList = document.getElementById('dbTidakList');
+        if (dbTidakList) dbTidakList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
     });
 }
 
@@ -547,9 +654,10 @@ function updateChartCustomer(total, closing, pending, followup) {
     const ctx = document.getElementById('chartCustomer');
     if (!ctx) return;
     if (chartCustomer) chartCustomer.destroy();
+    const dataArr = [closing, pending, followup, total - (closing + pending + followup)];
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: [closing, pending, followup, total - (closing + pending + followup)], backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'], borderWidth: 0, hoverOffset: 12 }] },
+        data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: dataArr, backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'], borderWidth: 0, hoverOffset: 12 }] },
         options: { responsive: true, maintainAspectRatio: true, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle' } } } }
     });
 }
@@ -687,6 +795,9 @@ function loadAllData() {
 }
 
 // Notifikasi
-document.getElementById('notifBtn')?.addEventListener('click', () => {
-    showNotif('Fitur notifikasi dalam pengembangan');
-});
+const notifBtn = document.getElementById('notifBtn');
+if (notifBtn) {
+    notifBtn.addEventListener('click', () => {
+        showNotif('Fitur notifikasi dalam pengembangan');
+    });
+}
