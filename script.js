@@ -630,27 +630,56 @@ if (importBtn) {
 // ========== DATABASE ARCHIVES ==========
 function loadDBClosing() {
     if (!currentUser) return;
-    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
+    
+    // Gunakan onSnapshot untuk realtime update
+    db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let html = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
-        });
+        if (snap.empty) {
+            html = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Belum ada data closing</p>';
+        } else {
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `
+                    <div class="db-item">
+                        <div class="db-item-info">
+                            <h4>${escapeHtml(d.nama)}</h4>
+                            <p>${d.hp}</p>
+                            <small style="font-size: 11px; color: #9ca3af;">Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small>
+                        </div>
+                        <button onclick="openWA('${d.hp}')" style="background:#25D366;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">💬 WA</button>
+                    </div>
+                `;
+            });
+        }
         const dbClosingList = document.getElementById('dbClosingList');
-        if (dbClosingList) dbClosingList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada data</p>';
+        if (dbClosingList) dbClosingList.innerHTML = html;
     });
 }
 
 function loadDBTidak() {
     if (!currentUser) return;
-    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then(snap => {
+    
+    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let html = '';
-        snap.forEach(doc => {
-            const d = doc.data();
-            html += `<div class="db-item"><div class="db-item-info"><h4>${escapeHtml(d.nama)}</h4><p>${d.hp}</p><small>Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small></div><button onclick="openWA('${d.hp}')">WhatsApp</button></div>`;
-        });
+        if (snap.empty) {
+            html = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Belum ada data tidak tertarik</p>';
+        } else {
+            snap.forEach(doc => {
+                const d = doc.data();
+                html += `
+                    <div class="db-item">
+                        <div class="db-item-info">
+                            <h4>${escapeHtml(d.nama)}</h4>
+                            <p>${d.hp}</p>
+                            <small style="font-size: 11px; color: #9ca3af;">Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small>
+                        </div>
+                        <button onclick="openWA('${d.hp}')" style="background:#25D366;color:white;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;">💬 WA</button>
+                    </div>
+                `;
+            });
+        }
         const dbTidakList = document.getElementById('dbTidakList');
-        if (dbTidakList) dbTidakList.innerHTML = html || '<p style="text-align:center;padding:40px;">Tidak ada数据</p>';
+        if (dbTidakList) dbTidakList.innerHTML = html;
     });
 }
 
