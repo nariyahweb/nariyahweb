@@ -49,10 +49,6 @@ body {
     font-size: 28px;
 }
 
-.login-container h2 span {
-    font-size: 32px;
-}
-
 .input-group {
     margin-bottom: 20px;
 }
@@ -157,10 +153,6 @@ body {
 .sidebar-header h2 {
     color: #7c3aed;
     font-size: 24px;
-}
-
-.sidebar-header h2 span {
-    font-size: 28px;
 }
 
 .sidebar-menu {
@@ -361,12 +353,6 @@ body {
 .board-header h3 {
     font-size: 18px;
     color: #333;
-}
-
-.board-header h3 span {
-    font-size: 14px;
-    color: #888;
-    font-weight: normal;
 }
 
 .add-btn {
@@ -661,14 +647,6 @@ body {
                     <span class="icon">📊</span>
                     <span>Dashboard</span>
                 </div>
-                <div class="menu-item" onclick="showPage('followup')">
-                    <span class="icon">👥</span>
-                    <span>Followup Agen</span>
-                </div>
-                <div class="menu-item" onclick="showPage('prospek')">
-                    <span class="icon">🎯</span>
-                    <span>Prospek Agen</span>
-                </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
                 <div class="menu-item" onclick="openDBClosing()">
@@ -909,7 +887,8 @@ body {
     <div class="modal-content">
         <h3>Profile CS Agent</h3>
         <div style="text-align: center; margin-bottom: 15px;">
-            <img id="previewFoto" src="https://i.pravatar.cc/80" style="width: 80px; height: 80px; border-radius: 50%; cursor: pointer;">
+            <img id="previewFoto" src="https://i.pravatar.cc/80" style="width: 80px; height: 80px; border-radius: 50%; cursor: pointer;" onclick="document.getElementById('profileFoto').click()">
+            <input type="file" id="profileFoto" hidden accept="image/*">
         </div>
         <input type="text" id="profileName" placeholder="Nama">
         <input type="email" id="profileEmail" placeholder="Email" disabled>
@@ -1040,7 +1019,7 @@ function showPage(page) {
     if(page === 'dashboard') {
         document.querySelector('.menu-item:first-child').classList.add('active');
     } else if(page === 'import') {
-        document.querySelectorAll('.menu-item')[6].classList.add('active');
+        document.querySelectorAll('.menu-item')[5].classList.add('active');
     }
 }
 
@@ -1070,6 +1049,13 @@ function selectImportType(type) {
     event.currentTarget.classList.add('active');
 }
 
+// ========== WHATSAPP ==========
+function openWA(hp) {
+    if(!hp) return;
+    let nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+    window.open('https://wa.me/' + nomor, '_blank');
+}
+
 // ========== CRUD FUNCTIONS ==========
 function saveCustomer() {
     const nama = document.getElementById('customerName').value;
@@ -1087,7 +1073,7 @@ function saveCustomer() {
         document.getElementById('customerPhone').value = '+62';
         document.getElementById('customerDate').value = '';
         alert('Customer berhasil ditambahkan!');
-    });
+    }).catch(err => alert('Error: ' + err.message));
 }
 
 function saveProspek() {
@@ -1104,7 +1090,7 @@ function saveProspek() {
         document.getElementById('prospekName').value = '';
         document.getElementById('prospekPhone').value = '+62';
         alert('Prospek berhasil ditambahkan!');
-    });
+    }).catch(err => alert('Error: ' + err.message));
 }
 
 function saveProfile() {
@@ -1116,17 +1102,14 @@ function saveProfile() {
             document.getElementById('topUserName').innerText = nama;
             closeModal('profileModal');
             alert('Profile tersimpan!');
-        });
+        }).catch(err => alert('Error: ' + err.message));
 }
 
-function updateStatus(id, status) {
-    db.collection('customers').doc(id).update({ status: status });
-}
-
-function updateProspekStatus(id, status) {
-    db.collection('prospek').doc(id).update({ status: status });
-}
-
-function deleteItem(collection, id) {
-    if(confirm('Hapus data ini?')) {
-        db
+// ========== DATABASE ARCHIVES ==========
+function openDBClosing() {
+    document.getElementById('dbClosingModal').style.display = 'flex';
+    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
+        let html = '';
+        snap.forEach(doc => {
+            const d = doc.data();
+            html
