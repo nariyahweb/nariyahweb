@@ -49,20 +49,15 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
-// Inisialisasi sidebar setelah DOM loaded
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const hoverZone = document.getElementById('hoverZone');
     const toggleBtn = document.getElementById('toggleSidebarBtn');
     
-    console.log('Sidebar init - sidebar exists:', !!sidebar);
-    console.log('Is Mobile:', isMobile());
-    
-    // Desktop: Hover to open sidebar
     if (hoverZone) {
         hoverZone.addEventListener('mouseenter', function() {
             if (!isMobile() && sidebar) {
-                console.log('Hover zone enter - opening sidebar');
+                clearTimeout(sidebarTimeout);
                 sidebar.classList.add('active');
             }
         });
@@ -71,24 +66,26 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sidebar) {
         sidebar.addEventListener('mouseleave', function() {
             if (!isMobile()) {
-                console.log('Sidebar leave - closing sidebar');
-                sidebar.classList.remove('active');
+                sidebarTimeout = setTimeout(function() {
+                    sidebar.classList.remove('active');
+                }, 200);
             }
+        });
+        
+        sidebar.addEventListener('mouseenter', function() {
+            clearTimeout(sidebarTimeout);
         });
     }
     
-    // Mobile: Toggle button
     if (toggleBtn) {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (sidebar) {
-                console.log('Toggle button clicked - toggling sidebar');
                 sidebar.classList.toggle('active');
             }
         });
     }
     
-    // Close sidebar when clicking outside (mobile only)
     document.addEventListener('click', function(e) {
         if (isMobile() && sidebar && toggleBtn) {
             if (!sidebar.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
@@ -97,10 +94,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Handle window resize
     window.addEventListener('resize', function() {
         if (!isMobile() && sidebar) {
-            // Di desktop, pastikan sidebar tertutup saat resize
             sidebar.classList.remove('active');
         } else if (isMobile() && sidebar) {
             sidebar.classList.remove('active');
@@ -179,7 +174,6 @@ auth.onAuthStateChanged(user => {
                 if (data.foto) foto = data.foto;
             }
             
-            // Update header
             const topUserName = document.getElementById('topUserName');
             const profileName = document.getElementById('profileName');
             const topProfileImg = document.getElementById('profileImg');
@@ -231,7 +225,6 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         
-        // Close sidebar on mobile after click
         if (window.innerWidth <= 768) {
             const sidebarEl = document.getElementById('sidebar');
             if (sidebarEl) sidebarEl.classList.remove('active');
@@ -251,14 +244,12 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 
 // ========== PROFILE ==========
-// Klik foto profile di header
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
     profileImg.addEventListener('click', () => {
         const profileModal = document.getElementById('profileModal');
         if (profileModal) profileModal.style.display = 'flex';
         
-        // Load data user saat ini
         db.collection('users').doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
@@ -267,15 +258,12 @@ if (profileImg) {
                 if (data.foto) {
                     document.getElementById('previewFoto').src = data.foto;
                     document.getElementById('profileImg').src = data.foto;
-                } else {
-                    document.getElementById('previewFoto').src = 'https://i.pravatar.cc/80';
                 }
             }
         });
     });
 }
 
-// Klik foto di modal untuk ganti foto
 const previewFoto = document.getElementById('previewFoto');
 if (previewFoto) {
     previewFoto.addEventListener('click', () => {
@@ -284,7 +272,6 @@ if (previewFoto) {
     });
 }
 
-// Event ketika memilih file foto
 const profileFotoInput = document.getElementById('profileFoto');
 if (profileFotoInput) {
     profileFotoInput.addEventListener('change', function(e) {
@@ -296,7 +283,6 @@ if (profileFotoInput) {
             }
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Update preview di modal
                 const preview = document.getElementById('previewFoto');
                 if (preview) preview.src = e.target.result;
             };
@@ -305,7 +291,6 @@ if (profileFotoInput) {
     });
 }
 
-// Tombol simpan profile
 const saveProfileBtn = document.getElementById('saveProfileBtn');
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', async () => {
@@ -319,7 +304,6 @@ if (saveProfileBtn) {
         }
         
         try {
-            // Simpan ke database
             await db.collection('users').doc(currentUser.uid).set({
                 nama: nama,
                 hp: hp,
@@ -328,11 +312,9 @@ if (saveProfileBtn) {
                 updated_at: new Date().toISOString()
             }, { merge: true });
             
-            // Update nama di header
             const topUserName = document.getElementById('topUserName');
             if (topUserName) topUserName.innerText = nama;
             
-            // Update foto di header
             const topProfileImg = document.getElementById('profileImg');
             if (topProfileImg) topProfileImg.src = foto;
             
@@ -350,8 +332,7 @@ if (saveProfileBtn) {
 const addCustomerBtn = document.getElementById('addCustomerBtn');
 if (addCustomerBtn) {
     addCustomerBtn.addEventListener('click', () => {
-        const customerModal = document.getElementById('customerModal');
-        if (customerModal) customerModal.style.display = 'flex';
+        document.getElementById('customerModal').style.display = 'flex';
     });
 }
 
@@ -388,8 +369,7 @@ if (saveCustomerBtn) {
 const addProspekBtn = document.getElementById('addProspekBtn');
 if (addProspekBtn) {
     addProspekBtn.addEventListener('click', () => {
-        const prospekModal = document.getElementById('prospekModal');
-        if (prospekModal) prospekModal.style.display = 'flex';
+        document.getElementById('prospekModal').style.display = 'flex';
     });
 }
 
@@ -424,11 +404,7 @@ if (saveProspekBtn) {
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(doc => {
         const d = doc.data();
-        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        
-        if (!modal || !content) return;
-        
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
             <p><strong>No HP:</strong> ${d.hp}</p>
@@ -443,18 +419,14 @@ function openDetailCustomer(id) {
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
         `;
-        modal.style.display = 'flex';
+        document.getElementById('detailModal').style.display = 'flex';
     });
 }
 
 function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
-        const modal = document.getElementById('detailModal');
         const content = document.getElementById('detailContent');
-        
-        if (!modal || !content) return;
-        
         content.innerHTML = `
             <h3>${escapeHtml(d.nama)}</h3>
             <p><strong>No HP:</strong> ${d.hp}</p>
@@ -469,7 +441,7 @@ function openDetailProspek(id) {
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
         `;
-        modal.style.display = 'flex';
+        document.getElementById('detailModal').style.display = 'flex';
     });
 }
 
@@ -647,7 +619,6 @@ if (importBtn) {
             
             alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
             if (excelFileInput) excelFileInput.value = '';
-            const fileInfo = document.getElementById('fileInfo');
             if (fileInfo) fileInfo.innerHTML = '';
             importBtn.textContent = '🚀 Import Data Sekarang';
             importBtn.disabled = false;
@@ -709,9 +680,6 @@ function updateChartCustomer(total, closing, pending, followup) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            layout: {
-                padding: 10
-            },
             plugins: {
                 legend: {
                     position: 'right',
@@ -719,17 +687,18 @@ function updateChartCustomer(total, closing, pending, followup) {
                         usePointStyle: true,
                         pointStyle: 'circle',
                         padding: 12,
-                        font: { size: 11, weight: 'normal' },
+                        font: { size: 11 },
                         generateLabels: function(chart) {
                             const data = chart.data;
-                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const dataset = data.datasets[0];
+                            const total = dataset.data.reduce((a, b) => a + b, 0);
                             return data.labels.map((label, i) => {
-                                const value = data.datasets[0].data[i];
+                                const value = dataset.data[i];
                                 const percent = total ? ((value / total) * 100).toFixed(1) : 0;
                                 return {
                                     text: `${label} : ${value} (${percent}%)`,
-                                    fillStyle: data.datasets[0].backgroundColor[i],
-                                    strokeStyle: data.datasets[0].backgroundColor[i],
+                                    fillStyle: dataset.backgroundColor[i],
+                                    strokeStyle: dataset.backgroundColor[i],
                                     lineWidth: 0,
                                     hidden: false,
                                     index: i
@@ -780,9 +749,6 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            layout: {
-                padding: 10
-            },
             plugins: {
                 legend: {
                     position: 'right',
@@ -790,17 +756,18 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
                         usePointStyle: true,
                         pointStyle: 'circle',
                         padding: 12,
-                        font: { size: 11, weight: 'normal' },
+                        font: { size: 11 },
                         generateLabels: function(chart) {
                             const data = chart.data;
-                            const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const dataset = data.datasets[0];
+                            const total = dataset.data.reduce((a, b) => a + b, 0);
                             return data.labels.map((label, i) => {
-                                const value = data.datasets[0].data[i];
+                                const value = dataset.data[i];
                                 const percent = total ? ((value / total) * 100).toFixed(1) : 0;
                                 return {
                                     text: `${label} : ${value} (${percent}%)`,
-                                    fillStyle: data.datasets[0].backgroundColor[i],
-                                    strokeStyle: data.datasets[0].backgroundColor[i],
+                                    fillStyle: dataset.backgroundColor[i],
+                                    strokeStyle: dataset.backgroundColor[i],
                                     lineWidth: 0,
                                     hidden: false,
                                     index: i
@@ -824,9 +791,9 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
         }
     });
 }
+
 // ========== DRAG AND DROP ==========
 function initDragAndDrop() {
-    // Customer drag and drop
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
     const customerStatusMap = { baruList: 'baru', followupList: 'followup', pendingList: 'pending', closingList: 'closing' };
     customerGroups.forEach(groupId => {
@@ -847,7 +814,6 @@ function initDragAndDrop() {
         }
     });
     
-    // Prospek drag and drop
     const prospekGroups = ['prospekBaruList', 'prospekDihubungiList', 'prospekTertarikList', 'prospekTidakList'];
     const prospekStatusMap = { prospekBaruList: 'Baru', prospekDihubungiList: 'Sudah Dihubungi', prospekTertarikList: 'Tertarik', prospekTidakList: 'Tidak Tertarik' };
     prospekGroups.forEach(groupId => {
@@ -877,6 +843,7 @@ function loadAllData() {
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
+        
         snap.forEach(doc => {
             const d = doc.data();
             total++;
@@ -884,6 +851,7 @@ function loadAllData() {
             else if (d.status === 'pending') pending++;
             else if (d.status === 'followup') followup++;
             else lists.baru.push({ id: doc.id, nama: d.nama, hp: d.hp });
+            
             if (d.status === 'followup') lists.followup.push({ id: doc.id, nama: d.nama, hp: d.hp });
             if (d.status === 'pending') lists.pending.push({ id: doc.id, nama: d.nama, hp: d.hp });
             if (d.status === 'closing') lists.closing.push({ id: doc.id, nama: d.nama, hp: d.hp });
@@ -898,85 +866,16 @@ function loadAllData() {
         document.getElementById('activeProspek').innerText = total - closing;
         document.getElementById('rateClosing').innerText = total ? Math.round((closing / total) * 100) + '%' : '0%';
         
+        // Render customer cards
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
-                // Contoh dari loadAllData:
-container.innerHTML = lists[status].map(item => `
-    <div class="card-item" data-id="${item.id}">
-        <div class="card-name">${escapeHtml(item.nama)}</div>
-        <div class="card-phone">
-            <span>${item.hp}</span>
-            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 6.46 17.5 2 12.04 2Z" fill="#25D366"/>
-                    <path d="M12.04 3.5C16.77 3.5 20.7 7.42 20.7 12.15C20.7 16.88 16.77 20.8 12.04 20.8C10.5 20.8 9.02 20.42 7.7 19.7L7.3 19.45L4.5 20.2L5.28 17.53L5.02 17.11C4.24 15.75 3.82 14.22 3.82 12.65C3.82 7.92 7.75 4 12.04 4Z" fill="white"/>
-                    <path d="M16.5 14.5C16.5 14.5 15.5 15.2 15 15.5C14.5 15.8 13.8 15.8 13 15.5C11.5 15 9.5 13.5 9 13C8.5 12.5 8 11.5 8 11C8 10.5 8.5 10 9 9.5C9.2 9.3 9.5 9 9.5 8.5C9.5 8 9.2 7.5 8.8 7.2C8.5 7 8 6.8 7.5 6.8C7 6.8 6.5 7 6 7.5C5 8.5 5 10 5.5 11.5C6 13 7.5 15 9.5 16.5C11.5 18 13 18.5 14.5 18C15 17.8 15.5 17.5 16 17C16.5 16.5 16.5 16 16.5 15.5C16.5 15 16.5 14.5 16.5 14.5Z" fill="#25D366"/>
-                </svg>
-            </span>
-        </div>
-    </div>
-`).join('');
-                container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
-                });
-            }
-        }
-        updateChartCustomer(total, closing, pending, followup);
-        initDragAndDrop();
-    });
-    
-    // Load prospek
-    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
-        let baru = 0, dihubungi = 0, tertarik = 0, tidak = 0;
-        const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
-        snap.forEach(doc => {
-            const d = doc.data();
-            const st = d.status || 'Baru';
-            if (st === 'Baru') { baru++; lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
-            else if (st === 'Sudah Dihubungi') { dihubungi++; lists.prospekDihubungi.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
-            else if (st === 'Tertarik') { tertarik++; lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
-            else { tidak++; lists.prospekTidak.push({ id: doc.id, nama: d.nama, hp: d.hp }); }
-        });
-        
-        document.getElementById('countProspekBaru').innerText = baru;
-        document.getElementById('countDihubungi').innerText = dihubungi;
-        document.getElementById('countTertarik').innerText = tertarik;
-        document.getElementById('countTidakTertarik').innerText = tidak;
-        
-        for (let col in lists) {
-            const container = document.getElementById(col + 'List');
-            if (container) {
-                // Contoh dari loadAllData:
-container.innerHTML = lists[status].map(item => `
-    <div class="card-item" data-id="${item.id}">
-        <div class="card-name">${escapeHtml(item.nama)}</div>
-        <div class="card-phone">
-            <span>${item.hp}</span>
-            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 6.46 17.5 2 12.04 2Z" fill="#25D366"/>
-                    <path d="M12.04 3.5C16.77 3.5 20.7 7.42 20.7 12.15C20.7 16.88 16.77 20.8 12.04 20.8C10.5 20.8 9.02 20.42 7.7 19.7L7.3 19.45L4.5 20.2L5.28 17.53L5.02 17.11C4.24 15.75 3.82 14.22 3.82 12.65C3.82 7.92 7.75 4 12.04 4Z" fill="white"/>
-                    <path d="M16.5 14.5C16.5 14.5 15.5 15.2 15 15.5C14.5 15.8 13.8 15.8 13 15.5C11.5 15 9.5 13.5 9 13C8.5 12.5 8 11.5 8 11C8 10.5 8.5 10 9 9.5C9.2 9.3 9.5 9 9.5 8.5C9.5 8 9.2 7.5 8.8 7.2C8.5 7 8 6.8 7.5 6.8C7 6.8 6.5 7 6 7.5C5 8.5 5 10 5.5 11.5C6 13 7.5 15 9.5 16.5C11.5 18 13 18.5 14.5 18C15 17.8 15.5 17.5 16 17C16.5 16.5 16.5 16 16.5 15.5C16.5 15 16.5 14.5 16.5 14.5Z" fill="#25D366"/>
-                </svg>
-            </span>
-        </div>
-    </div>
-`).join('');
-                container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
-                });
-            }
-        }
-        updateChartProspek(baru, dihubungi, tertarik, tidak);
-        initDragAndDrop();
-    });
-}
-
-// Notifikasi
-const notifBtn = document.getElementById('notifBtn');
-if (notifBtn) {
-    notifBtn.addEventListener('click', () => {
-        showNotif('Fitur notifikasi dalam pengembangan');
-    });
-}
+                container.innerHTML = lists[status].map(item => `
+                    <div class="card-item" data-id="${item.id}">
+                        <div class="card-name">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone">
+                            <span>${item.hp}</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 6.46 17.5 2 12.04 2Z" fill="#25D366"/>
+                                    <path d="M12.04 3.5C16.77 3.
