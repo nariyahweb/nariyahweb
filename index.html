@@ -1,58 +1,952 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FLOUPYUD</title>
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLOUPYUD - CRM Agent</title>
+
+<style>
+/* ========== SEMUA CSS DI SINI ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    background: #f5f3ff; 
+}
+
+/* Login Page */
+#loginPage { 
+    display: flex; 
+    height: 100vh; 
+    justify-content: center; 
+    align-items: center; 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-box { 
+    background: white; 
+    padding: 30px; 
+    border-radius: 16px; 
+    width: 320px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.login-box h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #7c3aed;
+    font-size: 24px;
+}
+
+.login-box input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.login-box button {
+    width: 100%;
+    padding: 12px;
+    background: #7c3aed;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.login-box button:hover {
+    background: #6d28d9;
+}
+
+/* App Container */
+#app { 
+    display: none; 
+}
+
+/* Layout */
+.layout {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    position: fixed;
+    left: 0;
+    top: 60px;
+    width: 260px;
+    height: calc(100vh - 60px);
+    background: white;
+    padding: 20px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    overflow-y: auto;
+}
+
+.sidebar.active {
+    transform: translateX(0);
+}
+
+.sidebar h2 {
+    color: #7c3aed;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.menu-item {
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    color: #444;
+    transition: all 0.2s;
+}
+
+.menu-item:hover {
+    background: #f3e8ff;
+}
+
+.menu-item.active {
+    background: #7c3aed;
+    color: white;
+}
+
+.menu-item.logout {
+    background: #ef4444;
+    color: white;
+    margin-top: 20px;
+}
+
+.menu-item.logout:hover {
+    background: #dc2626;
+}
+
+/* Topbar */
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #7c3aed;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.top-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.toggle-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.top-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: bold;
+}
+
+.top-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.notif {
+    position: relative;
+    cursor: pointer;
+}
+
+.notif span {
+    position: absolute;
+    top: -8px;
+    right: -12px;
+    background: red;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 50%;
+}
+
+.profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid white;
+    cursor: pointer;
+}
+
+/* Content */
+.content {
+    margin-top: 60px;
+    margin-left: 0;
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    transition: margin-left 0.3s;
+}
+
+/* Stats Cards */
+.stats-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.stat-modern {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.stat-modern:hover {
+    transform: translateY(-3px);
+}
+
+.stat-modern h4 {
+    color: #888;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.stat-modern p {
+    font-size: 24px;
+    font-weight: bold;
+    color: #7c3aed;
+}
+
+/* Charts */
+.chart-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.chart-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.chart-box canvas {
+    max-height: 250px;
+}
+
+/* Board Sections */
+.board-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.add-btn {
+    background: #7c3aed;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.mini-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.mini-column {
+    background: #fafafa;
+    border-radius: 12px;
+    padding: 15px;
+}
+
+.mini-head {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.mini-head.purple { background: #f3e8ff; color: #7c3aed; }
+.mini-head.blue { background: #eff6ff; color: #2563eb; }
+.mini-head.orange { background: #fff7ed; color: #ea580c; }
+.mini-head.green { background: #ecfdf5; color: #16a34a; }
+.mini-head.red { background: #fef2f2; color: #dc2626; }
+
+.mini-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: grab;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+.mini-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.mini-phone {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+}
+
+.mini-list {
+    min-height: 200px;
+}
+
+/* Import Section */
+.import-modern {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.import-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.step-card {
+    background: #fafafa;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.drop-box {
+    border: 2px dashed #c4b5fd;
+    padding: 30px;
+    text-align: center;
+    border-radius: 10px;
+    background: #faf5ff;
+    cursor: pointer;
+}
+
+.radio-box {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.radio-box.active {
+    border: 2px solid #7c3aed;
+    background: #ede9fe;
+}
+
+.btn-import-modern {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+/* Modals */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modal-box {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-box input, .modal-box select {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.modal-box button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.modal-box button:first-of-type {
+    background: #7c3aed;
+    color: white;
+}
+
+/* Notif Box */
+#notifBox {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.notif-dropdown {
+    position: absolute;
+    right: 0;
+    top: 35px;
+    width: 280px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.notif-item {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .mini-board {
+        grid-template-columns: 1fr;
+    }
     
-    <!-- External Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    .stats-modern {
+        grid-template-columns: 1fr 1fr;
+    }
     
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    .chart-container {
+        grid-template-columns: 1fr;
+    }
     
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/style.css">
+    .import-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Icon Circle */
+.icon-circle {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.icon-circle.purple { background: linear-gradient(135deg, #7c3aed, #a78bfa); }
+.icon-circle.green { background: linear-gradient(135deg, #22c55e, #4ade80); }
+.icon-circle.blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+.icon-circle.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+/* Utility */
+hr {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+small {
+    font-size: 11px;
+    color: #888;
+}
+</style>
 </head>
 <body>
-    <div id="hoverZone"></div>
-    
-    <!-- LOGIN PAGE -->
-    <div id="loginPage">
-        <div class="login-box">
-            <h3>FLOUPYUD</h3>
-            <input id="email" placeholder="Email">
-            <input id="password" type="password" placeholder="Password">
-            <button onclick="login()">Login</button>
+
+<div id="hoverZone"></div>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+    <div class="login-box">
+        <h3>🚀 FLOUPYUD</h3>
+        <input type="email" id="email" placeholder="Email" autocomplete="off">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="handleLogin()">Masuk</button>
+        <p style="text-align:center; margin-top:15px; font-size:12px; color:#888;">
+            Demo: demo@floupyud.com / demo123
+        </p>
+    </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+    <div class="layout">
+        
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <h2>📋 FLOUPYUD</h2>
+            <div class="menu">
+                <div class="menu-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
+                <div class="menu-item" onclick="showSection('import')">📥 Import Data</div>
+                <hr>
+                <small>DATABASE</small>
+                <div class="menu-item" onclick="openDBClosing()">📁 DB Closing</div>
+                <div class="menu-item" onclick="openDBTidak()">📁 DB Tidak Tertarik</div>
+                <hr>
+                <div class="menu-item logout" onclick="handleLogout()">🚪 Logout</div>
+            </div>
+        </div>
+        
+        <!-- MAIN CONTENT -->
+        <div class="main" style="flex:1; width:100%;">
+            
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div class="top-left">
+                    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+                    <span>FLOUPYUD</span>
+                </div>
+                <div class="top-center" id="topCenterName">CS Agent</div>
+                <div class="top-right">
+                    <div class="notif" onclick="toggleNotif()">
+                        🔔
+                        <span id="notifCount">0</span>
+                        <div id="notifDropdown" class="notif-dropdown"></div>
+                    </div>
+                    <div class="profile" onclick="openProfileModal()">
+                        <img id="topProfileImg" src="https://i.pravatar.cc/40" alt="profile">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CONTENT AREA -->
+            <div class="content">
+                <div id="dashboardSection">
+                    <!-- STATS -->
+                    <div class="stats-modern">
+                        <div class="stat-modern">
+                            <div><h4>Total Data</h4><p id="total">0</p><small>Semua Data</small></div>
+                            <div class="icon-circle purple">👥</div>
+                        </div>
+                        <div class="stat-modern">
+                            <div><h4>Closing</h4><p id="closingCount">0</p><small>Data Closing</small></div>
+                            <div class="icon-circle green">✔</div>
+                        </div>
+                        <div class="stat-modern">
+                            <div><h4>Rate Closing</h4><p id="rateText">0%</p><small>Dari Total</small></div>
+                            <div class="icon-circle blue">📊</div>
+                        </div>
+                        <div class="stat-modern">
+                            <div><h4>Prospek Aktif</h4><p id="prospekAktif">0</p><small>Dalam Proses</small></div>
+                            <div class="icon-circle orange">👤</div>
+                        </div>
+                    </div>
+                    
+                    <!-- CHARTS -->
+                    <div class="chart-container">
+                        <div class="chart-box"><h3>Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
+                        <div class="chart-box"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
+                    </div>
+                    
+                    <!-- FOLLOWUP BOARD -->
+                    <div class="board-section">
+                        <div class="board-header">
+                            <h2>📞 Followup Agen</h2>
+                            <button class="add-btn" onclick="openModalCustomer()">+ Tambah</button>
+                        </div>
+                        <div class="mini-board">
+                            <div class="mini-column"><div class="mini-head purple">Baru <b id="countBaru">0</b></div><div id="baru" class="mini-list"></div></div>
+                            <div class="mini-column"><div class="mini-head blue">Follow Up <b id="countFollowup">0</b></div><div id="followup" class="mini-list"></div></div>
+                            <div class="mini-column"><div class="mini-head orange">Pending <b id="countPending">0</b></div><div id="pending" class="mini-list"></div></div>
+                            <div class="mini-column"><div class="mini-head green">Closing <b id="countClosing">0</b></div><div id="closing" class="mini-list"></div></div>
+                        </div>
+                    </div>
+                    
+                    <!-- PROSPEK BOARD -->
+                    <div class="board-section">
+                        <div class="board-header">
+                            <h2>🎯 Prospek Agen</h2>
+                            <button class="add-btn" onclick="openModalProspek()">+ Tambah</button>
+                        </div>
+                        <div class="mini-board">
+                            <div class="mini-column"><div class="mini-head purple">Baru <b id="countProspekBaru">0</b></div><div id="prospekBaru" class="mini-list"></div></div>
+                            <div class="mini-column"><div class="mini-head blue">Dihubungi <b id="countHubungi">0</b></div><div id="prospekHubungi" class="mini-list"></div></div>
+                            <div class="mini-column"><div class="mini-head green">Tertarik <b id="countTertarik">0</b></div><div id="prospekTertarik" class="mini-list"></div></div>
+                            <div class="mini-column"><div class="mini-head red">Tidak Tertarik <b id="countTidak">0</b></div><div id="prospekTidak" class="mini-list"></div></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- IMPORT SECTION (hidden by default) -->
+                <div id="importSection" style="display:none;">
+                    <div class="import-modern">
+                        <div class="import-header"><div class="icon">📥</div><div><h2>Import Data Excel</h2><p>Import data dengan mudah dan cepat</p></div></div>
+                        <div class="import-content">
+                            <div class="step-card upload-area" onclick="document.getElementById('excelFile').click()">
+                                <h4>1. Pilih File Excel</h4>
+                                <div class="drop-box" id="dropBox">
+                                    <p id="uploadText">⬆️ Drag & Drop file di sini</p>
+                                    <small>atau klik untuk pilih file</small>
+                                    <input type="file" id="excelFile" hidden>
+                                    <div id="fileInfo" style="margin-top:10px;font-size:12px;color:#6d28d9;"></div>
+                                </div>
+                            </div>
+                            <div class="step-card">
+                                <h4>2. Pilih Tujuan Import</h4>
+                                <div class="radio-box active" onclick="selectType('prospek')"><b>Import ke Prospek</b><p>Data akan masuk ke Prospek Agen</p></div>
+                                <div class="radio-box" onclick="selectType('customer')"><b>Import ke Customer</b><p>Data akan masuk ke Followup Agen</p></div>
+                            </div>
+                            <div class="step-card info">
+                                <h4>3. Informasi Import</h4>
+                                <ul><li>✔ Import ribuan data sekaligus</li><li>✔ Validasi nomor otomatis</li><li>✔ Data tidak valid akan dilewati</li></ul>
+                                <button class="btn-import-modern" onclick="importExcel()">🚀 Import Data Sekarang</button>
+                                <small class="secure">🔒 Data Anda aman</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="modalCustomer"><div class="modal-box"><h3>Tambah Customer</h3><input id="nama" placeholder="Nama" maxlength="25"><input id="hp" placeholder="No HP" maxlength="15" value="+62"><input id="tanggal" type="date"><button onclick="saveCustomer()">Simpan</button><button onclick="closeModal('modalCustomer')">Tutup</button></div></div>
+<div class="modal" id="modalProspek"><div class="modal-box"><h3>Tambah Prospek</h3><input id="p_nama" placeholder="Nama" maxlength="25"><input id="p_hp" placeholder="No HP" maxlength="15" value="+62"><button onclick="saveProspek()">Simpan</button><button onclick="closeModal('modalProspek')">Tutup</button></div></div>
+<div class="modal" id="modalDetail"><div class="modal-box" id="detailContent"></div></div>
+<div class="modal" id="modalDBClosing"><div class="modal-box"><h3>Database Closing</h3><div id="dbClosingList"></div><button onclick="closeModal('modalDBClosing')">Tutup</button></div></div>
+<div class="modal" id="modalDBTidak"><div class="modal-box"><h3>Database Tidak Tertarik</h3><div id="dbTidakList"></div><button onclick="closeModal('modalDBTidak')">Tutup</button></div></div>
+<div class="modal" id="modalProfile"><div class="modal-box"><h3>Profile CS Agent</h3><div style="text-align:center;"><img id="previewFoto" src="https://i.pravatar.cc/100" style="width:80px;border-radius:50%;cursor:pointer;"><input type="file" id="profile_foto" accept="image/*" hidden></div><input id="profile_nama" placeholder="Nama"><input id="profile_email" placeholder="Email" disabled><input id="profile_hp" placeholder="No HP"><button onclick="saveProfile()">Simpan</button><button onclick="closeModal('modalProfile')">Tutup</button></div></div>
+<div class="modal" id="modalFU"><div class="modal-box"><h3>Follow Up</h3><select id="media"><option>Whatsapp Chat</option><option>Whatsapp Call</option></select><select id="respon"><option>Ya</option><option>Tidak</option><option>Menunggu</option></select><input id="jenis_respon" placeholder="Isi balasan"><input id="reminder" type="datetime-local"><button onclick="saveFollowUp()">Simpan</button><button onclick="closeModal('modalFU')">Tutup</button></div></div>
+
+<div id="notifBox"></div>
+
+<script>
+// ========== FIREBASE CONFIG ==========
+const firebaseConfig = {
+    apiKey: "AIzaSyCfj2Xdj6et3fThyA2gg-GWG8yZOhoqREA",
+    authDomain: "floupyud.firebaseapp.com",
+    projectId: "floupyud"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ========== GLOBAL VARIABLES ==========
+let currentUser = null;
+let currentCustomerId = null;
+let importType = "prospek";
+let chartCustomer = null;
+let chartProspek = null;
+
+// ========== LOGIN FUNCTION ==========
+window.handleLogin = async function() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
     
-    <!-- APP (seluruh HTML dashboard) -->
-    <div id="app" class="layout">
-        <!-- Sidebar, Topbar, Content -->
-        <!-- ... konten HTML lainnya ... -->
-    </div>
+    if(!email || !password) {
+        alert('Email dan password harus diisi!');
+        return;
+    }
     
-    <!-- Modals -->
-    <!-- ... semua modal ... -->
+    try {
+        const result = await auth.signInWithEmailAndPassword(email, password);
+        console.log('Login sukses:', result.user.uid);
+    } catch(error) {
+        alert('Login gagal: ' + error.message);
+    }
+}
+
+window.handleLogout = function() {
+    auth.signOut();
+}
+
+// ========== AUTH STATE ==========
+auth.onAuthStateChanged(async (user) => {
+    const loginPage = document.getElementById('loginPage');
+    const app = document.getElementById('app');
     
-    <!-- JavaScript Modules -->
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/customers.js"></script>
-    <script src="js/prospek.js"></script>
-    <script src="js/dragdrop.js"></script>
-    <script src="js/charts.js"></script>
-    <script src="js/import.js"></script>
-    <script src="js/notif.js"></script>
-    <script src="js/profile.js"></script>
-    <script src="js/main.js"></script>
+    if(user) {
+        currentUser = user;
+        loginPage.style.display = 'none';
+        app.style.display = 'block';
+        
+        // Load user profile
+        const doc = await db.collection('users').doc(user.uid).get();
+        let nama = 'CS Agent';
+        let foto = 'https://i.pravatar.cc/40';
+        
+        if(doc.exists) {
+            const data = doc.data();
+            if(data.nama) nama = data.nama;
+            if(data.foto) foto = data.foto;
+        }
+        
+        document.getElementById('topCenterName').innerText = nama;
+        document.getElementById('topProfileImg').src = foto;
+        document.getElementById('previewFoto').src = foto;
+        
+        // Load all data
+        loadAllData();
+    } else {
+        loginPage.style.display = 'flex';
+        app.style.display = 'none';
+        currentUser = null;
+    }
+});
+
+// ========== NAVIGATION ==========
+window.showSection = function(section) {
+    document.getElementById('dashboardSection').style.display = section === 'dashboard' ? 'block' : 'none';
+    document.getElementById('importSection').style.display = section === 'import' ? 'block' : 'none';
     
-    <div id="notifBox"></div>
-</body>
-</html>
+    // Update active menu
+    document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+// ========== SIDEBAR ==========
+window.toggleSidebar = function() {
+    document.querySelector('.sidebar').classList.toggle('active');
+}
+
+// Close sidebar when clicking outside
+document.addEventListener('click', function(e) {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = document.querySelector('.toggle-btn');
+    if(sidebar && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+        sidebar.classList.remove('active');
+    }
+});
+
+// ========== CUSTOMER FUNCTIONS ==========
+window.openModalCustomer = function() {
+    document.getElementById('modalCustomer').style.display = 'flex';
+}
+
+window.saveCustomer = async function() {
+    const nama = document.getElementById('nama').value;
+    const hp = document.getElementById('hp').value;
+    const tanggal = document.getElementById('tanggal').value;
+    
+    if(!nama || !hp) {
+        alert('Nama dan No HP wajib diisi!');
+        return;
+    }
+    
+    try {
+        await db.collection('customers').add({
+            nama: nama,
+            hp: hp,
+            tanggal: tanggal || new Date().toISOString().split('T')[0],
+            status: 'baru',
+            user_id: currentUser.uid,
+            created_at: new Date().toISOString()
+        });
+        
+        document.getElementById('nama').value = '';
+        document.getElementById('hp').value = '+62';
+        document.getElementById('tanggal').value = '';
+        closeModal('modalCustomer');
+        alert('Data berhasil disimpan!');
+    } catch(error) {
+        alert('Gagal menyimpan: ' + error.message);
+    }
+}
+
+// ========== PROSPEK FUNCTIONS ==========
+window.openModalProspek = function() {
+    document.getElementById('modalProspek').style.display = 'flex';
+}
+
+window.saveProspek = async function() {
+    const nama = document.getElementById('p_nama').value;
+    const hp = document.getElementById('p_hp').value;
+    
+    if(!nama || !hp) {
+        alert('Nama dan No HP wajib diisi!');
+        return;
+    }
+    
+    try {
+        await db.collection('prospek').add({
+            nama: nama,
+            hp: hp,
+            status: 'Baru',
+            user_id: currentUser.uid,
+            created_at: new Date().toISOString()
+        });
+        
+        document.getElementById('p_nama').value = '';
+        document.getElementById('p_hp').value = '+62';
+        closeModal('modalProspek');
+        alert('Data berhasil disimpan!');
+    } catch(error) {
+        alert('Gagal menyimpan: ' + error.message);
+    }
+}
+
+// ========== LOAD DATA ==========
+async function loadAllData() {
+    if(!currentUser) return;
+    
+    // Load customers
+    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snapshot => {
+        let total = 0, closing = 0, pending = 0, followup = 0;
+        const baruList = [], followupList = [], pendingList = [], closingList = [];
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            total++;
+            if(data.status === 'closing') closing++;
+            else if(data.status === 'pending') pending++;
+            else if(data.status === 'followup') followup++;
+            else baruList.push({id: doc.id, ...data});
+            
+            if(data.status === 'followup') followupList.push({id: doc.id, ...data});
+            if(data.status === 'pending') pendingList.push({id: doc.id, ...data});
+            if(data.status === 'closing') closingList.push({id: doc.id, ...data});
+        });
+        
+        // Update UI
+        document.getElementById('countBaru').innerText = total - (closing + pending + followup);
+        document.getElementById('countFollowup').innerText = followup;
+        document.getElementById('countPending').innerText = pending;
+        document.getElementById('countClosing').innerText = closing;
+        document.getElementById('total').innerText = total;
+        document.getElementById('closingCount').innerText = closing;
+        document.getElementById('prospekAktif').innerText = total - closing;
+        
+        const rate = total ? Math.round((closing/total)*100) : 0;
+        document.getElementById('rateText').innerText = rate + '%';
+        
+        renderCustomerCards('baru', baruList);
+        renderCustomerCards('followup', followupList);
+        renderCustomerCards('pending', pendingList);
+        renderCustomerCards('closing', closingList);
+        
+        updateChartCustomer(total, closing, pending, followup);
+    });
+    
+    // Load prospek
+    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snapshot => {
+        let baru = 0, hubungi = 0, tertarik = 0, tidak = 0;
+        const baruList = [], hubungiList = [], tertarikList = [], tidakList = [];
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const status = data.status || 'Baru';
+            
+            if(status === 'Baru') { baru++; baruList.push({id: doc.id, ...data}); }
+            else if(status === 'Sudah Dihubungi') { hubungi++; hubungiList.push({id: doc.id, ...data}); }
+            else if(status === 'Tertarik') { tertarik++; tertarikList.push({id: doc.id, ...data}); }
+            else if(status === 'Tidak Tertarik') { tidak++; tidakList.push({id: doc.id, ...data}); }
+            else { baru++; baruList.push({id: doc.id, ...data}); }
+        });
+        
+        document.getElementById('countProspekBaru').innerText = baru;
+        document.getElementById('countHubungi').innerText = hubungi;
+        document.getElementById('countTertarik').innerText = tertarik;
+        document.getElementById('countTidak').innerText = tidak;
+        
+        renderProspekCards('prospekBaru', baruList);
+        renderProspekCards('prospekHubungi', hubungiList);
+        renderProspekCards('prospekTertarik', tertarikList);
+        renderProspekCards('prospekTidak', tidakList);
+        
+        updateChartProspek(baru, hubungi, tertarik, tidak);
+    });
+}
+
+function renderCustomerCards(containerId, items) {
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    container.innerHTML = '';
+    items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'mini-card';
+        card.setAttribute('data-id', item.id);
+        card.onclick = () => openDetailCustomer(item.id);
+        card.innerHTML = `<b>${item.nama || '-'}</b><div class="mini-phone"><span>${item.hp || '-'}</span><span onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div>`;
+        container.appendChild(card);
+    });
+}
+
+function renderProspekCards(containerId, items) {
+    const container = document.getElementById(containerId);
+    if(!container) return;
+    container.innerHTML = '';
+    items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'mini-card';
+        card.setAttribute('data-id', item.id);
+        card.onclick = () => openDetailProspek(item.id);
+        card.innerHTML = `<b>${item.nama || '-'}</b><div class="mini-phone"><span>${item.hp || '-'}</span><span onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div>`;
+        container.appendChild(card);
+    });
