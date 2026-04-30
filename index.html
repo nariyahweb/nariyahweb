@@ -38,15 +38,45 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     color: #7c3aed;
     font-size: 24px;
 }
-.login-box input {
+.input-group {
+    margin: 15px 0;
+    position: relative;
+}
+.input-group input {
     width: 100%;
     padding: 12px;
-    margin: 10px 0;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 14px;
 }
-.login-box button {
+.input-group label {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+.password-wrapper {
+    position: relative;
+}
+.password-wrapper input {
+    padding-right: 45px;
+}
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    color: #999;
+    background: none;
+    border: none;
+    padding: 5px;
+}
+.toggle-password:hover {
+    color: #7c3aed;
+}
+.login-box button[type="button"] {
     width: 100%;
     padding: 12px;
     background: #7c3aed;
@@ -58,39 +88,12 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     cursor: pointer;
     margin-top: 10px;
 }
-.login-box button:hover { background: #6d28d9; }
-
-/* Password wrapper untuk icon mata */
-.password-wrapper {
-    position: relative;
-    width: 100%;
-    margin: 10px 0;
-}
-.password-wrapper input {
-    width: 100%;
-    padding: 12px;
-    padding-right: 45px;
-    margin: 0;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-}
-.toggle-password {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 20px;
-    color: #888;
-    user-select: none;
-    transition: color 0.2s;
-    z-index: 10;
-    background: transparent;
-    border: none;
-}
-.toggle-password:hover {
-    color: #7c3aed;
+.login-box button[type="button"]:hover { background: #6d28d9; }
+.error-msg {
+    color: red;
+    font-size: 12px;
+    margin-top: 10px;
+    text-align: center;
 }
 
 /* App Container */
@@ -125,7 +128,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
 .menu-item:hover { background: #f3e8ff; }
 .menu-item.active { background: #7c3aed; color: white; }
 .menu-item.logout { background: #ef4444; color: white; margin-top: 20px; }
-.menu-item.logout:hover { background: #dc2626; }
 
 /* Topbar */
 .topbar {
@@ -182,10 +184,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    cursor: pointer;
-    transition: transform 0.2s;
 }
-.stat-modern:hover { transform: translateY(-3px); }
 .stat-modern h4 { color: #888; font-size: 12px; margin-bottom: 5px; }
 .stat-modern p { font-size: 24px; font-weight: bold; color: #7c3aed; }
 
@@ -200,9 +199,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
-.chart-box canvas { max-height: 250px; }
 
 /* Boards */
 .board-section {
@@ -210,7 +207,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 .board-header {
     display: flex;
@@ -256,9 +252,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     margin-bottom: 10px;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    transition: all 0.2s;
 }
-.mini-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 .mini-phone {
     display: flex;
     justify-content: space-between;
@@ -273,7 +267,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 .import-content {
     display: grid;
@@ -317,7 +310,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     cursor: pointer;
     margin-top: 15px;
 }
-.btn-import-modern:hover { background: #6d28d9; }
 
 /* Modals */
 .modal {
@@ -354,7 +346,6 @@ body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
     cursor: pointer;
 }
 .modal-box button:first-of-type { background: #7c3aed; color: white; }
-.modal-box button:first-of-type:hover { background: #6d28d9; }
 
 .icon-circle {
     width: 45px;
@@ -385,15 +376,22 @@ small { font-size: 11px; color: #888; }
 <div id="loginPage">
     <div class="login-box">
         <h3>🚀 FLOUPYUD</h3>
-        <input type="email" id="email" placeholder="Email" autocomplete="email">
         
-        <!-- Password with toggle eye -->
-        <div class="password-wrapper">
-            <input type="password" id="password" placeholder="Password" autocomplete="current-password">
-            <button type="button" class="toggle-password" id="togglePasswordBtn">👁️</button>
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="Email@gmail.com" autocomplete="email">
         </div>
         
-        <button id="loginBtn">Masuk</button>
+        <div class="input-group">
+            <label>Password</label>
+            <div class="password-wrapper">
+                <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+                <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
+            </div>
+        </div>
+        
+        <button type="button" onclick="handleLogin()">Masuk</button>
+        <div id="loginError" class="error-msg"></div>
         <p style="text-align:center; margin-top:15px; font-size:12px; color:#888;">
             Gunakan akun Firebase yang sudah terdaftar
         </p>
@@ -406,31 +404,30 @@ small { font-size: 11px; color: #888; }
         <div class="sidebar">
             <h2>📋 FLOUPYUD</h2>
             <div class="menu">
-                <div class="menu-item active" data-section="dashboard">📊 Dashboard</div>
-                <div class="menu-item" data-section="import">📥 Import Data</div>
+                <div class="menu-item active" onclick="showSection('dashboard')">📊 Dashboard</div>
+                <div class="menu-item" onclick="showSection('import')">📥 Import Data</div>
                 <hr>
                 <small>DATABASE</small>
-                <div class="menu-item" id="openDBClosing">📁 DB Closing</div>
-                <div class="menu-item" id="openDBTidak">📁 DB Tidak Tertarik</div>
+                <div class="menu-item" onclick="openDBClosing()">📁 DB Closing</div>
+                <div class="menu-item" onclick="openDBTidak()">📁 DB Tidak Tertarik</div>
                 <hr>
-                <div class="menu-item logout" id="logoutBtn">🚪 Logout</div>
+                <div class="menu-item logout" onclick="logout()">🚪 Logout</div>
             </div>
         </div>
         
         <div style="flex:1; width:100%;">
             <div class="topbar">
                 <div class="top-left">
-                    <button class="toggle-btn" id="toggleSidebarBtn">☰</button>
+                    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
                     <span>FLOUPYUD</span>
                 </div>
                 <div class="top-center" id="topCenterName">CS Agent</div>
                 <div class="top-right">
-                    <div class="notif" id="notifBtn">
+                    <div class="notif" onclick="toggleNotif()">
                         🔔
                         <span id="notifCount">0</span>
-                        <div id="notifDropdown" class="notif-dropdown" style="display:none; position:absolute; right:0; top:35px; width:250px; background:white; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15);"></div>
                     </div>
-                    <div class="profile" id="profileBtn">
+                    <div class="profile" onclick="openProfileModal()">
                         <img id="topProfileImg" src="https://i.pravatar.cc/40">
                     </div>
                 </div>
@@ -451,7 +448,7 @@ small { font-size: 11px; color: #888; }
                     </div>
                     
                     <div class="board-section">
-                        <div class="board-header"><h2>📞 Followup Agen</h2><button class="add-btn" id="addCustomerBtn">+ Tambah</button></div>
+                        <div class="board-header"><h2>📞 Followup Agen</h2><button class="add-btn" onclick="openModalCustomer()">+ Tambah</button></div>
                         <div class="mini-board">
                             <div class="mini-column"><div class="mini-head purple">Baru <b id="countBaru">0</b></div><div id="baru" class="mini-list"></div></div>
                             <div class="mini-column"><div class="mini-head blue">Follow Up <b id="countFollowup">0</b></div><div id="followup" class="mini-list"></div></div>
@@ -461,7 +458,7 @@ small { font-size: 11px; color: #888; }
                     </div>
                     
                     <div class="board-section">
-                        <div class="board-header"><h2>🎯 Prospek Agen</h2><button class="add-btn" id="addProspekBtn">+ Tambah</button></div>
+                        <div class="board-header"><h2>🎯 Prospek Agen</h2><button class="add-btn" onclick="openModalProspek()">+ Tambah</button></div>
                         <div class="mini-board">
                             <div class="mini-column"><div class="mini-head purple">Baru <b id="countProspekBaru">0</b></div><div id="prospekBaru" class="mini-list"></div></div>
                             <div class="mini-column"><div class="mini-head blue">Dihubungi <b id="countHubungi">0</b></div><div id="prospekHubungi" class="mini-list"></div></div>
@@ -477,19 +474,19 @@ small { font-size: 11px; color: #888; }
                         <div class="import-content">
                             <div class="step-card">
                                 <h4>1. Pilih File Excel</h4>
-                                <div class="drop-box" id="dropZone">
+                                <div class="drop-box" onclick="document.getElementById('excelFile').click()">
                                     <p>⬆️ Klik untuk pilih file</p>
                                     <input type="file" id="excelFile" hidden accept=".xlsx,.xls">
                                 </div>
                             </div>
                             <div class="step-card">
                                 <h4>2. Pilih Tujuan</h4>
-                                <div class="radio-box active" data-import="prospek"><b>Import ke Prospek</b></div>
-                                <div class="radio-box" data-import="customer"><b>Import ke Customer</b></div>
+                                <div class="radio-box active" onclick="selectType('prospek')"><b>Import ke Prospek</b></div>
+                                <div class="radio-box" onclick="selectType('customer')"><b>Import ke Customer</b></div>
                             </div>
                             <div class="step-card">
                                 <h4>3. Import</h4>
-                                <button class="btn-import-modern" id="importBtn">🚀 Import Data</button>
+                                <button class="btn-import-modern" onclick="importExcel()">🚀 Import Data</button>
                             </div>
                         </div>
                     </div>
@@ -499,14 +496,14 @@ small { font-size: 11px; color: #888; }
     </div>
 </div>
 
-<!-- MODALS dengan autocomplete standar HTML5 -->
+<!-- MODALS -->
 <div class="modal" id="modalCustomer">
     <div class="modal-box">
         <h3>Tambah Customer</h3>
         <input id="nama" placeholder="Nama" autocomplete="name">
         <input id="hp" placeholder="No HP" value="+62" autocomplete="tel">
         <input id="tanggal" type="date" autocomplete="bday">
-        <button id="saveCustomerBtn">Simpan</button>
+        <button onclick="saveCustomer()">Simpan</button>
         <button onclick="closeModal('modalCustomer')">Tutup</button>
     </div>
 </div>
@@ -516,7 +513,7 @@ small { font-size: 11px; color: #888; }
         <h3>Tambah Prospek</h3>
         <input id="p_nama" placeholder="Nama" autocomplete="name">
         <input id="p_hp" placeholder="No HP" value="+62" autocomplete="tel">
-        <button id="saveProspekBtn">Simpan</button>
+        <button onclick="saveProspek()">Simpan</button>
         <button onclick="closeModal('modalProspek')">Tutup</button>
     </div>
 </div>
@@ -526,7 +523,7 @@ small { font-size: 11px; color: #888; }
         <h3>Profile</h3>
         <input id="profile_nama" placeholder="Nama" autocomplete="name">
         <input id="profile_email" placeholder="Email" disabled autocomplete="email">
-        <button id="saveProfileBtn">Simpan</button>
+        <button onclick="saveProfile()">Simpan</button>
         <button onclick="closeModal('modalProfile')">Tutup</button>
     </div>
 </div>
@@ -566,320 +563,312 @@ let importType = "prospek";
 let chartCustomer = null;
 let chartProspek = null;
 
-// ========== TOGGLE PASSWORD FUNCTION ==========
-document.addEventListener('DOMContentLoaded', function() {
-    const toggleBtn = document.getElementById('togglePasswordBtn');
+// ========== TOGGLE PASSWORD ==========
+function togglePassword() {
     const passwordInput = document.getElementById('password');
+    const toggleBtn = event.currentTarget;
     
-    if(toggleBtn && passwordInput) {
-        toggleBtn.addEventListener('click', function() {
-            if(passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleBtn.textContent = '🙈';
-                toggleBtn.style.opacity = '0.7';
-            } else {
-                passwordInput.type = 'password';
-                toggleBtn.textContent = '👁️';
-                toggleBtn.style.opacity = '1';
-            }
+    if(passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.textContent = '🙈';
+    } else {
+        passwordInput.type = 'password';
+        toggleBtn.textContent = '👁️';
+    }
+}
+
+// ========== LOGIN FUNCTION ==========
+function handleLogin() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('loginError');
+    
+    if(!email || !password) {
+        errorDiv.textContent = 'Email dan password harus diisi!';
+        return;
+    }
+    
+    errorDiv.textContent = '';
+    const loginBtn = event.currentTarget;
+    loginBtn.textContent = 'Loading...';
+    loginBtn.disabled = true;
+    
+    auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            console.log('Login sukses:', userCredential.user.uid);
+        })
+        .catch((error) => {
+            errorDiv.textContent = 'Login gagal: ' + error.message;
+            loginBtn.textContent = 'Masuk';
+            loginBtn.disabled = false;
         });
+}
+
+function logout() {
+    auth.signOut();
+}
+
+// ========== AUTH STATE ==========
+auth.onAuthStateChanged((user) => {
+    const loginPage = document.getElementById('loginPage');
+    const app = document.getElementById('app');
+    
+    if(user) {
+        currentUser = user;
+        loginPage.style.display = 'none';
+        app.style.display = 'block';
+        
+        db.collection('users').doc(user.uid).get().then(doc => {
+            let nama = 'CS Agent';
+            if(doc.exists && doc.data().nama) nama = doc.data().nama;
+            document.getElementById('topCenterName').innerText = nama;
+        });
+        
+        loadAllData();
+    } else {
+        loginPage.style.display = 'flex';
+        app.style.display = 'none';
+        currentUser = null;
+        
+        // Reset form
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+        document.getElementById('password').type = 'password';
+        const toggleBtn = document.querySelector('.toggle-password');
+        if(toggleBtn) toggleBtn.textContent = '👁️';
     }
 });
 
 // ========== HELPER FUNCTIONS ==========
-window.closeModal = function(modalId) {
-    const modal = document.getElementById(modalId);
-    if(modal) modal.style.display = 'none';
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
 }
 
 function showNotif(msg) {
     const notif = document.createElement('div');
     notif.textContent = msg;
-    notif.style.cssText = 'position:fixed; top:70px; right:20px; background:#7c3aed; color:white; padding:10px 15px; border-radius:8px; z-index:9999; box-shadow:0 2px 10px rgba(0,0,0,0.2);';
+    notif.style.cssText = 'position:fixed; top:70px; right:20px; background:#7c3aed; color:white; padding:10px 15px; border-radius:8px; z-index:9999;';
     document.body.appendChild(notif);
     setTimeout(() => notif.remove(), 3000);
 }
 
-function escapeHtml(text) {
-    if(!text) return '';
-    return text.replace(/[&<>]/g, function(m) {
-        if(m === '&') return '&amp;';
-        if(m === '<') return '&lt;';
-        if(m === '>') return '&gt;';
-        return m;
-    });
+function toggleSidebar() {
+    document.querySelector('.sidebar').classList.toggle('active');
 }
 
-// ========== DOM ELEMENTS ==========
-const loginPage = document.getElementById('loginPage');
-const app = document.getElementById('app');
-const emailInput = document.getElementById('email');
-const passwordInput = document.getElementById('password');
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
-const sidebar = document.querySelector('.sidebar');
-const profileBtn = document.getElementById('profileBtn');
-const addCustomerBtn = document.getElementById('addCustomerBtn');
-const addProspekBtn = document.getElementById('addProspekBtn');
-const saveCustomerBtn = document.getElementById('saveCustomerBtn');
-const saveProspekBtn = document.getElementById('saveProspekBtn');
-const saveProfileBtn = document.getElementById('saveProfileBtn');
-const importBtn = document.getElementById('importBtn');
-const openDBClosing = document.getElementById('openDBClosing');
-const openDBTidak = document.getElementById('openDBTidak');
-const dropZone = document.getElementById('dropZone');
-const excelFile = document.getElementById('excelFile');
-
-// ========== LOGIN ==========
-if(loginBtn) {
-    loginBtn.onclick = function() {
-        const email = emailInput ? emailInput.value : '';
-        const password = passwordInput ? passwordInput.value : '';
-        
-        if(!email || !password) {
-            alert('Email dan password harus diisi!');
-            return;
-        }
-        
-        loginBtn.textContent = 'Loading...';
-        loginBtn.disabled = true;
-        
-        auth.signInWithEmailAndPassword(email, password)
-            .then(() => {
-                loginBtn.textContent = 'Masuk';
-                loginBtn.disabled = false;
-            })
-            .catch(err => {
-                loginBtn.textContent = 'Masuk';
-                loginBtn.disabled = false;
-                alert('Login gagal: ' + err.message);
-            });
-    }
+function showSection(section) {
+    document.getElementById('dashboardSection').style.display = section === 'dashboard' ? 'block' : 'none';
+    document.getElementById('importSection').style.display = section === 'import' ? 'block' : 'none';
 }
 
-if(logoutBtn) {
-    logoutBtn.onclick = function() {
-        auth.signOut();
-    }
+function selectType(type) {
+    importType = type;
+    document.querySelectorAll('.radio-box').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
 }
-
-// ========== AUTH STATE ==========
-auth.onAuthStateChanged((user) => {
-    if(user) {
-        currentUser = user;
-        if(loginPage) loginPage.style.display = 'none';
-        if(app) app.style.display = 'block';
-        
-        db.collection('users').doc(user.uid).get().then(doc => {
-            let nama = 'CS Agent';
-            if(doc.exists && doc.data().nama) nama = doc.data().nama;
-            const topCenter = document.getElementById('topCenterName');
-            if(topCenter) topCenter.innerText = nama;
-        });
-        
-        loadAllData();
-    } else {
-        if(loginPage) loginPage.style.display = 'flex';
-        if(app) app.style.display = 'none';
-        currentUser = null;
-        
-        if(emailInput) emailInput.value = '';
-        if(passwordInput) {
-            passwordInput.value = '';
-            passwordInput.type = 'password';
-        }
-        const toggleBtn = document.getElementById('togglePasswordBtn');
-        if(toggleBtn) {
-            toggleBtn.textContent = '👁️';
-        }
-    }
-});
-
-// ========== SIDEBAR ==========
-if(toggleSidebarBtn) {
-    toggleSidebarBtn.onclick = function() {
-        if(sidebar) sidebar.classList.toggle('active');
-    }
-}
-
-document.addEventListener('click', function(e) {
-    if(sidebar && toggleSidebarBtn && !sidebar.contains(e.target) && e.target !== toggleSidebarBtn) {
-        sidebar.classList.remove('active');
-    }
-});
-
-// ========== NAVIGATION ==========
-document.querySelectorAll('.menu-item[data-section]').forEach(item => {
-    item.onclick = function() {
-        const section = this.dataset.section;
-        const dashboardSection = document.getElementById('dashboardSection');
-        const importSection = document.getElementById('importSection');
-        
-        if(dashboardSection) dashboardSection.style.display = section === 'dashboard' ? 'block' : 'none';
-        if(importSection) importSection.style.display = section === 'import' ? 'block' : 'none';
-        
-        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-        this.classList.add('active');
-    }
-});
 
 // ========== CUSTOMER ==========
-if(addCustomerBtn) {
-    addCustomerBtn.onclick = () => {
-        const modal = document.getElementById('modalCustomer');
-        if(modal) modal.style.display = 'flex';
-    }
+function openModalCustomer() {
+    document.getElementById('modalCustomer').style.display = 'flex';
 }
 
-if(saveCustomerBtn) {
-    saveCustomerBtn.onclick = function() {
-        const namaInput = document.getElementById('nama');
-        const hpInput = document.getElementById('hp');
-        const tanggalInput = document.getElementById('tanggal');
-        
-        const nama = namaInput ? namaInput.value : '';
-        const hp = hpInput ? hpInput.value : '';
-        const tanggal = tanggalInput ? tanggalInput.value : '';
-        
-        if(!nama || !hp) { alert('Lengkapi data!'); return; }
-        
-        db.collection('customers').add({
-            nama, hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
-            status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
-        }).then(() => {
-            closeModal('modalCustomer');
-            if(namaInput) namaInput.value = '';
-            if(hpInput) hpInput.value = '+62';
-            if(tanggalInput) tanggalInput.value = '';
-            showNotif('Customer berhasil ditambahkan');
-        }).catch(err => alert('Error: ' + err.message));
-    }
+function saveCustomer() {
+    const nama = document.getElementById('nama').value;
+    const hp = document.getElementById('hp').value;
+    const tanggal = document.getElementById('tanggal').value;
+    
+    if(!nama || !hp) { alert('Lengkapi data!'); return; }
+    
+    db.collection('customers').add({
+        nama, hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
+        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+    }).then(() => {
+        closeModal('modalCustomer');
+        document.getElementById('nama').value = '';
+        document.getElementById('hp').value = '+62';
+        document.getElementById('tanggal').value = '';
+        showNotif('Customer berhasil ditambahkan');
+    }).catch(err => alert('Error: ' + err.message));
 }
 
 // ========== PROSPEK ==========
-if(addProspekBtn) {
-    addProspekBtn.onclick = () => {
-        const modal = document.getElementById('modalProspek');
-        if(modal) modal.style.display = 'flex';
-    }
+function openModalProspek() {
+    document.getElementById('modalProspek').style.display = 'flex';
 }
 
-if(saveProspekBtn) {
-    saveProspekBtn.onclick = function() {
-        const pNamaInput = document.getElementById('p_nama');
-        const pHpInput = document.getElementById('p_hp');
-        
-        const nama = pNamaInput ? pNamaInput.value : '';
-        const hp = pHpInput ? pHpInput.value : '';
-        
-        if(!nama || !hp) { alert('Lengkapi data!'); return; }
-        
-        db.collection('prospek').add({
-            nama, hp, status: 'Baru', user_id: currentUser.uid, created_at: new Date().toISOString()
-        }).then(() => {
-            closeModal('modalProspek');
-            if(pNamaInput) pNamaInput.value = '';
-            if(pHpInput) pHpInput.value = '+62';
-            showNotif('Prospek berhasil ditambahkan');
-        }).catch(err => alert('Error: ' + err.message));
-    }
+function saveProspek() {
+    const nama = document.getElementById('p_nama').value;
+    const hp = document.getElementById('p_hp').value;
+    
+    if(!nama || !hp) { alert('Lengkapi data!'); return; }
+    
+    db.collection('prospek').add({
+        nama, hp, status: 'Baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+    }).then(() => {
+        closeModal('modalProspek');
+        document.getElementById('p_nama').value = '';
+        document.getElementById('p_hp').value = '+62';
+        showNotif('Prospek berhasil ditambahkan');
+    }).catch(err => alert('Error: ' + err.message));
 }
 
 // ========== PROFILE ==========
-if(profileBtn) {
-    profileBtn.onclick = () => {
-        const modal = document.getElementById('modalProfile');
-        if(modal) modal.style.display = 'flex';
-        const profileEmail = document.getElementById('profile_email');
-        if(profileEmail && currentUser) profileEmail.value = currentUser.email;
-        
-        db.collection('users').doc(currentUser.uid).get().then(doc => {
-            const profileNama = document.getElementById('profile_nama');
-            if(profileNama) {
-                if(doc.exists) profileNama.value = doc.data().nama || '';
-                else profileNama.value = '';
-            }
-        });
-    }
+function openProfileModal() {
+    document.getElementById('modalProfile').style.display = 'flex';
+    document.getElementById('profile_email').value = currentUser.email;
+    
+    db.collection('users').doc(currentUser.uid).get().then(doc => {
+        if(doc.exists) document.getElementById('profile_nama').value = doc.data().nama || '';
+    });
 }
 
-if(saveProfileBtn) {
-    saveProfileBtn.onclick = function() {
-        const profileNama = document.getElementById('profile_nama');
-        const nama = profileNama ? profileNama.value : '';
-        
-        if(!nama) { alert('Nama wajib diisi'); return; }
-        
-        db.collection('users').doc(currentUser.uid).set({ nama, email: currentUser.email }, { merge: true })
-            .then(() => {
-                const topCenter = document.getElementById('topCenterName');
-                if(topCenter) topCenter.innerText = nama;
-                closeModal('modalProfile');
-                showNotif('Profile tersimpan');
-            }).catch(err => alert('Error: ' + err.message));
-    }
+function saveProfile() {
+    const nama = document.getElementById('profile_nama').value;
+    if(!nama) { alert('Nama wajib diisi'); return; }
+    
+    db.collection('users').doc(currentUser.uid).set({ nama, email: currentUser.email }, { merge: true })
+        .then(() => {
+            document.getElementById('topCenterName').innerText = nama;
+            closeModal('modalProfile');
+            showNotif('Profile tersimpan');
+        }).catch(err => alert('Error: ' + err.message));
 }
 
 // ========== WHATSAPP ==========
-window.openWA = function(hp) {
+function openWA(hp) {
     if(!hp) return;
     let nomor = hp.toString().replace('+', '').replace(/^0/, '62');
     window.open('https://wa.me/' + nomor, '_blank');
 }
 
 // ========== IMPORT EXCEL ==========
-if(dropZone) {
-    dropZone.onclick = () => {
-        if(excelFile) excelFile.click();
-    }
-}
-
-if(excelFile) {
-    excelFile.onchange = function(e) {
-        if(e.target.files[0]) showNotif('File siap: ' + e.target.files[0].name);
-    }
-}
-
-document.querySelectorAll('.radio-box[data-import]').forEach(el => {
-    el.onclick = function() {
-        importType = this.dataset.import;
-        document.querySelectorAll('.radio-box').forEach(r => r.classList.remove('active'));
-        this.classList.add('active');
-    }
-});
-
-if(importBtn) {
-    importBtn.onclick = async function() {
-        const file = excelFile ? excelFile.files[0] : null;
-        if(!file) { alert('Pilih file dulu!'); return; }
+function importExcel() {
+    const file = document.getElementById('excelFile').files[0];
+    if(!file) { alert('Pilih file dulu!'); return; }
+    
+    const importBtn = event.currentTarget;
+    importBtn.textContent = 'Memproses...';
+    importBtn.disabled = true;
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
         
-        importBtn.textContent = 'Memproses...';
-        importBtn.disabled = true;
-        
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+        let success = 0, failed = 0;
+        for(const row of json) {
+            let nama = row.nama || row.Nama;
+            let hp = row.hp || row.HP;
+            if(!nama || !hp) { failed++; continue; }
             
-            let success = 0, failed = 0;
-            for(const row of json) {
-                let nama = row.nama || row.Nama;
-                let hp = row.hp || row.HP;
-                if(!nama || !hp) { failed++; continue; }
-                
-                hp = hp.toString();
-                if(!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
-                
-                const collection = importType === 'prospek' ? 'prospek' : 'customers';
-                const data = { nama, hp, user_id: currentUser.uid, created_at: new Date().toISOString() };
-                if(collection === 'prospek') data.status = 'Baru';
-                else data.status = 'baru', data.tanggal = new Date().toISOString().split('T')[0];
-                
-                await db.collection(collection).add(data);
-                success++;
+            hp = hp.toString();
+            if(!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
+            
+            const collection = importType === 'prospek' ? 'prospek' : 'customers';
+            const data = { nama, hp, user_id: currentUser.uid, created_at: new Date().toISOString() };
+            if(collection === 'prospek') data.status = 'Baru';
+            else data.status = 'baru', data.tanggal = new Date().toISOString().split('T')[0];
+            
+            await db.collection(collection).add(data);
+            success++;
+        }
+        alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+        document.getElementById('excelFile').value = '';
+        importBtn.textContent = '🚀 Import Data';
+        importBtn.disabled = false;
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// ========== DATABASE ARCHIVES ==========
+function openDBClosing() {
+    document.getElementById('modalDBClosing').style.display = 'flex';
+    db.collection('db_closing').where('user_id', '==', currentUser.uid).get().then(snap => {
+        let html = '';
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.nama}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
+        });
+        document.getElementById('dbClosingList').innerHTML = html || 'Kosong';
+    });
+}
+
+function openDBTidak() {
+    document.getElementById('modalDBTidak').style.display = 'flex';
+    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get().then(snap => {
+        let html = '';
+        snap.forEach(doc => {
+            const d = doc.data();
+            html += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${d.nama}</b><br>${d.hp}<br><button onclick="openWA('${d.hp}')">WA</button></div>`;
+        });
+        document.getElementById('dbTidakList').innerHTML = html || 'Kosong';
+    });
+}
+
+function toggleNotif() {
+    alert('Fitur notifikasi sedang dalam pengembangan');
+}
+
+// ========== LOAD DATA ==========
+function loadAllData() {
+    if(!currentUser) return;
+    
+    // Load customers
+    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+        let total = 0, closing = 0, pending = 0, followup = 0;
+        const lists = { baru: [], followup: [], pending: [], closing: [] };
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            total++;
+            if(d.status === 'closing') closing++;
+            else if(d.status === 'pending') pending++;
+            else if(d.status === 'followup') followup++;
+            else lists.baru.push({id: doc.id, ...d});
+            
+            if(d.status === 'followup') lists.followup.push({id: doc.id, ...d});
+            if(d.status === 'pending') lists.pending.push({id: doc.id, ...d});
+            if(d.status === 'closing') lists.closing.push({id: doc.id, ...d});
+        });
+        
+        document.getElementById('countBaru').innerText = total - (closing + pending + followup);
+        document.getElementById('countFollowup').innerText = followup;
+        document.getElementById('countPending').innerText = pending;
+        document.getElementById('countClosing').innerText = closing;
+        document.getElementById('total').innerText = total;
+        document.getElementById('closingCount').innerText = closing;
+        document.getElementById('prospekAktif').innerText = total - closing;
+        document.getElementById('rateText').innerText = total ? Math.round((closing/total)*100) + '%' : '0%';
+        
+        for(const status in lists) {
+            const container = document.getElementById(status);
+            if(container) {
+                container.innerHTML = lists[status].map(item => `
+                    <div class="mini-card" onclick="openWA('${item.hp}')">
+                        <b>${escapeHtml(item.nama)}</b>
+                        <div class="mini-phone"><span>${item.hp}</span><span>🟢</span></div>
+                    </div>
+                `).join('');
             }
-            alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
-            if(excelFile) excelFile.value = '';
-            importBtn.textContent = '🚀 Import Data';
-            importBtn
+        }
+        
+        updateChartCustomer(total, closing, pending, followup);
+    });
+    
+    // Load prospek
+    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+        let baru = 0, hubungi = 0, tertarik = 0, tidak = 0;
+        const lists = { prospekBaru: [], prospekHubungi: [], prospekTertarik: [], prospekTidak: [] };
+        
+        snap.forEach(doc => {
+            const d = doc.data();
+            const status = d.status || 'Baru';
+            if(status === 'Baru') { baru++; lists.prospekBaru.push({id: doc.id, ...d}); }
+            else if(status === 'Sudah Dihubungi') { hubungi++; lists.prospekHubungi.push({id: doc.id, ...d}); }
+            else if(status === 'Tertarik') { tertarik++; lists.prospekTertarik.push({id: doc.id, ...d}); }
+            else { tidak++; lists.prospekTidak.push({id: doc.id, ...d}); }
+        });
+        
+        document.getElementById('countProspekBaru').innerText = baru;
+        document.getElementById('countHubungi').innerText = hubungi;
+        document.getElementById('countTertarik').innerText
