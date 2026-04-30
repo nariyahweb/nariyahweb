@@ -25,7 +25,6 @@ function initSidebar() {
         return window.innerWidth <= 768;
     }
     
-    // Desktop: Hover to open sidebar
     if (hoverZone) {
         hoverZone.addEventListener('mouseenter', function() {
             if (!isMobile() && sidebar) {
@@ -49,7 +48,6 @@ function initSidebar() {
         });
     }
     
-    // Mobile: Toggle button
     if (toggleBtn) {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -59,7 +57,6 @@ function initSidebar() {
         });
     }
     
-    // Close sidebar when clicking outside (mobile only)
     document.addEventListener('click', function(e) {
         if (isMobile() && sidebar && toggleBtn) {
             if (!sidebar.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
@@ -68,7 +65,6 @@ function initSidebar() {
         }
     });
     
-    // Handle window resize
     window.addEventListener('resize', function() {
         if (!isMobile() && sidebar) {
             sidebar.classList.add('active');
@@ -78,7 +74,6 @@ function initSidebar() {
     });
 }
 
-// Jalankan sidebar
 initSidebar();
 
 // ========== HELPER FUNCTIONS ==========
@@ -112,6 +107,88 @@ function escapeHtml(text) {
         if (m === '>') return '&gt;';
         return m;
     });
+}
+
+// ========== FUNGSI CLOSING & TIDAK TERTARIK ==========
+// Fungsi untuk menyimpan ke database closing
+async function saveToClosingDB(id, data) {
+    try {
+        await db.collection('db_closing').add({
+            nama: data.nama,
+            hp: data.hp,
+            tanggal: data.tanggal || new Date().toISOString().split('T')[0],
+            closing_date: new Date().toISOString(),
+            user_id: currentUser.uid
+        });
+        
+        // Hapus dari customers
+        await db.collection('customers').doc(id).delete();
+        
+        showNotif('✅ Data berhasil masuk Database Closing!');
+        return true;
+    } catch (error) {
+        showNotif('❌ Gagal menyimpan ke DB Closing: ' + error.message, true);
+        return false;
+    }
+}
+
+// Fungsi untuk menyimpan ke database tidak tertarik
+async function saveToTidakTertarikDB(id, data) {
+    try {
+        await db.collection('db_tidak_tertarik').add({
+            nama: data.nama,
+            hp: data.hp,
+            tanggal: new Date().toISOString(),
+            user_id: currentUser.uid
+        });
+        
+        // Hapus dari prospek
+        await db.collection('prospek').doc(id).delete();
+        
+        showNotif('✅ Data berhasil masuk Database Tidak Tertarik!');
+        return true;
+    } catch (error) {
+        showNotif('❌ Gagal menyimpan ke DB Tidak Tertarik: ' + error.message, true);
+        return false;
+    }
+}
+
+// Fungsi konfirmasi untuk closing
+async function confirmClosing(id, data) {
+    const result = confirm(
+        "⚠️ PERHATIAN!\n\n" +
+        "Anda akan memindahkan data ini ke DATABASE CLOSING.\n\n" +
+        "✅ OK = Pindahkan ke DB Closing (data akan diarsipkan)\n" +
+        "❌ CANCEL = Tetap di kolom Closing (tidak diarsipkan)\n\n" +
+        "Apakah Anda yakin?"
+    );
+    
+    if (result) {
+        await saveToClosingDB(id, data);
+    } else {
+        // Hanya update status ke closing tanpa mengarsip
+        await db.collection('customers').doc(id).update({ status: 'closing' });
+        showNotif('📌 Data tetap di kolom Closing (tidak diarsipkan)');
+    }
+}
+
+// Fungsi konfirmasi untuk tidak tertarik
+async function confirmTidakTertarik(id, data) {
+    const result = confirm(
+        "⚠️ PERHATIAN!\n\n" +
+        "Anda akan memindahkan data ini ke DATABASE TIDAK TERTARIK.\n\n" +
+        "✅ OK = Pindahkan ke DB Tidak Tertarik (data akan diarsipkan)\n" +
+        "❌ CANCEL = Tetap di kolom Tidak Tertarik (tidak diarsipkan)\n\n" +
+        "Apakah Anda yakin?"
+    );
+    
+    if (result) {
+        await saveToTidakTertarikDB(id, data);
+    } else {
+        // Hanya update status ke tidak tertarik tanpa mengarsip
+        await db.collection('prospek').doc(id).update({ status: 'Tidak Tertarik' });
+        showNotif('📌 Data tetap di kolom Tidak Tertarik (tidak diarsipkan)');
+    }
 }
 
 // ========== TOGGLE PASSWORD ==========
@@ -208,14 +285,12 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
         
-        // Hide all pages
         const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage'];
         pages.forEach(p => {
             const el = document.getElementById(p);
             if (el) el.style.display = 'none';
         });
         
-        // Show selected page
         if (page === 'dashboard') {
             const dashboardPage = document.getElementById('dashboardPage');
             if (dashboardPage) dashboardPage.style.display = 'block';
@@ -232,11 +307,9 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
             loadDBTidak();
         }
         
-        // Update active menu
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         
-        // Close sidebar on mobile after click
         if (window.innerWidth <= 768) {
             const sidebar = document.getElementById('sidebar');
             if (sidebar) sidebar.classList.remove('active');
@@ -272,7 +345,6 @@ if (previewFoto) {
     });
 }
 
-// Upload foto profile
 const profileFoto = document.getElementById('profileFoto');
 if (profileFoto) {
     profileFoto.addEventListener('change', function(e) {
@@ -412,7 +484,7 @@ function openDetailCustomer(id) {
                 <button onclick="openWA('${d.hp}')">WhatsApp</button>
                 <button onclick="updateStatus('${id}','followup')">Follow Up</button>
                 <button onclick="updateStatus('${id}','pending')">Pending</button>
-                <button onclick="updateStatus('${id}','closing')">Closing</button>
+                <button onclick="confirmClosingFromDetail('${id}')" style="background:#10b981;color:white;">Closing</button>
                 <button onclick="deleteCustomer('${id}')" style="background:#ef4444;color:white;">Hapus</button>
                 <button onclick="closeModal('detailModal')">Tutup</button>
             </div>
@@ -437,7 +509,7 @@ function openDetailProspek(id) {
                 <button onclick="openWA('${d.hp}')">WhatsApp</button>
                 <button onclick="updateProspekStatus('${id}','Sudah Dihubungi')">Dihubungi</button>
                 <button onclick="updateProspekStatus('${id}','Tertarik')">Tertarik</button>
-                <button onclick="updateProspekStatus('${id}','Tidak Tertarik')">Tidak Tertarik</button>
+                <button onclick="confirmTidakTertarikFromDetail('${id}')" style="background:#ef4444;color:white;">Tidak Tertarik</button>
                 ${d.status === 'Tertarik' ? `<button onclick="convertToCustomer('${id}')">Jadikan Customer</button>` : ''}
                 <button onclick="deleteProspek('${id}')" style="background:#ef4444;color:white;">Hapus</button>
                 <button onclick="closeModal('detailModal')">Tutup</button>
@@ -446,6 +518,23 @@ function openDetailProspek(id) {
         modal.style.display = 'flex';
     });
 }
+
+// Fungsi konfirmasi dari detail modal
+window.confirmClosingFromDetail = async function(id) {
+    closeModal('detailModal');
+    const doc = await db.collection('customers').doc(id).get();
+    if (doc.exists) {
+        await confirmClosing(id, doc.data());
+    }
+};
+
+window.confirmTidakTertarikFromDetail = async function(id) {
+    closeModal('detailModal');
+    const doc = await db.collection('prospek').doc(id).get();
+    if (doc.exists) {
+        await confirmTidakTertarik(id, doc.data());
+    }
+};
 
 window.updateStatus = function(id, status) {
     db.collection('customers').doc(id).update({ status: status });
@@ -593,6 +682,7 @@ function loadDBClosing() {
                     <div class="db-item-info">
                         <h4>${escapeHtml(d.nama)}</h4>
                         <p>${d.hp}</p>
+                        <small>Closing: ${new Date(d.closing_date).toLocaleDateString('id-ID')}</small>
                     </div>
                     <button onclick="openWA('${d.hp}')">WhatsApp</button>
                 </div>
@@ -614,6 +704,7 @@ function loadDBTidak() {
                     <div class="db-item-info">
                         <h4>${escapeHtml(d.nama)}</h4>
                         <p>${d.hp}</p>
+                        <small>Tanggal: ${new Date(d.tanggal).toLocaleDateString('id-ID')}</small>
                     </div>
                     <button onclick="openWA('${d.hp}')">WhatsApp</button>
                 </div>
@@ -692,7 +783,7 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     });
 }
 
-// ========== DRAG AND DROP ==========
+// ========== DRAG AND DROP DENGAN KONFIRMASI ==========
 function initDragAndDrop() {
     // Customer drag and drop
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
@@ -710,11 +801,24 @@ function initDragAndDrop() {
                 group: 'customers',
                 animation: 200,
                 draggable: '.card-item',
-                onEnd: function(evt) {
+                onEnd: async function(evt) {
                     const id = evt.item.dataset.id;
                     const newStatus = customerStatusMap[evt.to.id];
+                    
                     if (id && newStatus && currentUser) {
-                        db.collection('customers').doc(id).update({ status: newStatus });
+                        // Jika dipindah ke column CLOSING
+                        if (newStatus === 'closing') {
+                            // Ambil data customer
+                            const doc = await db.collection('customers').doc(id).get();
+                            if (doc.exists) {
+                                // Tampilkan konfirmasi
+                                await confirmClosing(id, doc.data());
+                            }
+                        } else {
+                            // Update status biasa
+                            await db.collection('customers').doc(id).update({ status: newStatus });
+                            showNotif(`Status diubah menjadi ${newStatus}`);
+                        }
                     }
                 }
             });
@@ -738,11 +842,24 @@ function initDragAndDrop() {
                 group: 'prospek',
                 animation: 200,
                 draggable: '.card-item',
-                onEnd: function(evt) {
+                onEnd: async function(evt) {
                     const id = evt.item.dataset.id;
                     const newStatus = prospekStatusMap[evt.to.id];
+                    
                     if (id && newStatus && currentUser) {
-                        db.collection('prospek').doc(id).update({ status: newStatus });
+                        // Jika dipindah ke column TIDAK TERTARIK
+                        if (newStatus === 'Tidak Tertarik') {
+                            // Ambil data prospek
+                            const doc = await db.collection('prospek').doc(id).get();
+                            if (doc.exists) {
+                                // Tampilkan konfirmasi
+                                await confirmTidakTertarik(id, doc.data());
+                            }
+                        } else {
+                            // Update status biasa
+                            await db.collection('prospek').doc(id).update({ status: newStatus });
+                            showNotif(`Status diubah menjadi ${newStatus}`);
+                        }
                     }
                 }
             });
@@ -788,7 +905,7 @@ function loadAllData() {
             const container = document.getElementById(status + 'List');
             if (container) {
                 container.innerHTML = lists[status].map(item => `
-                    <div class="card-item" data-id="${item.id}">
+                    <div class="card-item" data-id="${item.id}" data-status="${status}">
                         <div class="card-name">${escapeHtml(item.nama)}</div>
                         <div class="card-phone">
                             <span>${item.hp}</span>
@@ -821,56 +938,4 @@ function loadAllData() {
             const st = d.status || 'Baru';
             if (st === 'Baru') {
                 baru++;
-                lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else if (st === 'Sudah Dihubungi') {
-                dihubungi++;
-                lists.prospekDihubungi.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else if (st === 'Tertarik') {
-                tertarik++;
-                lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            } else {
-                tidak++;
-                lists.prospekTidak.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            }
-        });
-        
-        document.getElementById('countProspekBaru').innerText = baru;
-        document.getElementById('countDihubungi').innerText = dihubungi;
-        document.getElementById('countTertarik').innerText = tertarik;
-        document.getElementById('countTidakTertarik').innerText = tidak;
-        
-        for (let col in lists) {
-            const container = document.getElementById(col + 'List');
-            if (container) {
-                container.innerHTML = lists[col].map(item => `
-                    <div class="card-item" data-id="${item.id}">
-                        <div class="card-name">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone">
-                            <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span>
-                        </div>
-                    </div>
-                `).join('');
-                
-                container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => {
-                        if (!e.target.classList.contains('whatsapp-icon')) {
-                            openDetailProspek(card.dataset.id);
-                        }
-                    });
-                });
-            }
-        }
-        
-        updateChartProspek(baru, dihubungi, tertarik, tidak);
-        initDragAndDrop();
-    });
-}
-
-// Notifikasi
-const notifBtn = document.getElementById('notifBtn');
-if (notifBtn) {
-    notifBtn.addEventListener('click', () => {
-        showNotif('Fitur notifikasi dalam pengembangan');
-    });
-}
+                lists.prospekBar
