@@ -557,6 +557,8 @@ window.confirmTidakTertarik = async function(id) {
 // ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
+const fileInfo = document.getElementById('fileInfo');
+
 if (dropZone) {
     dropZone.addEventListener('click', () => {
         if (excelFileInput) excelFileInput.click();
@@ -565,68 +567,157 @@ if (dropZone) {
 
 if (excelFileInput) {
     excelFileInput.addEventListener('change', function(e) {
-        if (e.target.files[0]) {
-            const fileInfo = document.getElementById('fileInfo');
-            if (fileInfo) fileInfo.innerHTML = '📄 ' + e.target.files[0].name;
+        const file = e.target.files[0];
+        if (file) {
+            console.log('File selected:', file.name);
+            if (fileInfo) {
+                fileInfo.innerHTML = `📄 ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                fileInfo.style.color = '#10b981';
+            }
+        } else {
+            if (fileInfo) fileInfo.innerHTML = '';
         }
     });
 }
 
+// Radio option untuk pilih tujuan import
 document.querySelectorAll('.radio-option').forEach(opt => {
     opt.addEventListener('click', function() {
         importType = this.dataset.import;
         document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active'));
         this.classList.add('active');
+        console.log('Import type changed to:', importType);
     });
 });
 
+// Tombol import
 const importBtn = document.getElementById('importBtn');
 if (importBtn) {
     importBtn.addEventListener('click', async () => {
         const file = excelFileInput ? excelFileInput.files[0] : null;
+        
+        console.log('Import button clicked, file:', file ? file.name : 'no file');
+        
         if (!file) {
-            showNotif('Pilih file dulu!', true);
+            showNotif('Pilih file Excel dulu!', true);
             return;
         }
         
-        importBtn.textContent = 'Memproses...';
+        // Cek ekstensi file
+        const fileExt = file.name.split('.').pop().toLowerCase();
+        if (!['xlsx', 'xls', 'csv'].includes(fileExt)) {
+            showNotif('Format file harus .xlsx, .xls, atau .csv', true);
+            return;
+        }
+        
+        importBtn.textContent = '📥 Memproses...';
         importBtn.disabled = true;
         
         const reader = new FileReader();
+        
         reader.onload = async function(e) {
-            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            
-            let success = 0, failed = 0;
-            for (let row of json) {
-                let nama = row.nama || row.Nama;
-                let hp = row.hp || row.HP;
-                if (!nama || !hp) { failed++; continue; }
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
                 
-                hp = hp.toString();
-                if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
+                console.log('Data dari Excel:', json);
+                console.log('Jumlah data:', json.length);
+                console.log('Tipe import:', importType);
                 
-                if (importType === 'prospek') {
-                    await db.collection('prospek').add({
-                        nama: nama, hp: hp, status: 'Baru',
-                        user_id: currentUser.uid, created_at: new Date().toISOString()
-                    });
-                } else {
-                    await db.collection('customers').add({
-                        nama: nama, hp: hp,
-                        tanggal: new Date().toISOString().split('T')[0],
-                        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
-                    });
+                if (json.length === 0) {
+                    showNotif('File Excel kosong!', true);
+                    importBtn.textContent = '🚀 Import Data Sekarang';
+                    importBtn.disabled = false;
+                    return;
                 }
-                success++;
+                
+                let success = 0;
+                let failed = 0;
+                let errors = [];
+                
+                for (let i = 0; i < json.length; i++) {
+                    const row = json[i];
+                    let nama = row.nama || row.Nama || row.NAMA || row.name || row.Name;
+                    let hp = row.hp || row.HP || row.no_hp || row.phone || row.telp;
+                    
+                    console.log(`Row ${i + 1}:`, { nama, hp });
+                    
+                    if (!nama || !hp) {
+                        failed++;
+                        errors.push(`Baris ${i + 1}: Nama atau HP kosong`);
+                        continue;
+                    }
+                    
+                    // Format nomor HP
+                    hp = hp.toString().trim();
+                    // Hapus semua karakter non-digit
+                    let cleanHp = hp.replace(/\D/g, '');
+                    
+                    // Format ke +62
+                    if (cleanHp.startsWith('0')) {
+                        cleanHp = '62' + cleanHp.substring(1);
+                    } else if (cleanHp.startsWith('62')) {
+                        cleanHp = cleanHp;
+                    } else if (cleanHp.startsWith('8')) {
+                        cleanHp = '62' + cleanHp;
+                    }
+                    
+                    // Pastikan ada +62 di depan
+                    const formattedHp = '+' + cleanHp;
+                    
+                    console.log(`Formatted HP: ${formattedHp}`);
+                    
+                    if (importType === 'prospek') {
+                        await db.collection('prospek').add({
+                            nama: nama,
+                            hp: formattedHp,
+                            status: 'Baru',
+                            user_id: currentUser.uid,
+                            created_at: new Date().toISOString()
+                        });
+                    } else {
+                        await db.collection('customers').add({
+                            nama: nama,
+                            hp: formattedHp,
+                            tanggal: new Date().toISOString().split('T')[0],
+                            status: 'baru',
+                            user_id: currentUser.uid,
+                            created_at: new Date().toISOString()
+                        });
+                    }
+                    success++;
+                }
+                
+                let message = `✅ Import selesai!\n📊 Berhasil: ${success}\n❌ Gagal: ${failed}`;
+                if (errors.length > 0 && errors.length <= 5) {
+                    message += '\n\nDetail error:\n' + errors.join('\n');
+                } else if (errors.length > 5) {
+                    message += `\n\n${errors.length} data gagal diimport (format tidak valid)`;
+                }
+                alert(message);
+                
+                // Reset file input
+                excelFileInput.value = '';
+                if (fileInfo) fileInfo.innerHTML = '';
+                
+            } catch (error) {
+                console.error('Error processing Excel:', error);
+                showNotif('Gagal memproses file: ' + error.message, true);
+            } finally {
+                importBtn.textContent = '🚀 Import Data Sekarang';
+                importBtn.disabled = false;
             }
-            
-            alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
-            if (excelFileInput) excelFileInput.value = '';
-            if (fileInfo) fileInfo.innerHTML = '';
+        };
+        
+        reader.onerror = function(error) {
+            console.error('FileReader error:', error);
+            showNotif('Gagal membaca file', true);
             importBtn.textContent = '🚀 Import Data Sekarang';
             importBtn.disabled = false;
         };
+        
         reader.readAsArrayBuffer(file);
     });
 }
