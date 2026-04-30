@@ -485,7 +485,6 @@ body {
 .chart-card:hover canvas {
     transform: scale(1.02);
 }
-
 /* Board Sections */
 .board-section {
     background: white;
