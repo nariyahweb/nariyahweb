@@ -15,13 +15,9 @@
 <title>FLOUPYUD - CRM Agent</title>
 
 <style>
-/* ========== SEMUA CSS DI SINI ========== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body { 
-    font-family: 'Segoe UI', Arial, sans-serif; 
-    background: #f5f3ff; 
-}
+body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f3ff; }
 
 /* Login Page */
 #loginPage { 
@@ -69,20 +65,13 @@ body {
     margin-top: 10px;
 }
 
-.login-box button:hover {
-    background: #6d28d9;
-}
+.login-box button:hover { background: #6d28d9; }
 
 /* App Container */
-#app { 
-    display: none; 
-}
+#app { display: none; }
 
 /* Layout */
-.layout {
-    display: flex;
-    height: 100vh;
-}
+.layout { display: flex; height: 100vh; }
 
 /* Sidebar */
 .sidebar {
@@ -100,15 +89,8 @@ body {
     overflow-y: auto;
 }
 
-.sidebar.active {
-    transform: translateX(0);
-}
-
-.sidebar h2 {
-    color: #7c3aed;
-    margin-bottom: 20px;
-    font-size: 20px;
-}
+.sidebar.active { transform: translateX(0); }
+.sidebar h2 { color: #7c3aed; margin-bottom: 20px; font-size: 20px; }
 
 .menu-item {
     padding: 12px;
@@ -119,24 +101,10 @@ body {
     transition: all 0.2s;
 }
 
-.menu-item:hover {
-    background: #f3e8ff;
-}
-
-.menu-item.active {
-    background: #7c3aed;
-    color: white;
-}
-
-.menu-item.logout {
-    background: #ef4444;
-    color: white;
-    margin-top: 20px;
-}
-
-.menu-item.logout:hover {
-    background: #dc2626;
-}
+.menu-item:hover { background: #f3e8ff; }
+.menu-item.active { background: #7c3aed; color: white; }
+.menu-item.logout { background: #ef4444; color: white; margin-top: 20px; }
+.menu-item.logout:hover { background: #dc2626; }
 
 /* Topbar */
 .topbar {
@@ -155,38 +123,12 @@ body {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-.top-left {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
+.top-left { display: flex; align-items: center; gap: 15px; }
+.toggle-btn { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+.top-center { position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; }
+.top-right { display: flex; align-items: center; gap: 20px; }
 
-.toggle-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.top-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-weight: bold;
-}
-
-.top-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.notif {
-    position: relative;
-    cursor: pointer;
-}
-
+.notif { position: relative; cursor: pointer; }
 .notif span {
     position: absolute;
     top: -8px;
@@ -198,22 +140,14 @@ body {
     border-radius: 50%;
 }
 
-.profile img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid white;
-    cursor: pointer;
-}
+.profile img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; cursor: pointer; }
 
 /* Content */
 .content {
     margin-top: 60px;
-    margin-left: 0;
     padding: 20px;
     flex: 1;
     overflow-y: auto;
-    transition: margin-left 0.3s;
 }
 
 /* Stats Cards */
@@ -236,21 +170,9 @@ body {
     transition: transform 0.2s;
 }
 
-.stat-modern:hover {
-    transform: translateY(-3px);
-}
-
-.stat-modern h4 {
-    color: #888;
-    font-size: 12px;
-    margin-bottom: 5px;
-}
-
-.stat-modern p {
-    font-size: 24px;
-    font-weight: bold;
-    color: #7c3aed;
-}
+.stat-modern:hover { transform: translateY(-3px); }
+.stat-modern h4 { color: #888; font-size: 12px; margin-bottom: 5px; }
+.stat-modern p { font-size: 24px; font-weight: bold; color: #7c3aed; }
 
 /* Charts */
 .chart-container {
@@ -267,9 +189,7 @@ body {
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.chart-box canvas {
-    max-height: 250px;
-}
+.chart-box canvas { max-height: 250px; }
 
 /* Board Sections */
 .board-section {
@@ -345,9 +265,7 @@ body {
     color: #666;
 }
 
-.mini-list {
-    min-height: 200px;
-}
+.mini-list { min-height: 200px; }
 
 /* Import Section */
 .import-modern {
@@ -445,10 +363,7 @@ body {
     cursor: pointer;
 }
 
-.modal-box button:first-of-type {
-    background: #7c3aed;
-    color: white;
-}
+.modal-box button:first-of-type { background: #7c3aed; color: white; }
 
 /* Notif Box */
 #notifBox {
@@ -478,25 +393,6 @@ body {
     font-size: 12px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .mini-board {
-        grid-template-columns: 1fr;
-    }
-    
-    .stats-modern {
-        grid-template-columns: 1fr 1fr;
-    }
-    
-    .chart-container {
-        grid-template-columns: 1fr;
-    }
-    
-    .import-content {
-        grid-template-columns: 1fr;
-    }
-}
-
 /* Icon Circle */
 .icon-circle {
     width: 45px;
@@ -513,16 +409,14 @@ body {
 .icon-circle.blue { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
 .icon-circle.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
 
-/* Utility */
-hr {
-    margin: 15px 0;
-    border: none;
-    border-top: 1px solid #eee;
-}
+hr { margin: 15px 0; border: none; border-top: 1px solid #eee; }
+small { font-size: 11px; color: #888; }
 
-small {
-    font-size: 11px;
-    color: #888;
+@media (max-width: 768px) {
+    .mini-board { grid-template-columns: 1fr; }
+    .stats-modern { grid-template-columns: 1fr 1fr; }
+    .chart-container { grid-template-columns: 1fr; }
+    .import-content { grid-template-columns: 1fr; }
 }
 </style>
 </head>
@@ -642,7 +536,7 @@ small {
                     </div>
                 </div>
                 
-                <!-- IMPORT SECTION (hidden by default) -->
+                <!-- IMPORT SECTION -->
                 <div id="importSection" style="display:none;">
                     <div class="import-modern">
                         <div class="import-header"><div class="icon">📥</div><div><h2>Import Data Excel</h2><p>Import data dengan mudah dan cepat</p></div></div>
@@ -694,6 +588,7 @@ const firebaseConfig = {
     projectId: "floupyud"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -705,8 +600,8 @@ let importType = "prospek";
 let chartCustomer = null;
 let chartProspek = null;
 
-// ========== LOGIN FUNCTION ==========
-window.handleLogin = async function() {
+// ========== LOGIN FUNCTIONS ==========
+window.handleLogin = function() {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
@@ -715,20 +610,21 @@ window.handleLogin = async function() {
         return;
     }
     
-    try {
-        const result = await auth.signInWithEmailAndPassword(email, password);
-        console.log('Login sukses:', result.user.uid);
-    } catch(error) {
-        alert('Login gagal: ' + error.message);
-    }
+    auth.signInWithEmailAndPassword(email, password)
+        .then((result) => {
+            console.log('Login sukses:', result.user.uid);
+        })
+        .catch((error) => {
+            alert('Login gagal: ' + error.message);
+        });
 }
 
 window.handleLogout = function() {
     auth.signOut();
 }
 
-// ========== AUTH STATE ==========
-auth.onAuthStateChanged(async (user) => {
+// ========== AUTH STATE LISTENER ==========
+auth.onAuthStateChanged((user) => {
     const loginPage = document.getElementById('loginPage');
     const app = document.getElementById('app');
     
@@ -738,19 +634,20 @@ auth.onAuthStateChanged(async (user) => {
         app.style.display = 'block';
         
         // Load user profile
-        const doc = await db.collection('users').doc(user.uid).get();
-        let nama = 'CS Agent';
-        let foto = 'https://i.pravatar.cc/40';
-        
-        if(doc.exists) {
-            const data = doc.data();
-            if(data.nama) nama = data.nama;
-            if(data.foto) foto = data.foto;
-        }
-        
-        document.getElementById('topCenterName').innerText = nama;
-        document.getElementById('topProfileImg').src = foto;
-        document.getElementById('previewFoto').src = foto;
+        db.collection('users').doc(user.uid).get().then((doc) => {
+            let nama = 'CS Agent';
+            let foto = 'https://i.pravatar.cc/40';
+            
+            if(doc.exists) {
+                const data = doc.data();
+                if(data.nama) nama = data.nama;
+                if(data.foto) foto = data.foto;
+            }
+            
+            document.getElementById('topCenterName').innerText = nama;
+            document.getElementById('topProfileImg').src = foto;
+            document.getElementById('previewFoto').src = foto;
+        });
         
         // Load all data
         loadAllData();
@@ -763,11 +660,21 @@ auth.onAuthStateChanged(async (user) => {
 
 // ========== NAVIGATION ==========
 window.showSection = function(section) {
-    document.getElementById('dashboardSection').style.display = section === 'dashboard' ? 'block' : 'none';
-    document.getElementById('importSection').style.display = section === 'import' ? 'block' : 'none';
+    const dashboardSection = document.getElementById('dashboardSection');
+    const importSection = document.getElementById('importSection');
+    
+    if(section === 'dashboard') {
+        dashboardSection.style.display = 'block';
+        importSection.style.display = 'none';
+    } else {
+        dashboardSection.style.display = 'none';
+        importSection.style.display = 'block';
+    }
     
     // Update active menu
-    document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+    document.querySelectorAll('.menu-item').forEach(item => {
+        item.classList.remove('active');
+    });
     event.target.classList.add('active');
 }
 
@@ -780,17 +687,22 @@ window.toggleSidebar = function() {
 document.addEventListener('click', function(e) {
     const sidebar = document.querySelector('.sidebar');
     const toggleBtn = document.querySelector('.toggle-btn');
-    if(sidebar && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+    if(sidebar && toggleBtn && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
         sidebar.classList.remove('active');
     }
 });
+
+// ========== MODAL FUNCTIONS ==========
+window.closeModal = function(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
 
 // ========== CUSTOMER FUNCTIONS ==========
 window.openModalCustomer = function() {
     document.getElementById('modalCustomer').style.display = 'flex';
 }
 
-window.saveCustomer = async function() {
+window.saveCustomer = function() {
     const nama = document.getElementById('nama').value;
     const hp = document.getElementById('hp').value;
     const tanggal = document.getElementById('tanggal').value;
@@ -800,24 +712,22 @@ window.saveCustomer = async function() {
         return;
     }
     
-    try {
-        await db.collection('customers').add({
-            nama: nama,
-            hp: hp,
-            tanggal: tanggal || new Date().toISOString().split('T')[0],
-            status: 'baru',
-            user_id: currentUser.uid,
-            created_at: new Date().toISOString()
-        });
-        
+    db.collection('customers').add({
+        nama: nama,
+        hp: hp,
+        tanggal: tanggal || new Date().toISOString().split('T')[0],
+        status: 'baru',
+        user_id: currentUser.uid,
+        created_at: new Date().toISOString()
+    }).then(() => {
         document.getElementById('nama').value = '';
         document.getElementById('hp').value = '+62';
         document.getElementById('tanggal').value = '';
         closeModal('modalCustomer');
         alert('Data berhasil disimpan!');
-    } catch(error) {
+    }).catch((error) => {
         alert('Gagal menyimpan: ' + error.message);
-    }
+    });
 }
 
 // ========== PROSPEK FUNCTIONS ==========
@@ -825,7 +735,7 @@ window.openModalProspek = function() {
     document.getElementById('modalProspek').style.display = 'flex';
 }
 
-window.saveProspek = async function() {
+window.saveProspek = function() {
     const nama = document.getElementById('p_nama').value;
     const hp = document.getElementById('p_hp').value;
     
@@ -834,34 +744,43 @@ window.saveProspek = async function() {
         return;
     }
     
-    try {
-        await db.collection('prospek').add({
-            nama: nama,
-            hp: hp,
-            status: 'Baru',
-            user_id: currentUser.uid,
-            created_at: new Date().toISOString()
-        });
-        
+    db.collection('prospek').add({
+        nama: nama,
+        hp: hp,
+        status: 'Baru',
+        user_id: currentUser.uid,
+        created_at: new Date().toISOString()
+    }).then(() => {
         document.getElementById('p_nama').value = '';
         document.getElementById('p_hp').value = '+62';
         closeModal('modalProspek');
         alert('Data berhasil disimpan!');
-    } catch(error) {
+    }).catch((error) => {
         alert('Gagal menyimpan: ' + error.message);
+    });
+}
+
+// ========== WHATSAPP ==========
+window.openWA = function(hp) {
+    if(!hp) {
+        alert('Nomor tidak tersedia');
+        return;
     }
+    let nomor = hp.replace('+', '');
+    if(nomor.startsWith('0')) nomor = '62' + nomor.substring(1);
+    window.open('https://wa.me/' + nomor, '_blank');
 }
 
 // ========== LOAD DATA ==========
-async function loadAllData() {
+function loadAllData() {
     if(!currentUser) return;
     
     // Load customers
-    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snapshot => {
+    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot((snapshot) => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const baruList = [], followupList = [], pendingList = [], closingList = [];
         
-        snapshot.forEach(doc => {
+        snapshot.forEach((doc) => {
             const data = doc.data();
             total++;
             if(data.status === 'closing') closing++;
@@ -895,11 +814,11 @@ async function loadAllData() {
     });
     
     // Load prospek
-    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snapshot => {
+    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot((snapshot) => {
         let baru = 0, hubungi = 0, tertarik = 0, tidak = 0;
         const baruList = [], hubungiList = [], tertarikList = [], tidakList = [];
         
-        snapshot.forEach(doc => {
+        snapshot.forEach((doc) => {
             const data = doc.data();
             const status = data.status || 'Baru';
             
@@ -928,11 +847,10 @@ function renderCustomerCards(containerId, items) {
     const container = document.getElementById(containerId);
     if(!container) return;
     container.innerHTML = '';
-    items.forEach(item => {
+    items.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'mini-card';
         card.setAttribute('data-id', item.id);
-        card.onclick = () => openDetailCustomer(item.id);
         card.innerHTML = `<b>${item.nama || '-'}</b><div class="mini-phone"><span>${item.hp || '-'}</span><span onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div>`;
         container.appendChild(card);
     });
@@ -942,11 +860,8 @@ function renderProspekCards(containerId, items) {
     const container = document.getElementById(containerId);
     if(!container) return;
     container.innerHTML = '';
-    items.forEach(item => {
+    items.forEach((item) => {
         const card = document.createElement('div');
         card.className = 'mini-card';
         card.setAttribute('data-id', item.id);
-        card.onclick = () => openDetailProspek(item.id);
-        card.innerHTML = `<b>${item.nama || '-'}</b><div class="mini-phone"><span>${item.hp || '-'}</span><span onclick="event.stopPropagation(); openWA('${item.hp}')">🟢</span></div>`;
-        container.appendChild(card);
-    });
+        card.innerHTML = `<b>${item.nama || '-'}</b><div class="mini-phone"><span>${item.hp || '-'}</span><span onclick="event.stopPropagation(); openWA('${item.hp}')">
