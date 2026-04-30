@@ -111,84 +111,26 @@
                         <div class="chart-card"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
                     </div>
 
-                    <!-- FOLLOWUP & PROSPEK AGEN - SIDE BY SIDE -->
-<div class="boards-wrapper">
-    <!-- FOLLOWUP AGEN BOARD -->
-    <div class="board-section">
-        <div class="board-header">
-            <h3>📞 Followup Agen</h3>
-            <button class="add-btn" id="addCustomerBtn">+ Tambah Data</button>
-        </div>
-        <div class="kanban-board">
-            <div class="kanban-column">
-                <div class="column-header purple-header">
-                    <span>Baru</span>
-                    <span class="count" id="countBaru">0</span>
-                </div>
-                <div class="kanban-cards" id="baruList"></div>
-            </div>
-            <div class="kanban-column">
-                <div class="column-header blue-header">
-                    <span>Follow Up</span>
-                    <span class="count" id="countFollowup">0</span>
-                </div>
-                <div class="kanban-cards" id="followupList"></div>
-            </div>
-            <div class="kanban-column">
-                <div class="column-header orange-header">
-                    <span>Pending</span>
-                    <span class="count" id="countPending">0</span>
-                </div>
-                <div class="kanban-cards" id="pendingList"></div>
-            </div>
-            <div class="kanban-column">
-                <div class="column-header green-header">
-                    <span>Closing</span>
-                    <span class="count" id="countClosing">0</span>
-                </div>
-                <div class="kanban-cards" id="closingList"></div>
-            </div>
-        </div>
-    </div>
+                    <div class="board-section">
+                        <div class="board-header"><h3>📞 Followup Agen</h3><button class="add-btn" id="addCustomerBtn">+ Tambah Data</button></div>
+                        <div class="kanban-board">
+                            <div class="kanban-column"><div class="column-header purple-header"><span>Baru</span><span class="count" id="countBaru">0</span></div><div class="kanban-cards" id="baruList"></div></div>
+                            <div class="kanban-column"><div class="column-header blue-header"><span>Follow Up</span><span class="count" id="countFollowup">0</span></div><div class="kanban-cards" id="followupList"></div></div>
+                            <div class="kanban-column"><div class="column-header orange-header"><span>Pending</span><span class="count" id="countPending">0</span></div><div class="kanban-cards" id="pendingList"></div></div>
+                            <div class="kanban-column"><div class="column-header green-header"><span>Closing</span><span class="count" id="countClosing">0</span></div><div class="kanban-cards" id="closingList"></div></div>
+                        </div>
+                    </div>
 
-    <!-- PROSPEK AGEN BOARD -->
-    <div class="board-section">
-        <div class="board-header">
-            <h3>🎯 Prospek Agen</h3>
-            <button class="add-btn" id="addProspekBtn">+ Tambah Data</button>
-        </div>
-        <div class="kanban-board">
-            <div class="kanban-column">
-                <div class="column-header purple-header">
-                    <span>Baru</span>
-                    <span class="count" id="countProspekBaru">0</span>
+                    <div class="board-section">
+                        <div class="board-header"><h3>🎯 Prospek Agen</h3><button class="add-btn" id="addProspekBtn">+ Tambah Data</button></div>
+                        <div class="kanban-board">
+                            <div class="kanban-column"><div class="column-header purple-header"><span>Baru</span><span class="count" id="countProspekBaru">0</span></div><div class="kanban-cards" id="prospekBaruList"></div></div>
+                            <div class="kanban-column"><div class="column-header blue-header"><span>Dihubungi</span><span class="count" id="countDihubungi">0</span></div><div class="kanban-cards" id="prospekDihubungiList"></div></div>
+                            <div class="kanban-column"><div class="column-header green-header"><span>Tertarik</span><span class="count" id="countTertarik">0</span></div><div class="kanban-cards" id="prospekTertarikList"></div></div>
+                            <div class="kanban-column"><div class="column-header red-header"><span>Tidak Tertarik</span><span class="count" id="countTidakTertarik">0</span></div><div class="kanban-cards" id="prospekTidakList"></div></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="kanban-cards" id="prospekBaruList"></div>
-            </div>
-            <div class="kanban-column">
-                <div class="column-header blue-header">
-                    <span>Dihubungi</span>
-                    <span class="count" id="countDihubungi">0</span>
-                </div>
-                <div class="kanban-cards" id="prospekDihubungiList"></div>
-            </div>
-            <div class="kanban-column">
-                <div class="column-header green-header">
-                    <span>Tertarik</span>
-                    <span class="count" id="countTertarik">0</span>
-                </div>
-                <div class="kanban-cards" id="prospekTertarikList"></div>
-            </div>
-            <div class="kanban-column">
-                <div class="column-header red-header">
-                    <span>Tidak Tertarik</span>
-                    <span class="count" id="countTidakTertarik">0</span>
-                </div>
-                <div class="kanban-cards" id="prospekTidakList"></div>
-            </div>
-        </div>
-    </div>
-</div>
 
                 <!-- IMPORT PAGE -->
                 <div id="importPage" class="page-content" style="display:none">
@@ -213,32 +155,8 @@
 <!-- MODALS -->
 <div class="modal" id="customerModal"><div class="modal-content"><h3>Tambah Customer</h3><input type="text" id="customerName" placeholder="Nama Lengkap"><input type="tel" id="customerPhone" placeholder="No HP" value="+62"><input type="date" id="customerDate"><div class="modal-buttons"><button id="saveCustomerBtn">Simpan</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div></div></div>
 <div class="modal" id="prospekModal"><div class="modal-content"><h3>Tambah Prospek</h3><input type="text" id="prospekName" placeholder="Nama Agen"><input type="tel" id="prospekPhone" placeholder="No HP" value="+62"><select id="prospekStatusSelect"><option value="Baru">Baru</option><option value="Sudah Dihubungi">Sudah Dihubungi</option><option value="Tertarik">Tertarik</option><option value="Tidak Tertarik">Tidak Tertarik</option></select><div class="modal-buttons"><button id="saveProspekBtn">Simpan</button><button class="closeModalBtn" data-modal="prospekModal">Batal</button></div></div></div>
-<div class="modal" id="profileModal">
-    <div class="modal-content">
-        <h3>Profile CS Agent</h3>
-        
-        <!-- Foto Profile dengan upload -->
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img id="previewFoto" src="https://i.pravatar.cc/80" style="width: 80px; height: 80px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 3px solid #4f46e5;">
-            <input type="file" id="profileFoto" hidden accept="image/*">
-            <p style="font-size: 12px; color: #888; margin-top: 8px;">Klik foto untuk ganti</p>
-        </div>
-        
-        <label style="display: block; font-size: 13px; margin-top: 10px;">Nama</label>
-        <input type="text" id="profileName" placeholder="Nama">
-        
-        <label style="display: block; font-size: 13px; margin-top: 10px;">Email</label>
-        <input type="email" id="profileEmail" placeholder="Email" disabled>
-        
-        <label style="display: block; font-size: 13px; margin-top: 10px;">No HP</label>
-        <input type="tel" id="profilePhone" placeholder="No HP" value="+62">
-        
-        <div class="modal-buttons">
-            <button id="saveProfileBtn">Simpan</button>
-            <button class="closeModalBtn" data-modal="profileModal">Batal</button>
-        </div>
-    </div>
-</div>
+<div class="modal" id="profileModal"><div class="modal-content"><h3>Profile CS Agent</h3><div class="profile-photo"><img id="previewFoto" src="https://i.pravatar.cc/80"><input type="file" id="profileFoto" hidden accept="image/*"><p>Klik foto untuk ganti</p></div><input type="text" id="profileName" placeholder="Nama"><input type="email" id="profileEmail" placeholder="Email" disabled><input type="tel" id="profilePhone" placeholder="No HP" value="+62"><div class="modal-buttons"><button id="saveProfileBtn">Simpan</button><button class="closeModalBtn" data-modal="profileModal">Batal</button></div></div></div>
+<div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
 
 <div id="notifBox"></div>
 
