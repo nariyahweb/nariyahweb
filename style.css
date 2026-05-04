@@ -1846,3 +1846,151 @@ body:has(.modal[style*="display: flex"]) {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* ========== MERAPATKAN JARAK ATAS BAWAH ========== */
+
+/* Perkecil jarak antar elemen utama */
+.content-area {
+    padding: 16px 24px !important;
+}
+
+/* Stats grid lebih rapat */
+.stats-grid {
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+}
+
+.stat-card {
+    padding: 12px 16px !important;
+    border-radius: 16px !important;
+}
+
+.stat-info h4 {
+    font-size: 11px !important;
+    margin-bottom: 2px !important;
+}
+
+.stat-info .value {
+    font-size: 24px !important;
+    line-height: 1.2 !important;
+}
+
+.stat-info small {
+    font-size: 9px !important;
+}
+
+.stat-icon {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 18px !important;
+}
+
+/* Charts row lebih rapat */
+.charts-row {
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+}
+
+.chart-card {
+    padding: 12px 16px !important;
+    border-radius: 16px !important;
+}
+
+.chart-card h3 {
+    font-size: 13px !important;
+    margin-bottom: 8px !important;
+}
+
+.chart-card canvas {
+    max-height: 140px !important;
+}
+
+/* Board section lebih rapat */
+.boards-wrapper {
+    gap: 16px !important;
+}
+
+.board-section {
+    padding: 12px 16px !important;
+    border-radius: 16px !important;
+}
+
+.board-header {
+    margin-bottom: 10px !important;
+    padding-bottom: 8px !important;
+}
+
+.board-header h3 {
+    font-size: 14px !important;
+}
+
+.add-btn {
+    padding: 4px 12px !important;
+    font-size: 11px !important;
+}
+
+/* Kanban column lebih rapat */
+.kanban-board {
+    gap: 8px !important;
+}
+
+.kanban-column {
+    padding: 8px !important;
+    border-radius: 12px !important;
+}
+
+.column-header {
+    padding: 4px 4px 6px 0 !important;
+    font-size: 11px !important;
+}
+
+.column-header .count {
+    font-size: 10px !important;
+    padding: 1px 5px !important;
+}
+
+.kanban-cards {
+    min-height: 200px !important;
+}
+
+/* Card item lebih rapat */
+.card-item {
+    padding: 6px 8px !important;
+    margin-bottom: 5px !important;
+    border-radius: 8px !important;
+}
+
+.card-name {
+    font-size: 11px !important;
+    margin-bottom: 2px !important;
+}
+
+.card-phone {
+    font-size: 9px !important;
+}
+
+.whatsapp-icon {
+    font-size: 10px !important;
+}
+
+/* Responsif tetap terjaga */
+@media (max-width: 1024px) {
+    .stats-grid {
+        gap: 10px !important;
+    }
+    .stat-card {
+        padding: 10px 12px !important;
+    }
+    .stat-info .value {
+        font-size: 20px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-area {
+        padding: 12px !important;
+    }
+    .board-section {
+        padding: 10px !important;
+    }
+}
