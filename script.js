@@ -443,8 +443,14 @@ function showModal(modalId) {
 
 function getStatusBadge(status) {
     const statusMap = {
-        'baru': 'status-baru', 'followup': 'status-followup', 'pending': 'status-pending', 'closing': 'status-closing',
-        'Baru': 'status-baru', 'Sudah Dihubungi': 'status-dihubungi', 'Tertarik': 'status-tertarik', 'Tidak Tertarik': 'status-tidak'
+        'baru': 'status-baru',
+        'followup': 'status-followup',
+        'pending': 'status-pending',
+        'closing': 'status-closing',
+        'Baru': 'status-baru',
+        'Sudah Dihubungi': 'status-dihubungi',
+        'Tertarik': 'status-tertarik',
+        'Tidak Tertarik': 'status-tidak'
     };
     const className = statusMap[status] || 'status-baru';
     let displayName = status;
@@ -468,9 +474,27 @@ function openDetailCustomer(id) {
             </div>
             <div class="detail-body">
                 <div class="detail-info">
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${d.tanggal || '-'}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status Saat Ini</label><div class="value">${d.status === 'followup' ? 'Follow Up' : d.status}</div></div></div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📱</div>
+                        <div class="detail-info-content">
+                            <label>Nomor WhatsApp</label>
+                            <div class="value">${escapeHtml(d.hp)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📅</div>
+                        <div class="detail-info-content">
+                            <label>Tanggal Input</label>
+                            <div class="value">${d.tanggal || '-'}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📌</div>
+                        <div class="detail-info-content">
+                            <label>Status Saat Ini</label>
+                            <div class="value">${d.status === 'followup' ? 'Follow Up' : d.status}</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="detail-actions">
                     <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
@@ -492,7 +516,10 @@ function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
         const content = document.getElementById('detailContent');
-        let statusIcon = d.status === 'Sudah Dihubungi' ? '📞' : d.status === 'Tertarik' ? '⭐' : d.status === 'Tidak Tertarik' ? '❌' : '🆕';
+        let statusIcon = '🆕';
+        if (d.status === 'Sudah Dihubungi') statusIcon = '📞';
+        else if (d.status === 'Tertarik') statusIcon = '⭐';
+        else if (d.status === 'Tidak Tertarik') statusIcon = '❌';
         
         content.innerHTML = `
             <div class="detail-header">
@@ -502,9 +529,27 @@ function openDetailProspek(id) {
             </div>
             <div class="detail-body">
                 <div class="detail-info">
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID') : '-'}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status Saat Ini</label><div class="value">${d.status}</div></div></div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📱</div>
+                        <div class="detail-info-content">
+                            <label>Nomor WhatsApp</label>
+                            <div class="value">${escapeHtml(d.hp)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📅</div>
+                        <div class="detail-info-content">
+                            <label>Tanggal Input</label>
+                            <div class="value">${d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID') : '-'}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📌</div>
+                        <div class="detail-info-content">
+                            <label>Status Saat Ini</label>
+                            <div class="value">${d.status}</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="detail-actions">
                     <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
@@ -512,7 +557,11 @@ function openDetailProspek(id) {
                     <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">⭐ Tertarik</button>
                     <button class="btn-danger" onclick="confirmTidakTertarik('${id}')">❌ Tidak Tertarik</button>
                 </div>
-                ${d.status === 'Tertarik' ? `<div style="margin-top:16px;"><button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button></div>` : ''}
+                ${d.status === 'Tertarik' ? `
+                <div style="margin-top: 16px;">
+                    <button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button>
+                </div>
+                ` : ''}
             </div>
             <div class="detail-footer">
                 <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
@@ -557,8 +606,12 @@ window.convertToCustomer = function(id) {
         db.collection('prospek').doc(id).get().then(doc => {
             const d = doc.data();
             db.collection('customers').add({
-                nama: d.nama, hp: d.hp, tanggal: new Date().toISOString().split('T')[0],
-                status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+                nama: d.nama,
+                hp: d.hp,
+                tanggal: new Date().toISOString().split('T')[0],
+                status: 'baru',
+                user_id: currentUser.uid,
+                created_at: new Date().toISOString()
             });
             db.collection('prospek').doc(id).delete();
             showNotif('Berhasil jadi customer!');
