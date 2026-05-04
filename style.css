@@ -1760,3 +1760,114 @@ body:has(.modal[style*="display: flex"]) {
     margin: 0 auto !important;
     display: block !important;
 }
+
+/* ========== PERBAIKAN KANBAN CARD AGAR TIDAK SESAK ========== */
+
+/* Buat kanban board lebih fleksibel */
+.kanban-board {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+}
+
+/* Kolom kanban */
+.kanban-column {
+    min-width: 0 !important;
+    /* Mencegah overflow */
+    overflow: hidden !important;
+}
+
+/* Card item - lebih ringkas */
+.card-item {
+    padding: 8px 10px !important;
+    margin-bottom: 8px !important;
+    border-radius: 10px !important;
+    background: white !important;
+    word-wrap: break-word !important;
+    overflow: hidden !important;
+}
+
+/* Nama card - potong jika terlalu panjang */
+.card-name {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Nomor telepon card */
+.card-phone {
+    font-size: 11px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+.card-phone span:first-child {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex: 1 !important;
+}
+
+/* Header kolom lebih ringkas */
+.column-header {
+    padding: 8px 4px 8px 0 !important;
+    font-size: 13px !important;
+}
+
+.column-header .count {
+    font-size: 11px !important;
+    padding: 2px 8px !important;
+}
+
+/* Responsif untuk layar lebih kecil */
+@media (max-width: 1400px) {
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 12px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .kanban-board {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Perbaikan board section */
+.board-section {
+    padding: 16px !important;
+    min-width: 280px !important;
+}
+
+.board-header h3 {
+    font-size: 16px !important;
+}
+
+.add-btn {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+}
+
+/* Perbaikan chart agar tidak terlalu besar */
+.chart-card canvas {
+    max-height: 180px !important;
+}
+
+.charts-row {
+    gap: 16px !important;
+}
+
+/* Perbaikan stat card */
+.stat-info .value {
+    font-size: 24px !important;
+}
+
+.stat-icon {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 20px !important;
+}
