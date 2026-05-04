@@ -241,7 +241,7 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 
 // ========== PROFILE ==========
-// Event klik foto profile di header (icon profile di pojok kanan atas)
+// Event klik foto profile di header
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
     profileImg.addEventListener('click', () => {
@@ -252,9 +252,7 @@ if (profileImg) {
         db.collection('users').doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
-                // Isi form dengan data yang ada
                 document.getElementById('profileName').value = data.nama || '';
-                // Hapus +62 dari nomor HP untuk ditampilkan di input
                 document.getElementById('profilePhone').value = data.hp ? data.hp.replace('+62', '') : '';
                 if (data.foto) {
                     document.getElementById('previewFoto').src = data.foto;
@@ -264,25 +262,38 @@ if (profileImg) {
     });
 }
 
-// Event untuk ikon kamera (baru ditambahkan)
-const cameraIcon = document.getElementById('cameraIcon');
-if (cameraIcon) {
-    cameraIcon.addEventListener('click', () => {
-        const profileFotoInput = document.getElementById('profileFoto');
-        if (profileFotoInput) profileFotoInput.click();
-    });
+// ========== FUNGSI UNTUK PREVIEW FOTO BESAR ==========
+function showPhotoPreview(imageUrl) {
+    const previewModal = document.getElementById('previewPhotoModal');
+    const previewImage = document.getElementById('previewPhotoLarge');
+    if (previewImage && previewModal) {
+        previewImage.src = imageUrl;
+        previewModal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+    }
 }
 
-// Event untuk preview foto (klik foto langsung)
+// Event klik foto di modal profile (untuk melihat foto besar)
 const previewFoto = document.getElementById('previewFoto');
 if (previewFoto) {
-    previewFoto.addEventListener('click', () => {
+    previewFoto.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const currentPhoto = document.getElementById('previewFoto').src;
+        showPhotoPreview(currentPhoto);
+    });
+}
+
+// Event untuk ikon kamera (untuk mengganti foto)
+const cameraIcon = document.getElementById('cameraIcon');
+if (cameraIcon) {
+    cameraIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
         const profileFotoInput = document.getElementById('profileFoto');
         if (profileFotoInput) profileFotoInput.click();
     });
 }
 
-// Event ketika memilih file foto dari komputer
+// Event ketika memilih file foto dari komputer (untuk mengganti)
 const profileFotoInput = document.getElementById('profileFoto');
 if (profileFotoInput) {
     profileFotoInput.addEventListener('change', function(e) {
@@ -302,6 +313,7 @@ if (profileFotoInput) {
                 if (headerImg) {
                     headerImg.src = e.target.result;
                 }
+                showNotif('Foto baru dipilih, klik Simpan untuk menyimpan');
             };
             reader.readAsDataURL(file);
         }
@@ -321,7 +333,7 @@ if (saveProfileBtn) {
             return;
         }
         
-        // Format nomor HP (tambah +62)
+        // Format nomor HP
         if (hp) {
             hp = hp.replace(/\D/g, '');
             if (hp.startsWith('0')) {
@@ -379,6 +391,16 @@ const profilePhone = document.getElementById('profilePhone');
 formatPhoneInput(customerPhone);
 formatPhoneInput(prospekPhone);
 formatPhoneInput(profilePhone);
+
+// Pastikan modal preview foto bisa ditutup dengan klik di luar
+const previewPhotoModal = document.getElementById('previewPhotoModal');
+if (previewPhotoModal) {
+    previewPhotoModal.addEventListener('click', (e) => {
+        if (e.target === previewPhotoModal) {
+            closeModal('previewPhotoModal');
+        }
+    });
+}
 
 // ========== CUSTOMER CRUD ==========
 const addCustomerBtn = document.getElementById('addCustomerBtn');
