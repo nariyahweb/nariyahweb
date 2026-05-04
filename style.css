@@ -928,7 +928,7 @@ body.modal-open {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* Detail Modal */
+/* ========== DETAIL MODAL - PERBAIKAN ========== */
 #detailModal .modal-content {
     max-width: 450px;
     padding: 0;
@@ -1026,6 +1026,7 @@ body.modal-open {
     color: #1f2937;
 }
 
+/* TOMBOL ACTION - PASTIKAN MUNCUL */
 .detail-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1049,6 +1050,51 @@ body.modal-open {
 
 .detail-actions button:hover {
     transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: #4f46e5;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #4338ca;
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-outline {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.btn-outline:hover {
+    background: #e5e7eb;
 }
 
 .detail-footer {
@@ -1076,17 +1122,6 @@ body.modal-open {
     transform: translateY(-2px);
 }
 
-.btn-primary { background: #4f46e5; color: white; }
-.btn-primary:hover { background: #4338ca; }
-.btn-success { background: #10b981; color: white; }
-.btn-success:hover { background: #059669; }
-.btn-warning { background: #f59e0b; color: white; }
-.btn-warning:hover { background: #d97706; }
-.btn-danger { background: #ef4444; color: white; }
-.btn-danger:hover { background: #dc2626; }
-.btn-outline { background: #f3f4f6; color: #374151; }
-.btn-outline:hover { background: #e5e7eb; }
-
 /* Status Badge */
 .status-badge {
     display: inline-block;
@@ -1096,13 +1131,40 @@ body.modal-open {
     font-weight: 500;
 }
 
-.status-baru { background: #f3e8ff; color: #9333ea; }
-.status-followup { background: #eff6ff; color: #2563eb; }
-.status-pending { background: #fff7ed; color: #ea580c; }
-.status-closing { background: #ecfdf5; color: #16a34a; }
-.status-tertarik { background: #ecfdf5; color: #16a34a; }
-.status-tidak { background: #fef2f2; color: #dc2626; }
-.status-dihubungi { background: #eff6ff; color: #2563eb; }
+.status-baru {
+    background: #f3e8ff;
+    color: #9333ea;
+}
+
+.status-followup {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.status-pending {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.status-closing {
+    background: #ecfdf5;
+    color: #16a34a;
+}
+
+.status-tertarik {
+    background: #ecfdf5;
+    color: #16a34a;
+}
+
+.status-tidak {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.status-dihubungi {
+    background: #eff6ff;
+    color: #2563eb;
+}
 
 /* Form Modal */
 .modal-content h3 {
