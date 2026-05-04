@@ -110,7 +110,7 @@ body {
     min-height: 100vh;
 }
 
-/* ========== SIDEBAR (HOVER MODE - TETAP SEPERTI SEMULA) ========== */
+/* ========== SIDEBAR (HOVER MODE) ========== */
 .sidebar {
     width: 260px;
     background: white;
@@ -202,7 +202,6 @@ body {
     text-transform: uppercase;
 }
 
-/* ========== HOVER ZONE ========== */
 #hoverZone {
     position: fixed;
     left: 0;
@@ -336,48 +335,21 @@ body {
     overflow: hidden;
 }
 
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.05), transparent);
-    transition: left 0.5s ease;
-}
-
-.stat-card:hover::before {
-    left: 100%;
-}
-
 .stat-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15);
-    border-color: #c7d2fe;
 }
 
 .stat-info h4 {
     font-size: 13px;
     color: #6b7280;
     margin-bottom: 6px;
-    transition: color 0.3s ease;
-}
-
-.stat-card:hover .stat-info h4 {
-    color: #4f46e5;
 }
 
 .stat-info .value {
     font-size: 28px;
     font-weight: 700;
     color: #4f46e5;
-    transition: transform 0.3s ease, color 0.3s ease;
-}
-
-.stat-card:hover .stat-info .value {
-    transform: scale(1.05);
-    color: #4338ca;
 }
 
 .stat-info small {
@@ -394,12 +366,6 @@ body {
     justify-content: center;
     font-size: 24px;
     color: white;
-    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-
-.stat-card:hover .stat-icon {
-    transform: scale(1.15) rotate(8deg);
-    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
 }
 
 .bg-purple { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
@@ -420,51 +386,16 @@ body {
     padding: 20px;
     border-radius: 20px;
     border: 1px solid #e5e7eb;
-    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-}
-
-.chart-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.05), transparent);
-    transition: left 0.5s ease;
-}
-
-.chart-card:hover::before {
-    left: 100%;
-}
-
-.chart-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15);
-    border-color: #c7d2fe;
 }
 
 .chart-card h3 {
     font-size: 16px;
     margin-bottom: 15px;
     color: #1f2937;
-    transition: color 0.3s ease;
-}
-
-.chart-card:hover h3 {
-    color: #4f46e5;
 }
 
 .chart-card canvas {
     max-height: 220px;
-    transition: transform 0.3s ease;
-}
-
-.chart-card:hover canvas {
-    transform: scale(1.02);
 }
 
 /* ========== BOARD SECTIONS ========== */
@@ -482,11 +413,6 @@ body {
     flex: 1;
     min-width: 300px;
     border: 1px solid #e5e7eb;
-    transition: all 0.3s ease;
-}
-
-.board-section:hover {
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
 }
 
 .board-header {
@@ -513,12 +439,10 @@ body {
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
-    transition: all 0.2s;
 }
 
 .add-btn:hover {
     background: #4338ca;
-    transform: translateY(-1px);
 }
 
 /* ========== KANBAN BOARD ========== */
@@ -531,38 +455,16 @@ body {
 .kanban-column {
     border-radius: 20px;
     padding: 12px;
-    transition: all 0.2s;
 }
 
 .kanban-column[data-status="baru"],
-.kanban-column[data-status="Baru"] {
-    background: #f3e8ff;
-}
-
+.kanban-column[data-status="Baru"] { background: #f3e8ff; }
 .kanban-column[data-status="followup"],
-.kanban-column[data-status="Sudah Dihubungi"] {
-    background: #eff6ff;
-}
-
-.kanban-column[data-status="pending"] {
-    background: #fff7ed;
-}
-
-.kanban-column[data-status="closing"] {
-    background: #ecfdf5;
-}
-
-.kanban-column[data-status="Tertarik"] {
-    background: #ecfdf5;
-}
-
-.kanban-column[data-status="Tidak Tertarik"] {
-    background: #fef2f2;
-}
-
-.kanban-column:hover {
-    transform: translateY(-2px);
-}
+.kanban-column[data-status="Sudah Dihubungi"] { background: #eff6ff; }
+.kanban-column[data-status="pending"] { background: #fff7ed; }
+.kanban-column[data-status="closing"] { background: #ecfdf5; }
+.kanban-column[data-status="Tertarik"] { background: #ecfdf5; }
+.kanban-column[data-status="Tidak Tertarik"] { background: #fef2f2; }
 
 .column-header {
     display: flex;
@@ -572,7 +474,6 @@ body {
     margin-bottom: 12px;
     font-weight: 700;
     font-size: 14px;
-    background: transparent;
 }
 
 .column-header .count {
@@ -580,7 +481,6 @@ body {
     padding: 2px 10px;
     border-radius: 30px;
     font-size: 12px;
-    font-weight: 600;
 }
 
 .purple-header { color: #6b21a5; }
@@ -601,13 +501,11 @@ body {
     cursor: grab;
     border: 1px solid #e5e7eb;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .card-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-color: #c7d2fe;
 }
 
 .card-name {
@@ -629,20 +527,6 @@ body {
     cursor: pointer;
     font-size: 14px;
     color: #25D366;
-    transition: transform 0.2s;
-}
-
-.whatsapp-icon:hover {
-    transform: scale(1.2);
-}
-
-.sortable-ghost {
-    opacity: 0.4;
-    background: #e0e7ff;
-}
-
-.sortable-drag {
-    cursor: grabbing;
 }
 
 /* ========== IMPORT SECTION ========== */
@@ -651,15 +535,6 @@ body {
     border-radius: 24px;
     padding: 28px;
     border: 1px solid #e5e7eb;
-}
-
-.import-header {
-    margin-bottom: 24px;
-}
-
-.import-header h3 {
-    font-size: 22px;
-    color: #1f2937;
 }
 
 .import-grid {
@@ -674,12 +549,6 @@ body {
     padding: 20px;
 }
 
-.import-card h4 {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 16px;
-}
-
 .drop-zone {
     border: 2px dashed #c7d2fe;
     background: #eef2ff;
@@ -687,11 +556,6 @@ body {
     padding: 32px 20px;
     text-align: center;
     cursor: pointer;
-}
-
-.drop-zone p {
-    color: #4f46e5;
-    font-weight: 500;
 }
 
 .radio-option {
@@ -705,22 +569,6 @@ body {
 .radio-option.active {
     border-color: #4f46e5;
     background: #eef2ff;
-}
-
-.radio-option p {
-    font-size: 12px;
-    color: #6b7280;
-}
-
-.info-list {
-    list-style: none;
-    margin-bottom: 20px;
-}
-
-.info-list li {
-    padding: 8px 0;
-    font-size: 13px;
-    color: #4b5563;
 }
 
 .import-btn {
@@ -747,51 +595,8 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid #f0f0f0;
     flex-wrap: wrap;
     gap: 12px;
-}
-
-.db-header h3 {
-    font-size: 20px;
-    color: #1f2937;
-    margin: 0;
-}
-
-.db-actions {
-    display: flex;
-    gap: 12px;
-}
-
-.db-select-all, .db-delete-selected {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.db-select-all {
-    background: #eef2ff;
-    color: #4f46e5;
-}
-
-.db-select-all:hover {
-    background: #e0e7ff;
-    transform: translateY(-1px);
-}
-
-.db-delete-selected {
-    background: #fef2f2;
-    color: #dc2626;
-}
-
-.db-delete-selected:hover {
-    background: #fee2e2;
-    transform: translateY(-1px);
 }
 
 .db-list {
@@ -805,43 +610,10 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
-    transition: background 0.2s;
-}
-
-.db-item:hover {
-    background: #f9fafb;
-}
-
-.db-item:last-child {
-    border-bottom: none;
-}
-
-.db-item-checkbox {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    accent-color: #4f46e5;
 }
 
 .db-item-info {
     flex: 1;
-}
-
-.db-item-info h4 {
-    font-size: 16px;
-    margin-bottom: 4px;
-    color: #1f2937;
-}
-
-.db-item-info p {
-    font-size: 13px;
-    color: #6b7280;
-    margin-bottom: 4px;
-}
-
-.db-item-info small {
-    font-size: 11px;
-    color: #9ca3af;
 }
 
 .db-item-actions {
@@ -849,33 +621,22 @@ body {
     gap: 8px;
 }
 
-.db-item-wa, .db-item-delete {
+.db-item-wa {
+    background: #25D366;
+    color: white;
     padding: 6px 12px;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 12px;
-    transition: all 0.2s;
-}
-
-.db-item-wa {
-    background: #25D366;
-    color: white;
-}
-
-.db-item-wa:hover {
-    background: #20b85a;
-    transform: scale(1.05);
 }
 
 .db-item-delete {
     background: #fef2f2;
     color: #dc2626;
-}
-
-.db-item-delete:hover {
-    background: #fee2e2;
-    transform: scale(1.05);
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
 /* ========== MODALS ========== */
@@ -890,11 +651,6 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    backdrop-filter: blur(4px);
-}
-
-body.modal-open {
-    overflow: hidden;
 }
 
 .modal-content {
@@ -905,11 +661,9 @@ body.modal-open {
     max-height: 85vh;
     overflow-y: auto;
     position: relative;
-    animation: modalPopup 0.3s ease;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
 
-/* ========== DETAIL MODAL - SEMUA TOMBOL MUNCUL ========== */
+/* ========== DETAIL MODAL - FIX TOMBOL TUTUP & HAPUS ========== */
 #detailModal .modal-content {
     max-width: 450px;
     padding: 0;
@@ -1021,64 +775,48 @@ body.modal-open {
     gap: 6px !important;
 }
 
-.detail-actions button:hover {
-    transform: translateY(-2px);
-}
+.btn-primary { background: #4f46e5 !important; color: white !important; }
+.btn-success { background: #10b981 !important; color: white !important; }
+.btn-warning { background: #f59e0b !important; color: white !important; }
+.btn-danger { background: #ef4444 !important; color: white !important; }
 
-.btn-primary {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-.btn-success {
-    background: #10b981 !important;
-    color: white !important;
-}
-
-.btn-warning {
-    background: #f59e0b !important;
-    color: white !important;
-}
-
-.btn-danger {
-    background: #ef4444 !important;
-    color: white !important;
-}
-
-/* TOMBOL TUTUP DAN HAPUS - DIPASTIKAN MUNCUL DI PC */
-.detail-footer {
+/* ========== TOMBOL TUTUP DAN HAPUS - FIX UNTUK PC ========== */
+#detailModal .detail-footer {
     display: flex !important;
+    flex-direction: row !important;
     gap: 12px !important;
-    padding: 14px 20px !important;
+    padding: 16px 20px !important;
     border-top: 1px solid #e5e7eb !important;
     background: white !important;
+    width: 100% !important;
 }
 
-.detail-footer button {
+#detailModal .detail-footer button {
     flex: 1 !important;
-    padding: 10px !important;
+    padding: 12px 16px !important;
     border: none !important;
     border-radius: 12px !important;
     cursor: pointer !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
 }
 
-.detail-footer .btn-outline {
+#detailModal .detail-footer button:first-child {
     background: #f3f4f6 !important;
     color: #374151 !important;
 }
 
-.detail-footer .btn-outline:hover {
-    background: #e5e7eb !important;
-}
-
-.detail-footer .btn-danger {
+#detailModal .detail-footer button:last-child {
     background: #ef4444 !important;
     color: white !important;
 }
 
-.detail-footer .btn-danger:hover {
+#detailModal .detail-footer button:first-child:hover {
+    background: #e5e7eb !important;
+}
+
+#detailModal .detail-footer button:last-child:hover {
     background: #dc2626 !important;
 }
 
@@ -1097,9 +835,8 @@ body.modal-open {
 .status-closing { background: #ecfdf5; color: #16a34a; }
 .status-tertarik { background: #ecfdf5; color: #16a34a; }
 .status-tidak { background: #fef2f2; color: #dc2626; }
-.status-dihubungi { background: #eff6ff; color: #2563eb; }
 
-/* ========== FORM MODAL (TAMBAH DATA) ========== */
+/* ========== FORM MODAL ========== */
 .modal-content h3 {
     font-size: 20px;
     font-weight: 700;
@@ -1129,10 +866,6 @@ body.modal-open {
     margin-bottom: 6px;
 }
 
-.form-group label .required {
-    color: #ef4444;
-}
-
 .form-group input, 
 .form-group select {
     width: 100%;
@@ -1141,31 +874,6 @@ body.modal-open {
     border-radius: 14px;
     font-size: 14px;
     background: #fafafc;
-}
-
-.form-group input:focus, 
-.form-group select:focus {
-    outline: none;
-    border-color: #4f46e5;
-    background: white;
-}
-
-.input-icon {
-    position: relative;
-}
-
-.input-icon input,
-.input-icon select {
-    padding-left: 38px;
-}
-
-.input-icon span {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 16px;
-    color: #9ca3af;
 }
 
 .phone-input {
@@ -1181,7 +889,6 @@ body.modal-open {
     display: flex;
     align-items: center;
     font-weight: 600;
-    font-size: 14px;
 }
 
 .modal-buttons {
@@ -1199,16 +906,11 @@ body.modal-open {
     border-radius: 14px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 13px;
 }
 
 .modal-buttons button:first-child {
     background: #4f46e5;
     color: white;
-}
-
-.modal-buttons button:first-child:hover {
-    background: #4338ca;
 }
 
 .modal-buttons button:last-child {
@@ -1271,20 +973,6 @@ body.modal-open {
     border-bottom: 1px solid #f0f0f0;
 }
 
-.preview-photo-header h3 {
-    margin: 0;
-    font-size: 16px;
-    padding: 0;
-}
-
-.close-preview {
-    background: none;
-    border: none;
-    font-size: 22px;
-    cursor: pointer;
-    color: #9ca3af;
-}
-
 .preview-photo-body {
     padding: 20px;
 }
@@ -1310,19 +998,11 @@ body.modal-open {
     padding: 10px 18px;
     border-radius: 12px;
     margin-bottom: 10px;
-    animation: slideIn 0.3s ease;
     font-size: 13px;
 }
 
-.notif-success {
-    background: #4f46e5;
-    color: white;
-}
-
-.notif-error {
-    background: #ef4444;
-    color: white;
-}
+.notif-success { background: #4f46e5; color: white; }
+.notif-error { background: #ef4444; color: white; }
 
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
@@ -1331,55 +1011,19 @@ body.modal-open {
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1200px) {
-    .kanban-board {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    .kanban-board { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 1024px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .charts-row {
-        grid-template-columns: 1fr;
-    }
-    .import-grid {
-        grid-template-columns: 1fr;
-    }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .import-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
-    .boards-wrapper {
-        flex-direction: column;
-    }
-    .kanban-board {
-        grid-template-columns: 1fr;
-    }
-    .board-section {
-        min-width: 100%;
-    }
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    .content-area {
-        padding: 16px;
-    }
-    .topbar-center {
-        display: none;
-    }
-}
-
-/* SCROLLBAR */
-.modal-content::-webkit-scrollbar {
-    width: 5px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-    background: #c7d2fe;
-    border-radius: 10px;
+    .boards-wrapper { flex-direction: column; }
+    .kanban-board { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .content-area { padding: 16px; }
+    .topbar-center { display: none; }
 }
