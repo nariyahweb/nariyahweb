@@ -110,7 +110,7 @@ body {
     min-height: 100vh;
 }
 
-/* ========== SIDEBAR - PERBAIKAN UNTUK PC ========== */
+/* ========== SIDEBAR HOVER MODE (seperti semula) ========== */
 .sidebar {
     width: 260px;
     background: white;
@@ -121,92 +121,44 @@ body {
     height: calc(100vh - 60px);
     overflow-y: auto;
     z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
     box-shadow: 2px 0 10px rgba(0,0,0,0.05);
 }
 
-/* PC: sidebar langsung muncul */
+.sidebar.active {
+    transform: translateX(0);
+}
+
+/* PC: hover zone untuk buka sidebar */
 @media (min-width: 769px) {
-    .sidebar {
-        transform: translateX(0) !important;
-    }
     #hoverZone {
+        position: fixed;
+        left: 0;
+        top: 60px;
+        width: 20px;
+        height: calc(100vh - 60px);
+        z-index: 2000;
+        background: transparent;
+    }
+    
+    /* Tombol toggle hide di PC */
+    .toggle-btn {
         display: none;
     }
 }
 
-/* Mobile: sidebar tersembunyi sampai di-toggle */
+/* Mobile: tetap pakai toggle button */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
-        transition: transform 0.3s ease;
     }
     .sidebar.active {
         transform: translateX(0);
     }
-}
-
-.sidebar-header {
-    padding: 20px;
-    border-bottom: 1px solid #f0f0f0;
-}
-
-.sidebar-header h2 {
-    color: #4f46e5;
-    font-size: 20px;
-}
-
-.sidebar-menu {
-    padding: 16px 0;
-}
-
-.menu-item {
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    color: #4b5563;
-    transition: all 0.2s;
-}
-
-.menu-item:hover {
-    background: #f3f4f6;
-    color: #4f46e5;
-}
-
-.menu-item.active {
-    background: #eef2ff;
-    color: #4f46e5;
-    border-right: 3px solid #4f46e5;
-}
-
-.menu-item .icon {
-    font-size: 20px;
-    width: 24px;
-}
-
-.menu-divider {
-    height: 1px;
-    background: #e5e7eb;
-    margin: 12px 20px;
-}
-
-.menu-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #9ca3af;
-    padding: 8px 20px;
-    text-transform: uppercase;
-}
-
-#hoverZone {
-    position: fixed;
-    left: 0;
-    top: 60px;
-    width: 32px;
-    height: calc(100vh - 60px);
-    z-index: 2000;
-    background: transparent;
+    .toggle-btn {
+        display: block;
+    }
 }
 
 /* ========== TOPBAR ========== */
