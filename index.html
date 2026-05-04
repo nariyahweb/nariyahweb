@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>FLOUPYUD - CRM Agent</title>
     
     <!-- Libraries -->
@@ -45,29 +45,51 @@
 <div id="app">
     <div class="app-container">
         <div class="sidebar" id="sidebar">
-            <div class="sidebar-header"><h2>🚀 FLOUPYUD</h2></div>
+            <div class="sidebar-header"><h2>FLOUPYUD</h2></div>
             <div class="sidebar-menu">
-                <div class="menu-item active" data-page="dashboard"><span class="icon">📊</span><span>Dashboard</span></div>
+                <div class="menu-item active" data-page="dashboard">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
-                <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
-                <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
+                <div class="menu-item" data-page="dbClosing">
+                    <span class="icon">📁</span>
+                    <span>DB Closing</span>
+                </div>
+                <div class="menu-item" data-page="dbTidak">
+                    <span class="icon">📁</span>
+                    <span>DB Tidak Tertarik</span>
+                </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">IMPORT DATA</div>
-                <div class="menu-item" data-page="import"><span class="icon">📥</span><span>Import Data</span></div>
+                <div class="menu-item" data-page="import">
+                    <span class="icon">📥</span>
+                    <span>Import Data</span>
+                </div>
                 <div class="menu-divider"></div>
-                <div class="menu-item" id="logoutBtn"><span class="icon">🚪</span><span>Logout</span></div>
+                <div class="menu-item" id="logoutBtn">
+                    <span class="icon">🚪</span>
+                    <span>Logout</span>
+                </div>
             </div>
         </div>
 
         <div class="main-content">
             <div class="topbar">
-                <div class="topbar-left"><button class="toggle-btn" id="toggleSidebarBtn">☰</button><span class="logo">FLOUPYUD</span></div>
+                <div class="topbar-left">
+                    <button class="toggle-btn" id="toggleSidebarBtn">☰</button>
+                    <span class="logo">FLOUPYUD</span>
+                </div>
                 <div class="topbar-center" id="topUserName">CS Agent</div>
-                <div class="topbar-right"><div class="notif-icon" id="notifBtn">🔔<span class="badge" id="notifCount">0</span></div><img class="profile-img" id="profileImg" src="https://i.pravatar.cc/40" alt="Profile"></div>
+                <div class="topbar-right">
+                    <div class="notif-icon" id="notifBtn">🔔<span class="badge" id="notifCount">0</span></div>
+                    <img class="profile-img" id="profileImg" src="https://i.pravatar.cc/40" alt="Profile">
+                </div>
             </div>
 
             <div class="content-area">
+                <!-- DASHBOARD PAGE -->
                 <div id="dashboardPage" class="page-content">
                     <div class="stats-grid">
                         <div class="stat-card"><div class="stat-info"><h4>Total Data</h4><div class="value" id="totalData">0</div><small>Semua Data</small></div><div class="stat-icon bg-purple">👥</div></div>
@@ -104,6 +126,7 @@
                     </div>
                 </div>
 
+                <!-- IMPORT PAGE -->
                 <div id="importPage" class="page-content" style="display:none">
                     <div class="import-section">
                         <div class="import-header"><h3>📥 Import Data Excel</h3><p>Import data dengan mudah dan cepat</p></div>
@@ -115,10 +138,12 @@
                     </div>
                 </div>
 
+                <!-- DB CLOSING PAGE -->
                 <div id="dbClosingPage" class="page-content" style="display:none">
                     <div class="db-section"><div class="db-header"><h3>📁 Database Closing</h3><div class="db-actions"><button class="db-select-all" id="selectAllClosing">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedClosing">🗑️ Hapus Terpilih</button></div></div><div id="dbClosingList" class="db-list"></div></div>
                 </div>
 
+                <!-- DB TIDAK TERTARIK PAGE -->
                 <div id="dbTidakPage" class="page-content" style="display:none">
                     <div class="db-section"><div class="db-header"><h3>📁 Database Tidak Tertarik</h3><div class="db-actions"><button class="db-select-all" id="selectAllTidak">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedTidak">🗑️ Hapus Terpilih</button></div></div><div id="dbTidakList" class="db-list"></div></div>
                 </div>
