@@ -68,6 +68,16 @@
                     <span>Import Data</span>
                 </div>
                 <div class="menu-divider"></div>
+                <div class="menu-label">KOMUNIKASI</div>
+                <div class="menu-item" data-page="reminder">
+                    <span class="icon">⏰</span>
+                    <span>Pengingat (Reminder)</span>
+                </div>
+                <div class="menu-item" data-page="pesan">
+                    <span class="icon">💬</span>
+                    <span>Pesan</span>
+                </div>
+                <div class="menu-divider"></div>
                 <div class="menu-item" id="logoutBtn">
                     <span class="icon">🚪</span>
                     <span>Logout</span>
@@ -147,6 +157,32 @@
                 <div id="dbTidakPage" class="page-content" style="display:none">
                     <div class="db-section"><div class="db-header"><h3>📁 Database Tidak Tertarik</h3><div class="db-actions"><button class="db-select-all" id="selectAllTidak">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedTidak">🗑️ Hapus Terpilih</button></div></div><div id="dbTidakList" class="db-list"></div></div>
                 </div>
+
+                <!-- REMINDER PAGE -->
+                <div id="reminderPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header">
+                            <h3>⏰ Pengingat (Reminder)</h3>
+                            <button class="add-btn" id="addReminderBtn">+ Tambah Pengingat</button>
+                        </div>
+                        <div id="reminderList" class="db-list">
+                            <p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PESAN PAGE -->
+                <div id="pesanPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header">
+                            <h3>💬 Pesan</h3>
+                            <button class="add-btn" id="addPesanBtn">+ Kirim Pesan</button>
+                        </div>
+                        <div id="pesanList" class="db-list">
+                            <p style="text-align:center;padding:40px;">💬 Belum ada pesan</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -196,6 +232,67 @@
 </div>
 
 <div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
+
+<!-- MODAL REMINDER -->
+<div class="modal" id="reminderModal">
+    <div class="modal-content">
+        <h3>⏰ Tambah Pengingat</h3>
+        <div class="modal-subtitle">Buat pengingat untuk tugas Anda</div>
+        <div class="form-group">
+            <label>Judul Pengingat <span class="required">*</span></label>
+            <div class="input-icon">
+                <span>📝</span>
+                <input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Deskripsi</label>
+            <div class="input-icon">
+                <span>📄</span>
+                <textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Tanggal & Waktu</label>
+            <div class="input-icon">
+                <span>📅</span>
+                <input type="datetime-local" id="reminderDateTime">
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="saveReminderBtn">Simpan</button>
+            <button class="closeModalBtn" data-modal="reminderModal">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PESAN -->
+<div class="modal" id="pesanModal">
+    <div class="modal-content">
+        <h3>💬 Kirim Pesan</h3>
+        <div class="modal-subtitle">Kirim pesan ke CS lain</div>
+        <div class="form-group">
+            <label>Kepada <span class="required">*</span></label>
+            <div class="input-icon">
+                <span>👥</span>
+                <select id="pesanTo">
+                    <option value="">Pilih CS Tujuan</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Pesan <span class="required">*</span></label>
+            <div class="input-icon">
+                <span>💬</span>
+                <textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="savePesanBtn">Kirim</button>
+            <button class="closeModalBtn" data-modal="pesanModal">Batal</button>
+        </div>
+    </div>
+</div>
 
 <div id="notifBox"></div>
 
