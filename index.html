@@ -300,7 +300,7 @@
             <img id="previewFoto" src="https://i.pravatar.cc/100" alt="Profile Photo">
             <div class="camera-icon" id="cameraIcon">📷</div>
             <input type="file" id="profileFoto" hidden accept="image/*">
-            <p>Klik foto atau ikon kamera untuk mengganti</p>
+            <p>🔍 Klik foto untuk memperbesar | 📷 Klik kamera untuk ganti foto</p>
         </div>
         
         <div class="form-group">
@@ -330,6 +330,22 @@
         <div class="modal-buttons">
             <button id="saveProfileBtn">Simpan Perubahan</button>
             <button class="closeModalBtn" data-modal="profileModal">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PREVIEW FOTO (untuk melihat foto besar) -->
+<div class="modal" id="previewPhotoModal">
+    <div class="modal-content preview-photo-content">
+        <div class="preview-photo-header">
+            <h3>Foto Profile</h3>
+            <button class="close-preview" onclick="closeModal('previewPhotoModal')">✕</button>
+        </div>
+        <div class="preview-photo-body">
+            <img id="previewPhotoLarge" src="" alt="Preview Foto">
+        </div>
+        <div class="modal-buttons">
+            <button onclick="closeModal('previewPhotoModal')">Tutup</button>
         </div>
     </div>
 </div>
