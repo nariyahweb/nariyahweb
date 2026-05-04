@@ -1251,3 +1251,283 @@ if (notifBtn) {
         document.querySelector('.menu-item[data-page="pesan"]').click();
     });
 }
+
+// ========== PERBAIKAN REMINDER & PESAN ==========
+
+// Pastikan tombol terhubung setelah DOM siap
+document.addEventListener('DOMContentLoaded', function() {
+    // Tombol Tambah Pengingat
+    const addReminderBtn = document.getElementById('addReminderBtn');
+    if (addReminderBtn) {
+        addReminderBtn.addEventListener('click', function() {
+            console.log('Tombol Tambah Pengingat diklik');
+            const modal = document.getElementById('reminderModal');
+            if (modal) modal.style.display = 'flex';
+            else console.log('Modal reminderModal tidak ditemukan');
+        });
+    } else {
+        console.log('Tombol addReminderBtn tidak ditemukan');
+    }
+    
+    // Tombol Tambah Pesan
+    const addPesanBtn = document.getElementById('addPesanBtn');
+    if (addPesanBtn) {
+        addPesanBtn.addEventListener('click', function() {
+            console.log('Tombol Kirim Pesan diklik');
+            loadUsersForSelect();
+            const modal = document.getElementById('pesanModal');
+            if (modal) modal.style.display = 'flex';
+            else console.log('Modal pesanModal tidak ditemukan');
+        });
+    } else {
+        console.log('Tombol addPesanBtn tidak ditemukan');
+    }
+});
+
+// ========== REMINDER FUNCTIONS (ULANG) ==========
+async function loadReminders() {
+    if (!currentUser) {
+        console.log('User belum login');
+        return;
+    }
+    
+    const reminderList = document.getElementById('reminderList');
+    if (!reminderList) {
+        console.log('Element reminderList tidak ditemukan');
+        return;
+    }
+    
+    try {
+        const snapshot = await db.collection('reminders')
+            .where('user_id', '==', currentUser.uid)
+            .orderBy('created_at', 'desc')
+            .get();
+        
+        if (snapshot.empty) {
+            reminderList.innerHTML = '<p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p>';
+            return;
+        }
+        
+        let html = '';
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            const dateTime = d.datetime ? new Date(d.datetime).toLocaleString('id-ID') : '-';
+            html += `
+                <div class="db-item">
+                    <div class="db-item-info">
+                        <h4>📝 ${escapeHtml(d.title)}</h4>
+                        <p>${escapeHtml(d.description || '-')}</p>
+                        <small>⏰ ${dateTime}</small>
+                    </div>
+                    <div class="db-item-actions">
+                        <button class="db-item-delete" onclick="deleteReminder('${doc.id}')">🗑️ Hapus</button>
+                    </div>
+                </div>
+            `;
+        });
+        reminderList.innerHTML = html;
+        console.log('Reminder loaded:', snapshot.size);
+    } catch (error) {
+        console.error('Error load reminders:', error);
+        showNotif('Gagal memuat pengingat', true);
+    }
+}
+
+window.deleteReminder = async function(id) {
+    if (confirm('Hapus pengingat ini?')) {
+        try {
+            await db.collection('reminders').doc(id).delete();
+            showNotif('Pengingat dihapus');
+            loadReminders();
+        } catch (error) {
+            showNotif('Gagal hapus: ' + error.message, true);
+        }
+    }
+};
+
+// Tombol Simpan Pengingat
+const saveReminderBtn = document.getElementById('saveReminderBtn');
+if (saveReminderBtn) {
+    saveReminderBtn.addEventListener('click', async function() {
+        const title = document.getElementById('reminderTitle').value;
+        const description = document.getElementById('reminderDesc').value;
+        const datetime = document.getElementById('reminderDateTime').value;
+        
+        if (!title) {
+            showNotif('Judul wajib diisi', true);
+            return;
+        }
+        
+        try {
+            await db.collection('reminders').add({
+                title: title,
+                description: description,
+                datetime: datetime,
+                user_id: currentUser.uid,
+                created_at: new Date().toISOString()
+            });
+            
+            closeModal('reminderModal');
+            document.getElementById('reminderTitle').value = '';
+            document.getElementById('reminderDesc').value = '';
+            document.getElementById('reminderDateTime').value = '';
+            showNotif('Pengingat ditambahkan');
+            loadReminders();
+        } catch (error) {
+            showNotif('Gagal simpan: ' + error.message, true);
+        }
+    });
+}
+
+// ========== PESAN FUNCTIONS (ULANG) ==========
+async function loadUsersForSelect() {
+    try {
+        const snapshot = await db.collection('users').get();
+        const select = document.getElementById('pesanTo');
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">Pilih CS Tujuan</option>';
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (doc.id !== currentUser.uid) {
+                const name = data.nama || data.email || 'CS Agent';
+                select.innerHTML += `<option value="${doc.id}">${escapeHtml(name)}</option>`;
+            }
+        });
+        console.log('Users loaded:', snapshot.size);
+    } catch (error) {
+        console.error('Error load users:', error);
+    }
+}
+
+async function loadPesan() {
+    if (!currentUser) return;
+    
+    const pesanList = document.getElementById('pesanList');
+    if (!pesanList) return;
+    
+    try {
+        const snapshot = await db.collection('messages')
+            .where('to_id', '==', currentUser.uid)
+            .orderBy('created_at', 'desc')
+            .get();
+        
+        if (snapshot.empty) {
+            pesanList.innerHTML = '<p style="text-align:center;padding:40px;">💬 Belum ada pesan</p>';
+            return;
+        }
+        
+        let html = '';
+        for (const doc of snapshot.docs) {
+            const d = doc.data();
+            let fromName = 'Unknown';
+            try {
+                const fromUser = await db.collection('users').doc(d.from_id).get();
+                if (fromUser.exists) fromName = fromUser.data().nama || fromUser.data().email || 'CS Agent';
+            } catch(e) { console.error(e); }
+            
+            const isRead = d.is_read ? '✅ Dibaca' : '🆕 Baru';
+            html += `
+                <div class="db-item ${!d.is_read ? 'unread' : ''}" style="${!d.is_read ? 'background:#eef2ff;' : ''}">
+                    <div class="db-item-info">
+                        <h4>📨 Dari: ${escapeHtml(fromName)}</h4>
+                        <p>${escapeHtml(d.message)}</p>
+                        <small>📅 ${new Date(d.created_at).toLocaleString('id-ID')} | ${isRead}</small>
+                    </div>
+                    <div class="db-item-actions">
+                        <button class="db-item-wa" onclick="markAsRead('${doc.id}')">✅ Tandai Dibaca</button>
+                        <button class="db-item-delete" onclick="deletePesan('${doc.id}')">🗑️ Hapus</button>
+                    </div>
+                </div>
+            `;
+        }
+        pesanList.innerHTML = html;
+        console.log('Pesan loaded:', snapshot.size);
+    } catch (error) {
+        console.error('Error load pesan:', error);
+    }
+}
+
+window.markAsRead = async function(id) {
+    try {
+        await db.collection('messages').doc(id).update({ is_read: true });
+        showNotif('Pesan ditandai dibaca');
+        loadPesan();
+        updateNotifBadge();
+    } catch (error) {
+        showNotif('Gagal: ' + error.message, true);
+    }
+};
+
+window.deletePesan = async function(id) {
+    if (confirm('Hapus pesan ini?')) {
+        try {
+            await db.collection('messages').doc(id).delete();
+            showNotif('Pesan dihapus');
+            loadPesan();
+            updateNotifBadge();
+        } catch (error) {
+            showNotif('Gagal hapus: ' + error.message, true);
+        }
+    }
+};
+
+// Tombol Kirim Pesan
+const savePesanBtn = document.getElementById('savePesanBtn');
+if (savePesanBtn) {
+    savePesanBtn.addEventListener('click', async function() {
+        const toId = document.getElementById('pesanTo').value;
+        const message = document.getElementById('pesanMessage').value;
+        
+        if (!toId || !message) {
+            showNotif('Lengkapi data!', true);
+            return;
+        }
+        
+        try {
+            await db.collection('messages').add({
+                from_id: currentUser.uid,
+                to_id: toId,
+                message: message,
+                is_read: false,
+                created_at: new Date().toISOString()
+            });
+            
+            closeModal('pesanModal');
+            document.getElementById('pesanTo').value = '';
+            document.getElementById('pesanMessage').value = '';
+            showNotif('Pesan terkirim');
+        } catch (error) {
+            showNotif('Gagal kirim: ' + error.message, true);
+        }
+    });
+}
+
+async function updateNotifBadge() {
+    if (!currentUser) return;
+    try {
+        const snapshot = await db.collection('messages')
+            .where('to_id', '==', currentUser.uid)
+            .where('is_read', '==', false)
+            .get();
+        const badge = document.getElementById('notifCount');
+        if (badge) badge.innerText = snapshot.size;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+// Real-time listener untuk notifikasi
+if (currentUser) {
+    db.collection('messages').where('to_id', '==', currentUser.uid).onSnapshot(() => {
+        updateNotifBadge();
+    });
+}
+
+// Notifikasi button
+const notifBtn2 = document.getElementById('notifBtn');
+if (notifBtn2) {
+    notifBtn2.addEventListener('click', () => {
+        document.querySelector('.menu-item[data-page="pesan"]')?.click();
+    });
+}
