@@ -193,43 +193,39 @@ auth.onAuthStateChanged(user => {
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
-        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'reminderPage', 'pesanPage'];
+        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'reminderPage', 'pesanPage', 'broadcastPage'];
         pages.forEach(p => {
             const el = document.getElementById(p);
             if (el) el.style.display = 'none';
         });
         
         if (page === 'dashboard') {
-            const dashboardPage = document.getElementById('dashboardPage');
-            if (dashboardPage) dashboardPage.style.display = 'block';
+            document.getElementById('dashboardPage').style.display = 'block';
         } else if (page === 'import') {
-            const importPage = document.getElementById('importPage');
-            if (importPage) importPage.style.display = 'block';
+            document.getElementById('importPage').style.display = 'block';
         } else if (page === 'dbClosing') {
-            const dbClosingPage = document.getElementById('dbClosingPage');
-            if (dbClosingPage) dbClosingPage.style.display = 'block';
+            document.getElementById('dbClosingPage').style.display = 'block';
             loadDBClosing();
         } else if (page === 'dbTidak') {
-            const dbTidakPage = document.getElementById('dbTidakPage');
-            if (dbTidakPage) dbTidakPage.style.display = 'block';
+            document.getElementById('dbTidakPage').style.display = 'block';
             loadDBTidak();
         } else if (page === 'reminder') {
-            const reminderPage = document.getElementById('reminderPage');
-            if (reminderPage) reminderPage.style.display = 'block';
+            document.getElementById('reminderPage').style.display = 'block';
             loadReminders();
         } else if (page === 'pesan') {
-            const pesanPage = document.getElementById('pesanPage');
-            if (pesanPage) pesanPage.style.display = 'block';
+            document.getElementById('pesanPage').style.display = 'block';
             loadPesan();
             loadUsersForSelect();
+        } else if (page === 'broadcast') {
+            document.getElementById('broadcastPage').style.display = 'block';
+            initBroadcast();
         }
         
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         
         if (window.innerWidth <= 768) {
-            const sidebarEl = document.getElementById('sidebar');
-            if (sidebarEl) sidebarEl.classList.remove('active');
+            document.getElementById('sidebar')?.classList.remove('active');
         }
     });
 });
@@ -249,9 +245,7 @@ document.querySelectorAll('.modal').forEach(modal => {
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
     profileImg.addEventListener('click', () => {
-        const profileModal = document.getElementById('profileModal');
-        if (profileModal) profileModal.style.display = 'flex';
-        
+        document.getElementById('profileModal').style.display = 'flex';
         db.collection('users').doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
@@ -277,8 +271,7 @@ const previewFoto = document.getElementById('previewFoto');
 if (previewFoto) {
     previewFoto.addEventListener('click', (e) => {
         e.stopPropagation();
-        const currentPhoto = document.getElementById('previewFoto').src;
-        showPhotoPreview(currentPhoto);
+        showPhotoPreview(document.getElementById('previewFoto').src);
     });
 }
 
@@ -286,8 +279,7 @@ const cameraIcon = document.getElementById('cameraIcon');
 if (cameraIcon) {
     cameraIcon.addEventListener('click', (e) => {
         e.stopPropagation();
-        const profileFotoInput = document.getElementById('profileFoto');
-        if (profileFotoInput) profileFotoInput.click();
+        document.getElementById('profileFoto').click();
     });
 }
 
@@ -302,10 +294,8 @@ if (profileFotoInput) {
             }
             const reader = new FileReader();
             reader.onload = function(e) {
-                const preview = document.getElementById('previewFoto');
-                if (preview) preview.src = e.target.result;
-                const headerImg = document.getElementById('profileImg');
-                if (headerImg) headerImg.src = e.target.result;
+                document.getElementById('previewFoto').src = e.target.result;
+                document.getElementById('profileImg').src = e.target.result;
                 showNotif('Foto baru dipilih, klik Simpan untuk menyimpan');
             };
             reader.readAsDataURL(file);
@@ -338,12 +328,8 @@ if (saveProfileBtn) {
                 nama: nama, hp: hp, foto: foto, email: currentUser.email, updated_at: new Date().toISOString()
             }, { merge: true });
             
-            const topUserName = document.getElementById('topUserName');
-            if (topUserName) topUserName.innerText = nama;
-            
-            const topProfileImg = document.getElementById('profileImg');
-            if (topProfileImg) topProfileImg.src = foto;
-            
+            document.getElementById('topUserName').innerText = nama;
+            document.getElementById('profileImg').src = foto;
             closeModal('profileModal');
             showNotif('Profile tersimpan');
         } catch (e) {
@@ -362,87 +348,69 @@ function formatPhoneInput(input) {
     }
 }
 
-const customerPhone = document.getElementById('customerPhone');
-const prospekPhone = document.getElementById('prospekPhone');
-const profilePhone = document.getElementById('profilePhone');
-formatPhoneInput(customerPhone);
-formatPhoneInput(prospekPhone);
-formatPhoneInput(profilePhone);
+formatPhoneInput(document.getElementById('customerPhone'));
+formatPhoneInput(document.getElementById('prospekPhone'));
+formatPhoneInput(document.getElementById('profilePhone'));
 
-const previewPhotoModal = document.getElementById('previewPhotoModal');
-if (previewPhotoModal) {
-    previewPhotoModal.addEventListener('click', (e) => {
-        if (e.target === previewPhotoModal) closeModal('previewPhotoModal');
-    });
-}
+document.getElementById('previewPhotoModal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('previewPhotoModal')) closeModal('previewPhotoModal');
+});
 
 // ========== CUSTOMER CRUD ==========
-const addCustomerBtn = document.getElementById('addCustomerBtn');
-if (addCustomerBtn) {
-    addCustomerBtn.addEventListener('click', () => {
-        document.getElementById('customerModal').style.display = 'flex';
-    });
-}
+document.getElementById('addCustomerBtn')?.addEventListener('click', () => {
+    document.getElementById('customerModal').style.display = 'flex';
+});
 
-const saveCustomerBtn = document.getElementById('saveCustomerBtn');
-if (saveCustomerBtn) {
-    saveCustomerBtn.addEventListener('click', () => {
-        const nama = document.getElementById('customerName').value;
-        let hp = document.getElementById('customerPhone').value;
-        const tanggal = document.getElementById('customerDate').value;
-        
-        if (!nama || !hp) {
-            showNotif('Lengkapi data!', true);
-            return;
-        }
-        
-        hp = '+62' + hp.replace(/\D/g, '');
-        
-        db.collection('customers').add({
-            nama: nama, hp: hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
-            status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
-        }).then(() => {
-            closeModal('customerModal');
-            document.getElementById('customerName').value = '';
-            document.getElementById('customerPhone').value = '';
-            document.getElementById('customerDate').value = '';
-            showNotif('Customer berhasil ditambahkan');
-        }).catch(e => showNotif('Error: ' + e.message, true));
-    });
-}
+document.getElementById('saveCustomerBtn')?.addEventListener('click', () => {
+    const nama = document.getElementById('customerName').value;
+    let hp = document.getElementById('customerPhone').value;
+    const tanggal = document.getElementById('customerDate').value;
+    
+    if (!nama || !hp) {
+        showNotif('Lengkapi data!', true);
+        return;
+    }
+    
+    hp = '+62' + hp.replace(/\D/g, '');
+    
+    db.collection('customers').add({
+        nama: nama, hp: hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
+        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+    }).then(() => {
+        closeModal('customerModal');
+        document.getElementById('customerName').value = '';
+        document.getElementById('customerPhone').value = '';
+        document.getElementById('customerDate').value = '';
+        showNotif('Customer berhasil ditambahkan');
+    }).catch(e => showNotif('Error: ' + e.message, true));
+});
 
 // ========== PROSPEK CRUD ==========
-const addProspekBtn = document.getElementById('addProspekBtn');
-if (addProspekBtn) {
-    addProspekBtn.addEventListener('click', () => {
-        document.getElementById('prospekModal').style.display = 'flex';
-    });
-}
+document.getElementById('addProspekBtn')?.addEventListener('click', () => {
+    document.getElementById('prospekModal').style.display = 'flex';
+});
 
-const saveProspekBtn = document.getElementById('saveProspekBtn');
-if (saveProspekBtn) {
-    saveProspekBtn.addEventListener('click', () => {
-        const nama = document.getElementById('prospekName').value;
-        let hp = document.getElementById('prospekPhone').value;
-        const status = document.getElementById('prospekStatusSelect').value;
-        
-        if (!nama || !hp) {
-            showNotif('Lengkapi data!', true);
-            return;
-        }
-        
-        hp = '+62' + hp.replace(/\D/g, '');
-        
-        db.collection('prospek').add({
-            nama: nama, hp: hp, status: status, user_id: currentUser.uid, created_at: new Date().toISOString()
-        }).then(() => {
-            closeModal('prospekModal');
-            document.getElementById('prospekName').value = '';
-            document.getElementById('prospekPhone').value = '';
-            showNotif('Prospek berhasil ditambahkan');
-        }).catch(e => showNotif('Error: ' + e.message, true));
-    });
-}
+document.getElementById('saveProspekBtn')?.addEventListener('click', () => {
+    const nama = document.getElementById('prospekName').value;
+    let hp = document.getElementById('prospekPhone').value;
+    const status = document.getElementById('prospekStatusSelect').value;
+    
+    if (!nama || !hp) {
+        showNotif('Lengkapi data!', true);
+        return;
+    }
+    
+    hp = '+62' + hp.replace(/\D/g, '');
+    
+    db.collection('prospek').add({
+        nama: nama, hp: hp, status: status, user_id: currentUser.uid, created_at: new Date().toISOString()
+    }).then(() => {
+        closeModal('prospekModal');
+        document.getElementById('prospekName').value = '';
+        document.getElementById('prospekPhone').value = '';
+        showNotif('Prospek berhasil ditambahkan');
+    }).catch(e => showNotif('Error: ' + e.message, true));
+});
 
 // ========== DETAIL MODAL ==========
 function showModal(modalId) {
@@ -455,14 +423,10 @@ function showModal(modalId) {
 
 function getStatusBadge(status) {
     const statusMap = {
-        'baru': 'status-baru',
-        'followup': 'status-followup',
-        'pending': 'status-pending',
-        'closing': 'status-closing',
-        'Baru': 'status-baru',
-        'Sudah Dihubungi': 'status-dihubungi',
-        'Tertarik': 'status-tertarik',
-        'Tidak Tertarik': 'status-tidak'
+        'baru': 'status-baru', 'followup': 'status-followup',
+        'pending': 'status-pending', 'closing': 'status-closing',
+        'Baru': 'status-baru', 'Sudah Dihubungi': 'status-dihubungi',
+        'Tertarik': 'status-tertarik', 'Tidak Tertarik': 'status-tidak'
     };
     const className = statusMap[status] || 'status-baru';
     let displayName = status;
@@ -475,10 +439,9 @@ function getStatusBadge(status) {
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(doc => {
         const d = doc.data();
-        const content = document.getElementById('detailContent');
         const statusIcon = d.status === 'closing' ? '🎉' : d.status === 'pending' ? '⏳' : d.status === 'followup' ? '📞' : '🆕';
         
-        content.innerHTML = `
+        document.getElementById('detailContent').innerHTML = `
             <div class="detail-header">
                 <div class="detail-avatar">${statusIcon}</div>
                 <h3>${escapeHtml(d.nama)}</h3>
@@ -527,13 +490,12 @@ function openDetailCustomer(id) {
 function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
-        const content = document.getElementById('detailContent');
         let statusIcon = '🆕';
         if (d.status === 'Sudah Dihubungi') statusIcon = '📞';
         else if (d.status === 'Tertarik') statusIcon = '⭐';
         else if (d.status === 'Tidak Tertarik') statusIcon = '❌';
         
-        content.innerHTML = `
+        document.getElementById('detailContent').innerHTML = `
             <div class="detail-header">
                 <div class="detail-avatar">${statusIcon}</div>
                 <h3>${escapeHtml(d.nama)}</h3>
@@ -569,11 +531,7 @@ function openDetailProspek(id) {
                     <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">⭐ Tertarik</button>
                     <button class="btn-danger" onclick="confirmTidakTertarik('${id}')">❌ Tidak Tertarik</button>
                 </div>
-                ${d.status === 'Tertarik' ? `
-                <div style="margin-top: 16px;">
-                    <button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button>
-                </div>
-                ` : ''}
+                ${d.status === 'Tertarik' ? `<div style="margin-top:16px;"><button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button></div>` : ''}
             </div>
             <div class="detail-footer">
                 <button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button>
@@ -618,12 +576,8 @@ window.convertToCustomer = function(id) {
         db.collection('prospek').doc(id).get().then(doc => {
             const d = doc.data();
             db.collection('customers').add({
-                nama: d.nama,
-                hp: d.hp,
-                tanggal: new Date().toISOString().split('T')[0],
-                status: 'baru',
-                user_id: currentUser.uid,
-                created_at: new Date().toISOString()
+                nama: d.nama, hp: d.hp, tanggal: new Date().toISOString().split('T')[0],
+                status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
             });
             db.collection('prospek').doc(id).delete();
             showNotif('Berhasil jadi customer!');
@@ -687,7 +641,7 @@ window.confirmTidakTertarik = async function(id) {
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
 if (dropZone) {
-    dropZone.addEventListener('click', () => { if (excelFileInput) excelFileInput.click(); });
+    dropZone.addEventListener('click', () => excelFileInput?.click());
 }
 if (excelFileInput) {
     excelFileInput.addEventListener('change', function(e) {
@@ -706,43 +660,40 @@ document.querySelectorAll('.radio-option').forEach(opt => {
     });
 });
 
-const importBtn = document.getElementById('importBtn');
-if (importBtn) {
-    importBtn.addEventListener('click', async () => {
-        const file = excelFileInput ? excelFileInput.files[0] : null;
-        if (!file) { showNotif('Pilih file dulu!', true); return; }
-        
-        importBtn.textContent = 'Memproses...';
-        importBtn.disabled = true;
-        
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            let success = 0, failed = 0;
-            for (let row of json) {
-                let nama = row.nama || row.Nama;
-                let hp = row.hp || row.HP;
-                if (!nama || !hp) { failed++; continue; }
-                hp = hp.toString();
-                if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
-                if (importType === 'prospek') {
-                    await db.collection('prospek').add({ nama, hp, status: 'Baru', user_id: currentUser.uid, created_at: new Date().toISOString() });
-                } else {
-                    await db.collection('customers').add({ nama, hp, tanggal: new Date().toISOString().split('T')[0], status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString() });
-                }
-                success++;
+document.getElementById('importBtn')?.addEventListener('click', async () => {
+    const file = excelFileInput?.files[0];
+    if (!file) { showNotif('Pilih file dulu!', true); return; }
+    
+    const importBtn = document.getElementById('importBtn');
+    importBtn.textContent = 'Memproses...';
+    importBtn.disabled = true;
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        let success = 0, failed = 0;
+        for (let row of json) {
+            let nama = row.nama || row.Nama;
+            let hp = row.hp || row.HP;
+            if (!nama || !hp) { failed++; continue; }
+            hp = hp.toString();
+            if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
+            if (importType === 'prospek') {
+                await db.collection('prospek').add({ nama, hp, status: 'Baru', user_id: currentUser.uid, created_at: new Date().toISOString() });
+            } else {
+                await db.collection('customers').add({ nama, hp, tanggal: new Date().toISOString().split('T')[0], status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString() });
             }
-            alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
-            if (excelFileInput) excelFileInput.value = '';
-            const fileInfo = document.getElementById('fileInfo');
-            if (fileInfo) fileInfo.innerHTML = '';
-            importBtn.textContent = '🚀 Import Data Sekarang';
-            importBtn.disabled = false;
-        };
-        reader.readAsArrayBuffer(file);
-    });
-}
+            success++;
+        }
+        alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+        excelFileInput.value = '';
+        document.getElementById('fileInfo').innerHTML = '';
+        importBtn.textContent = '🚀 Import Data Sekarang';
+        importBtn.disabled = false;
+    };
+    reader.readAsArrayBuffer(file);
+});
 
 // ========== DATABASE ARCHIVES ==========
 let selectedClosingIds = new Map();
@@ -777,10 +728,6 @@ function loadDBClosing() {
                 if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
             });
         });
-        const checkboxes = document.querySelectorAll('#dbClosingList .db-item-checkbox');
-        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked);
-        const btn = document.getElementById('selectAllClosing');
-        if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
     });
 }
 
@@ -813,10 +760,6 @@ function loadDBTidak() {
                 if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
             });
         });
-        const checkboxes = document.querySelectorAll('#dbTidakList .db-item-checkbox');
-        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked);
-        const btn = document.getElementById('selectAllTidak');
-        if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
     });
 }
 
@@ -900,10 +843,7 @@ function updateChartCustomer(total, closing, pending, followup) {
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
         data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: [closing, pending, followup, baru], backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) {
-            const data = chart.data, dataset = data.datasets[0], total = dataset.data.reduce((a,b)=>a+b,0);
-            return data.labels.map((label,i) => ({ text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i]/total)*100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i }));
-        } } } } }
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } } } }
     });
 }
 
@@ -916,10 +856,7 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: { labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'], datasets: [{ data: dataArr, backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) {
-            const data = chart.data, dataset = data.datasets[0], total = dataset.data.reduce((a,b)=>a+b,0);
-            return data.labels.map((label,i) => ({ text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i]/total)*100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i }));
-        } } } } }
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } } } }
     });
 }
 
@@ -1002,7 +939,7 @@ function loadAllData() {
                         <div class="card-name">${escapeHtml(item.nama)}</div>
                         <div class="card-phone">
                             <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🗪</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
                         </div>
                     </div>
                 `).join('');
@@ -1040,7 +977,7 @@ function loadAllData() {
                         <div class="card-name">${escapeHtml(item.nama)}</div>
                         <div class="card-phone">
                             <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">🗪</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
                         </div>
                     </div>
                 `).join('');
@@ -1058,37 +995,38 @@ function loadAllData() {
 async function loadReminders() {
     if (!currentUser) return;
     
-    const snapshot = await db.collection('reminders')
-        .where('user_id', '==', currentUser.uid)
-        .orderBy('created_at', 'desc')
-        .get();
-    
-    const reminderList = document.getElementById('reminderList');
-    if (!reminderList) return;
-    
-    if (snapshot.empty) {
-        reminderList.innerHTML = '<p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p>';
-        return;
-    }
-    
-    let html = '';
-    snapshot.forEach(doc => {
-        const d = doc.data();
-        const dateTime = d.datetime ? new Date(d.datetime).toLocaleString('id-ID') : '-';
-        html += `
+    try {
+        const snapshot = await db.collection('reminders')
+            .where('user_id', '==', currentUser.uid)
+            .get();
+        
+        const reminderList = document.getElementById('reminderList');
+        if (!reminderList) return;
+        
+        if (snapshot.empty) {
+            reminderList.innerHTML = '<p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p>';
+            return;
+        }
+        
+        const items = [];
+        snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+        items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        reminderList.innerHTML = items.map(item => `
             <div class="db-item">
                 <div class="db-item-info">
-                    <h4>📝 ${escapeHtml(d.title)}</h4>
-                    <p>${escapeHtml(d.description || '-')}</p>
-                    <small>⏰ ${dateTime}</small>
+                    <h4>📝 ${escapeHtml(item.title)}</h4>
+                    <p>${escapeHtml(item.description || '-')}</p>
+                    <small>⏰ ${item.datetime ? new Date(item.datetime).toLocaleString('id-ID') : '-'}</small>
                 </div>
                 <div class="db-item-actions">
-                    <button class="db-item-delete" onclick="deleteReminder('${doc.id}')">🗑️ Hapus</button>
+                    <button class="db-item-delete" onclick="deleteReminder('${item.id}')">🗑️ Hapus</button>
                 </div>
             </div>
-        `;
-    });
-    reminderList.innerHTML = html;
+        `).join('');
+    } catch (error) {
+        console.error('Error load reminders:', error);
+    }
 }
 
 window.deleteReminder = async function(id) {
@@ -1114,18 +1052,15 @@ document.getElementById('saveReminderBtn')?.addEventListener('click', async () =
     }
     
     await db.collection('reminders').add({
-        title: title,
-        description: description,
-        datetime: datetime,
-        user_id: currentUser.uid,
-        created_at: new Date().toISOString()
+        title: title, description: description || '', datetime: datetime || null,
+        user_id: currentUser.uid, created_at: new Date().toISOString()
     });
     
     closeModal('reminderModal');
     document.getElementById('reminderTitle').value = '';
     document.getElementById('reminderDesc').value = '';
     document.getElementById('reminderDateTime').value = '';
-    showNotif('Pengingat ditambahkan');
+    showNotif('✅ Pengingat ditambahkan');
     loadReminders();
 });
 
@@ -1148,42 +1083,49 @@ async function loadUsersForSelect() {
 async function loadPesan() {
     if (!currentUser) return;
     
-    const snapshot = await db.collection('messages')
-        .where('to_id', '==', currentUser.uid)
-        .orderBy('created_at', 'desc')
-        .get();
-    
-    const pesanList = document.getElementById('pesanList');
-    if (!pesanList) return;
-    
-    if (snapshot.empty) {
-        pesanList.innerHTML = '<p style="text-align:center;padding:40px;">💬 Belum ada pesan</p>';
-        return;
-    }
-    
-    let html = '';
-    for (const doc of snapshot.docs) {
-        const d = doc.data();
-        let fromName = 'Unknown';
-        const fromUser = await db.collection('users').doc(d.from_id).get();
-        if (fromUser.exists) fromName = fromUser.data().nama || fromUser.data().email || 'CS Agent';
+    try {
+        const snapshot = await db.collection('messages')
+            .where('to_id', '==', currentUser.uid)
+            .get();
         
-        const isRead = d.is_read ? '✅ Dibaca' : '🆕 Baru';
-        html += `
-            <div class="db-item ${!d.is_read ? 'unread' : ''}" style="${!d.is_read ? 'background:#eef2ff;' : ''}">
-                <div class="db-item-info">
-                    <h4>📨 Dari: ${escapeHtml(fromName)}</h4>
-                    <p>${escapeHtml(d.message)}</p>
-                    <small>📅 ${new Date(d.created_at).toLocaleString('id-ID')} | ${isRead}</small>
+        const pesanList = document.getElementById('pesanList');
+        if (!pesanList) return;
+        
+        if (snapshot.empty) {
+            pesanList.innerHTML = '<p style="text-align:center;padding:40px;">💬 Belum ada pesan</p>';
+            return;
+        }
+        
+        const items = [];
+        for (const doc of snapshot.docs) {
+            items.push({ id: doc.id, ...doc.data() });
+        }
+        items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        let html = '';
+        for (const item of items) {
+            let fromName = 'Unknown';
+            const fromUser = await db.collection('users').doc(item.from_id).get();
+            if (fromUser.exists) fromName = fromUser.data().nama || fromUser.data().email || 'CS Agent';
+            
+            html += `
+                <div class="db-item ${!item.is_read ? 'unread' : ''}" style="${!item.is_read ? 'background:#eef2ff;' : ''}">
+                    <div class="db-item-info">
+                        <h4>📨 Dari: ${escapeHtml(fromName)}</h4>
+                        <p>${escapeHtml(item.message)}</p>
+                        <small>📅 ${new Date(item.created_at).toLocaleString('id-ID')} | ${item.is_read ? '✅ Dibaca' : '🆕 Baru'}</small>
+                    </div>
+                    <div class="db-item-actions">
+                        <button class="db-item-wa" onclick="markAsRead('${item.id}')">✅ Tandai Dibaca</button>
+                        <button class="db-item-delete" onclick="deletePesan('${item.id}')">🗑️ Hapus</button>
+                    </div>
                 </div>
-                <div class="db-item-actions">
-                    <button class="db-item-wa" onclick="markAsRead('${doc.id}')">✅ Tandai Dibaca</button>
-                    <button class="db-item-delete" onclick="deletePesan('${doc.id}')">🗑️ Hapus</button>
-                </div>
-            </div>
-        `;
+            `;
+        }
+        pesanList.innerHTML = html;
+    } catch (error) {
+        console.error('Error load pesan:', error);
     }
-    pesanList.innerHTML = html;
 }
 
 window.markAsRead = async function(id) {
@@ -1217,17 +1159,14 @@ document.getElementById('savePesanBtn')?.addEventListener('click', async () => {
     }
     
     await db.collection('messages').add({
-        from_id: currentUser.uid,
-        to_id: toId,
-        message: message,
-        is_read: false,
-        created_at: new Date().toISOString()
+        from_id: currentUser.uid, to_id: toId, message: message,
+        is_read: false, created_at: new Date().toISOString()
     });
     
     closeModal('pesanModal');
     document.getElementById('pesanTo').value = '';
     document.getElementById('pesanMessage').value = '';
-    showNotif('Pesan terkirim');
+    showNotif('✅ Pesan terkirim');
 });
 
 async function updateNotifBadge() {
@@ -1240,294 +1179,146 @@ async function updateNotifBadge() {
     if (badge) badge.innerText = snapshot.size;
 }
 
-// Real-time listener untuk notifikasi
-db.collection('messages').where('to_id', '==', currentUser?.uid).onSnapshot(() => {
-    updateNotifBadge();
+if (currentUser) {
+    db.collection('messages').where('to_id', '==', currentUser.uid).onSnapshot(() => updateNotifBadge());
+}
+
+document.getElementById('notifBtn')?.addEventListener('click', () => {
+    document.querySelector('.menu-item[data-page="pesan"]')?.click();
 });
 
-const notifBtn = document.getElementById('notifBtn');
-if (notifBtn) {
-    notifBtn.addEventListener('click', () => {
-        document.querySelector('.menu-item[data-page="pesan"]').click();
+// ========== BROADCAST WHATSAPP FUNCTIONS ==========
+let currentNumbers = [];
+
+function initBroadcast() {
+    // Radio change event
+    document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const value = this.value;
+            document.getElementById('filterStatusCard').style.display = value === 'custom' ? 'none' : 'block';
+            document.getElementById('customNumbersCard').style.display = value === 'custom' ? 'block' : 'none';
+            document.getElementById('prospekFilter').style.display = value === 'prospek' ? 'flex' : 'none';
+            document.getElementById('customerFilter').style.display = value === 'customer' ? 'flex' : 'none';
+            loadNumbers();
+        });
     });
-}
-
-// ========== PERBAIKAN REMINDER & PESAN ==========
-
-// Pastikan tombol terhubung setelah DOM siap
-document.addEventListener('DOMContentLoaded', function() {
-    // Tombol Tambah Pengingat
-    const addReminderBtn = document.getElementById('addReminderBtn');
-    if (addReminderBtn) {
-        addReminderBtn.addEventListener('click', function() {
-            console.log('Tombol Tambah Pengingat diklik');
-            const modal = document.getElementById('reminderModal');
-            if (modal) modal.style.display = 'flex';
-            else console.log('Modal reminderModal tidak ditemukan');
-        });
-    } else {
-        console.log('Tombol addReminderBtn tidak ditemukan');
-    }
     
-    // Tombol Tambah Pesan
-    const addPesanBtn = document.getElementById('addPesanBtn');
-    if (addPesanBtn) {
-        addPesanBtn.addEventListener('click', function() {
-            console.log('Tombol Kirim Pesan diklik');
-            loadUsersForSelect();
-            const modal = document.getElementById('pesanModal');
-            if (modal) modal.style.display = 'flex';
-            else console.log('Modal pesanModal tidak ditemukan');
-        });
-    } else {
-        console.log('Tombol addPesanBtn tidak ditemukan');
-    }
-});
-
-// ========== REMINDER FUNCTIONS (ULANG) ==========
-async function loadReminders() {
-    if (!currentUser) {
-        console.log('User belum login');
-        return;
-    }
-    
-    const reminderList = document.getElementById('reminderList');
-    if (!reminderList) {
-        console.log('Element reminderList tidak ditemukan');
-        return;
-    }
-    
-    try {
-        const snapshot = await db.collection('reminders')
-            .where('user_id', '==', currentUser.uid)
-            .orderBy('created_at', 'desc')
-            .get();
-        
-        if (snapshot.empty) {
-            reminderList.innerHTML = '<p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p>';
-            return;
-        }
-        
-        let html = '';
-        snapshot.forEach(doc => {
-            const d = doc.data();
-            const dateTime = d.datetime ? new Date(d.datetime).toLocaleString('id-ID') : '-';
-            html += `
-                <div class="db-item">
-                    <div class="db-item-info">
-                        <h4>📝 ${escapeHtml(d.title)}</h4>
-                        <p>${escapeHtml(d.description || '-')}</p>
-                        <small>⏰ ${dateTime}</small>
-                    </div>
-                    <div class="db-item-actions">
-                        <button class="db-item-delete" onclick="deleteReminder('${doc.id}')">🗑️ Hapus</button>
-                    </div>
-                </div>
-            `;
-        });
-        reminderList.innerHTML = html;
-        console.log('Reminder loaded:', snapshot.size);
-    } catch (error) {
-        console.error('Error load reminders:', error);
-        showNotif('Gagal memuat pengingat', true);
-    }
-}
-
-window.deleteReminder = async function(id) {
-    if (confirm('Hapus pengingat ini?')) {
-        try {
-            await db.collection('reminders').doc(id).delete();
-            showNotif('Pengingat dihapus');
-            loadReminders();
-        } catch (error) {
-            showNotif('Gagal hapus: ' + error.message, true);
-        }
-    }
-};
-
-// Tombol Simpan Pengingat
-const saveReminderBtn = document.getElementById('saveReminderBtn');
-if (saveReminderBtn) {
-    saveReminderBtn.addEventListener('click', async function() {
-        const title = document.getElementById('reminderTitle').value;
-        const description = document.getElementById('reminderDesc').value;
-        const datetime = document.getElementById('reminderDateTime').value;
-        
-        if (!title) {
-            showNotif('Judul wajib diisi', true);
-            return;
-        }
-        
-        try {
-            await db.collection('reminders').add({
-                title: title,
-                description: description,
-                datetime: datetime,
-                user_id: currentUser.uid,
-                created_at: new Date().toISOString()
-            });
-            
-            closeModal('reminderModal');
-            document.getElementById('reminderTitle').value = '';
-            document.getElementById('reminderDesc').value = '';
-            document.getElementById('reminderDateTime').value = '';
-            showNotif('Pengingat ditambahkan');
-            loadReminders();
-        } catch (error) {
-            showNotif('Gagal simpan: ' + error.message, true);
-        }
+    // Filter checkboxes change
+    document.querySelectorAll('#customerFilter input, #prospekFilter input').forEach(cb => {
+        cb.addEventListener('change', () => loadNumbers());
     });
+    
+    document.getElementById('customNumbers')?.addEventListener('input', () => loadNumbers());
+    document.getElementById('refreshNumbersBtn')?.addEventListener('click', () => loadNumbers());
+    document.getElementById('sendBroadcastBtn')?.addEventListener('click', sendBroadcast);
+    
+    loadNumbers();
 }
 
-// ========== PESAN FUNCTIONS (ULANG) ==========
-async function loadUsersForSelect() {
-    try {
-        const snapshot = await db.collection('users').get();
-        const select = document.getElementById('pesanTo');
-        if (!select) return;
+async function loadNumbers() {
+    const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
+    let numbers = [];
+    
+    if (sourceType === 'custom') {
+        const customText = document.getElementById('customNumbers')?.value || '';
+        numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
+    } else {
+        let collection = 'customers';
+        let statusField = 'status';
+        let statusValues = [];
         
-        select.innerHTML = '<option value="">Pilih CS Tujuan</option>';
+        if (sourceType === 'prospek') {
+            collection = 'prospek';
+            statusField = 'status';
+            statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value);
+        } else if (sourceType === 'customer') {
+            collection = 'customers';
+            statusField = 'status';
+            statusValues = Array.from(document.querySelectorAll('#customerFilter input:checked')).map(cb => cb.value);
+        } else if (sourceType === 'closing') {
+            collection = 'db_closing';
+            statusField = null;
+        } else if (sourceType === 'dbTidak') {
+            collection = 'db_tidak_tertarik';
+            statusField = null;
+        }
+        
+        let query = db.collection(collection).where('user_id', '==', currentUser.uid);
+        if (statusValues && statusValues.length > 0) {
+            query = query.where(statusField, 'in', statusValues);
+        }
+        
+        const snapshot = await query.get();
         snapshot.forEach(doc => {
             const data = doc.data();
-            if (doc.id !== currentUser.uid) {
-                const name = data.nama || data.email || 'CS Agent';
-                select.innerHTML += `<option value="${doc.id}">${escapeHtml(name)}</option>`;
-            }
+            numbers.push({ hp: data.hp, nama: data.nama });
         });
-        console.log('Users loaded:', snapshot.size);
-    } catch (error) {
-        console.error('Error load users:', error);
     }
-}
-
-async function loadPesan() {
-    if (!currentUser) return;
     
-    const pesanList = document.getElementById('pesanList');
-    if (!pesanList) return;
+    currentNumbers = numbers;
+    const countSpan = document.getElementById('selectedCount');
+    const listDiv = document.getElementById('selectedNumbersList');
     
-    try {
-        const snapshot = await db.collection('messages')
-            .where('to_id', '==', currentUser.uid)
-            .orderBy('created_at', 'desc')
-            .get();
-        
-        if (snapshot.empty) {
-            pesanList.innerHTML = '<p style="text-align:center;padding:40px;">💬 Belum ada pesan</p>';
-            return;
-        }
-        
-        let html = '';
-        for (const doc of snapshot.docs) {
-            const d = doc.data();
-            let fromName = 'Unknown';
-            try {
-                const fromUser = await db.collection('users').doc(d.from_id).get();
-                if (fromUser.exists) fromName = fromUser.data().nama || fromUser.data().email || 'CS Agent';
-            } catch(e) { console.error(e); }
+    if (countSpan) countSpan.innerText = numbers.length;
+    
+    if (numbers.length === 0) {
+        listDiv.innerHTML = '<p style="color:#9ca3af;">Tidak ada nomor yang dipilih</p>';
+    } else if (typeof numbers[0] === 'string') {
+        listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n)}</div>`).join('');
+    } else {
+        listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n.nama)} - ${escapeHtml(n.hp)}</div>`).join('');
+    }
+}
+
+async function sendBroadcast() {
+    const messageTemplate = document.getElementById('broadcastMessage')?.value;
+    const openAll = document.getElementById('openAllWA')?.checked;
+    const sendOneByOne = document.getElementById('sendOneByOne')?.checked;
+    
+    if (!messageTemplate) {
+        showNotif('Pesan tidak boleh kosong!', true);
+        return;
+    }
+    
+    if (currentNumbers.length === 0) {
+        showNotif('Tidak ada nomor tujuan!', true);
+        return;
+    }
+    
+    if (sendOneByOne) {
+        for (let i = 0; i < currentNumbers.length; i++) {
+            const item = currentNumbers[i];
+            const hp = typeof item === 'string' ? item : item.hp;
+            const nama = typeof item === 'string' ? '' : item.nama;
+            const message = messageTemplate.replace(/{nama}/g, nama || 'Customer');
+            const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+            const waUrl = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
+            window.open(waUrl, '_blank');
             
-            const isRead = d.is_read ? '✅ Dibaca' : '🆕 Baru';
-            html += `
-                <div class="db-item ${!d.is_read ? 'unread' : ''}" style="${!d.is_read ? 'background:#eef2ff;' : ''}">
-                    <div class="db-item-info">
-                        <h4>📨 Dari: ${escapeHtml(fromName)}</h4>
-                        <p>${escapeHtml(d.message)}</p>
-                        <small>📅 ${new Date(d.created_at).toLocaleString('id-ID')} | ${isRead}</small>
-                    </div>
-                    <div class="db-item-actions">
-                        <button class="db-item-wa" onclick="markAsRead('${doc.id}')">✅ Tandai Dibaca</button>
-                        <button class="db-item-delete" onclick="deletePesan('${doc.id}')">🗑️ Hapus</button>
-                    </div>
-                </div>
-            `;
+            if (i < currentNumbers.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
         }
-        pesanList.innerHTML = html;
-        console.log('Pesan loaded:', snapshot.size);
-    } catch (error) {
-        console.error('Error load pesan:', error);
-    }
-}
-
-window.markAsRead = async function(id) {
-    try {
-        await db.collection('messages').doc(id).update({ is_read: true });
-        showNotif('Pesan ditandai dibaca');
-        loadPesan();
-        updateNotifBadge();
-    } catch (error) {
-        showNotif('Gagal: ' + error.message, true);
-    }
-};
-
-window.deletePesan = async function(id) {
-    if (confirm('Hapus pesan ini?')) {
-        try {
-            await db.collection('messages').doc(id).delete();
-            showNotif('Pesan dihapus');
-            loadPesan();
-            updateNotifBadge();
-        } catch (error) {
-            showNotif('Gagal hapus: ' + error.message, true);
+        showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`);
+    } else if (openAll) {
+        for (const item of currentNumbers) {
+            const hp = typeof item === 'string' ? item : item.hp;
+            const nama = typeof item === 'string' ? '' : item.nama;
+            const message = messageTemplate.replace(/{nama}/g, nama || 'Customer');
+            const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+            const waUrl = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
+            window.open(waUrl, '_blank');
+        }
+        showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`);
+    } else {
+        if (currentNumbers.length > 0) {
+            const first = currentNumbers[0];
+            const hp = typeof first === 'string' ? first : first.hp;
+            const nama = typeof first === 'string' ? '' : first.nama;
+            const message = messageTemplate.replace(/{nama}/g, nama || 'Customer');
+            const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+            window.open('https://wa.me/' + nomor + '?text=' + encodeURIComponent(message), '_blank');
+            showNotif('✅ Membuka chat WhatsApp pertama');
         }
     }
-};
-
-// Tombol Kirim Pesan
-const savePesanBtn = document.getElementById('savePesanBtn');
-if (savePesanBtn) {
-    savePesanBtn.addEventListener('click', async function() {
-        const toId = document.getElementById('pesanTo').value;
-        const message = document.getElementById('pesanMessage').value;
-        
-        if (!toId || !message) {
-            showNotif('Lengkapi data!', true);
-            return;
-        }
-        
-        try {
-            await db.collection('messages').add({
-                from_id: currentUser.uid,
-                to_id: toId,
-                message: message,
-                is_read: false,
-                created_at: new Date().toISOString()
-            });
-            
-            closeModal('pesanModal');
-            document.getElementById('pesanTo').value = '';
-            document.getElementById('pesanMessage').value = '';
-            showNotif('Pesan terkirim');
-        } catch (error) {
-            showNotif('Gagal kirim: ' + error.message, true);
-        }
-    });
-}
-
-async function updateNotifBadge() {
-    if (!currentUser) return;
-    try {
-        const snapshot = await db.collection('messages')
-            .where('to_id', '==', currentUser.uid)
-            .where('is_read', '==', false)
-            .get();
-        const badge = document.getElementById('notifCount');
-        if (badge) badge.innerText = snapshot.size;
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-// Real-time listener untuk notifikasi
-if (currentUser) {
-    db.collection('messages').where('to_id', '==', currentUser.uid).onSnapshot(() => {
-        updateNotifBadge();
-    });
-}
-
-// Notifikasi button
-const notifBtn2 = document.getElementById('notifBtn');
-if (notifBtn2) {
-    notifBtn2.addEventListener('click', () => {
-        document.querySelector('.menu-item[data-page="pesan"]')?.click();
-    });
 }
