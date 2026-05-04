@@ -73,18 +73,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 200);
             }
         });
-        
-        sidebar.addEventListener('mouseenter', function() {
-            clearTimeout(sidebarTimeout);
-        });
+        sidebar.addEventListener('mouseenter', function() { clearTimeout(sidebarTimeout); });
     }
     
     if (toggleBtn) {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            if (sidebar) {
-                sidebar.classList.toggle('active');
-            }
+            if (sidebar) sidebar.classList.toggle('active');
         });
     }
     
@@ -97,11 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     window.addEventListener('resize', function() {
-        if (!isMobile() && sidebar) {
-            sidebar.classList.remove('active');
-        } else if (isMobile() && sidebar) {
-            sidebar.classList.remove('active');
-        }
+        if (!isMobile() && sidebar) sidebar.classList.remove('active');
+        else if (isMobile() && sidebar) sidebar.classList.remove('active');
     });
 });
 
@@ -237,9 +229,7 @@ document.querySelectorAll('.closeModalBtn').forEach(btn => {
 
 document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal(modal.id);
-        }
+        if (e.target === modal) closeModal(modal.id);
     });
 });
 
@@ -255,9 +245,7 @@ if (profileImg) {
                 const data = doc.data();
                 document.getElementById('profileName').value = data.nama || '';
                 document.getElementById('profilePhone').value = data.hp ? data.hp.replace('+62', '') : '';
-                if (data.foto) {
-                    document.getElementById('previewFoto').src = data.foto;
-                }
+                if (data.foto) document.getElementById('previewFoto').src = data.foto;
             }
         });
     });
@@ -335,11 +323,7 @@ if (saveProfileBtn) {
         
         try {
             await db.collection('users').doc(currentUser.uid).set({
-                nama: nama,
-                hp: hp,
-                foto: foto,
-                email: currentUser.email,
-                updated_at: new Date().toISOString()
+                nama: nama, hp: hp, foto: foto, email: currentUser.email, updated_at: new Date().toISOString()
             }, { merge: true });
             
             const topUserName = document.getElementById('topUserName');
@@ -369,7 +353,6 @@ function formatPhoneInput(input) {
 const customerPhone = document.getElementById('customerPhone');
 const prospekPhone = document.getElementById('prospekPhone');
 const profilePhone = document.getElementById('profilePhone');
-
 formatPhoneInput(customerPhone);
 formatPhoneInput(prospekPhone);
 formatPhoneInput(profilePhone);
@@ -404,12 +387,8 @@ if (saveCustomerBtn) {
         hp = '+62' + hp.replace(/\D/g, '');
         
         db.collection('customers').add({
-            nama: nama,
-            hp: hp,
-            tanggal: tanggal || new Date().toISOString().split('T')[0],
-            status: 'baru',
-            user_id: currentUser.uid,
-            created_at: new Date().toISOString()
+            nama: nama, hp: hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
+            status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
         }).then(() => {
             closeModal('customerModal');
             document.getElementById('customerName').value = '';
@@ -443,11 +422,7 @@ if (saveProspekBtn) {
         hp = '+62' + hp.replace(/\D/g, '');
         
         db.collection('prospek').add({
-            nama: nama,
-            hp: hp,
-            status: status,
-            user_id: currentUser.uid,
-            created_at: new Date().toISOString()
+            nama: nama, hp: hp, status: status, user_id: currentUser.uid, created_at: new Date().toISOString()
         }).then(() => {
             closeModal('prospekModal');
             document.getElementById('prospekName').value = '';
@@ -457,7 +432,7 @@ if (saveProspekBtn) {
     });
 }
 
-// ========== DETAIL MODAL (Perbaiki) ==========
+// ========== DETAIL MODAL ==========
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -493,27 +468,9 @@ function openDetailCustomer(id) {
             </div>
             <div class="detail-body">
                 <div class="detail-info">
-                    <div class="detail-info-item">
-                        <div class="detail-info-icon">📱</div>
-                        <div class="detail-info-content">
-                            <label>Nomor WhatsApp</label>
-                            <div class="value">${escapeHtml(d.hp)}</div>
-                        </div>
-                    </div>
-                    <div class="detail-info-item">
-                        <div class="detail-info-icon">📅</div>
-                        <div class="detail-info-content">
-                            <label>Tanggal Input</label>
-                            <div class="value">${d.tanggal || '-'}</div>
-                        </div>
-                    </div>
-                    <div class="detail-info-item">
-                        <div class="detail-info-icon">📌</div>
-                        <div class="detail-info-content">
-                            <label>Status Saat Ini</label>
-                            <div class="value">${d.status === 'followup' ? 'Follow Up' : d.status}</div>
-                        </div>
-                    </div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${d.tanggal || '-'}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status Saat Ini</label><div class="value">${d.status === 'followup' ? 'Follow Up' : d.status}</div></div></div>
                 </div>
                 <div class="detail-actions">
                     <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
@@ -535,10 +492,7 @@ function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
         const content = document.getElementById('detailContent');
-        let statusIcon = '🆕';
-        if (d.status === 'Sudah Dihubungi') statusIcon = '📞';
-        else if (d.status === 'Tertarik') statusIcon = '⭐';
-        else if (d.status === 'Tidak Tertarik') statusIcon = '❌';
+        let statusIcon = d.status === 'Sudah Dihubungi' ? '📞' : d.status === 'Tertarik' ? '⭐' : d.status === 'Tidak Tertarik' ? '❌' : '🆕';
         
         content.innerHTML = `
             <div class="detail-header">
@@ -548,27 +502,9 @@ function openDetailProspek(id) {
             </div>
             <div class="detail-body">
                 <div class="detail-info">
-                    <div class="detail-info-item">
-                        <div class="detail-info-icon">📱</div>
-                        <div class="detail-info-content">
-                            <label>Nomor WhatsApp</label>
-                            <div class="value">${escapeHtml(d.hp)}</div>
-                        </div>
-                    </div>
-                    <div class="detail-info-item">
-                        <div class="detail-info-icon">📅</div>
-                        <div class="detail-info-content">
-                            <label>Tanggal Input</label>
-                            <div class="value">${d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID') : '-'}</div>
-                        </div>
-                    </div>
-                    <div class="detail-info-item">
-                        <div class="detail-info-icon">📌</div>
-                        <div class="detail-info-content">
-                            <label>Status Saat Ini</label>
-                            <div class="value">${d.status}</div>
-                        </div>
-                    </div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID') : '-'}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status Saat Ini</label><div class="value">${d.status}</div></div></div>
                 </div>
                 <div class="detail-actions">
                     <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
@@ -576,11 +512,7 @@ function openDetailProspek(id) {
                     <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">⭐ Tertarik</button>
                     <button class="btn-danger" onclick="confirmTidakTertarik('${id}')">❌ Tidak Tertarik</button>
                 </div>
-                ${d.status === 'Tertarik' ? `
-                <div style="margin-top: 16px;">
-                    <button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button>
-                </div>
-                ` : ''}
+                ${d.status === 'Tertarik' ? `<div style="margin-top:16px;"><button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button></div>` : ''}
             </div>
             <div class="detail-footer">
                 <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
@@ -625,12 +557,8 @@ window.convertToCustomer = function(id) {
         db.collection('prospek').doc(id).get().then(doc => {
             const d = doc.data();
             db.collection('customers').add({
-                nama: d.nama,
-                hp: d.hp,
-                tanggal: new Date().toISOString().split('T')[0],
-                status: 'baru',
-                user_id: currentUser.uid,
-                created_at: new Date().toISOString()
+                nama: d.nama, hp: d.hp, tanggal: new Date().toISOString().split('T')[0],
+                status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
             });
             db.collection('prospek').doc(id).delete();
             showNotif('Berhasil jadi customer!');
@@ -642,11 +570,8 @@ window.convertToCustomer = function(id) {
 async function saveToClosingDB(id, data) {
     try {
         await db.collection('db_closing').add({
-            nama: data.nama,
-            hp: data.hp,
-            tanggal: data.tanggal || new Date().toISOString().split('T')[0],
-            closing_date: new Date().toISOString(),
-            user_id: currentUser.uid
+            nama: data.nama, hp: data.hp, tanggal: data.tanggal || new Date().toISOString().split('T')[0],
+            closing_date: new Date().toISOString(), user_id: currentUser.uid
         });
         await db.collection('customers').doc(id).delete();
         showNotif('✅ Data berhasil masuk Database Closing!');
@@ -660,10 +585,7 @@ async function saveToClosingDB(id, data) {
 async function saveToTidakTertarikDB(id, data) {
     try {
         await db.collection('db_tidak_tertarik').add({
-            nama: data.nama,
-            hp: data.hp,
-            tanggal: new Date().toISOString(),
-            user_id: currentUser.uid
+            nama: data.nama, hp: data.hp, tanggal: new Date().toISOString(), user_id: currentUser.uid
         });
         await db.collection('prospek').doc(id).delete();
         showNotif('✅ Data berhasil masuk Database Tidak Tertarik!');
@@ -784,14 +706,16 @@ function loadDBClosing() {
             cb.addEventListener('change', (e) => {
                 const id = cb.dataset.id;
                 cb.checked ? selectedClosingIds.set(id, true) : selectedClosingIds.delete(id);
-                const selectAllBtn = document.getElementById('selectAllClosing');
-                if (selectAllBtn) {
-                    const checkboxes = document.querySelectorAll('#dbClosingList .db-item-checkbox');
-                    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked);
-                    selectAllBtn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
-                }
+                const checkboxes = document.querySelectorAll('#dbClosingList .db-item-checkbox');
+                const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked);
+                const btn = document.getElementById('selectAllClosing');
+                if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
             });
         });
+        const checkboxes = document.querySelectorAll('#dbClosingList .db-item-checkbox');
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked);
+        const btn = document.getElementById('selectAllClosing');
+        if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
     });
 }
 
@@ -818,14 +742,16 @@ function loadDBTidak() {
             cb.addEventListener('change', (e) => {
                 const id = cb.dataset.id;
                 cb.checked ? selectedTidakIds.set(id, true) : selectedTidakIds.delete(id);
-                const selectAllBtn = document.getElementById('selectAllTidak');
-                if (selectAllBtn) {
-                    const checkboxes = document.querySelectorAll('#dbTidakList .db-item-checkbox');
-                    const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked);
-                    selectAllBtn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
-                }
+                const checkboxes = document.querySelectorAll('#dbTidakList .db-item-checkbox');
+                const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked);
+                const btn = document.getElementById('selectAllTidak');
+                if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
             });
         });
+        const checkboxes = document.querySelectorAll('#dbTidakList .db-item-checkbox');
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(c => c.checked);
+        const btn = document.getElementById('selectAllTidak');
+        if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
     });
 }
 
@@ -934,83 +860,43 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
 
 // ========== DRAG AND DROP ==========
 function initDragAndDrop() {
-    console.log('Initializing drag and drop...');
-    
-    // Customer drag and drop
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
-    const customerStatusMap = { 
-        baruList: 'baru', 
-        followupList: 'followup', 
-        pendingList: 'pending', 
-        closingList: 'closing' 
-    };
-    
+    const customerStatusMap = { baruList: 'baru', followupList: 'followup', pendingList: 'pending', closingList: 'closing' };
     customerGroups.forEach(groupId => {
         const el = document.getElementById(groupId);
         if (el && !el.hasAttribute('data-sortable')) {
-            try {
-                new Sortable(el, {
-                    group: 'customers',
-                    animation: 200,
-                    draggable: '.card-item',
-                    onEnd: async function(evt) {
-                        const id = evt.item.dataset.id;
-                        const newStatus = customerStatusMap[evt.to.id];
-                        console.log('Drag end - customer:', id, 'new status:', newStatus);
-                        if (id && newStatus && currentUser) {
-                            if (newStatus === 'closing') {
-                                await window.confirmClosing(id);
-                            } else {
-                                await db.collection('customers').doc(id).update({ status: newStatus });
-                                showNotif(`Status diubah menjadi ${newStatus}`);
-                            }
-                        }
+            new Sortable(el, {
+                group: 'customers', animation: 200, draggable: '.card-item',
+                onEnd: async function(evt) {
+                    const id = evt.item.dataset.id;
+                    const newStatus = customerStatusMap[evt.to.id];
+                    if (id && newStatus && currentUser) {
+                        if (newStatus === 'closing') await window.confirmClosing(id);
+                        else await db.collection('customers').doc(id).update({ status: newStatus });
                     }
-                });
-                el.setAttribute('data-sortable', 'true');
-                console.log(`Sortable initialized for ${groupId}`);
-            } catch(e) {
-                console.error(`Error initializing Sortable for ${groupId}:`, e);
-            }
+                }
+            });
+            el.setAttribute('data-sortable', 'true');
         }
     });
     
-    // Prospek drag and drop
     const prospekGroups = ['prospekBaruList', 'prospekDihubungiList', 'prospekTertarikList', 'prospekTidakList'];
-    const prospekStatusMap = { 
-        prospekBaruList: 'Baru', 
-        prospekDihubungiList: 'Sudah Dihubungi', 
-        prospekTertarikList: 'Tertarik', 
-        prospekTidakList: 'Tidak Tertarik' 
-    };
-    
+    const prospekStatusMap = { prospekBaruList: 'Baru', prospekDihubungiList: 'Sudah Dihubungi', prospekTertarikList: 'Tertarik', prospekTidakList: 'Tidak Tertarik' };
     prospekGroups.forEach(groupId => {
         const el = document.getElementById(groupId);
         if (el && !el.hasAttribute('data-sortable')) {
-            try {
-                new Sortable(el, {
-                    group: 'prospek',
-                    animation: 200,
-                    draggable: '.card-item',
-                    onEnd: async function(evt) {
-                        const id = evt.item.dataset.id;
-                        const newStatus = prospekStatusMap[evt.to.id];
-                        console.log('Drag end - prospek:', id, 'new status:', newStatus);
-                        if (id && newStatus && currentUser) {
-                            if (newStatus === 'Tidak Tertarik') {
-                                await window.confirmTidakTertarik(id);
-                            } else {
-                                await db.collection('prospek').doc(id).update({ status: newStatus });
-                                showNotif(`Status diubah menjadi ${newStatus}`);
-                            }
-                        }
+            new Sortable(el, {
+                group: 'prospek', animation: 200, draggable: '.card-item',
+                onEnd: async function(evt) {
+                    const id = evt.item.dataset.id;
+                    const newStatus = prospekStatusMap[evt.to.id];
+                    if (id && newStatus && currentUser) {
+                        if (newStatus === 'Tidak Tertarik') await window.confirmTidakTertarik(id);
+                        else await db.collection('prospek').doc(id).update({ status: newStatus });
                     }
-                });
-                el.setAttribute('data-sortable', 'true');
-                console.log(`Sortable initialized for ${groupId}`);
-            } catch(e) {
-                console.error(`Error initializing Sortable for ${groupId}:`, e);
-            }
+                }
+            });
+            el.setAttribute('data-sortable', 'true');
         }
     });
 }
@@ -1046,7 +932,15 @@ function loadAllData() {
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
-                container.innerHTML = lists[status].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span></div></div>`).join('');
+                container.innerHTML = lists[status].map(item => `
+                    <div class="card-item" data-id="${item.id}">
+                        <div class="card-name">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone">
+                            <span>${item.hp}</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
+                        </div>
+                    </div>
+                `).join('');
                 container.querySelectorAll('.card-item').forEach(card => {
                     card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
                 });
@@ -1076,7 +970,15 @@ function loadAllData() {
         for (let col in lists) {
             const container = document.getElementById(col + 'List');
             if (container) {
-                container.innerHTML = lists[col].map(item => `<div class="card-item" data-id="${item.id}"><div class="card-name">${escapeHtml(item.nama)}</div><div class="card-phone"><span>${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span></div></div>`).join('');
+                container.innerHTML = lists[col].map(item => `
+                    <div class="card-item" data-id="${item.id}">
+                        <div class="card-name">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone">
+                            <span>${item.hp}</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
+                        </div>
+                    </div>
+                `).join('');
                 container.querySelectorAll('.card-item').forEach(card => {
                     card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
                 });
