@@ -241,17 +241,21 @@ document.querySelectorAll('.modal').forEach(modal => {
 });
 
 // ========== PROFILE ==========
+// Event klik foto profile di header (icon profile di pojok kanan atas)
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
     profileImg.addEventListener('click', () => {
         const profileModal = document.getElementById('profileModal');
         if (profileModal) profileModal.style.display = 'flex';
         
+        // Load data user saat ini dari Firestore
         db.collection('users').doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
                 const data = doc.data();
+                // Isi form dengan data yang ada
                 document.getElementById('profileName').value = data.nama || '';
-                document.getElementById('profilePhone').value = data.hp || '+62';
+                // Hapus +62 dari nomor HP untuk ditampilkan di input
+                document.getElementById('profilePhone').value = data.hp ? data.hp.replace('+62', '') : '';
                 if (data.foto) {
                     document.getElementById('previewFoto').src = data.foto;
                 }
@@ -260,6 +264,16 @@ if (profileImg) {
     });
 }
 
+// Event untuk ikon kamera (baru ditambahkan)
+const cameraIcon = document.getElementById('cameraIcon');
+if (cameraIcon) {
+    cameraIcon.addEventListener('click', () => {
+        const profileFotoInput = document.getElementById('profileFoto');
+        if (profileFotoInput) profileFotoInput.click();
+    });
+}
+
+// Event untuk preview foto (klik foto langsung)
 const previewFoto = document.getElementById('previewFoto');
 if (previewFoto) {
     previewFoto.addEventListener('click', () => {
@@ -268,6 +282,7 @@ if (previewFoto) {
     });
 }
 
+// Event ketika memilih file foto dari komputer
 const profileFotoInput = document.getElementById('profileFoto');
 if (profileFotoInput) {
     profileFotoInput.addEventListener('change', function(e) {
@@ -280,25 +295,41 @@ if (profileFotoInput) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 const preview = document.getElementById('previewFoto');
-                if (preview) preview.src = e.target.result;
+                if (preview) {
+                    preview.src = e.target.result;
+                }
                 const headerImg = document.getElementById('profileImg');
-                if (headerImg) headerImg.src = e.target.result;
+                if (headerImg) {
+                    headerImg.src = e.target.result;
+                }
             };
             reader.readAsDataURL(file);
         }
     });
 }
 
+// Event tombol simpan profile
 const saveProfileBtn = document.getElementById('saveProfileBtn');
 if (saveProfileBtn) {
     saveProfileBtn.addEventListener('click', async () => {
         const nama = document.getElementById('profileName').value;
-        const hp = document.getElementById('profilePhone').value;
+        let hp = document.getElementById('profilePhone').value;
         const foto = document.getElementById('previewFoto').src;
         
         if (!nama) {
             showNotif('Nama wajib diisi', true);
             return;
+        }
+        
+        // Format nomor HP (tambah +62)
+        if (hp) {
+            hp = hp.replace(/\D/g, '');
+            if (hp.startsWith('0')) {
+                hp = hp.substring(1);
+            }
+            hp = '+62' + hp;
+        } else {
+            hp = '+62';
         }
         
         try {
@@ -310,19 +341,44 @@ if (saveProfileBtn) {
                 updated_at: new Date().toISOString()
             }, { merge: true });
             
+            // Update nama di header
             const topUserName = document.getElementById('topUserName');
             if (topUserName) topUserName.innerText = nama;
             
+            // Update foto di header
             const topProfileImg = document.getElementById('profileImg');
             if (topProfileImg) topProfileImg.src = foto;
             
             closeModal('profileModal');
             showNotif('Profile tersimpan');
         } catch (e) {
+            console.error('Error:', e);
             showNotif('Gagal: ' + e.message, true);
         }
     });
 }
+
+// Fungsi untuk memformat input nomor HP
+function formatPhoneInput(input) {
+    if (input) {
+        input.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.startsWith('0')) {
+                value = value.substring(1);
+            }
+            this.value = value;
+        });
+    }
+}
+
+// Terapkan format ke semua input nomor HP
+const customerPhone = document.getElementById('customerPhone');
+const prospekPhone = document.getElementById('prospekPhone');
+const profilePhone = document.getElementById('profilePhone');
+
+formatPhoneInput(customerPhone);
+formatPhoneInput(prospekPhone);
+formatPhoneInput(profilePhone);
 
 // ========== CUSTOMER CRUD ==========
 const addCustomerBtn = document.getElementById('addCustomerBtn');
