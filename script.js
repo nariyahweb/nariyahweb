@@ -461,8 +461,11 @@ function getStatusBadge(status) {
 }
 
 function openDetailCustomer(id) {
+    console.log("Membuka detail customer dengan ID:", id); // DEBUG
     db.collection('customers').doc(id).get().then(doc => {
         const d = doc.data();
+        console.log("Data customer:", d); // DEBUG
+        
         const content = document.getElementById('detailContent');
         const statusIcon = d.status === 'closing' ? '🎉' : d.status === 'pending' ? '⏳' : d.status === 'followup' ? '📞' : '🆕';
         
@@ -508,7 +511,11 @@ function openDetailCustomer(id) {
                 <button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button>
             </div>
         `;
+        console.log("HTML sudah di-set"); // DEBUG
         showModal('detailModal');
+    }).catch(err => {
+        console.error("Error mengambil data:", err);
+        showNotif('Gagal memuat detail', true);
     });
 }
 
