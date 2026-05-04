@@ -504,7 +504,7 @@ function openDetailCustomer(id) {
                 </div>
             </div>
             <div class="detail-footer">
-                <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
+                <button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button>
                 <button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button>
             </div>
         `;
@@ -564,7 +564,7 @@ function openDetailProspek(id) {
                 ` : ''}
             </div>
             <div class="detail-footer">
-                <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
+                <button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button>
                 <button class="btn-danger" onclick="deleteProspek('${id}')">🗑️ Hapus</button>
             </div>
         `;
