@@ -1550,3 +1550,213 @@ body:has(.modal[style*="display: flex"]) {
     background: #c7d2fe;
     border-radius: 10px;
 }
+
+/* ========== PERBAIKAN POPUP PROFILE & TAMBAH DATA ========== */
+
+/* Lebarkan semua modal content */
+.modal-content {
+    max-width: 500px !important;
+    width: 90% !important;
+    padding: 0 !important;
+}
+
+/* Header modal */
+.modal-content h3 {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    padding: 24px 24px 0 24px !important;
+    margin-bottom: 4px !important;
+    color: #1f2937 !important;
+}
+
+.modal-subtitle {
+    font-size: 13px !important;
+    color: #6b7280 !important;
+    padding: 0 24px 16px 24px !important;
+    margin-bottom: 0 !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+
+/* Form group lebih lebar */
+.form-group {
+    padding: 0 24px !important;
+    margin-bottom: 20px !important;
+}
+
+.form-group label {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+}
+
+.form-group input,
+.form-group select {
+    width: 100% !important;
+    padding: 14px 16px !important;
+    font-size: 14px !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 14px !important;
+    background: #fafafc !important;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #4f46e5 !important;
+    outline: none !important;
+}
+
+/* Input dengan icon */
+.input-icon input {
+    padding-left: 44px !important;
+}
+
+.input-icon span {
+    left: 14px !important;
+    font-size: 18px !important;
+}
+
+/* Nomor WhatsApp dengan prefix */
+.phone-input {
+    display: flex !important;
+    gap: 10px !important;
+}
+
+.phone-prefix {
+    background: #f3f4f6 !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 14px !important;
+    padding: 0 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
+
+/* Tombol modal */
+.modal-buttons {
+    padding: 16px 24px 24px 24px !important;
+    margin-top: 8px !important;
+    border-top: 1px solid #f0f0f0 !important;
+    display: flex !important;
+    gap: 12px !important;
+}
+
+.modal-buttons button {
+    flex: 1 !important;
+    padding: 14px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-radius: 14px !important;
+    cursor: pointer !important;
+}
+
+.modal-buttons button:first-child {
+    background: #4f46e5 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.modal-buttons button:first-child:hover {
+    background: #4338ca !important;
+}
+
+.modal-buttons button:last-child {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    border: none !important;
+}
+
+.modal-buttons button:last-child:hover {
+    background: #e5e7eb !important;
+}
+
+/* ========== PERBAIKAN POPUP PROFILE ========== */
+#profileModal .modal-content {
+    max-width: 500px !important;
+}
+
+.profile-photo {
+    text-align: center !important;
+    margin: 16px 24px 20px 24px !important;
+    position: relative !important;
+}
+
+.profile-photo img {
+    width: 100px !important;
+    height: 100px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    border: 4px solid white !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+    cursor: pointer !important;
+}
+
+.profile-photo .camera-icon {
+    position: absolute !important;
+    bottom: 5px !important;
+    right: calc(50% - 50px) !important;
+    background: #4f46e5 !important;
+    color: white !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    border: 2px solid white !important;
+}
+
+.profile-photo .camera-icon:hover {
+    background: #4338ca !important;
+}
+
+.profile-photo p {
+    font-size: 12px !important;
+    color: #9ca3af !important;
+    margin-top: 12px !important;
+}
+
+/* ========== PERBAIKAN PREVIEW FOTO ========== */
+#previewPhotoModal .modal-content {
+    max-width: 450px !important;
+    text-align: center !important;
+    padding: 0 !important;
+}
+
+.preview-photo-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 16px 20px !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.preview-photo-header h3 {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 18px !important;
+}
+
+.close-preview {
+    background: none !important;
+    border: none !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    color: #9ca3af !important;
+}
+
+.preview-photo-body {
+    padding: 24px !important;
+}
+
+.preview-photo-body img {
+    width: 200px !important;
+    height: 200px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+    margin: 0 auto !important;
+    display: block !important;
+}
