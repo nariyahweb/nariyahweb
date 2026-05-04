@@ -110,7 +110,7 @@ body {
     min-height: 100vh;
 }
 
-/* ========== SIDEBAR ========== */
+/* ========== SIDEBAR - PERBAIKAN UNTUK PC ========== */
 .sidebar {
     width: 260px;
     background: white;
@@ -121,27 +121,24 @@ body {
     height: calc(100vh - 60px);
     overflow-y: auto;
     z-index: 1000;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
     box-shadow: 2px 0 10px rgba(0,0,0,0.05);
 }
 
-.sidebar.active {
-    transform: translateX(0);
-}
-
+/* PC: sidebar langsung muncul */
 @media (min-width: 769px) {
     .sidebar {
-        transform: translateX(-100%);
+        transform: translateX(0) !important;
     }
-    .sidebar.active {
-        transform: translateX(0);
+    #hoverZone {
+        display: none;
     }
 }
 
+/* Mobile: sidebar tersembunyi sampai di-toggle */
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
+        transition: transform 0.3s ease;
     }
     .sidebar.active {
         transform: translateX(0);
@@ -202,12 +199,11 @@ body {
     text-transform: uppercase;
 }
 
-/* ========== HOVER ZONE ========== */
 #hoverZone {
     position: fixed;
     left: 0;
     top: 60px;
-    width: 20px;
+    width: 32px;
     height: calc(100vh - 60px);
     z-index: 2000;
     background: transparent;
@@ -242,6 +238,12 @@ body {
     color: white;
     padding: 8px 12px;
     border-radius: 8px;
+}
+
+@media (min-width: 769px) {
+    .toggle-btn {
+        display: none;
+    }
 }
 
 .toggle-btn:hover {
@@ -296,9 +298,16 @@ body {
 /* ========== MAIN CONTENT ========== */
 .main-content {
     flex: 1;
-    margin-left: 0;
-    width: 100%;
+    margin-left: 260px;
+    width: calc(100% - 260px);
     margin-top: 60px;
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
 }
 
 .content-area {
@@ -907,6 +916,7 @@ body.modal-open {
     position: relative;
     animation: modalPopup 0.3s ease;
     box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    padding: 28px 24px;
 }
 
 .modal-content::-webkit-scrollbar {
@@ -928,9 +938,9 @@ body.modal-open {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* ========== DETAIL MODAL - PERBAIKAN ========== */
+/* ========== DETAIL MODAL - PERBAIKAN TOMBOL ========== */
 #detailModal .modal-content {
-    max-width: 450px;
+    max-width: 480px;
     padding: 0;
     overflow: hidden;
 }
@@ -1026,7 +1036,7 @@ body.modal-open {
     color: #1f2937;
 }
 
-/* TOMBOL ACTION - PASTIKAN MUNCUL */
+/* TOMBOL ACTION - DIPASTIKAN MUNCUL */
 .detail-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1035,7 +1045,7 @@ body.modal-open {
 }
 
 .detail-actions button {
-    padding: 12px;
+    padding: 12px 8px;
     border: none;
     border-radius: 14px;
     cursor: pointer;
@@ -1194,7 +1204,7 @@ body.modal-open {
     font-size: 13px;
     font-weight: 600;
     color: #374151;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .form-group label .required {
@@ -1202,7 +1212,8 @@ body.modal-open {
     margin-left: 4px;
 }
 
-.form-group input, .form-group select {
+.form-group input, 
+.form-group select {
     width: 100%;
     padding: 14px 16px;
     border: 1.5px solid #e5e7eb;
@@ -1212,7 +1223,8 @@ body.modal-open {
     background: #fafafc;
 }
 
-.form-group input:focus, .form-group select:focus {
+.form-group input:focus, 
+.form-group select:focus {
     outline: none;
     border-color: #4f46e5;
     background: white;
@@ -1223,7 +1235,8 @@ body.modal-open {
     position: relative;
 }
 
-.input-icon input {
+.input-icon input,
+.input-icon select {
     padding-left: 42px;
 }
 
@@ -1291,7 +1304,7 @@ body.modal-open {
     transform: translateY(-2px);
 }
 
-/* Profile Photo */
+/* Profile Photo - PERBAIKAN */
 .profile-photo {
     text-align: center;
     margin-bottom: 24px;
@@ -1343,7 +1356,7 @@ body.modal-open {
 }
 
 /* Preview Photo Modal */
-#previewPhotoModal .preview-photo-content {
+#previewPhotoModal .modal-content {
     max-width: 500px;
     text-align: center;
     padding: 0;
