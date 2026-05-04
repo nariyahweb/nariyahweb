@@ -110,7 +110,7 @@ body {
     min-height: 100vh;
 }
 
-/* ========== SIDEBAR (KEMBALI KE SEMULA - HOVER MODE) ========== */
+/* ========== SIDEBAR (HOVER MODE - TETAP SEPERTI SEMULA) ========== */
 .sidebar {
     width: 260px;
     background: white;
@@ -909,26 +909,7 @@ body.modal-open {
     box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
 
-.modal-content::-webkit-scrollbar {
-    width: 6px;
-}
-
-.modal-content::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.modal-content::-webkit-scrollbar-thumb {
-    background: #c7d2fe;
-    border-radius: 10px;
-}
-
-@keyframes modalPopup {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-/* ========== DETAIL MODAL - DIPASTIKAN TOMBOL MUNCUL ========== */
+/* ========== DETAIL MODAL - SEMUA TOMBOL MUNCUL ========== */
 #detailModal .modal-content {
     max-width: 450px;
     padding: 0;
@@ -937,33 +918,33 @@ body.modal-open {
 
 .detail-header {
     background: linear-gradient(135deg, #4f46e5, #8b5cf6);
-    padding: 28px 24px;
+    padding: 24px 20px;
     text-align: center;
     color: white;
 }
 
 .detail-avatar {
-    width: 70px;
-    height: 70px;
+    width: 65px;
+    height: 65px;
     background: rgba(255,255,255,0.2);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 12px;
-    font-size: 36px;
+    margin: 0 auto 10px;
+    font-size: 32px;
     border: 3px solid white;
 }
 
 .detail-header h3 {
-    font-size: 20px;
+    font-size: 18px;
     margin-bottom: 4px;
     color: white;
 }
 
 .detail-header .detail-status {
     display: inline-block;
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 20px;
     font-size: 11px;
     background: rgba(255,255,255,0.2);
@@ -1019,7 +1000,7 @@ body.modal-open {
     color: #1f2937;
 }
 
-/* TOMBOL ACTION - PASTIKAN MUNCUL */
+/* TOMBOL ACTION WA, FOLLOW UP, PENDING, CLOSING */
 .detail-actions {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
@@ -1038,7 +1019,6 @@ body.modal-open {
     align-items: center !important;
     justify-content: center !important;
     gap: 6px !important;
-    transition: all 0.2s !important;
 }
 
 .detail-actions button:hover {
@@ -1065,27 +1045,41 @@ body.modal-open {
     color: white !important;
 }
 
-.btn-outline {
+/* TOMBOL TUTUP DAN HAPUS - DIPASTIKAN MUNCUL DI PC */
+.detail-footer {
+    display: flex !important;
+    gap: 12px !important;
+    padding: 14px 20px !important;
+    border-top: 1px solid #e5e7eb !important;
+    background: white !important;
+}
+
+.detail-footer button {
+    flex: 1 !important;
+    padding: 10px !important;
+    border: none !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+}
+
+.detail-footer .btn-outline {
     background: #f3f4f6 !important;
     color: #374151 !important;
 }
 
-.detail-footer {
-    padding: 16px 20px;
-    border-top: 1px solid #f0f0f0;
-    display: flex;
-    gap: 12px;
-    background: white;
+.detail-footer .btn-outline:hover {
+    background: #e5e7eb !important;
 }
 
-.detail-footer button {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
+.detail-footer .btn-danger {
+    background: #ef4444 !important;
+    color: white !important;
+}
+
+.detail-footer .btn-danger:hover {
+    background: #dc2626 !important;
 }
 
 /* Status Badge */
@@ -1105,24 +1099,21 @@ body.modal-open {
 .status-tidak { background: #fef2f2; color: #dc2626; }
 .status-dihubungi { background: #eff6ff; color: #2563eb; }
 
-/* ========== FORM MODAL (TAMBAH DATA) - DIPERBAIKI ========== */
+/* ========== FORM MODAL (TAMBAH DATA) ========== */
 .modal-content h3 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
     margin-bottom: 6px;
     color: #1f2937;
-    padding: 0 20px;
-    padding-top: 24px;
+    padding: 20px 20px 0;
 }
 
 .modal-subtitle {
     font-size: 12px;
     color: #6b7280;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
+    margin-bottom: 16px;
+    padding: 0 20px 12px;
     border-bottom: 1px solid #f0f0f0;
-    padding: 0 20px;
-    padding-bottom: 12px;
 }
 
 .form-group {
@@ -1140,7 +1131,6 @@ body.modal-open {
 
 .form-group label .required {
     color: #ef4444;
-    margin-left: 2px;
 }
 
 .form-group input, 
@@ -1197,7 +1187,7 @@ body.modal-open {
 .modal-buttons {
     display: flex;
     gap: 12px;
-    margin-top: 24px;
+    margin-top: 20px;
     padding: 16px 20px 24px;
     border-top: 1px solid #f0f0f0;
 }
@@ -1226,11 +1216,7 @@ body.modal-open {
     color: #374151;
 }
 
-.modal-buttons button:last-child:hover {
-    background: #e5e7eb;
-}
-
-/* ========== PROFILE MODAL - DIPERBAIKI ========== */
+/* ========== PROFILE MODAL ========== */
 .profile-photo {
     text-align: center;
     margin: 16px 0 20px;
@@ -1297,10 +1283,6 @@ body.modal-open {
     font-size: 22px;
     cursor: pointer;
     color: #9ca3af;
-}
-
-.close-preview:hover {
-    color: #ef4444;
 }
 
 .preview-photo-body {
@@ -1385,4 +1367,19 @@ body.modal-open {
     .topbar-center {
         display: none;
     }
+}
+
+/* SCROLLBAR */
+.modal-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #c7d2fe;
+    border-radius: 10px;
 }
