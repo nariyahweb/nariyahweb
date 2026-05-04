@@ -1098,13 +1098,12 @@ body.modal-open {
 }
 
 .detail-footer {
-    padding: 16px 24px 24px;
-    border-top: 1px solid #f0f0f0;
+    padding: 16px 20px;
+    border-top: 2px solid #e5e7eb;
     display: flex;
     gap: 12px;
     background: white;
-    position: sticky;
-    bottom: 0;
+    margin-top: 8px;
 }
 
 .detail-footer button {
