@@ -477,7 +477,7 @@ body {
 
 .board-section {
     background: white;
-    border-radius: 20px;
+    border-radius: 24px;
     padding: 20px;
     flex: 1;
     min-width: 300px;
@@ -528,53 +528,83 @@ body {
     gap: 16px;
 }
 
+/* Kolom dengan background warna penuh */
 .kanban-column {
-    background: #f9fafb;
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 12px;
     transition: all 0.2s;
 }
 
-.kanban-column:hover {
-    background: #f3f4f6;
+/* Warna background untuk setiap kolom */
+.kanban-column[data-status="baru"],
+.kanban-column[data-status="Baru"] {
+    background: #f3e8ff;
 }
 
+.kanban-column[data-status="followup"],
+.kanban-column[data-status="Sudah Dihubungi"] {
+    background: #eff6ff;
+}
+
+.kanban-column[data-status="pending"] {
+    background: #fff7ed;
+}
+
+.kanban-column[data-status="closing"] {
+    background: #ecfdf5;
+}
+
+.kanban-column[data-status="Tertarik"] {
+    background: #ecfdf5;
+}
+
+.kanban-column[data-status="Tidak Tertarik"] {
+    background: #fef2f2;
+}
+
+.kanban-column:hover {
+    transform: translateY(-2px);
+}
+
+/* Header kolom - lebih menonjol */
 .column-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px;
-    border-radius: 12px;
+    padding: 12px 16px;
+    border-radius: 16px;
     margin-bottom: 12px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(4px);
 }
 
 .column-header .count {
-    background: rgba(0, 0, 0, 0.08);
-    padding: 2px 8px;
-    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 2px 10px;
+    border-radius: 30px;
     font-size: 12px;
+    font-weight: 600;
 }
 
-.purple-header { background: #f3e8ff; color: #9333ea; }
-.blue-header { background: #eff6ff; color: #2563eb; }
-.orange-header { background: #fff7ed; color: #ea580c; }
-.green-header { background: #ecfdf5; color: #16a34a; }
-.red-header { background: #fef2f2; color: #dc2626; }
+/* Warna teks header sesuai kolom */
+.purple-header { color: #6b21a5; }
+.blue-header { color: #1d4ed8; }
+.orange-header { color: #c2410c; }
+.green-header { color: #15803d; }
+.red-header { color: #b91c1c; }
 
-.kanban-cards {
-    min-height: 320px;
-}
-
+/* Card item - tetap putih dengan bayangan */
 .card-item {
     background: white;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 12px;
     margin-bottom: 10px;
     cursor: grab;
     border: 1px solid #e5e7eb;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .card-item:hover {
@@ -607,6 +637,35 @@ body {
 
 .whatsapp-icon:hover {
     transform: scale(1.2);
+}
+
+/* Sorting ghost effect */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #e0e7ff;
+}
+
+.sortable-drag {
+    cursor: grabbing;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .boards-wrapper {
+        flex-direction: column;
+    }
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+    .board-section {
+        min-width: 100%;
+    }
 }
 
 /* Import Section */
