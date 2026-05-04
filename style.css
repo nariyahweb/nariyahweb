@@ -519,7 +519,7 @@ body {
     color: #25D366;
 }
 
-/* ========== MODALS ========== */
+/* ========== MODALS & SCROLL ========== */
 .modal {
     position: fixed;
     top: 0;
@@ -538,15 +538,35 @@ body.modal-open {
     overflow: hidden !important;
 }
 
+/* SCROLL PADA SEMUA MODAL */
 .modal-content {
     background: white;
     border-radius: 28px;
     width: 90%;
     max-width: 450px;
-    max-height: 85vh;
-    overflow-y: auto;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
     position: relative;
     animation: fadeScale 0.2s ease;
+}
+
+/* Custom scrollbar untuk semua modal */
+.modal-content::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1 !important;
+    border-radius: 10px !important;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #c7d2fe !important;
+    border-radius: 10px !important;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #a5b4fc !important;
 }
 
 @keyframes fadeScale {
@@ -560,11 +580,11 @@ body.modal-open {
     }
 }
 
-/* ========== DETAIL MODAL - SEMUA TOMBOL MUNCUL ========== */
+/* ========== DETAIL MODAL ========== */
 #detailModal .modal-content {
     max-width: 450px;
     padding: 0;
-    overflow: hidden;
+    overflow-y: auto !important;
 }
 
 .detail-header {
@@ -572,6 +592,9 @@ body.modal-open {
     padding: 20px;
     text-align: center;
     color: white;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 10 !important;
 }
 
 .detail-avatar {
@@ -681,13 +704,16 @@ body.modal-open {
 .btn-warning { background: #f59e0b; color: white; }
 .btn-danger { background: #ef4444; color: white; }
 
-/* 2 TOMBOL TUTUP & HAPUS - DIPASTIKAN MUNCUL */
+/* 2 TOMBOL TUTUP & HAPUS */
 .detail-footer {
     display: flex !important;
     gap: 12px !important;
     padding: 16px 20px !important;
     border-top: 1px solid #e5e7eb !important;
     background: white !important;
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 10 !important;
 }
 
 .detail-footer button {
@@ -736,7 +762,7 @@ body.modal-open {
 .status-tidak { background: #fef2f2; color: #dc2626; }
 .status-dihubungi { background: #eff6ff; color: #2563eb; }
 
-/* ========== FORM MODAL ========== */
+/* ========== FORM MODAL (TAMBAH DATA) ========== */
 .modal-content > h3 {
     font-size: 20px;
     font-weight: 700;
@@ -803,6 +829,10 @@ body.modal-open {
     margin-top: 20px;
     padding: 16px 20px 24px;
     border-top: 1px solid #f0f0f0;
+    position: sticky !important;
+    bottom: 0 !important;
+    background: white !important;
+    z-index: 10 !important;
 }
 
 .modal-buttons button {
