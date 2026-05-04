@@ -457,7 +457,7 @@ if (saveProspekBtn) {
     });
 }
 
-// ========== DETAIL MODAL ==========
+// ========== DETAIL MODAL (Perbaiki) ==========
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
@@ -472,7 +472,10 @@ function getStatusBadge(status) {
         'Baru': 'status-baru', 'Sudah Dihubungi': 'status-dihubungi', 'Tertarik': 'status-tertarik', 'Tidak Tertarik': 'status-tidak'
     };
     const className = statusMap[status] || 'status-baru';
-    const displayName = status === 'followup' ? 'Follow Up' : status === 'Sudah Dihubungi' ? 'Dihubungi' : status === 'Tidak Tertarik' ? 'Tidak Tertarik' : status;
+    let displayName = status;
+    if (status === 'followup') displayName = 'Follow Up';
+    else if (status === 'Sudah Dihubungi') displayName = 'Dihubungi';
+    else if (status === 'Tidak Tertarik') displayName = 'Tidak Tertarik';
     return `<span class="status-badge ${className}">${displayName}</span>`;
 }
 
@@ -483,12 +486,34 @@ function openDetailCustomer(id) {
         const statusIcon = d.status === 'closing' ? '🎉' : d.status === 'pending' ? '⏳' : d.status === 'followup' ? '📞' : '🆕';
         
         content.innerHTML = `
-            <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
+            <div class="detail-header">
+                <div class="detail-avatar">${statusIcon}</div>
+                <h3>${escapeHtml(d.nama)}</h3>
+                <div class="detail-status">${getStatusBadge(d.status)}</div>
+            </div>
             <div class="detail-body">
                 <div class="detail-info">
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${d.tanggal || '-'}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status Saat Ini</label><div class="value">${d.status === 'followup' ? 'Follow Up' : d.status}</div></div></div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📱</div>
+                        <div class="detail-info-content">
+                            <label>Nomor WhatsApp</label>
+                            <div class="value">${escapeHtml(d.hp)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📅</div>
+                        <div class="detail-info-content">
+                            <label>Tanggal Input</label>
+                            <div class="value">${d.tanggal || '-'}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📌</div>
+                        <div class="detail-info-content">
+                            <label>Status Saat Ini</label>
+                            <div class="value">${d.status === 'followup' ? 'Follow Up' : d.status}</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="detail-actions">
                     <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
@@ -497,7 +522,10 @@ function openDetailCustomer(id) {
                     <button class="btn-success" onclick="confirmClosing('${id}')">🎉 Closing</button>
                 </div>
             </div>
-            <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button><button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button></div>
+            <div class="detail-footer">
+                <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
+                <button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button>
+            </div>
         `;
         showModal('detailModal');
     });
@@ -507,15 +535,40 @@ function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
         const content = document.getElementById('detailContent');
-        let statusIcon = d.status === 'Sudah Dihubungi' ? '📞' : d.status === 'Tertarik' ? '⭐' : d.status === 'Tidak Tertarik' ? '❌' : '🆕';
+        let statusIcon = '🆕';
+        if (d.status === 'Sudah Dihubungi') statusIcon = '📞';
+        else if (d.status === 'Tertarik') statusIcon = '⭐';
+        else if (d.status === 'Tidak Tertarik') statusIcon = '❌';
         
         content.innerHTML = `
-            <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
+            <div class="detail-header">
+                <div class="detail-avatar">${statusIcon}</div>
+                <h3>${escapeHtml(d.nama)}</h3>
+                <div class="detail-status">${getStatusBadge(d.status)}</div>
+            </div>
             <div class="detail-body">
                 <div class="detail-info">
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID') : '-'}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status Saat Ini</label><div class="value">${d.status}</div></div></div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📱</div>
+                        <div class="detail-info-content">
+                            <label>Nomor WhatsApp</label>
+                            <div class="value">${escapeHtml(d.hp)}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📅</div>
+                        <div class="detail-info-content">
+                            <label>Tanggal Input</label>
+                            <div class="value">${d.created_at ? new Date(d.created_at).toLocaleDateString('id-ID') : '-'}</div>
+                        </div>
+                    </div>
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">📌</div>
+                        <div class="detail-info-content">
+                            <label>Status Saat Ini</label>
+                            <div class="value">${d.status}</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="detail-actions">
                     <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
@@ -523,9 +576,16 @@ function openDetailProspek(id) {
                     <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">⭐ Tertarik</button>
                     <button class="btn-danger" onclick="confirmTidakTertarik('${id}')">❌ Tidak Tertarik</button>
                 </div>
-                ${d.status === 'Tertarik' ? `<div style="margin-top:16px;"><button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button></div>` : ''}
+                ${d.status === 'Tertarik' ? `
+                <div style="margin-top: 16px;">
+                    <button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button>
+                </div>
+                ` : ''}
             </div>
-            <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button><button class="btn-danger" onclick="deleteProspek('${id}')">🗑️ Hapus</button></div>
+            <div class="detail-footer">
+                <button class="btn-outline" onclick="closeModal('detailModal')">Tutup</button>
+                <button class="btn-danger" onclick="deleteProspek('${id}')">🗑️ Hapus</button>
+            </div>
         `;
         showModal('detailModal');
     });
@@ -565,8 +625,12 @@ window.convertToCustomer = function(id) {
         db.collection('prospek').doc(id).get().then(doc => {
             const d = doc.data();
             db.collection('customers').add({
-                nama: d.nama, hp: d.hp, tanggal: new Date().toISOString().split('T')[0],
-                status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+                nama: d.nama,
+                hp: d.hp,
+                tanggal: new Date().toISOString().split('T')[0],
+                status: 'baru',
+                user_id: currentUser.uid,
+                created_at: new Date().toISOString()
             });
             db.collection('prospek').doc(id).delete();
             showNotif('Berhasil jadi customer!');
@@ -578,8 +642,11 @@ window.convertToCustomer = function(id) {
 async function saveToClosingDB(id, data) {
     try {
         await db.collection('db_closing').add({
-            nama: data.nama, hp: data.hp, tanggal: data.tanggal || new Date().toISOString().split('T')[0],
-            closing_date: new Date().toISOString(), user_id: currentUser.uid
+            nama: data.nama,
+            hp: data.hp,
+            tanggal: data.tanggal || new Date().toISOString().split('T')[0],
+            closing_date: new Date().toISOString(),
+            user_id: currentUser.uid
         });
         await db.collection('customers').doc(id).delete();
         showNotif('✅ Data berhasil masuk Database Closing!');
@@ -593,7 +660,10 @@ async function saveToClosingDB(id, data) {
 async function saveToTidakTertarikDB(id, data) {
     try {
         await db.collection('db_tidak_tertarik').add({
-            nama: data.nama, hp: data.hp, tanggal: new Date().toISOString(), user_id: currentUser.uid
+            nama: data.nama,
+            hp: data.hp,
+            tanggal: new Date().toISOString(),
+            user_id: currentUser.uid
         });
         await db.collection('prospek').doc(id).delete();
         showNotif('✅ Data berhasil masuk Database Tidak Tertarik!');
@@ -864,43 +934,83 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
 
 // ========== DRAG AND DROP ==========
 function initDragAndDrop() {
+    console.log('Initializing drag and drop...');
+    
+    // Customer drag and drop
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
-    const customerStatusMap = { baruList: 'baru', followupList: 'followup', pendingList: 'pending', closingList: 'closing' };
+    const customerStatusMap = { 
+        baruList: 'baru', 
+        followupList: 'followup', 
+        pendingList: 'pending', 
+        closingList: 'closing' 
+    };
+    
     customerGroups.forEach(groupId => {
         const el = document.getElementById(groupId);
         if (el && !el.hasAttribute('data-sortable')) {
-            new Sortable(el, {
-                group: 'customers', animation: 200, draggable: '.card-item',
-                onEnd: async function(evt) {
-                    const id = evt.item.dataset.id;
-                    const newStatus = customerStatusMap[evt.to.id];
-                    if (id && newStatus && currentUser) {
-                        if (newStatus === 'closing') await window.confirmClosing(id);
-                        else await db.collection('customers').doc(id).update({ status: newStatus });
+            try {
+                new Sortable(el, {
+                    group: 'customers',
+                    animation: 200,
+                    draggable: '.card-item',
+                    onEnd: async function(evt) {
+                        const id = evt.item.dataset.id;
+                        const newStatus = customerStatusMap[evt.to.id];
+                        console.log('Drag end - customer:', id, 'new status:', newStatus);
+                        if (id && newStatus && currentUser) {
+                            if (newStatus === 'closing') {
+                                await window.confirmClosing(id);
+                            } else {
+                                await db.collection('customers').doc(id).update({ status: newStatus });
+                                showNotif(`Status diubah menjadi ${newStatus}`);
+                            }
+                        }
                     }
-                }
-            });
-            el.setAttribute('data-sortable', 'true');
+                });
+                el.setAttribute('data-sortable', 'true');
+                console.log(`Sortable initialized for ${groupId}`);
+            } catch(e) {
+                console.error(`Error initializing Sortable for ${groupId}:`, e);
+            }
         }
     });
     
+    // Prospek drag and drop
     const prospekGroups = ['prospekBaruList', 'prospekDihubungiList', 'prospekTertarikList', 'prospekTidakList'];
-    const prospekStatusMap = { prospekBaruList: 'Baru', prospekDihubungiList: 'Sudah Dihubungi', prospekTertarikList: 'Tertarik', prospekTidakList: 'Tidak Tertarik' };
+    const prospekStatusMap = { 
+        prospekBaruList: 'Baru', 
+        prospekDihubungiList: 'Sudah Dihubungi', 
+        prospekTertarikList: 'Tertarik', 
+        prospekTidakList: 'Tidak Tertarik' 
+    };
+    
     prospekGroups.forEach(groupId => {
         const el = document.getElementById(groupId);
         if (el && !el.hasAttribute('data-sortable')) {
-            new Sortable(el, {
-                group: 'prospek', animation: 200, draggable: '.card-item',
-                onEnd: async function(evt) {
-                    const id = evt.item.dataset.id;
-                    const newStatus = prospekStatusMap[evt.to.id];
-                    if (id && newStatus && currentUser) {
-                        if (newStatus === 'Tidak Tertarik') await window.confirmTidakTertarik(id);
-                        else await db.collection('prospek').doc(id).update({ status: newStatus });
+            try {
+                new Sortable(el, {
+                    group: 'prospek',
+                    animation: 200,
+                    draggable: '.card-item',
+                    onEnd: async function(evt) {
+                        const id = evt.item.dataset.id;
+                        const newStatus = prospekStatusMap[evt.to.id];
+                        console.log('Drag end - prospek:', id, 'new status:', newStatus);
+                        if (id && newStatus && currentUser) {
+                            if (newStatus === 'Tidak Tertarik') {
+                                await window.confirmTidakTertarik(id);
+                            } else {
+                                await db.collection('prospek').doc(id).update({ status: newStatus });
+                                showNotif(`Status diubah menjadi ${newStatus}`);
+                            }
+                        }
                     }
-                }
-            });
-            el.setAttribute('data-sortable', 'true');
+                });
+                el.setAttribute('data-sortable', 'true');
+                console.log(`Sortable initialized for ${groupId}`);
+            } catch(e) {
+                console.error(`Error initializing Sortable for ${groupId}:`, e);
+            }
         }
     });
 }
