@@ -2150,3 +2150,21 @@ body:has(.modal[style*="display: flex"]) {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+.download-example-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.download-example-btn:hover {
+    background: #059669;
+    transform: translateY(-2px);
+}
