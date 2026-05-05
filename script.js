@@ -389,22 +389,29 @@ document.getElementById('addCustomerBtn')?.addEventListener('click', () => {
 });
 
 document.getElementById('saveCustomerBtn')?.addEventListener('click', () => {
+    const agentId = document.getElementById('customerId').value;
     const nama = document.getElementById('customerName').value;
     let hp = document.getElementById('customerPhone').value;
     const tanggal = document.getElementById('customerDate').value;
     
-    if (!nama || !hp) {
-        showNotif('Lengkapi data!', true);
+    if (!agentId || !nama || !hp) {
+        showNotif('Lengkapi data! (ID Agent, Nama, No WhatsApp wajib diisi)', true);
         return;
     }
     
     hp = '+62' + hp.replace(/\D/g, '');
     
     db.collection('customers').add({
-        nama: nama, hp: hp, tanggal: tanggal || new Date().toISOString().split('T')[0],
-        status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString()
+        agent_id: agentId,
+        nama: nama,
+        hp: hp,
+        tanggal: tanggal || new Date().toISOString().split('T')[0],
+        status: 'baru',
+        user_id: currentUser.uid,
+        created_at: new Date().toISOString()
     }).then(() => {
         closeModal('customerModal');
+        document.getElementById('customerId').value = '';
         document.getElementById('customerName').value = '';
         document.getElementById('customerPhone').value = '';
         document.getElementById('customerDate').value = '';
@@ -476,6 +483,13 @@ function openDetailCustomer(id) {
             </div>
             <div class="detail-body">
                 <div class="detail-info">
+                    <div class="detail-info-item">
+                        <div class="detail-info-icon">🆔</div>
+                        <div class="detail-info-content">
+                            <label>ID Agent</label>
+                            <div class="value">${escapeHtml(d.agent_id || '-')}</div>
+                        </div>
+                    </div>
                     <div class="detail-info-item">
                         <div class="detail-info-icon">📱</div>
                         <div class="detail-info-content">
@@ -1030,20 +1044,20 @@ function initDragAndDrop() {
 function loadAllData() {
     if (!currentUser) return;
     
-    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
-        let total = 0, closing = 0, pending = 0, followup = 0;
-        const lists = { baru: [], followup: [], pending: [], closing: [] };
-        snap.forEach(doc => {
-            const d = doc.data();
-            total++;
-            if (d.status === 'closing') closing++;
-            else if (d.status === 'pending') pending++;
-            else if (d.status === 'followup') followup++;
-            else lists.baru.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            if (d.status === 'followup') lists.followup.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            if (d.status === 'pending') lists.pending.push({ id: doc.id, nama: d.nama, hp: d.hp });
-            if (d.status === 'closing') lists.closing.push({ id: doc.id, nama: d.nama, hp: d.hp });
-        });
+db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+    let total = 0, closing = 0, pending = 0, followup = 0;
+    const lists = { baru: [], followup: [], pending: [], closing: [] };
+    snap.forEach(doc => {
+        const d = doc.data();
+        total++;
+        if (d.status === 'closing') closing++;
+        else if (d.status === 'pending') pending++;
+        else if (d.status === 'followup') followup++;
+        else lists.baru.push({ id: doc.id, agent_id: d.agent_id, nama: d.nama, hp: d.hp });
+        if (d.status === 'followup') lists.followup.push({ id: doc.id, agent_id: d.agent_id, nama: d.nama, hp: d.hp });
+        if (d.status === 'pending') lists.pending.push({ id: doc.id, agent_id: d.agent_id, nama: d.nama, hp: d.hp });
+        if (d.status === 'closing') lists.closing.push({ id: doc.id, agent_id: d.agent_id, nama: d.nama, hp: d.hp });
+    });
         
         document.getElementById('countBaru').innerText = total - (closing + pending + followup);
         document.getElementById('countFollowup').innerText = followup;
@@ -1054,23 +1068,24 @@ function loadAllData() {
         document.getElementById('activeProspek').innerText = total - closing;
         document.getElementById('rateClosing').innerText = total ? Math.round((closing / total) * 100) + '%' : '0%';
         
-        for (let status in lists) {
-            const container = document.getElementById(status + 'List');
-            if (container) {
-                container.innerHTML = lists[status].map(item => `
-                    <div class="card-item" data-id="${item.id}">
-                        <div class="card-name">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone">
-                            <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span>
-                        </div>
-                    </div>
-                `).join('');
-                container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
-                });
-            }
-        }
+for (let status in lists) {
+    const container = document.getElementById(status + 'List');
+    if (container) {
+        container.innerHTML = lists[status].map(item => `
+            <div class="card-item" data-id="${item.id}">
+                <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                <div class="card-name">${escapeHtml(item.nama)}</div>
+                <div class="card-phone">
+                    <span>${item.hp}</span>
+                    <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span>
+                </div>
+            </div>
+        `).join('');
+        container.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
+        });
+    }
+}
         updateChartCustomer(total, closing, pending, followup);
         initDragAndDrop();
     });
