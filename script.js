@@ -51,16 +51,30 @@ function isMobile() {
     return window.innerWidth <= 768;
 }
 
+function updateSidebarBodyClass() {
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && sidebar.classList.contains('active')) {
+        document.body.classList.add('sidebar-open');
+    } else {
+        document.body.classList.remove('sidebar-open');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const hoverZone = document.getElementById('hoverZone');
     const toggleBtn = document.getElementById('toggleSidebarBtn');
+    
+    function updateState() {
+        updateSidebarBodyClass();
+    }
     
     if (hoverZone) {
         hoverZone.addEventListener('mouseenter', function() {
             if (!isMobile() && sidebar) {
                 clearTimeout(sidebarTimeout);
                 sidebar.classList.add('active');
+                updateState();
             }
         });
     }
@@ -70,6 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!isMobile()) {
                 sidebarTimeout = setTimeout(function() {
                     sidebar.classList.remove('active');
+                    updateState();
                 }, 200);
             }
         });
@@ -79,7 +94,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (toggleBtn) {
         toggleBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            if (sidebar) sidebar.classList.toggle('active');
+            if (sidebar) {
+                sidebar.classList.toggle('active');
+                updateState();
+            }
         });
     }
     
@@ -87,14 +105,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isMobile() && sidebar && toggleBtn) {
             if (!sidebar.contains(e.target) && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
                 sidebar.classList.remove('active');
+                updateState();
             }
         }
     });
     
     window.addEventListener('resize', function() {
-        if (!isMobile() && sidebar) sidebar.classList.remove('active');
-        else if (isMobile() && sidebar) sidebar.classList.remove('active');
+        if (!isMobile() && sidebar) {
+            sidebar.classList.remove('active');
+            updateState();
+        } else if (isMobile() && sidebar) {
+            sidebar.classList.remove('active');
+            updateState();
+        }
     });
+    
+    updateState();
 });
 
 // ========== TOGGLE PASSWORD ==========
@@ -226,6 +252,7 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         
         if (window.innerWidth <= 768) {
             document.getElementById('sidebar')?.classList.remove('active');
+            updateSidebarBodyClass();
         }
     });
 });
@@ -1284,7 +1311,7 @@ document.getElementById('notifBtn')?.addEventListener('click', () => {
 });
 
 // ========== BROADCAST WHATSAPP FUNCTIONS ==========
-let currentNumbers = []; // <-- HANYA SATU KALI DEKLARASI
+let currentNumbers = [];
 let currentBroadcastIndex = 0;
 let broadcastNumbers = [];
 let broadcastMessageTemplate = '';
@@ -1393,7 +1420,6 @@ async function sendBroadcast() {
         return;
     }
     
-    // Mode buka semua
     if (!sendOneByOne) {
         for (const item of currentNumbers) {
             const hp = typeof item === 'string' ? item : item.hp;
@@ -1407,7 +1433,6 @@ async function sendBroadcast() {
         return;
     }
     
-    // Mode satu per satu
     if (isBroadcasting) {
         showNotif('⚠️ Broadcast sedang berjalan! Selesaikan dulu.', true);
         return;
