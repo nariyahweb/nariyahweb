@@ -475,6 +475,27 @@ function openDetailCustomer(id) {
         const d = doc.data();
         const statusIcon = d.status === 'closing' ? '🎉' : d.status === 'pending' ? '⏳' : d.status === 'followup' ? '📞' : '🆕';
         
+        // Tentukan tombol berdasarkan status
+        let actionButtons = '';
+        
+        if (d.status === 'baru') {
+            actionButtons = `
+                <button class="btn-primary" onclick="updateCustomerStatus('${id}','followup')">📞 Lanjut ke Follow Up</button>
+            `;
+        } else if (d.status === 'followup') {
+            actionButtons = `
+                <button class="btn-warning" onclick="updateCustomerStatus('${id}','pending')">⏳ Lanjut ke Pending</button>
+            `;
+        } else if (d.status === 'pending') {
+            actionButtons = `
+                <button class="btn-success" onclick="confirmClosing('${id}')">🎉 Closing</button>
+            `;
+        } else if (d.status === 'closing') {
+            actionButtons = `
+                <button class="btn-outline" disabled style="opacity:0.5; cursor:not-allowed;">✅ Selesai (Closing)</button>
+            `;
+        }
+        
         document.getElementById('detailContent').innerHTML = `
             <div class="detail-header">
                 <div class="detail-avatar">${statusIcon}</div>
@@ -508,15 +529,13 @@ function openDetailCustomer(id) {
                         <div class="detail-info-icon">📌</div>
                         <div class="detail-info-content">
                             <label>Status Saat Ini</label>
-                            <div class="value">${d.status === 'followup' ? 'Follow Up' : d.status}</div>
+                            <div class="value">${d.status === 'followup' ? 'Follow Up' : d.status === 'baru' ? 'Baru' : d.status}</div>
                         </div>
                     </div>
                 </div>
                 <div class="detail-actions">
                     <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
-                    <button class="btn-primary" onclick="updateStatus('${id}','followup')">📞 Follow Up</button>
-                    <button class="btn-warning" onclick="updateStatus('${id}','pending')">⏳ Pending</button>
-                    <button class="btn-success" onclick="confirmClosing('${id}')">🎉 Closing</button>
+                    ${actionButtons}
                 </div>
             </div>
             <div class="detail-footer">
@@ -528,6 +547,13 @@ function openDetailCustomer(id) {
     });
 }
 
+// Fungsi update status customer yang berurutan
+window.updateCustomerStatus = function(id, newStatus) {
+    db.collection('customers').doc(id).update({ status: newStatus });
+    closeModal('detailModal');
+    showNotif(`Status berhasil diupdate ke ${newStatus === 'followup' ? 'Follow Up' : newStatus}`);
+};
+
 function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
@@ -535,6 +561,28 @@ function openDetailProspek(id) {
         if (d.status === 'Sudah Dihubungi') statusIcon = '📞';
         else if (d.status === 'Tertarik') statusIcon = '⭐';
         else if (d.status === 'Tidak Tertarik') statusIcon = '❌';
+        
+        // Tentukan tombol berdasarkan status
+        let actionButtons = '';
+        
+        if (d.status === 'Baru') {
+            actionButtons = `
+                <button class="btn-primary" onclick="updateProspekStatus('${id}','Sudah Dihubungi')">📞 Lanjut ke Dihubungi</button>
+            `;
+        } else if (d.status === 'Sudah Dihubungi') {
+            actionButtons = `
+                <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">⭐ Tertarik</button>
+                <button class="btn-danger" onclick="confirmTidakTertarik('${id}')">❌ Tidak Tertarik</button>
+            `;
+        } else if (d.status === 'Tertarik') {
+            actionButtons = `
+                <button class="btn-primary" onclick="showConvertToCustomerModal('${id}')">🔄 Jadikan Customer (Followup Agen)</button>
+            `;
+        } else if (d.status === 'Tidak Tertarik') {
+            actionButtons = `
+                <button class="btn-outline" disabled style="opacity:0.5; cursor:not-allowed;">❌ Sudah Tidak Tertarik</button>
+            `;
+        }
         
         document.getElementById('detailContent').innerHTML = `
             <div class="detail-header">
@@ -568,11 +616,8 @@ function openDetailProspek(id) {
                 </div>
                 <div class="detail-actions">
                     <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
-                    <button class="btn-primary" onclick="updateProspekStatus('${id}','Sudah Dihubungi')">📞 Dihubungi</button>
-                    <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">⭐ Tertarik</button>
-                    <button class="btn-danger" onclick="confirmTidakTertarik('${id}')">❌ Tidak Tertarik</button>
+                    ${actionButtons}
                 </div>
-                ${d.status === 'Tertarik' ? `<div style="margin-top:16px;"><button class="btn-primary" style="width:100%;" onclick="convertToCustomer('${id}')">🔄 Jadikan Customer</button></div>` : ''}
             </div>
             <div class="detail-footer">
                 <button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button>
