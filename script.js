@@ -1826,6 +1826,7 @@ function finishBroadcast() {
 let currentConvertProspekId = null;
 
 function showConvertToCustomerModal(prospekId) {
+    console.log("Membuka modal konversi untuk prospek ID:", prospekId);
     currentConvertProspekId = prospekId;
     
     // Set tanggal followup otomatis +1 bulan dari sekarang
@@ -1834,80 +1835,138 @@ function showConvertToCustomerModal(prospekId) {
     nextMonth.setMonth(today.getMonth() + 1);
     const formattedDate = nextMonth.toISOString().split('T')[0];
     
-    document.getElementById('convertFollowupDate').value = formattedDate;
-    document.getElementById('convertAgentId').value = '';
-    document.getElementById('convertModal').style.display = 'flex';
+    const dateInput = document.getElementById('convertFollowupDate');
+    const agentInput = document.getElementById('convertAgentId');
+    
+    if (dateInput) dateInput.value = formattedDate;
+    if (agentInput) agentInput.value = '';
+    
+    const modal = document.getElementById('convertModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+    }
 }
 
-// Pastikan tombol konfirmasi terhubung
-const confirmConvertBtn = document.getElementById('confirmConvertBtn');
-if (confirmConvertBtn) {
-    // Hapus event listener lama jika ada
-    const newBtn = confirmConvertBtn.cloneNode(true);
-    confirmConvertBtn.parentNode.replaceChild(newBtn, confirmConvertBtn);
+// Setup event listener untuk modal konversi
+function setupConvertModal() {
+    const confirmBtn = document.getElementById('confirmConvertBtn');
+    const cancelBtn = document.getElementById('cancelConvertBtn');
+    const modal = document.getElementById('convertModal');
     
-    newBtn.addEventListener('click', async () => {
-        console.log("Tombol konfirmasi diklik");
-        const agentId = document.getElementById('convertAgentId').value;
-        const followupDate = document.getElementById('convertFollowupDate').value;
+    // Hapus event listener lama dengan clone
+    if (confirmBtn) {
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
         
-        if (!agentId) {
-            showNotif('ID Agent wajib diisi!', true);
-            return;
-        }
-        
-        if (!followupDate) {
-            showNotif('Tanggal followup wajib diisi!', true);
-            return;
-        }
-        
-        if (!currentConvertProspekId) {
-            showNotif('Error: Data prospek tidak ditemukan', true);
-            return;
-        }
-        
-        // Konfirmasi sebelum pindah
-        const confirmMove = confirm(`⚠️ KONFIRMASI PEMINDAHAN\n\nAnda akan memindahkan prospek ke FOLLOWUP AGEN dengan data:\n\nID Agent: ${agentId}\nTanggal Followup: ${followupDate}\n\n✅ OK = Lanjutkan\n❌ CANCEL = Batalkan`);
-        
-        if (!confirmMove) return;
-        
-        try {
-            showNotif('⏳ Memproses pemindahan...');
+        newConfirmBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("Tombol Konfirmasi Pindah diklik");
             
-            const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
-            const prospekData = prospekDoc.data();
+            const agentId = document.getElementById('convertAgentId')?.value;
+            const followupDate = document.getElementById('convertFollowupDate')?.value;
             
-            if (!prospekData) {
-                showNotif('Data prospek tidak ditemukan', true);
+            if (!agentId) {
+                showNotif('⚠️ ID Agent wajib diisi!', true);
                 return;
             }
             
-            await db.collection('customers').add({
-                agent_id: agentId,
-                nama: prospekData.nama,
-                hp: prospekData.hp,
-                tanggal: followupDate,
-                status: 'baru',
-                apk: '', // Aplikasi akan diisi nanti di popup
-                user_id: currentUser.uid,
-                created_at: new Date().toISOString(),
-                converted_from: 'prospek',
-                original_prospek_id: currentConvertProspekId
-            });
+            if (!followupDate) {
+                showNotif('⚠️ Tanggal followup wajib diisi!', true);
+                return;
+            }
             
-            await db.collection('prospek').doc(currentConvertProspekId).delete();
+            if (!currentConvertProspekId) {
+                showNotif('⚠️ Error: Data prospek tidak ditemukan', true);
+                return;
+            }
             
-            closeModal('convertModal');
-            closeModal('detailModal');
-            showNotif('✅ Berhasil dipindahkan ke Followup Agen!');
-            loadAllData();
+            // Konfirmasi sebelum pindah
+            const confirmMove = confirm(`⚠️ KONFIRMASI PEMINDAHAN\n\nAnda akan memindahkan prospek ke FOLLOWUP AGEN dengan data:\n\nID Agent: ${agentId}\nTanggal Followup: ${followupDate}\n\n✅ OK = Lanjutkan\n❌ CANCEL = Batalkan`);
             
-        } catch (error) {
-            console.error('Error:', error);
-            showNotif('Gagal: ' + error.message, true);
-        }
-    });
+            if (!confirmMove) return;
+            
+            try {
+                showNotif('⏳ Memproses pemindahan...');
+                
+                const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
+                const prospekData = prospekDoc.data();
+                
+                if (!prospekData) {
+                    showNotif('❌ Data prospek tidak ditemukan', true);
+                    return;
+                }
+                
+                // Tambah ke customers
+                await db.collection('customers').add({
+                    agent_id: agentId,
+                    nama: prospekData.nama,
+                    hp: prospekData.hp,
+                    tanggal: followupDate,
+                    status: 'baru',
+                    apk: '',
+                    user_id: currentUser.uid,
+                    created_at: new Date().toISOString(),
+                    converted_from: 'prospek',
+                    original_prospek_id: currentConvertProspekId
+                });
+                
+                // Hapus dari prospek
+                await db.collection('prospek').doc(currentConvertProspekId).delete();
+                
+                // Tutup modal
+                const modalConvert = document.getElementById('convertModal');
+                if (modalConvert) {
+                    modalConvert.style.display = 'none';
+                }
+                closeModal('detailModal');
+                
+                showNotif('✅ Berhasil dipindahkan ke Followup Agen!');
+                loadAllData();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotif('❌ Gagal: ' + error.message, true);
+            }
+        });
+    }
+    
+    // Tombol Batal
+    if (cancelBtn) {
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        newCancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const modalConvert = document.getElementById('convertModal');
+            if (modalConvert) {
+                modalConvert.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        });
+    }
+    
+    // Klik di luar modal untuk menutup
+    if (modal) {
+        const newModal = modal.cloneNode(true);
+        modal.parentNode.replaceChild(newModal, modal);
+        
+        newModal.addEventListener('click', function(e) {
+            if (e.target === newModal) {
+                newModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+        });
+    }
 }
+
+// Panggil setup saat halaman dimuat
+document.addEventListener('DOMContentLoaded', function() {
+    setupConvertModal();
+    // ... kode DOMContentLoaded lainnya
+});
 
 // Download contoh file Excel
 document.getElementById('downloadCustomerExample')?.addEventListener('click', () => {
