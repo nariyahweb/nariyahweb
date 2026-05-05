@@ -264,7 +264,7 @@ body {
 
 @media (min-width: 769px) {
     .toggle-btn {
-        display: none;
+        display: block;
     }
 }
 
