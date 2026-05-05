@@ -1685,3 +1685,73 @@ function finishBroadcast() {
     if (panelDiv) panelDiv.style.display = 'none';
     broadcastStatus = [];
 }
+
+let currentConvertProspekId = null;
+
+function showConvertToCustomerModal(prospekId) {
+    currentConvertProspekId = prospekId;
+    
+    // Set tanggal followup otomatis +1 bulan dari sekarang
+    const today = new Date();
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(today.getMonth() + 1);
+    const formattedDate = nextMonth.toISOString().split('T')[0];
+    
+    document.getElementById('convertFollowupDate').value = formattedDate;
+    document.getElementById('convertAgentId').value = '';
+    document.getElementById('convertModal').style.display = 'flex';
+}
+
+document.getElementById('confirmConvertBtn')?.addEventListener('click', async () => {
+    const agentId = document.getElementById('convertAgentId').value;
+    const followupDate = document.getElementById('convertFollowupDate').value;
+    
+    if (!agentId) {
+        showNotif('ID Agent wajib diisi!', true);
+        return;
+    }
+    
+    if (!followupDate) {
+        showNotif('Tanggal followup wajib diisi!', true);
+        return;
+    }
+    
+    if (!currentConvertProspekId) return;
+    
+    try {
+        // Ambil data prospek
+        const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
+        const prospekData = prospekDoc.data();
+        
+        if (!prospekData) {
+            showNotif('Data prospek tidak ditemukan', true);
+            return;
+        }
+        
+        // Tambah ke customers (Followup Agen) dengan status 'baru'
+        await db.collection('customers').add({
+            agent_id: agentId,
+            nama: prospekData.nama,
+            hp: prospekData.hp,
+            tanggal: followupDate,
+            status: 'baru',
+            user_id: currentUser.uid,
+            created_at: new Date().toISOString(),
+            converted_from: 'prospek',
+            original_prospek_id: currentConvertProspekId
+        });
+        
+        // Hapus dari prospek
+        await db.collection('prospek').doc(currentConvertProspekId).delete();
+        
+        closeModal('convertModal');
+        closeModal('detailModal');
+        showNotif('✅ Berhasil dipindahkan ke Followup Agen!');
+        
+        // Refresh data
+        loadAllData();
+        
+    } catch (error) {
+        showNotif('Gagal: ' + error.message, true);
+    }
+});
