@@ -1827,3 +1827,303 @@ body:has(.modal[style*="display: flex"]) {
     background: #eef2ff;
     border-left: 3px solid #4f46e5;
 }
+
+/* ========== PERBAIKAN SIDEBAR - TIDAK RAPAT & ANIMASI GERAKAN ========== */
+
+/* Sidebar container */
+.sidebar {
+    width: 280px !important;
+    background: white !important;
+    border-right: 1px solid #e5e7eb !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 60px !important;
+    height: calc(100vh - 60px) !important;
+    overflow-y: auto !important;
+    z-index: 1000 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05) !important;
+}
+
+.sidebar.active {
+    transform: translateX(0) !important;
+    animation: sidebarSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Animasi sidebar slide in */
+@keyframes sidebarSlideIn {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Header sidebar */
+.sidebar-header {
+    padding: 24px 20px !important;
+    border-bottom: 1px solid #eef2ff !important;
+    margin-bottom: 8px !important;
+}
+
+.sidebar-header h2 {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #4f46e5 !important;
+    position: relative !important;
+    display: inline-block !important;
+    animation: logoGlow 2s ease-in-out infinite !important;
+    transition: all 0.3s ease !important;
+}
+
+.sidebar-header h2:hover {
+    transform: scale(1.05) rotate(-2deg) !important;
+    text-shadow: 0 0 15px rgba(79,70,229,0.5) !important;
+}
+
+@keyframes logoGlow {
+    0% {
+        text-shadow: 0 0 0px rgba(79,70,229,0);
+        letter-spacing: 0px;
+    }
+    50% {
+        text-shadow: 0 0 10px rgba(79,70,229,0.5);
+        letter-spacing: 1px;
+    }
+    100% {
+        text-shadow: 0 0 0px rgba(79,70,229,0);
+        letter-spacing: 0px;
+    }
+}
+
+/* Menu wrapper */
+.sidebar-menu {
+    padding: 8px 12px !important;
+}
+
+/* Menu label */
+.menu-label {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #9ca3af !important;
+    padding: 16px 12px 8px 12px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s ease !important;
+}
+
+.menu-label:hover {
+    color: #4f46e5 !important;
+    letter-spacing: 1px !important;
+}
+
+/* Menu item */
+.menu-item {
+    padding: 12px 16px !important;
+    margin: 4px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    cursor: pointer !important;
+    color: #4b5563 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    animation: slideInFromLeft 0.3s ease forwards !important;
+    opacity: 0;
+}
+
+/* Delay animasi menu item */
+.sidebar-menu .menu-item:nth-child(1) { animation-delay: 0.05s; }
+.sidebar-menu .menu-item:nth-child(2) { animation-delay: 0.1s; }
+.sidebar-menu .menu-item:nth-child(3) { animation-delay: 0.15s; }
+.sidebar-menu .menu-item:nth-child(4) { animation-delay: 0.2s; }
+.sidebar-menu .menu-item:nth-child(5) { animation-delay: 0.25s; }
+.sidebar-menu .menu-item:nth-child(6) { animation-delay: 0.3s; }
+.sidebar-menu .menu-item:nth-child(7) { animation-delay: 0.35s; }
+.sidebar-menu .menu-item:nth-child(8) { animation-delay: 0.4s; }
+.sidebar-menu .menu-item:nth-child(9) { animation-delay: 0.45s; }
+.sidebar-menu .menu-item:nth-child(10) { animation-delay: 0.5s; }
+.sidebar-menu .menu-item:nth-child(11) { animation-delay: 0.55s; }
+
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Hover efek menu item */
+.menu-item:hover {
+    background: linear-gradient(90deg, #eef2ff, #ffffff) !important;
+    transform: translateX(6px) !important;
+    color: #4f46e5 !important;
+}
+
+/* Icon hover bounce */
+.menu-item:hover .icon {
+    animation: iconBounce 0.5s ease !important;
+}
+
+@keyframes iconBounce {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(5px); }
+    60% { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+}
+
+/* Icon style */
+.menu-item .icon {
+    font-size: 20px !important;
+    width: 28px !important;
+    text-align: center !important;
+}
+
+/* Aktif menu item */
+.menu-item.active {
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    border-right: none !important;
+    position: relative !important;
+}
+
+.menu-item.active::before {
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 10% !important;
+    height: 80% !important;
+    width: 3px !important;
+    background: #4f46e5 !important;
+    border-radius: 0 3px 3px 0 !important;
+}
+
+/* Menu divider */
+.menu-divider {
+    height: 1px !important;
+    background: #eef2ff !important;
+    margin: 12px 12px !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.menu-divider::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, #4f46e5, transparent) !important;
+    animation: dividerShine 3s ease-in-out infinite !important;
+}
+
+@keyframes dividerShine {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Border gradient pada sidebar saat aktif */
+.sidebar::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    width: 3px !important;
+    height: 100% !important;
+    background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5) !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.sidebar.active::before {
+    opacity: 1 !important;
+    animation: borderGlow 2s ease-in-out infinite !important;
+}
+
+@keyframes borderGlow {
+    0% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
+    50% { background: linear-gradient(180deg, #8b5cf6, #4f46e5, #8b5cf6); }
+    100% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
+}
+
+/* Logout button khusus */
+#logoutBtn {
+    margin-top: 16px !important;
+    color: #ef4444 !important;
+}
+
+#logoutBtn:hover {
+    background: linear-gradient(90deg, #fef2f2, #ffffff) !important;
+    transform: translateX(6px) !important;
+}
+
+#logoutBtn:hover .icon {
+    animation: logoutShake 0.5s ease !important;
+}
+
+@keyframes logoutShake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    50% { transform: translateX(3px); }
+    75% { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+}
+
+/* Sidebar scrollbar kustom */
+.sidebar::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1 !important;
+    border-radius: 10px !important;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #c7d2fe !important;
+    border-radius: 10px !important;
+    transition: all 0.3s ease !important;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #4f46e5 !important;
+    width: 6px !important;
+}
+
+/* Hover zone untuk buka sidebar */
+#hoverZone {
+    position: fixed !important;
+    left: 0 !important;
+    top: 60px !important;
+    width: 20px !important;
+    height: calc(100vh - 60px) !important;
+    z-index: 2000 !important;
+    background: transparent !important;
+    transition: all 0.2s ease !important;
+}
+
+#hoverZone:hover {
+    width: 30px !important;
+    background: linear-gradient(90deg, rgba(79,70,229,0.1), transparent) !important;
+}
+
+/* Toggle button animasi */
+.toggle-btn {
+    transition: all 0.3s ease !important;
+}
+
+.toggle-btn:hover {
+    transform: rotate(90deg) !important;
+    background: rgba(255,255,255,0.3) !important;
+}
