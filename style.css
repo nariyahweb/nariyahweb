@@ -2252,3 +2252,159 @@ body {
     width: 30px;
     background: linear-gradient(90deg, rgba(79,70,229,0.1), transparent);
 }
+
+/* ========== PERBAIKAN SIDEBAR & STATS CARDS ========== */
+
+/* 1. PERBAIKAN SIDEBAR - KEMBALI KE TAMPILAN SEMULA */
+.sidebar {
+    width: 260px !important;
+    background: white !important;
+    border-right: 1px solid #e5e7eb !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 60px !important;
+    height: calc(100vh - 60px) !important;
+    overflow-y: auto !important;
+    z-index: 1000 !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05) !important;
+}
+
+.sidebar.active {
+    transform: translateX(0) !important;
+}
+
+/* Hapus border gradient yang mengganggu */
+.sidebar::before {
+    display: none !important;
+}
+
+/* 2. PERBAIKAN STATS CARDS - BERI JARAK DARI ATAS */
+.content-area {
+    padding-top: 20px !important;
+}
+
+.stats-grid {
+    margin-top: 0 !important;
+    margin-bottom: 20px !important;
+}
+
+/* 3. PERBAIKAN TOPBAR AGAR TIDAK TERLALU MENTOK */
+.topbar {
+    padding: 12px 24px !important;
+}
+
+/* 4. PASTIKAN MAIN CONTENT TIDAK BERMASALAH */
+.main-content {
+    margin-top: 60px !important;
+    padding: 0 !important;
+}
+
+/* 5. PERBAIKAN ANIMASI SIDEBAR - HAPUS ANIMASI YANG BERLEBIHAN */
+.sidebar-menu .menu-item {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* 6. HOVER EFEK SIDEBAR YANG LEMBUT */
+.menu-item {
+    transition: all 0.2s ease !important;
+}
+
+.menu-item:hover {
+    background: #eef2ff !important;
+    transform: translateX(4px) !important;
+}
+
+.menu-item:hover .icon {
+    animation: none !important;
+}
+
+/* 7. LOGO SIDEBAR - HAPUS ANIMASI BERKEDIP */
+.sidebar-header h2 {
+    animation: none !important;
+    transition: all 0.2s ease !important;
+}
+
+.sidebar-header h2:hover {
+    transform: scale(1.02) !important;
+}
+
+/* 8. LOGO TOPBAR - HAPUS ANIMASI FLOAT */
+.logo {
+    animation: none !important;
+}
+
+.logo:hover {
+    transform: scale(1.05) !important;
+}
+
+/* 9. HOVER ZONE - TIDAK MELEBAR BERLEBIHAN */
+#hoverZone {
+    width: 20px !important;
+    transition: none !important;
+}
+
+#hoverZone:hover {
+    width: 25px !important;
+    background: linear-gradient(90deg, rgba(79,70,229,0.05), transparent) !important;
+}
+
+/* 10. MENU DIVIDER - HAPUS ANIMASI SHINE */
+.menu-divider::after {
+    display: none !important;
+}
+
+/* 11. TOMBOL TOGGLE SIDEBAR */
+.toggle-btn {
+    transition: all 0.2s ease !important;
+}
+
+.toggle-btn:hover {
+    transform: rotate(0deg) !important;
+    background: rgba(255,255,255,0.3) !important;
+}
+
+/* 12. STATS CARD - PASTIKAN TIDAK MENTOK */
+.stat-card {
+    margin: 0 !important;
+}
+
+/* 13. BERI JARAK ANTARA STATS CARD DAN CHART */
+.charts-row {
+    margin-bottom: 20px !important;
+}
+
+/* 14. PASTIKAN SIDEBAR SCROLL TIDAK BERMASALAH */
+.sidebar::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #f1f1f1 !important;
+    border-radius: 10px !important;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #c7d2fe !important;
+    border-radius: 10px !important;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: #4f46e5 !important;
+}
+
+/* 15. SAAT SIDEBAR TERBUKA, MAIN CONTENT BERGERESER */
+@media (min-width: 769px) {
+    body.sidebar-open .main-content {
+        margin-left: 260px !important;
+        width: calc(100% - 260px) !important;
+        transition: margin-left 0.3s ease, width 0.3s ease !important;
+    }
+    
+    body:not(.sidebar-open) .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
