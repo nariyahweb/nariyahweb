@@ -1774,3 +1774,196 @@ body:has(.modal[style*="display: flex"]) {
 .panel-progress-item.success .panel-status {
     color: #10b981;
 }
+
+/* ========== ANIMASI EFEK UNTUK SEMUA ELEMEN ========== */
+
+/* Animasi untuk stat card */
+.stat-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.stat-card::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.1), transparent) !important;
+    transition: left 0.5s ease !important;
+}
+
+.stat-card:hover::before {
+    left: 100% !important;
+}
+
+.stat-card:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15) !important;
+    border-color: #c7d2fe !important;
+}
+
+.stat-card:hover .stat-info .value {
+    transform: scale(1.05) !important;
+    color: #4338ca !important;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.15) rotate(8deg) !important;
+    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2) !important;
+}
+
+/* Animasi untuk chart card */
+.chart-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.chart-card::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.08), transparent) !important;
+    transition: left 0.5s ease !important;
+}
+
+.chart-card:hover::before {
+    left: 100% !important;
+}
+
+.chart-card:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15) !important;
+    border-color: #c7d2fe !important;
+}
+
+.chart-card:hover h3 {
+    color: #4f46e5 !important;
+}
+
+.chart-card:hover canvas {
+    transform: scale(1.02) !important;
+}
+
+/* Animasi untuk board section */
+.board-section {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.board-section:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 15px 30px -12px rgba(0,0,0,0.12) !important;
+}
+
+/* Animasi untuk add button */
+.add-btn {
+    transition: all 0.2s ease !important;
+}
+
+.add-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3) !important;
+}
+
+/* Animasi untuk card item */
+.card-item {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: grab !important;
+}
+
+.card-item:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1) !important;
+    border-color: #c7d2fe !important;
+}
+
+/* Animasi untuk kanban column */
+.kanban-column {
+    transition: all 0.2s ease !important;
+}
+
+.kanban-column:hover {
+    transform: translateY(-3px) !important;
+}
+
+/* Animasi untuk db-item */
+.db-item {
+    transition: all 0.2s ease !important;
+}
+
+.db-item:hover {
+    transform: translateX(4px) !important;
+    background: #f9fafb !important;
+}
+
+/* Animasi untuk tombol */
+button {
+    transition: all 0.2s ease !important;
+}
+
+button:hover {
+    transform: translateY(-2px) !important;
+}
+
+/* Animasi untuk profile photo */
+.profile-photo img {
+    transition: all 0.2s ease !important;
+}
+
+.profile-photo img:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2) !important;
+}
+
+.profile-photo .camera-icon {
+    transition: all 0.2s ease !important;
+}
+
+.profile-photo .camera-icon:hover {
+    transform: scale(1.1) !important;
+    background: #4338ca !important;
+}
+
+/* Animasi untuk modal content */
+.modal-content {
+    animation: modalPopup 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) !important;
+}
+
+@keyframes modalPopup {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ========== PERBAIKAN PERSENTASE DI CHART ========== */
+/* Chart.js legend menampilkan persentase */
+.chart-card canvas {
+    max-height: 180px !important;
+}
+
+/* Pastikan legend chart muncul dengan persentase */
+.chartjs-legend {
+    display: block !important;
+}
+
+/* Style untuk tooltip chart */
+.chartjs-tooltip {
+    background: rgba(0,0,0,0.8) !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+}
