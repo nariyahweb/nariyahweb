@@ -1188,95 +1188,12 @@ document.getElementById('notifBtn')?.addEventListener('click', () => {
 });
 
 // ========== BROADCAST WHATSAPP FUNCTIONS ==========
-let currentNumbers = [];
-
-function initBroadcast() {
-    // Radio change event
-    document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const value = this.value;
-            document.getElementById('filterStatusCard').style.display = value === 'custom' ? 'none' : 'block';
-            document.getElementById('customNumbersCard').style.display = value === 'custom' ? 'block' : 'none';
-            document.getElementById('prospekFilter').style.display = value === 'prospek' ? 'flex' : 'none';
-            document.getElementById('customerFilter').style.display = value === 'customer' ? 'flex' : 'none';
-            loadNumbers();
-        });
-    });
-    
-    // Filter checkboxes change
-    document.querySelectorAll('#customerFilter input, #prospekFilter input').forEach(cb => {
-        cb.addEventListener('change', () => loadNumbers());
-    });
-    
-    document.getElementById('customNumbers')?.addEventListener('input', () => loadNumbers());
-    document.getElementById('refreshNumbersBtn')?.addEventListener('click', () => loadNumbers());
-    document.getElementById('sendBroadcastBtn')?.addEventListener('click', sendBroadcast);
-    
-    loadNumbers();
-}
-
-async function loadNumbers() {
-    const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
-    let numbers = [];
-    
-    if (sourceType === 'custom') {
-        const customText = document.getElementById('customNumbers')?.value || '';
-        numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
-    } else {
-        let collection = 'customers';
-        let statusField = 'status';
-        let statusValues = [];
-        
-        if (sourceType === 'prospek') {
-            collection = 'prospek';
-            statusField = 'status';
-            statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value);
-        } else if (sourceType === 'customer') {
-            collection = 'customers';
-            statusField = 'status';
-            statusValues = Array.from(document.querySelectorAll('#customerFilter input:checked')).map(cb => cb.value);
-        } else if (sourceType === 'closing') {
-            collection = 'db_closing';
-            statusField = null;
-        } else if (sourceType === 'dbTidak') {
-            collection = 'db_tidak_tertarik';
-            statusField = null;
-        }
-        
-        let query = db.collection(collection).where('user_id', '==', currentUser.uid);
-        if (statusValues && statusValues.length > 0) {
-            query = query.where(statusField, 'in', statusValues);
-        }
-        
-        const snapshot = await query.get();
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            numbers.push({ hp: data.hp, nama: data.nama });
-        });
-    }
-    
-    currentNumbers = numbers;
-    const countSpan = document.getElementById('selectedCount');
-    const listDiv = document.getElementById('selectedNumbersList');
-    
-    if (countSpan) countSpan.innerText = numbers.length;
-    
-    if (numbers.length === 0) {
-        listDiv.innerHTML = '<p style="color:#9ca3af;">Tidak ada nomor yang dipilih</p>';
-    } else if (typeof numbers[0] === 'string') {
-        listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n)}</div>`).join('');
-    } else {
-        listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n.nama)} - ${escapeHtml(n.hp)}</div>`).join('');
-    }
-}
-
-// ========== BROADCAST WHATSAPP FUNCTIONS ==========
-let currentNumbers = [];
+let currentNumbers = []; // <-- HANYA SATU DEKLARASI
 let currentBroadcastIndex = 0;
 let broadcastNumbers = [];
 let broadcastMessageTemplate = '';
 let isBroadcasting = false;
-let broadcastStatus = []; // 'success' atau 'failed'
+let broadcastStatus = [];
 
 function initBroadcast() {
     // Radio change event
@@ -1296,7 +1213,6 @@ function initBroadcast() {
         });
     });
     
-    // Filter checkboxes change
     document.querySelectorAll('#customerFilter input, #prospekFilter input').forEach(cb => {
         cb.addEventListener('change', () => loadNumbers());
     });
