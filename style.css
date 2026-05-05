@@ -2168,3 +2168,28 @@ body:has(.modal[style*="display: flex"]) {
     background: #059669;
     transform: translateY(-2px);
 }
+
+/* Modal Konversi */
+#convertModal .modal-content {
+    max-width: 450px;
+}
+
+.confirm-convert-btn {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+.confirm-convert-btn:hover {
+    background: #4338ca !important;
+    transform: translateY(-2px);
+}
+
+#cancelConvertBtn {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+}
+
+#cancelConvertBtn:hover {
+    background: #e5e7eb !important;
+    transform: translateY(-2px);
+}
