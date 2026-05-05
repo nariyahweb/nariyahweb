@@ -7,6 +7,8 @@
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: #f5f7fb;
+    overflow-x: hidden !important;
+    position: relative !important;
 }
 
 /* ========== LOGIN PAGE ========== */
@@ -122,33 +124,51 @@ body {
     overflow-y: auto;
     z-index: 1000;
     transform: translateX(-100%);
-    transition: transform 0.3s ease, width 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-}
-
-/* Sembunyikan scrollbar tapi tetap bisa scroll (opsional) */
-.sidebar::-webkit-scrollbar {
-    width: 4px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background: #c7d2fe;
-    border-radius: 10px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .sidebar.active {
     transform: translateX(0);
+    animation: sidebarSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Pastikan body tidak ikut scroll saat sidebar di-scroll */
-body {
-    overflow-x: hidden;
+@keyframes sidebarSlideIn {
+    from { transform: translateX(-100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
+
+/* Border gradient pada sidebar */
+.sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar.active::before {
+    opacity: 1;
+    animation: borderGlow 2s ease-in-out infinite;
+}
+
+@keyframes borderGlow {
+    0% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
+    50% { background: linear-gradient(180deg, #8b5cf6, #4f46e5, #8b5cf6); }
+    100% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
+}
+
+/* Sidebar scrollbar */
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+.sidebar::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; transition: all 0.3s ease; }
+.sidebar::-webkit-scrollbar-thumb:hover { background: #4f46e5; width: 6px; }
 
 /* ========== HOVER ZONE ========== */
 #hoverZone {
@@ -159,6 +179,12 @@ body {
     height: calc(100vh - 60px);
     z-index: 2000;
     background: transparent;
+    transition: all 0.2s ease;
+}
+
+#hoverZone:hover {
+    width: 30px;
+    background: linear-gradient(90deg, rgba(79,70,229,0.1), transparent);
 }
 
 /* ========== TOPBAR ========== */
@@ -190,22 +216,37 @@ body {
     color: white;
     padding: 8px 12px;
     border-radius: 8px;
-}
-
-@media (min-width: 769px) {
-    .toggle-btn {
-        display: block;
-    }
+    transition: all 0.3s ease;
 }
 
 .toggle-btn:hover {
+    transform: rotate(90deg);
     background: rgba(255,255,255,0.3);
+}
+
+@media (min-width: 769px) {
+    .toggle-btn { display: block; }
 }
 
 .logo {
     font-size: 18px;
     font-weight: 700;
     color: white;
+    position: relative;
+    display: inline-block;
+    animation: logoFloat 3s ease-in-out infinite;
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.1);
+    text-shadow: 0 0 10px rgba(255,255,255,0.8);
+}
+
+@keyframes logoFloat {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-2px); }
+    100% { transform: translateY(0px); }
 }
 
 .topbar-center {
@@ -253,30 +294,22 @@ body {
     margin-left: 0;
     width: 100%;
     margin-top: 60px;
-    transition: margin-left 0.3s ease, width 0.3s ease;
+    overflow-y: auto;
+    height: calc(100vh - 60px);
+    position: relative;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Saat sidebar terbuka (aktif) di PC */
 @media (min-width: 769px) {
-    .sidebar.active ~ .main-content,
-    .sidebar.active + .main-content {
+    body.sidebar-open .main-content {
         margin-left: 260px !important;
         width: calc(100% - 260px) !important;
     }
-    
-    .main-content {
-        margin-left: 0;
-        width: 100%;
-    }
 }
 
-/* Untuk mobile */
-@media (max-width: 768px) {
-    .sidebar.active ~ .main-content,
-    .sidebar.active + .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
+/* ========== CONTENT AREA ========== */
+.content-area {
+    padding: 20px 24px;
 }
 
 /* ========== STATS CARDS ========== */
@@ -284,7 +317,7 @@ body {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 .stat-card {
@@ -308,7 +341,7 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.05), transparent);
+    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.1), transparent);
     transition: left 0.5s ease;
 }
 
@@ -317,9 +350,19 @@ body {
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    transform: translateY(-6px);
+    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15);
     border-color: #c7d2fe;
+}
+
+.stat-card:hover .stat-info .value {
+    transform: scale(1.05);
+    color: #4338ca;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.15) rotate(8deg);
+    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
 }
 
 .stat-info h4 {
@@ -361,7 +404,7 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
 .chart-card {
@@ -369,6 +412,39 @@ body {
     padding: 12px 16px;
     border-radius: 16px;
     border: 1px solid #e5e7eb;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.08), transparent);
+    transition: left 0.5s ease;
+}
+
+.chart-card:hover::before {
+    left: 100%;
+}
+
+.chart-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15);
+    border-color: #c7d2fe;
+}
+
+.chart-card:hover h3 {
+    color: #4f46e5;
+}
+
+.chart-card:hover canvas {
+    transform: scale(1.02);
 }
 
 .chart-card h3 {
@@ -396,6 +472,12 @@ body {
     flex: 1;
     min-width: 280px;
     border: 1px solid #e5e7eb;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.board-section:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px -12px rgba(0,0,0,0.12);
 }
 
 .board-header {
@@ -422,10 +504,13 @@ body {
     cursor: pointer;
     font-size: 11px;
     font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .add-btn:hover {
     background: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
 }
 
 /* ========== KANBAN BOARD ========== */
@@ -438,6 +523,11 @@ body {
 .kanban-column {
     border-radius: 12px;
     padding: 8px;
+    transition: all 0.2s ease;
+}
+
+.kanban-column:hover {
+    transform: translateY(-3px);
 }
 
 .kanban-column[data-status="baru"],
@@ -483,12 +573,13 @@ body {
     margin-bottom: 5px;
     cursor: grab;
     border: 1px solid #e5e7eb;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    border-color: #c7d2fe;
 }
 
 .card-name {
@@ -679,9 +770,11 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    transition: all 0.2s ease;
 }
 
 .db-item:hover {
+    transform: translateX(4px);
     background: #f9fafb;
 }
 
@@ -748,6 +841,12 @@ body.modal-open {
     overflow: hidden;
 }
 
+body:has(.modal[style*="display: flex"]) {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+}
+
 .modal-content {
     background: white;
     border-radius: 24px;
@@ -756,9 +855,14 @@ body.modal-open {
     max-height: 85vh;
     overflow-y: auto;
     position: relative;
-    animation: modalPopup 0.2s ease;
+    animation: modalPopup 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
     box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
     padding: 0;
+}
+
+@keyframes modalPopup {
+    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal-content::-webkit-scrollbar {
@@ -773,11 +877,6 @@ body.modal-open {
 .modal-content::-webkit-scrollbar-thumb {
     background: #c7d2fe;
     border-radius: 10px;
-}
-
-@keyframes modalPopup {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
 }
 
 /* ========== DETAIL MODAL ========== */
@@ -888,6 +987,11 @@ body.modal-open {
     align-items: center;
     justify-content: center;
     gap: 6px;
+    transition: all 0.2s;
+}
+
+.detail-actions button:hover {
+    transform: translateY(-2px);
 }
 
 .btn-primary { background: #4f46e5; color: white; }
@@ -912,6 +1016,11 @@ body.modal-open {
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
+    transition: all 0.2s;
+}
+
+.detail-footer button:hover {
+    transform: translateY(-2px);
 }
 
 .detail-footer button:first-child {
@@ -1044,6 +1153,11 @@ body.modal-open {
     cursor: pointer;
     font-weight: 600;
     font-size: 13px;
+    transition: all 0.2s;
+}
+
+.modal-buttons button:hover {
+    transform: translateY(-2px);
 }
 
 .modal-buttons button:first-child {
@@ -1071,6 +1185,12 @@ body.modal-open {
     object-fit: cover;
     border: 4px solid white;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+.profile-photo img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
 .profile-photo .camera-icon {
@@ -1088,6 +1208,12 @@ body.modal-open {
     font-size: 14px;
     cursor: pointer;
     border: 2px solid white;
+    transition: all 0.2s ease;
+}
+
+.profile-photo .camera-icon:hover {
+    transform: scale(1.1);
+    background: #4338ca;
 }
 
 .profile-photo p {
@@ -1304,10 +1430,12 @@ body.modal-open {
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
+    transition: all 0.2s;
 }
 
 .broadcast-btn:hover {
     background: #20b85a;
+    transform: translateY(-2px);
 }
 
 .warning-text {
@@ -1328,183 +1456,15 @@ body.modal-open {
     border-radius: 8px;
     font-size: 12px;
     cursor: pointer;
-}
-
-/* ========== NOTIFIKASI ========== */
-#notifBox {
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    z-index: 9999;
-}
-
-.notif-toast {
-    padding: 10px 16px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    animation: slideIn 0.3s ease;
-    font-size: 12px;
-    font-weight: 500;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.notif-success { background: #4f46e5; color: white; }
-.notif-error { background: #ef4444; color: white; }
-
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-/* ========== RESPONSIVE ========== */
-@media (max-width: 1200px) {
-    .kanban-board { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 1024px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .charts-row { grid-template-columns: 1fr; }
-    .import-grid { grid-template-columns: 1fr; }
-    .broadcast-grid { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 768px) {
-    .boards-wrapper { flex-direction: column; }
-    .kanban-board { grid-template-columns: 1fr; }
-    .stats-grid { grid-template-columns: 1fr; }
-    .content-area { padding: 12px; }
-    .topbar-center { display: none; }
-    .toggle-btn { display: block !important; }
-}
-
-/* ========== UNREAD PESAN STYLE ========== */
-.db-item.unread {
-    background: #eef2ff;
-    border-left: 3px solid #4f46e5;
-}
-
-/* ========== FIX SCROLL BODY SAAT MODAL TERBUKA ========== */
-body:has(.modal[style*="display: flex"]) {
-    overflow: hidden !important;
-    position: fixed !important;
-    width: 100% !important;
-}
-
-/* ========== BROADCAST PROGRESS STYLE ========== */
-.broadcast-progress {
-    background: white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-top: 20px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-
-.progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #f0f0f0;
-}
-
-.progress-header span {
-    font-weight: 700;
-    font-size: 14px;
-    color: #1f2937;
-}
-
-.stop-broadcast-btn {
-    background: #fef2f2;
-    color: #dc2626;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
     transition: all 0.2s;
 }
 
-.stop-broadcast-btn:hover {
-    background: #fee2e2;
-    transform: translateY(-1px);
+.btn-refresh:hover {
+    transform: translateY(-2px);
+    background: #e0e7ff;
 }
 
-.progress-bar-container {
-    background: #e5e7eb;
-    border-radius: 20px;
-    height: 10px;
-    overflow: hidden;
-    margin-bottom: 12px;
-}
-
-.progress-bar-fill {
-    background: linear-gradient(90deg, #10b981, #059669);
-    width: 0%;
-    height: 100%;
-    border-radius: 20px;
-    transition: width 0.3s ease;
-}
-
-.progress-text {
-    text-align: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: #4b5563;
-    margin-bottom: 16px;
-}
-
-.progress-list {
-    max-height: 300px;
-    overflow-y: auto;
-    border-top: 1px solid #f0f0f0;
-    padding-top: 12px;
-}
-
-.progress-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 8px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 12px;
-    transition: background 0.2s;
-}
-
-.progress-item:last-child {
-    border-bottom: none;
-}
-
-.progress-item.done {
-    background: #ecfdf5;
-    color: #065f46;
-}
-
-.progress-item.current {
-    background: #eef2ff;
-    border-left: 3px solid #4f46e5;
-}
-
-.progress-status {
-    font-size: 14px;
-    width: 24px;
-    text-align: center;
-}
-
-.progress-number {
-    flex: 1;
-    font-family: monospace;
-    word-break: break-all;
-}
-
-.progress-item.done .progress-number {
-    text-decoration: line-through;
-    color: #059669;
-}
-
-/* ========== BROADCAST PANEL STYLE ========== */
+/* ========== BROADCAST PANEL ========== */
 .broadcast-panel {
     background: white;
     border-radius: 20px;
@@ -1596,7 +1556,7 @@ body:has(.modal[style*="display: flex"]) {
 
 .whatsapp-link-btn:hover {
     background: #20b85a;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 .action-buttons {
@@ -1606,7 +1566,9 @@ body:has(.modal[style*="display: flex"]) {
     margin-bottom: 16px;
 }
 
-.mark-sent-btn, .skip-btn, .repeat-btn, .stop-btn {
+.mark-sent-btn {
+    background: #10b981;
+    color: white;
     padding: 10px;
     border: none;
     border-radius: 10px;
@@ -1616,40 +1578,43 @@ body:has(.modal[style*="display: flex"]) {
     transition: all 0.2s;
 }
 
-.mark-sent-btn {
-    background: #10b981;
-    color: white;
-}
-
 .mark-sent-btn:hover {
     background: #059669;
+    transform: translateY(-2px);
 }
 
-.skip-btn {
-    background: #f59e0b;
+.mark-failed-btn {
+    background: #ef4444;
     color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 
-.skip-btn:hover {
-    background: #d97706;
-}
-
-.repeat-btn {
-    background: #3b82f6;
-    color: white;
-}
-
-.repeat-btn:hover {
-    background: #2563eb;
+.mark-failed-btn:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
 }
 
 .stop-btn {
     background: #ef4444;
     color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
 }
 
 .stop-btn:hover {
     background: #dc2626;
+    transform: translateY(-2px);
 }
 
 .progress-panel {
@@ -1658,8 +1623,32 @@ body:has(.modal[style*="display: flex"]) {
     background: #f9fafb;
 }
 
-.progress-list-panel {
-    max-height: 250px;
+.progress-bar-container {
+    background: #e5e7eb;
+    border-radius: 20px;
+    height: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-bar-fill {
+    background: linear-gradient(90deg, #10b981, #059669);
+    width: 0%;
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 16px;
+}
+
+.progress-list {
+    max-height: 300px;
     overflow-y: auto;
 }
 
@@ -1672,9 +1661,14 @@ body:has(.modal[style*="display: flex"]) {
     font-size: 12px;
 }
 
-.panel-progress-item.done {
+.panel-progress-item.success {
     background: #ecfdf5;
     color: #065f46;
+}
+
+.panel-progress-item.failed {
+    background: #fef2f2;
+    color: #dc2626;
 }
 
 .panel-progress-item.current {
@@ -1686,295 +1680,12 @@ body:has(.modal[style*="display: flex"]) {
     font-size: 14px;
 }
 
-/* Tombol Gagal Kirim */
-.mark-failed-btn {
-    background: #ef4444;
-    color: white;
-}
-
-.mark-failed-btn:hover {
-    background: #dc2626;
-    transform: translateY(-1px);
-}
-
-/* Status Failed di Progress List */
-.panel-progress-item.failed {
-    background: #fef2f2;
-    color: #dc2626;
-}
-
-.panel-progress-item.failed .panel-status {
-    color: #dc2626;
-}
-
-.panel-progress-item.success {
-    background: #ecfdf5;
-    color: #065f46;
-}
-
-.panel-progress-item.success .panel-status {
-    color: #10b981;
-}
-
-/* ========== ANIMASI EFEK UNTUK SEMUA ELEMEN ========== */
-
-/* Animasi untuk stat card */
-.stat-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    cursor: pointer !important;
-    position: relative !important;
-    overflow: hidden !important;
-}
-
-.stat-card::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.1), transparent) !important;
-    transition: left 0.5s ease !important;
-}
-
-.stat-card:hover::before {
-    left: 100% !important;
-}
-
-.stat-card:hover {
-    transform: translateY(-6px) !important;
-    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15) !important;
-    border-color: #c7d2fe !important;
-}
-
-.stat-card:hover .stat-info .value {
-    transform: scale(1.05) !important;
-    color: #4338ca !important;
-}
-
-.stat-card:hover .stat-icon {
-    transform: scale(1.15) rotate(8deg) !important;
-    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2) !important;
-}
-
-/* Animasi untuk chart card */
-.chart-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    cursor: pointer !important;
-    position: relative !important;
-    overflow: hidden !important;
-}
-
-.chart-card::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(90deg, transparent, rgba(79,70,229,0.08), transparent) !important;
-    transition: left 0.5s ease !important;
-}
-
-.chart-card:hover::before {
-    left: 100% !important;
-}
-
-.chart-card:hover {
-    transform: translateY(-6px) !important;
-    box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15) !important;
-    border-color: #c7d2fe !important;
-}
-
-.chart-card:hover h3 {
-    color: #4f46e5 !important;
-}
-
-.chart-card:hover canvas {
-    transform: scale(1.02) !important;
-}
-
-/* Animasi untuk board section */
-.board-section {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.board-section:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: 0 15px 30px -12px rgba(0,0,0,0.12) !important;
-}
-
-/* Animasi untuk add button */
-.add-btn {
-    transition: all 0.2s ease !important;
-}
-
-.add-btn:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 4px 12px rgba(79,70,229,0.3) !important;
-}
-
-/* Animasi untuk card item */
-.card-item {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    cursor: grab !important;
-}
-
-.card-item:hover {
-    transform: translateY(-3px) !important;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.1) !important;
-    border-color: #c7d2fe !important;
-}
-
-/* Animasi untuk kanban column */
-.kanban-column {
-    transition: all 0.2s ease !important;
-}
-
-.kanban-column:hover {
-    transform: translateY(-3px) !important;
-}
-
-/* Animasi untuk db-item */
-.db-item {
-    transition: all 0.2s ease !important;
-}
-
-.db-item:hover {
-    transform: translateX(4px) !important;
-    background: #f9fafb !important;
-}
-
-/* Animasi untuk tombol */
-button {
-    transition: all 0.2s ease !important;
-}
-
-button:hover {
-    transform: translateY(-2px) !important;
-}
-
-/* Animasi untuk profile photo */
-.profile-photo img {
-    transition: all 0.2s ease !important;
-}
-
-.profile-photo img:hover {
-    transform: scale(1.05) !important;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2) !important;
-}
-
-.profile-photo .camera-icon {
-    transition: all 0.2s ease !important;
-}
-
-.profile-photo .camera-icon:hover {
-    transform: scale(1.1) !important;
-    background: #4338ca !important;
-}
-
-/* Animasi untuk modal content */
-.modal-content {
-    animation: modalPopup 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) !important;
-}
-
-@keyframes modalPopup {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-/* ========== PERBAIKAN PERSENTASE DI CHART ========== */
-/* Chart.js legend menampilkan persentase */
-.chart-card canvas {
-    max-height: 180px !important;
-}
-
-/* Pastikan legend chart muncul dengan persentase */
-.chartjs-legend {
-    display: block !important;
-}
-
-/* Style untuk tooltip chart */
-.chartjs-tooltip {
-    background: rgba(0,0,0,0.8) !important;
-    color: white !important;
-    border-radius: 8px !important;
-    padding: 6px 12px !important;
-    font-size: 12px !important;
-}
-
-/* ========== ANIMASI LOGO DI SIDEBAR & TOPBAR ========== */
-
-/* Animasi logo di sidebar */
-.sidebar-header h2 {
-    position: relative !important;
-    display: inline-block !important;
-    animation: logoGlow 2s ease-in-out infinite !important;
-    transition: all 0.3s ease !important;
-}
-
-.sidebar-header h2:hover {
-    transform: scale(1.05) rotate(-2deg) !important;
-    text-shadow: 0 0 15px rgba(79,70,229,0.5) !important;
-}
-
-/* Animasi logo di topbar */
-.logo {
-    position: relative !important;
-    display: inline-block !important;
-    animation: logoFloat 3s ease-in-out infinite !important;
-    transition: all 0.3s ease !important;
-}
-
-.logo:hover {
-    transform: scale(1.1) !important;
-    text-shadow: 0 0 10px rgba(255,255,255,0.8) !important;
-}
-
-/* Animasi gemerlap pada logo */
-@keyframes logoGlow {
-    0% {
-        text-shadow: 0 0 0px rgba(79,70,229,0);
-        letter-spacing: 0px;
-    }
-    50% {
-        text-shadow: 0 0 10px rgba(79,70,229,0.5);
-        letter-spacing: 1px;
-    }
-    100% {
-        text-shadow: 0 0 0px rgba(79,70,229,0);
-        letter-spacing: 0px;
-    }
-}
-
-/* Animasi floating pada logo topbar */
-@keyframes logoFloat {
-    0% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-2px);
-    }
-    100% {
-        transform: translateY(0px);
-    }
-}
-
-/* ========== ANIMASI SIDEBAR MENU ITEM ========== */
-
-/* Efek masuk menu item satu per satu */
+/* ========== SIDEBAR MENU ITEM ANIMATIONS ========== */
 .sidebar-menu .menu-item {
-    animation: slideInFromLeft 0.3s ease forwards !important;
+    animation: slideInFromLeft 0.3s ease forwards;
     opacity: 0;
 }
 
-/* Delay animasi untuk setiap menu item */
 .sidebar-menu .menu-item:nth-child(1) { animation-delay: 0.05s; }
 .sidebar-menu .menu-item:nth-child(2) { animation-delay: 0.1s; }
 .sidebar-menu .menu-item:nth-child(3) { animation-delay: 0.15s; }
@@ -1986,29 +1697,22 @@ button:hover {
 .sidebar-menu .menu-item:nth-child(9) { animation-delay: 0.45s; }
 
 @keyframes slideInFromLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
-/* Hover efek pada menu item dengan icon bergerak */
 .menu-item {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    overflow: hidden !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
 }
 
 .menu-item:hover {
-    background: linear-gradient(90deg, #eef2ff, #ffffff) !important;
-    transform: translateX(5px) !important;
+    background: linear-gradient(90deg, #eef2ff, #ffffff);
+    transform: translateX(5px);
 }
 
 .menu-item:hover .icon {
-    animation: iconBounce 0.5s ease !important;
+    animation: iconBounce 0.5s ease;
 }
 
 @keyframes iconBounce {
@@ -2018,98 +1722,30 @@ button:hover {
     100% { transform: translateX(0); }
 }
 
-/* Menu label dengan efek */
 .menu-label {
-    position: relative !important;
-    transition: all 0.3s ease !important;
+    position: relative;
+    transition: all 0.3s ease;
 }
 
 .menu-label:hover {
-    color: #4f46e5 !important;
-    letter-spacing: 1px !important;
+    color: #4f46e5;
+    letter-spacing: 1px;
 }
 
-/* ========== ANIMASI SIDEBAR SAAT HOVER ========== */
-
-/* Efek saat sidebar terbuka */
-.sidebar.active {
-    animation: sidebarSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-@keyframes sidebarSlideIn {
-    from {
-        transform: translateX(-100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Efek border gradient pada sidebar */
-.sidebar {
-    position: relative !important;
-}
-
-.sidebar::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    width: 3px !important;
-    height: 100% !important;
-    background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5) !important;
-    opacity: 0 !important;
-    transition: opacity 0.3s ease !important;
-}
-
-.sidebar.active::before {
-    opacity: 1 !important;
-    animation: borderGlow 2s ease-in-out infinite !important;
-}
-
-@keyframes borderGlow {
-    0% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
-    50% { background: linear-gradient(180deg, #8b5cf6, #4f46e5, #8b5cf6); }
-    100% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
-}
-
-/* ========== ANIMASI SIDEBAR TOGGLE BUTTON ========== */
-.toggle-btn {
-    transition: all 0.3s ease !important;
-}
-
-.toggle-btn:hover {
-    transform: rotate(90deg) !important;
-    background: rgba(255,255,255,0.3) !important;
-}
-
-/* ========== ANIMASI HOVER ZONE ========== */
-#hoverZone {
-    transition: all 0.2s ease !important;
-}
-
-#hoverZone:hover {
-    width: 30px !important;
-    background: linear-gradient(90deg, rgba(79,70,229,0.1), transparent) !important;
-}
-
-/* ========== ANIMASI MENU DIVIDER ========== */
 .menu-divider {
-    position: relative !important;
-    overflow: hidden !important;
+    position: relative;
+    overflow: hidden;
 }
 
 .menu-divider::after {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(90deg, transparent, #4f46e5, transparent) !important;
-    animation: dividerShine 3s ease-in-out infinite !important;
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #4f46e5, transparent);
+    animation: dividerShine 3s ease-in-out infinite;
 }
 
 @keyframes dividerShine {
@@ -2118,18 +1754,17 @@ button:hover {
     100% { left: 100%; }
 }
 
-/* ========== ANIMASI LOGOUT BUTTON KHUSUS ========== */
 #logoutBtn {
-    transition: all 0.3s ease !important;
+    transition: all 0.3s ease;
 }
 
 #logoutBtn:hover {
-    background: linear-gradient(90deg, #fef2f2, #ffffff) !important;
-    transform: translateX(5px) !important;
+    background: linear-gradient(90deg, #fef2f2, #ffffff);
+    transform: translateX(5px);
 }
 
 #logoutBtn:hover .icon {
-    animation: logoutShake 0.5s ease !important;
+    animation: logoutShake 0.5s ease;
 }
 
 @keyframes logoutShake {
@@ -2140,533 +1775,55 @@ button:hover {
     100% { transform: translateX(0); }
 }
 
-/* ========== ANIMASI SIDEBAR SCROLLBAR KUSTOM ========== */
-.sidebar::-webkit-scrollbar {
-    width: 4px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background: #c7d2fe;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-    background: #4f46e5;
-    width: 6px;
-}
-
-/* ========== FIX SIDEBAR SCROLL & MAIN CONTENT RESIZE ========== */
-
-/* Pastikan body tidak bergeser */
-body {
-    overflow-x: hidden !important;
-    position: relative !important;
-}
-
-/* Scroll hanya di dalam sidebar */
-.sidebar {
-    overscroll-behavior: contain !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-}
-
-/* Main content tidak terpengaruh scroll sidebar */
-.main-content {
-    overflow-y: auto !important;
-    height: calc(100vh - 60px) !important;
-    position: relative !important;
-}
-
-/* Transisi halus saat sidebar membuka/menutup */
-.main-content {
-    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.sidebar {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* Saat sidebar terbuka di PC */
-@media (min-width: 769px) {
-    body.sidebar-open .main-content {
-        margin-left: 260px !important;
-        width: calc(100% - 260px) !important;
-    }
-}
-
-/* ========== FINAL FIX - JANGAN DIHAPUS ========== */
-
-/* Pastikan sidebar tidak bentrok */
-.sidebar {
-    overscroll-behavior: contain !important;
-    overflow-y: auto !important;
-    position: fixed !important;
-    top: 60px !important;
-    left: 0 !important;
-    height: calc(100vh - 60px) !important;
-    z-index: 1000 !important;
-}
-
-/* Pastikan main content tidak bermasalah */
-.main-content {
-    overflow-y: auto !important;
-    height: calc(100vh - 60px) !important;
-    position: relative !important;
-    margin-top: 60px !important;
-}
-
-/* Tombol toggle di PC - biarkan muncul */
-@media (min-width: 769px) {
-    .toggle-btn {
-        display: block !important;
-    }
-}
-
-/* Saat sidebar terbuka, main content bergeser */
-@media (min-width: 769px) {
-    body.sidebar-open .main-content {
-        margin-left: 260px !important;
-        width: calc(100% - 260px) !important;
-    }
-}
-
-/* Hover zone untuk membuka sidebar */
-#hoverZone {
+/* ========== NOTIFIKASI ========== */
+#notifBox {
     position: fixed;
-    left: 0;
-    top: 60px;
-    width: 20px;
-    height: calc(100vh - 60px);
-    z-index: 2000;
-    background: transparent;
-    transition: all 0.2s ease;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
 }
 
-#hoverZone:hover {
-    width: 30px;
-    background: linear-gradient(90deg, rgba(79,70,229,0.1), transparent);
+.notif-toast {
+    padding: 10px 16px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    animation: slideIn 0.3s ease;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-/* ========== PERBAIKAN SIDEBAR & STATS CARDS ========== */
+.notif-success { background: #4f46e5; color: white; }
+.notif-error { background: #ef4444; color: white; }
 
-/* 1. PERBAIKAN SIDEBAR - KEMBALI KE TAMPILAN SEMULA */
-.sidebar {
-    width: 260px !important;
-    background: white !important;
-    border-right: 1px solid #e5e7eb !important;
-    position: fixed !important;
-    left: 0 !important;
-    top: 60px !important;
-    height: calc(100vh - 60px) !important;
-    overflow-y: auto !important;
-    z-index: 1000 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.05) !important;
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
-.sidebar.active {
-    transform: translateX(0) !important;
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1200px) {
+    .kanban-board { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* Hapus border gradient yang mengganggu */
-.sidebar::before {
-    display: none !important;
+@media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .import-grid { grid-template-columns: 1fr; }
+    .broadcast-grid { grid-template-columns: 1fr; }
 }
 
-/* 2. PERBAIKAN STATS CARDS - BERI JARAK DARI ATAS */
-.content-area {
-    padding-top: 20px !important;
+@media (max-width: 768px) {
+    .boards-wrapper { flex-direction: column; }
+    .kanban-board { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .content-area { padding: 12px; }
+    .topbar-center { display: none; }
+    .toggle-btn { display: block !important; }
 }
 
-.stats-grid {
-    margin-top: 0 !important;
-    margin-bottom: 20px !important;
-}
-
-/* 3. PERBAIKAN TOPBAR AGAR TIDAK TERLALU MENTOK */
-.topbar {
-    padding: 12px 24px !important;
-}
-
-/* 4. PASTIKAN MAIN CONTENT TIDAK BERMASALAH */
-.main-content {
-    margin-top: 60px !important;
-    padding: 0 !important;
-}
-
-/* 5. PERBAIKAN ANIMASI SIDEBAR - HAPUS ANIMASI YANG BERLEBIHAN */
-.sidebar-menu .menu-item {
-    animation: none !important;
-    opacity: 1 !important;
-}
-
-/* 6. HOVER EFEK SIDEBAR YANG LEMBUT */
-.menu-item {
-    transition: all 0.2s ease !important;
-}
-
-.menu-item:hover {
-    background: #eef2ff !important;
-    transform: translateX(4px) !important;
-}
-
-.menu-item:hover .icon {
-    animation: none !important;
-}
-
-/* 7. LOGO SIDEBAR - HAPUS ANIMASI BERKEDIP */
-.sidebar-header h2 {
-    animation: none !important;
-    transition: all 0.2s ease !important;
-}
-
-.sidebar-header h2:hover {
-    transform: scale(1.02) !important;
-}
-
-/* 8. LOGO TOPBAR - HAPUS ANIMASI FLOAT */
-.logo {
-    animation: none !important;
-}
-
-.logo:hover {
-    transform: scale(1.05) !important;
-}
-
-/* 9. HOVER ZONE - TIDAK MELEBAR BERLEBIHAN */
-#hoverZone {
-    width: 20px !important;
-    transition: none !important;
-}
-
-#hoverZone:hover {
-    width: 25px !important;
-    background: linear-gradient(90deg, rgba(79,70,229,0.05), transparent) !important;
-}
-
-/* 10. MENU DIVIDER - HAPUS ANIMASI SHINE */
-.menu-divider::after {
-    display: none !important;
-}
-
-/* 11. TOMBOL TOGGLE SIDEBAR */
-.toggle-btn {
-    transition: all 0.2s ease !important;
-}
-
-.toggle-btn:hover {
-    transform: rotate(0deg) !important;
-    background: rgba(255,255,255,0.3) !important;
-}
-
-/* 12. STATS CARD - PASTIKAN TIDAK MENTOK */
-.stat-card {
-    margin: 0 !important;
-}
-
-/* 13. BERI JARAK ANTARA STATS CARD DAN CHART */
-.charts-row {
-    margin-bottom: 20px !important;
-}
-
-/* 14. PASTIKAN SIDEBAR SCROLL TIDAK BERMASALAH */
-.sidebar::-webkit-scrollbar {
-    width: 4px !important;
-}
-
-.sidebar::-webkit-scrollbar-track {
-    background: #f1f1f1 !important;
-    border-radius: 10px !important;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background: #c7d2fe !important;
-    border-radius: 10px !important;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-    background: #4f46e5 !important;
-}
-
-/* 15. SAAT SIDEBAR TERBUKA, MAIN CONTENT BERGERESER */
-@media (min-width: 769px) {
-    body.sidebar-open .main-content {
-        margin-left: 260px !important;
-        width: calc(100% - 260px) !important;
-        transition: margin-left 0.3s ease, width 0.3s ease !important;
-    }
-    
-    body:not(.sidebar-open) .main-content {
-        margin-left: 0 !important;
-        width: 100% !important;
-    }
-}
-
-/* ========== ANIMASI LOGO DI SIDEBAR & TOPBAR ========== */
-
-/* Animasi logo di sidebar */
-.sidebar-header h2 {
-    position: relative !important;
-    display: inline-block !important;
-    animation: logoGlow 2s ease-in-out infinite !important;
-    transition: all 0.3s ease !important;
-}
-
-.sidebar-header h2:hover {
-    transform: scale(1.05) rotate(-2deg) !important;
-    text-shadow: 0 0 15px rgba(79,70,229,0.5) !important;
-}
-
-/* Animasi logo di topbar */
-.logo {
-    position: relative !important;
-    display: inline-block !important;
-    animation: logoFloat 3s ease-in-out infinite !important;
-    transition: all 0.3s ease !important;
-}
-
-.logo:hover {
-    transform: scale(1.1) !important;
-    text-shadow: 0 0 10px rgba(255,255,255,0.8) !important;
-}
-
-/* Animasi gemerlap pada logo */
-@keyframes logoGlow {
-    0% {
-        text-shadow: 0 0 0px rgba(79,70,229,0);
-        letter-spacing: 0px;
-    }
-    50% {
-        text-shadow: 0 0 10px rgba(79,70,229,0.5);
-        letter-spacing: 1px;
-    }
-    100% {
-        text-shadow: 0 0 0px rgba(79,70,229,0);
-        letter-spacing: 0px;
-    }
-}
-
-/* Animasi floating pada logo topbar */
-@keyframes logoFloat {
-    0% {
-        transform: translateY(0px);
-    }
-    50% {
-        transform: translateY(-2px);
-    }
-    100% {
-        transform: translateY(0px);
-    }
-}
-
-/* ========== ANIMASI SIDEBAR MENU ITEM ========== */
-
-/* Efek masuk menu item satu per satu */
-.sidebar-menu .menu-item {
-    animation: slideInFromLeft 0.3s ease forwards !important;
-    opacity: 0;
-}
-
-/* Delay animasi untuk setiap menu item */
-.sidebar-menu .menu-item:nth-child(1) { animation-delay: 0.05s; }
-.sidebar-menu .menu-item:nth-child(2) { animation-delay: 0.1s; }
-.sidebar-menu .menu-item:nth-child(3) { animation-delay: 0.15s; }
-.sidebar-menu .menu-item:nth-child(4) { animation-delay: 0.2s; }
-.sidebar-menu .menu-item:nth-child(5) { animation-delay: 0.25s; }
-.sidebar-menu .menu-item:nth-child(6) { animation-delay: 0.3s; }
-.sidebar-menu .menu-item:nth-child(7) { animation-delay: 0.35s; }
-.sidebar-menu .menu-item:nth-child(8) { animation-delay: 0.4s; }
-.sidebar-menu .menu-item:nth-child(9) { animation-delay: 0.45s; }
-
-@keyframes slideInFromLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Hover efek pada menu item dengan icon bergerak */
-.menu-item {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    overflow: hidden !important;
-}
-
-.menu-item:hover {
-    background: linear-gradient(90deg, #eef2ff, #ffffff) !important;
-    transform: translateX(5px) !important;
-}
-
-.menu-item:hover .icon {
-    animation: iconBounce 0.5s ease !important;
-}
-
-@keyframes iconBounce {
-    0% { transform: translateX(0); }
-    30% { transform: translateX(5px); }
-    60% { transform: translateX(-2px); }
-    100% { transform: translateX(0); }
-}
-
-/* Menu label dengan efek */
-.menu-label {
-    position: relative !important;
-    transition: all 0.3s ease !important;
-}
-
-.menu-label:hover {
-    color: #4f46e5 !important;
-    letter-spacing: 1px !important;
-}
-
-/* ========== ANIMASI SIDEBAR SAAT HOVER ========== */
-
-/* Efek saat sidebar terbuka */
-.sidebar.active {
-    animation: sidebarSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-@keyframes sidebarSlideIn {
-    from {
-        transform: translateX(-100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Efek border gradient pada sidebar */
-.sidebar {
-    position: relative !important;
-}
-
-.sidebar::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    width: 3px !important;
-    height: 100% !important;
-    background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5) !important;
-    opacity: 0 !important;
-    transition: opacity 0.3s ease !important;
-}
-
-.sidebar.active::before {
-    opacity: 1 !important;
-    animation: borderGlow 2s ease-in-out infinite !important;
-}
-
-@keyframes borderGlow {
-    0% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
-    50% { background: linear-gradient(180deg, #8b5cf6, #4f46e5, #8b5cf6); }
-    100% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
-}
-
-/* ========== ANIMASI SIDEBAR TOGGLE BUTTON ========== */
-.toggle-btn {
-    transition: all 0.3s ease !important;
-}
-
-.toggle-btn:hover {
-    transform: rotate(90deg) !important;
-    background: rgba(255,255,255,0.3) !important;
-}
-
-/* ========== ANIMASI HOVER ZONE ========== */
-#hoverZone {
-    transition: all 0.2s ease !important;
-}
-
-#hoverZone:hover {
-    width: 30px !important;
-    background: linear-gradient(90deg, rgba(79,70,229,0.1), transparent) !important;
-}
-
-/* ========== ANIMASI MENU DIVIDER ========== */
-.menu-divider {
-    position: relative !important;
-    overflow: hidden !important;
-}
-
-.menu-divider::after {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(90deg, transparent, #4f46e5, transparent) !important;
-    animation: dividerShine 3s ease-in-out infinite !important;
-}
-
-@keyframes dividerShine {
-    0% { left: -100%; }
-    50% { left: 100%; }
-    100% { left: 100%; }
-}
-
-/* ========== ANIMASI LOGOUT BUTTON KHUSUS ========== */
-#logoutBtn {
-    transition: all 0.3s ease !important;
-}
-
-#logoutBtn:hover {
-    background: linear-gradient(90deg, #fef2f2, #ffffff) !important;
-    transform: translateX(5px) !important;
-}
-
-#logoutBtn:hover .icon {
-    animation: logoutShake 0.5s ease !important;
-}
-
-@keyframes logoutShake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-3px); }
-    50% { transform: translateX(3px); }
-    75% { transform: translateX(-2px); }
-    100% { transform: translateX(0); }
-}
-
-/* ========== ANIMASI SIDEBAR SCROLLBAR KUSTOM ========== */
-.sidebar::-webkit-scrollbar {
-    width: 4px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background: #c7d2fe;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-    background: #4f46e5;
-    width: 6px;
-}
-
-/* ========== PERBAIKAN STATS CARDS AGAR TIDAK MENTOK ========== */
-.content-area {
-    padding-top: 20px !important;
-}
-
-.stats-grid {
-    margin-top: 0 !important;
-    margin-bottom: 20px !important;
+/* ========== UNREAD PESAN STYLE ========== */
+.db-item.unread {
+    background: #eef2ff;
+    border-left: 3px solid #4f46e5;
 }
