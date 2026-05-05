@@ -424,5 +424,34 @@
 <div id="notifBox"></div>
 
 <script src="script.js"></script>
+
+<!-- Modal Konversi Tertarik ke Customer -->
+<div class="modal" id="convertModal">
+    <div class="modal-content">
+        <h3>🔄 Jadikan Customer (Followup Agen)</h3>
+        <div class="modal-subtitle">Isi data untuk memindahkan ke Followup Agen</div>
+        <div class="form-group">
+            <label>ID Agent <span class="required">*</span></label>
+            <div class="input-icon">
+                <span>🆔</span>
+                <input type="text" id="convertAgentId" placeholder="Contoh: AG-001">
+            </div>
+            <small style="font-size:11px;color:#9ca3af;margin-top:6px;display:block;">ID unik untuk agent terdaftar</small>
+        </div>
+        <div class="form-group">
+            <label>Tanggal Followup <span class="required">*</span></label>
+            <div class="input-icon">
+                <span>📅</span>
+                <input type="date" id="convertFollowupDate">
+            </div>
+            <small style="font-size:11px;color:#9ca3af;margin-top:6px;display:block;">Otomatis +1 bulan dari sekarang</small>
+        </div>
+        <div class="modal-buttons">
+            <button id="confirmConvertBtn">✅ Konfirmasi Pindah</button>
+            <button class="closeModalBtn" data-modal="convertModal">Batal</button>
+        </div>
+    </div>
+</div>
+    
 </body>
 </html>
