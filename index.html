@@ -290,10 +290,40 @@
     <div class="modal-content">
         <h3>Tambah Customer</h3>
         <div class="modal-subtitle">Isi data customer baru</div>
-        <div class="form-group"><label>Nama Lengkap <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="customerName" placeholder="Masukkan nama lengkap"></div></div>
-        <div class="form-group"><label>Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1"></div><small style="font-size:11px;color:#9ca3af;margin-top:6px;display:block;">Contoh: 81234567890</small></div>
-        <div class="form-group"><label>Tanggal Input</label><div class="input-icon"><span>📅</span><input type="date" id="customerDate"></div></div>
-        <div class="modal-buttons"><button id="saveCustomerBtn">Simpan Data</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div>
+        <div class="form-group">
+            <label>ID Agent <span class="required">*</span></label>
+            <div class="input-icon">
+                <span>🆔</span>
+                <input type="text" id="customerId" placeholder="Contoh: AG-001">
+            </div>
+            <small style="font-size:11px;color:#9ca3af;margin-top:6px;display:block;">ID unik untuk agent terdaftar</small>
+        </div>
+        <div class="form-group">
+            <label>Nama Lengkap <span class="required">*</span></label>
+            <div class="input-icon">
+                <span>👤</span>
+                <input type="text" id="customerName" placeholder="Masukkan nama lengkap">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Nomor WhatsApp <span class="required">*</span></label>
+            <div class="phone-input">
+                <div class="phone-prefix">+62</div>
+                <input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1">
+            </div>
+            <small style="font-size:11px;color:#9ca3af;margin-top:6px;display:block;">Contoh: 81234567890</small>
+        </div>
+        <div class="form-group">
+            <label>Tanggal Input</label>
+            <div class="input-icon">
+                <span>📅</span>
+                <input type="date" id="customerDate">
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="saveCustomerBtn">Simpan Data</button>
+            <button class="closeModalBtn" data-modal="customerModal">Batal</button>
+        </div>
     </div>
 </div>
 
