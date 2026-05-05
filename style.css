@@ -1448,3 +1448,117 @@ body:has(.modal[style*="display: flex"]) {
     position: fixed !important;
     width: 100% !important;
 }
+
+/* ========== BROADCAST PROGRESS STYLE ========== */
+.broadcast-progress {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 20px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.progress-header span {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.stop-broadcast-btn {
+    background: #fef2f2;
+    color: #dc2626;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.stop-broadcast-btn:hover {
+    background: #fee2e2;
+    transform: translateY(-1px);
+}
+
+.progress-bar-container {
+    background: #e5e7eb;
+    border-radius: 20px;
+    height: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-bar-fill {
+    background: linear-gradient(90deg, #10b981, #059669);
+    width: 0%;
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 16px;
+}
+
+.progress-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 12px;
+}
+
+.progress-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.progress-item:last-child {
+    border-bottom: none;
+}
+
+.progress-item.done {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.progress-item.current {
+    background: #eef2ff;
+    border-left: 3px solid #4f46e5;
+}
+
+.progress-status {
+    font-size: 14px;
+    width: 24px;
+    text-align: center;
+}
+
+.progress-number {
+    flex: 1;
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.progress-item.done .progress-number {
+    text-decoration: line-through;
+    color: #059669;
+}
