@@ -1562,3 +1562,185 @@ body:has(.modal[style*="display: flex"]) {
     text-decoration: line-through;
     color: #059669;
 }
+
+/* ========== BROADCAST PANEL STYLE ========== */
+.broadcast-panel {
+    background: white;
+    border-radius: 20px;
+    margin-top: 20px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #4f46e5;
+    color: white;
+    font-weight: 700;
+}
+
+.close-panel-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 8px;
+}
+
+.close-panel-btn:hover {
+    opacity: 0.8;
+}
+
+.panel-content {
+    padding: 20px;
+}
+
+.current-info {
+    background: #f9fafb;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.current-label {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-bottom: 4px;
+}
+
+.current-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.current-number {
+    font-size: 14px;
+    color: #6b7280;
+    font-family: monospace;
+}
+
+.message-preview {
+    background: #f3f4f6;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    max-height: 150px;
+    overflow-y: auto;
+    word-break: break-word;
+}
+
+.whatsapp-link-container {
+    margin-bottom: 16px;
+}
+
+.whatsapp-link-btn {
+    display: block;
+    text-align: center;
+    background: #25D366;
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.whatsapp-link-btn:hover {
+    background: #20b85a;
+    transform: translateY(-1px);
+}
+
+.action-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.mark-sent-btn, .skip-btn, .repeat-btn, .stop-btn {
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.mark-sent-btn {
+    background: #10b981;
+    color: white;
+}
+
+.mark-sent-btn:hover {
+    background: #059669;
+}
+
+.skip-btn {
+    background: #f59e0b;
+    color: white;
+}
+
+.skip-btn:hover {
+    background: #d97706;
+}
+
+.repeat-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.repeat-btn:hover {
+    background: #2563eb;
+}
+
+.stop-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.stop-btn:hover {
+    background: #dc2626;
+}
+
+.progress-panel {
+    padding: 16px 20px 20px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.progress-list-panel {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.panel-progress-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+}
+
+.panel-progress-item.done {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.panel-progress-item.current {
+    background: #eef2ff;
+    border-left: 3px solid #4f46e5;
+}
+
+.panel-status {
+    font-size: 14px;
+}
