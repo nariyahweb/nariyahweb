@@ -2127,3 +2127,26 @@ body:has(.modal[style*="display: flex"]) {
     transform: rotate(90deg) !important;
     background: rgba(255,255,255,0.3) !important;
 }
+
+/* ========== ID AGENT STYLE ========== */
+.card-id {
+    font-size: 10px;
+    font-weight: 600;
+    color: #4f46e5;
+    background: #eef2ff;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.card-name {
+    font-weight: 600;
+    font-size: 12px;
+    margin-bottom: 4px;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
