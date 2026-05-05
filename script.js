@@ -1188,7 +1188,7 @@ document.getElementById('notifBtn')?.addEventListener('click', () => {
 });
 
 // ========== BROADCAST WHATSAPP FUNCTIONS ==========
-let currentNumbers = []; // <-- HANYA SATU DEKLARASI
+let currentNumbers = []; // <-- HANYA SATU KALI DEKLARASI
 let currentBroadcastIndex = 0;
 let broadcastNumbers = [];
 let broadcastMessageTemplate = '';
@@ -1196,7 +1196,6 @@ let isBroadcasting = false;
 let broadcastStatus = [];
 
 function initBroadcast() {
-    // Radio change event
     document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
         radio.addEventListener('change', function() {
             const value = this.value;
@@ -1369,6 +1368,7 @@ function showBroadcastPanel() {
             
             document.getElementById('closeBroadcastPanelBtn')?.addEventListener('click', () => {
                 document.getElementById('broadcastPanel').style.display = 'none';
+                isBroadcasting = false;
             });
             document.getElementById('markSentBtn')?.addEventListener('click', () => {
                 if (isBroadcasting) {
@@ -1502,4 +1502,5 @@ function finishBroadcast() {
     isBroadcasting = false;
     const panelDiv = document.getElementById('broadcastPanel');
     if (panelDiv) panelDiv.style.display = 'none';
+    broadcastStatus = [];
 }
