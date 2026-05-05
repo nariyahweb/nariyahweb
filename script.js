@@ -1270,9 +1270,14 @@ async function loadNumbers() {
     }
 }
 
+// ========== BROADCAST WHATSAPP MANUAL DENGAN PROGRESS ==========
+let currentBroadcastIndex = 0;
+let broadcastNumbers = [];
+let broadcastMessageTemplate = '';
+let isBroadcasting = false;
+
 async function sendBroadcast() {
     const messageTemplate = document.getElementById('broadcastMessage')?.value;
-    const openAll = document.getElementById('openAllWA')?.checked;
     const sendOneByOne = document.getElementById('sendOneByOne')?.checked;
     
     if (!messageTemplate) {
@@ -1285,22 +1290,8 @@ async function sendBroadcast() {
         return;
     }
     
-    if (sendOneByOne) {
-        for (let i = 0; i < currentNumbers.length; i++) {
-            const item = currentNumbers[i];
-            const hp = typeof item === 'string' ? item : item.hp;
-            const nama = typeof item === 'string' ? '' : item.nama;
-            const message = messageTemplate.replace(/{nama}/g, nama || 'Customer');
-            const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
-            const waUrl = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
-            window.open(waUrl, '_blank');
-            
-            if (i < currentNumbers.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-        }
-        showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`);
-    } else if (openAll) {
+    if (!sendOneByOne) {
+        // Mode buka semua
         for (const item of currentNumbers) {
             const hp = typeof item === 'string' ? item : item.hp;
             const nama = typeof item === 'string' ? '' : item.nama;
@@ -1310,15 +1301,179 @@ async function sendBroadcast() {
             window.open(waUrl, '_blank');
         }
         showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`);
-    } else {
-        if (currentNumbers.length > 0) {
-            const first = currentNumbers[0];
-            const hp = typeof first === 'string' ? first : first.hp;
-            const nama = typeof first === 'string' ? '' : first.nama;
-            const message = messageTemplate.replace(/{nama}/g, nama || 'Customer');
-            const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
-            window.open('https://wa.me/' + nomor + '?text=' + encodeURIComponent(message), '_blank');
-            showNotif('✅ Membuka chat WhatsApp pertama');
+        return;
+    }
+    
+    // Mode satu per satu
+    if (isBroadcasting) {
+        showNotif('⚠️ Broadcast sedang berjalan! Selesaikan dulu.', true);
+        return;
+    }
+    
+    // Reset broadcast
+    broadcastNumbers = [...currentNumbers];
+    broadcastMessageTemplate = messageTemplate;
+    currentBroadcastIndex = 0;
+    isBroadcasting = true;
+    
+    // Tampilkan progress bar
+    showBroadcastProgress();
+    updateBroadcastProgress();
+    
+    // Mulai broadcast
+    processNextBroadcast();
+}
+
+function showBroadcastProgress() {
+    // Buat atau update progress bar di broadcast page
+    let progressDiv = document.getElementById('broadcastProgress');
+    if (!progressDiv) {
+        const broadcastCard = document.querySelector('#broadcastPage .broadcast-card:last-child');
+        if (broadcastCard) {
+            progressDiv = document.createElement('div');
+            progressDiv.id = 'broadcastProgress';
+            progressDiv.className = 'broadcast-progress';
+            progressDiv.innerHTML = `
+                <div class="progress-header">
+                    <span>📢 Progress Broadcast</span>
+                    <button id="stopBroadcastBtn" class="stop-broadcast-btn">⏹️ Berhenti</button>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progressBarFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">0 / 0</div>
+                <div class="progress-list" id="progressList"></div>
+            `;
+            broadcastCard.parentNode.insertBefore(progressDiv, broadcastCard.nextSibling);
+            
+            document.getElementById('stopBroadcastBtn')?.addEventListener('click', stopBroadcast);
         }
+    } else {
+        progressDiv.style.display = 'block';
+    }
+}
+
+function updateBroadcastProgress() {
+    const total = broadcastNumbers.length;
+    const processed = currentBroadcastIndex;
+    const percent = total > 0 ? (processed / total) * 100 : 0;
+    
+    const progressFill = document.getElementById('progressBarFill');
+    const progressText = document.getElementById('progressText');
+    const progressList = document.getElementById('progressList');
+    
+    if (progressFill) progressFill.style.width = `${percent}%`;
+    if (progressText) progressText.innerText = `${processed} / ${total} terkirim`;
+    
+    // Update daftar nomor dengan status
+    if (progressList && broadcastNumbers.length > 0) {
+        let html = '';
+        for (let i = 0; i < broadcastNumbers.length; i++) {
+            const item = broadcastNumbers[i];
+            const hp = typeof item === 'string' ? item : item.hp;
+            const nama = typeof item === 'string' ? '' : item.nama;
+            const displayName = nama ? `${nama} (${hp})` : hp;
+            const isDone = i < currentBroadcastIndex;
+            const isCurrent = i === currentBroadcastIndex;
+            
+            html += `
+                <div class="progress-item ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''}">
+                    <span class="progress-status">${isDone ? '✅' : (isCurrent ? '⏳' : '⭕')}</span>
+                    <span class="progress-number">${escapeHtml(displayName)}</span>
+                </div>
+            `;
+        }
+        progressList.innerHTML = html;
+        
+        // Auto scroll ke item yang sedang diproses
+        const currentElement = progressList.querySelector('.progress-item.current');
+        if (currentElement) {
+            currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+}
+
+async function processNextBroadcast() {
+    if (!isBroadcasting) return;
+    
+    if (currentBroadcastIndex >= broadcastNumbers.length) {
+        // Selesai semua
+        showNotif(`✅ Broadcast selesai! ${broadcastNumbers.length} nomor berhasil diproses`);
+        isBroadcasting = false;
+        const progressDiv = document.getElementById('broadcastProgress');
+        if (progressDiv) {
+            setTimeout(() => {
+                progressDiv.style.display = 'none';
+            }, 3000);
+        }
+        return;
+    }
+    
+    const item = broadcastNumbers[currentBroadcastIndex];
+    const hp = typeof item === 'string' ? item : item.hp;
+    const nama = typeof item === 'string' ? '' : item.nama;
+    const message = broadcastMessageTemplate.replace(/{nama}/g, nama || 'Customer');
+    const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+    const waUrl = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
+    
+    // Simpan index saat ini untuk referensi
+    const currentIdx = currentBroadcastIndex;
+    
+    // Update progress
+    updateBroadcastProgress();
+    
+    // Tampilkan dialog konfirmasi
+    const confirmMsg = `📢 KIRIM PESAN KE:\n\n` +
+                       `👤 Nama: ${nama || '-'}\n` +
+                       `📱 Nomor: ${hp}\n` +
+                       `📝 Pesan: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}\n\n` +
+                       `✅ Klik OK untuk membuka WhatsApp dan kirim pesan\n` +
+                       `❌ Klik CANCEL untuk melewati nomor ini\n\n` +
+                       `Progress: ${currentBroadcastIndex + 1} / ${broadcastNumbers.length}`;
+    
+    const result = confirm(confirmMsg);
+    
+    if (result) {
+        // Buka WhatsApp
+        window.open(waUrl, '_blank');
+        showNotif(`📤 Membuka chat untuk ${nama || nomor}`);
+        
+        // Tandai sudah diproses setelah user klik OK di alert berikutnya
+        setTimeout(() => {
+            const nextConfirm = confirm(`✅ Pesan untuk ${nama || nomor} sudah dikirim?\n\nKlik OK jika sudah mengirim pesan\nKlik CANCEL jika ingin mengulang (nomor yang sama)`);
+            
+            if (nextConfirm) {
+                // Lanjut ke nomor berikutnya
+                currentBroadcastIndex++;
+                updateBroadcastProgress();
+                processNextBroadcast();
+            } else {
+                // Ulang nomor yang sama (tidak increment index)
+                updateBroadcastProgress();
+                processNextBroadcast();
+            }
+        }, 500);
+    } else {
+        // Lewati nomor ini
+        const skipConfirm = confirm(`❌ Lewati ${nama || nomor}?\n\nKlik OK untuk lanjut ke nomor berikutnya\nKlik CANCEL untuk tetap di nomor ini`);
+        
+        if (skipConfirm) {
+            currentBroadcastIndex++;
+            updateBroadcastProgress();
+            processNextBroadcast();
+        } else {
+            // Tetap di nomor yang sama
+            updateBroadcastProgress();
+            processNextBroadcast();
+        }
+    }
+}
+
+function stopBroadcast() {
+    if (confirm('⏹️ Hentikan broadcast?\n\nProgress akan dihentikan. Anda bisa memulai ulang nanti.')) {
+        isBroadcasting = false;
+        const progressDiv = document.getElementById('broadcastProgress');
+        if (progressDiv) progressDiv.style.display = 'none';
+        showNotif('⏹️ Broadcast dihentikan');
     }
 }
