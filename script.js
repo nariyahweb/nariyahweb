@@ -1062,7 +1062,7 @@ function loadAllData() {
                         <div class="card-name">${escapeHtml(item.nama)}</div>
                         <div class="card-phone">
                             <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span>
                         </div>
                     </div>
                 `).join('');
@@ -1100,7 +1100,7 @@ function loadAllData() {
                         <div class="card-name">${escapeHtml(item.nama)}</div>
                         <div class="card-phone">
                             <span>${item.hp}</span>
-                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💚</span>
+                            <span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span>
                         </div>
                     </div>
                 `).join('');
