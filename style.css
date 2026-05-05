@@ -1744,3 +1744,33 @@ body:has(.modal[style*="display: flex"]) {
 .panel-status {
     font-size: 14px;
 }
+
+/* Tombol Gagal Kirim */
+.mark-failed-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.mark-failed-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+/* Status Failed di Progress List */
+.panel-progress-item.failed {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.panel-progress-item.failed .panel-status {
+    color: #dc2626;
+}
+
+.panel-progress-item.success {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.panel-progress-item.success .panel-status {
+    color: #10b981;
+}
