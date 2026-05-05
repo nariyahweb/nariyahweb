@@ -1270,7 +1270,7 @@ async function loadNumbers() {
     }
 }
 
-// ========== BROADCAST WHATSAPP MANUAL DENGAN PROGRESS ==========
+// ========== BROADCAST WHATSAPP MANUAL DENGAN LINK PANEL ==========
 let currentBroadcastIndex = 0;
 let broadcastNumbers = [];
 let broadcastMessageTemplate = '';
@@ -1291,7 +1291,6 @@ async function sendBroadcast() {
     }
     
     if (!sendOneByOne) {
-        // Mode buka semua
         for (const item of currentNumbers) {
             const hp = typeof item === 'string' ? item : item.hp;
             const nama = typeof item === 'string' ? '' : item.nama;
@@ -1304,68 +1303,127 @@ async function sendBroadcast() {
         return;
     }
     
-    // Mode satu per satu
     if (isBroadcasting) {
         showNotif('⚠️ Broadcast sedang berjalan! Selesaikan dulu.', true);
         return;
     }
     
-    // Reset broadcast
     broadcastNumbers = [...currentNumbers];
     broadcastMessageTemplate = messageTemplate;
     currentBroadcastIndex = 0;
     isBroadcasting = true;
     
-    // Tampilkan progress bar
-    showBroadcastProgress();
-    updateBroadcastProgress();
-    
-    // Mulai broadcast
-    processNextBroadcast();
+    showBroadcastPanel();
+    updateBroadcastPanel();
+    displayCurrentBroadcast();
 }
 
-function showBroadcastProgress() {
-    // Buat atau update progress bar di broadcast page
-    let progressDiv = document.getElementById('broadcastProgress');
-    if (!progressDiv) {
+function showBroadcastPanel() {
+    let panelDiv = document.getElementById('broadcastPanel');
+    if (!panelDiv) {
         const broadcastCard = document.querySelector('#broadcastPage .broadcast-card:last-child');
         if (broadcastCard) {
-            progressDiv = document.createElement('div');
-            progressDiv.id = 'broadcastProgress';
-            progressDiv.className = 'broadcast-progress';
-            progressDiv.innerHTML = `
-                <div class="progress-header">
-                    <span>📢 Progress Broadcast</span>
-                    <button id="stopBroadcastBtn" class="stop-broadcast-btn">⏹️ Berhenti</button>
+            panelDiv = document.createElement('div');
+            panelDiv.id = 'broadcastPanel';
+            panelDiv.className = 'broadcast-panel';
+            panelDiv.innerHTML = `
+                <div class="panel-header">
+                    <span>📢 Broadcast Manual</span>
+                    <button id="closeBroadcastPanelBtn" class="close-panel-btn">✕</button>
                 </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar-fill" id="progressBarFill"></div>
+                <div class="panel-content" id="panelContent">
+                    <div class="current-info">
+                        <div class="current-label">Sedang Diproses:</div>
+                        <div class="current-name" id="currentName">-</div>
+                        <div class="current-number" id="currentNumber">-</div>
+                    </div>
+                    <div class="message-preview" id="messagePreview"></div>
+                    <div class="action-buttons">
+                        <button id="markSentBtn" class="mark-sent-btn">✅ Tandai Terkirim & Lanjut</button>
+                        <button id="skipNumberBtn" class="skip-btn">⏭️ Lewati Nomor</button>
+                        <button id="repeatNumberBtn" class="repeat-btn">🔄 Ulang Nomor Ini</button>
+                        <button id="stopBroadcastPanelBtn" class="stop-btn">⏹️ Hentikan Broadcast</button>
+                    </div>
+                    <div class="whatsapp-link-container">
+                        <a href="#" id="whatsappLink" target="_blank" class="whatsapp-link-btn">💬 Buka WhatsApp</a>
+                    </div>
                 </div>
-                <div class="progress-text" id="progressText">0 / 0</div>
-                <div class="progress-list" id="progressList"></div>
+                <div class="progress-panel">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progressBarFillPanel"></div>
+                    </div>
+                    <div class="progress-text" id="progressTextPanel">0 / 0</div>
+                    <div class="progress-list" id="progressListPanel"></div>
+                </div>
             `;
-            broadcastCard.parentNode.insertBefore(progressDiv, broadcastCard.nextSibling);
+            broadcastCard.parentNode.insertBefore(panelDiv, broadcastCard.nextSibling);
             
-            document.getElementById('stopBroadcastBtn')?.addEventListener('click', stopBroadcast);
+            document.getElementById('closeBroadcastPanelBtn')?.addEventListener('click', () => {
+                document.getElementById('broadcastPanel').style.display = 'none';
+            });
+            document.getElementById('markSentBtn')?.addEventListener('click', () => {
+                currentBroadcastIndex++;
+                updateBroadcastPanel();
+                displayCurrentBroadcast();
+            });
+            document.getElementById('skipNumberBtn')?.addEventListener('click', () => {
+                currentBroadcastIndex++;
+                updateBroadcastPanel();
+                displayCurrentBroadcast();
+            });
+            document.getElementById('repeatNumberBtn')?.addEventListener('click', () => {
+                displayCurrentBroadcast();
+            });
+            document.getElementById('stopBroadcastPanelBtn')?.addEventListener('click', () => {
+                isBroadcasting = false;
+                document.getElementById('broadcastPanel').style.display = 'none';
+                showNotif('⏹️ Broadcast dihentikan');
+            });
         }
     } else {
-        progressDiv.style.display = 'block';
+        panelDiv.style.display = 'block';
     }
 }
 
-function updateBroadcastProgress() {
+function displayCurrentBroadcast() {
+    if (!isBroadcasting) return;
+    
+    if (currentBroadcastIndex >= broadcastNumbers.length) {
+        showNotif(`✅ Broadcast selesai! ${broadcastNumbers.length} nomor berhasil diproses`);
+        isBroadcasting = false;
+        const panelDiv = document.getElementById('broadcastPanel');
+        if (panelDiv) panelDiv.style.display = 'none';
+        return;
+    }
+    
+    const item = broadcastNumbers[currentBroadcastIndex];
+    const hp = typeof item === 'string' ? item : item.hp;
+    const nama = typeof item === 'string' ? '' : item.nama;
+    const message = broadcastMessageTemplate.replace(/{nama}/g, nama || 'Customer');
+    const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+    const waUrl = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
+    
+    document.getElementById('currentName').innerHTML = escapeHtml(nama || '-');
+    document.getElementById('currentNumber').innerHTML = escapeHtml(hp);
+    document.getElementById('messagePreview').innerHTML = `<strong>Pesan:</strong><br>${escapeHtml(message)}`;
+    const waLink = document.getElementById('whatsappLink');
+    if (waLink) waLink.href = waUrl;
+    
+    updateBroadcastPanel();
+}
+
+function updateBroadcastPanel() {
     const total = broadcastNumbers.length;
     const processed = currentBroadcastIndex;
     const percent = total > 0 ? (processed / total) * 100 : 0;
     
-    const progressFill = document.getElementById('progressBarFill');
-    const progressText = document.getElementById('progressText');
-    const progressList = document.getElementById('progressList');
+    const progressFill = document.getElementById('progressBarFillPanel');
+    const progressText = document.getElementById('progressTextPanel');
+    const progressList = document.getElementById('progressListPanel');
     
     if (progressFill) progressFill.style.width = `${percent}%`;
     if (progressText) progressText.innerText = `${processed} / ${total} terkirim`;
     
-    // Update daftar nomor dengan status
     if (progressList && broadcastNumbers.length > 0) {
         let html = '';
         for (let i = 0; i < broadcastNumbers.length; i++) {
@@ -1377,22 +1435,20 @@ function updateBroadcastProgress() {
             const isCurrent = i === currentBroadcastIndex;
             
             html += `
-                <div class="progress-item ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''}">
-                    <span class="progress-status">${isDone ? '✅' : (isCurrent ? '⏳' : '⭕')}</span>
-                    <span class="progress-number">${escapeHtml(displayName)}</span>
+                <div class="panel-progress-item ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''}">
+                    <span class="panel-status">${isDone ? '✅' : (isCurrent ? '⏳' : '⭕')}</span>
+                    <span class="panel-number">${escapeHtml(displayName)}</span>
                 </div>
             `;
         }
         progressList.innerHTML = html;
         
-        // Auto scroll ke item yang sedang diproses
-        const currentElement = progressList.querySelector('.progress-item.current');
+        const currentElement = progressList.querySelector('.panel-progress-item.current');
         if (currentElement) {
             currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }
 }
-
 async function processNextBroadcast() {
     if (!isBroadcasting) return;
     
