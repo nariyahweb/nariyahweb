@@ -1397,7 +1397,6 @@ async function processNextBroadcast() {
     if (!isBroadcasting) return;
     
     if (currentBroadcastIndex >= broadcastNumbers.length) {
-        // Selesai semua
         showNotif(`✅ Broadcast selesai! ${broadcastNumbers.length} nomor berhasil diproses`);
         isBroadcasting = false;
         const progressDiv = document.getElementById('broadcastProgress');
@@ -1416,56 +1415,53 @@ async function processNextBroadcast() {
     const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
     const waUrl = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
     
-    // Simpan index saat ini untuk referensi
-    const currentIdx = currentBroadcastIndex;
-    
     // Update progress
     updateBroadcastProgress();
     
-    // Tampilkan dialog konfirmasi
-    const confirmMsg = `📢 KIRIM PESAN KE:\n\n` +
-                       `👤 Nama: ${nama || '-'}\n` +
-                       `📱 Nomor: ${hp}\n` +
-                       `📝 Pesan: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}\n\n` +
-                       `✅ Klik OK untuk membuka WhatsApp dan kirim pesan\n` +
-                       `❌ Klik CANCEL untuk melewati nomor ini\n\n` +
-                       `Progress: ${currentBroadcastIndex + 1} / ${broadcastNumbers.length}`;
+    // Tampilkan info di alert
+    const userChoice = confirm(
+        `📢 KIRIM PESAN KE:\n\n` +
+        `👤 Nama: ${nama || '-'}\n` +
+        `📱 Nomor: ${hp}\n` +
+        `📝 Pesan: ${message.substring(0, 150)}${message.length > 150 ? '...' : ''}\n\n` +
+        `✅ OK = Buka WhatsApp & kirim pesan, lalu lanjut ke nomor berikutnya\n` +
+        `❌ CANCEL = Lewati nomor ini\n\n` +
+        `Progress: ${currentBroadcastIndex + 1} / ${broadcastNumbers.length}`
+    );
     
-    const result = confirm(confirmMsg);
-    
-    if (result) {
-        // Buka WhatsApp
-        window.open(waUrl, '_blank');
-        showNotif(`📤 Membuka chat untuk ${nama || nomor}`);
+    if (userChoice) {
+        // Buka WhatsApp di tab baru
+        const newWindow = window.open(waUrl, '_blank');
         
-        // Tandai sudah diproses setelah user klik OK di alert berikutnya
-        setTimeout(() => {
-            const nextConfirm = confirm(`✅ Pesan untuk ${nama || nomor} sudah dikirim?\n\nKlik OK jika sudah mengirim pesan\nKlik CANCEL jika ingin mengulang (nomor yang sama)`);
-            
-            if (nextConfirm) {
-                // Lanjut ke nomor berikutnya
-                currentBroadcastIndex++;
-                updateBroadcastProgress();
-                processNextBroadcast();
-            } else {
-                // Ulang nomor yang sama (tidak increment index)
-                updateBroadcastProgress();
-                processNextBroadcast();
-            }
-        }, 500);
-    } else {
-        // Lewati nomor ini
-        const skipConfirm = confirm(`❌ Lewati ${nama || nomor}?\n\nKlik OK untuk lanjut ke nomor berikutnya\nKlik CANCEL untuk tetap di nomor ini`);
+        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+            // Popup diblokir, beri petunjuk manual
+            showNotif('⚠️ Popup diblokir browser! Klik ikon popup di address bar untuk mengizinkan.', true);
+            alert(`⚠️ POPUP DIBLOKIR BROWSER!\n\nSilakan klik ikon popup di sebelah kiri address bar, lalu pilih "Always allow popups".\n\nAtau buka link ini:\n${waUrl}`);
+        } else {
+            showNotif(`📤 Membuka chat WhatsApp untuk ${nama || nomor}`);
+        }
         
-        if (skipConfirm) {
+        // Tampilkan input manual untuk konfirmasi sudah kirim
+        const sudahKirim = confirm(
+            `✅ Apakah pesan untuk ${nama || nomor} sudah dikirim?\n\n` +
+            `Klik OK jika SUDAH KIRIM → lanjut ke nomor berikutnya\n` +
+            `Klik CANCEL jika BELUM KIRIM → ulang nomor ini`
+        );
+        
+        if (sudahKirim) {
             currentBroadcastIndex++;
             updateBroadcastProgress();
             processNextBroadcast();
         } else {
-            // Tetap di nomor yang sama
+            // Ulang nomor yang sama
             updateBroadcastProgress();
             processNextBroadcast();
         }
+    } else {
+        // Lewati nomor ini
+        currentBroadcastIndex++;
+        updateBroadcastProgress();
+        processNextBroadcast();
     }
 }
 
