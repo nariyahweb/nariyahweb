@@ -148,6 +148,7 @@
                             <div class="import-card"><h4>1. Pilih File Excel</h4><div class="drop-zone" id="dropZone"><p>📂 Drag & Drop file di sini</p><small>atau klik untuk pilih file</small><input type="file" id="excelFile" hidden accept=".xlsx,.xls,.csv"></div><div id="fileInfo" class="file-info"></div></div>
                             <div class="import-card"><h4>2. Pilih Tujuan Import</h4><div class="radio-option active" data-import="prospek"><b>📋 Import ke Prospek</b><p>Data akan masuk ke Prospek Agen</p></div><div class="radio-option" data-import="customer"><b>👥 Import ke Customer</b><p>Data akan masuk ke Followup Agen</p></div></div>
                             <div class="import-card"><h4>3. Informasi Import</h4><ul class="info-list"><li>✔ Import ribuan data sekaligus</li><li>✔ Validasi nomor otomatis</li><li>✔ Data tidak valid akan dilewati</li></ul><button class="import-btn" id="importBtn">🚀 Import Data Sekarang</button></div>
+                            <div class="import-card"><h4>📥 Contoh File Import</h4><button class="download-example-btn" id="downloadCustomerExample">📋 Download Contoh Customer</button><button class="download-example-btn" id="downloadProspekExample">📋 Download Contoh Prospek</button></div>
                         </div>
                     </div>
                 </div>
@@ -296,7 +297,6 @@
                 <span>🆔</span>
                 <input type="text" id="customerId" placeholder="Contoh: AG-001">
             </div>
-            <small style="font-size:11px;color:#9ca3af;margin-top:6px;display:block;">ID unik untuk agent terdaftar</small>
         </div>
         <div class="form-group">
             <label>Nama Lengkap <span class="required">*</span></label>
@@ -311,7 +311,18 @@
                 <div class="phone-prefix">+62</div>
                 <input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1">
             </div>
-            <small style="font-size:11px;color:#9ca3af;margin-top:6px;display:block;">Contoh: 81234567890</small>
+        </div>
+        <div class="form-group">
+            <label>Aplikasi <span class="required">*</span></label>
+            <div class="input-icon">
+                <span>📱</span>
+                <select id="customerApk">
+                    <option value="">Pilih Aplikasi</option>
+                    <option value="GNP">🏦 GNP</option>
+                    <option value="BSB">🏦 BSB</option>
+                    <option value="BTN">🏦 BTN</option>
+                </select>
+            </div>
         </div>
         <div class="form-group">
             <label>Tanggal Input</label>
