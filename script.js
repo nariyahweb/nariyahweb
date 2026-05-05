@@ -392,10 +392,11 @@ document.getElementById('saveCustomerBtn')?.addEventListener('click', () => {
     const agentId = document.getElementById('customerId').value;
     const nama = document.getElementById('customerName').value;
     let hp = document.getElementById('customerPhone').value;
+    const apk = document.getElementById('customerApk').value;
     const tanggal = document.getElementById('customerDate').value;
     
-    if (!agentId || !nama || !hp) {
-        showNotif('Lengkapi data! (ID Agent, Nama, No WhatsApp wajib diisi)', true);
+    if (!agentId || !nama || !hp || !apk) {
+        showNotif('Lengkapi data! (ID Agent, Nama, No WhatsApp, Aplikasi wajib diisi)', true);
         return;
     }
     
@@ -405,6 +406,7 @@ document.getElementById('saveCustomerBtn')?.addEventListener('click', () => {
         agent_id: agentId,
         nama: nama,
         hp: hp,
+        apk: apk,
         tanggal: tanggal || new Date().toISOString().split('T')[0],
         status: 'baru',
         user_id: currentUser.uid,
@@ -414,6 +416,7 @@ document.getElementById('saveCustomerBtn')?.addEventListener('click', () => {
         document.getElementById('customerId').value = '';
         document.getElementById('customerName').value = '';
         document.getElementById('customerPhone').value = '';
+        document.getElementById('customerApk').value = '';
         document.getElementById('customerDate').value = '';
         showNotif('Customer berhasil ditambahkan');
     }).catch(e => showNotif('Error: ' + e.message, true));
@@ -511,6 +514,13 @@ function openDetailCustomer(id) {
                             <div class="value">${escapeHtml(d.agent_id || '-')}</div>
                         </div>
                     </div>
+<div class="detail-info-item">
+    <div class="detail-info-icon">📱</div>
+    <div class="detail-info-content">
+        <label>Aplikasi</label>
+        <div class="value">${escapeHtml(d.apk || '-')}</div>
+    </div>
+</div>
                     <div class="detail-info-item">
                         <div class="detail-info-icon">📱</div>
                         <div class="detail-info-content">
@@ -759,20 +769,40 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
         const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
         const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
         let success = 0, failed = 0;
+        
         for (let row of json) {
+            let agentId = row.agent_id || row.Agent_ID || row.id || row.ID;
             let nama = row.nama || row.Nama;
-            let hp = row.hp || row.HP;
-            if (!nama || !hp) { failed++; continue; }
+            let hp = row.hp || row.HP || row.phone || row.Phone;
+            let apk = row.apk || row.APK || row.aplikasi || row.Aplikasi;
+            
+            if (!agentId || !nama || !hp || !apk) { 
+                failed++; 
+                continue; 
+            }
+            
             hp = hp.toString();
             if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
+            
             if (importType === 'prospek') {
-                await db.collection('prospek').add({ nama, hp, status: 'Baru', user_id: currentUser.uid, created_at: new Date().toISOString() });
+                await db.collection('prospek').add({ 
+                    nama, hp, status: 'Baru', 
+                    user_id: currentUser.uid, 
+                    created_at: new Date().toISOString() 
+                });
             } else {
-                await db.collection('customers').add({ nama, hp, tanggal: new Date().toISOString().split('T')[0], status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString() });
+                await db.collection('customers').add({ 
+                    agent_id: agentId,
+                    nama, hp, apk,
+                    tanggal: new Date().toISOString().split('T')[0],
+                    status: 'baru', 
+                    user_id: currentUser.uid, 
+                    created_at: new Date().toISOString() 
+                });
             }
             success++;
         }
-        alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
+        alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}\n\nFormat yang diterima:\n- Customer: agent_id, nama, hp, apk\n- Prospek: nama, hp`);
         excelFileInput.value = '';
         document.getElementById('fileInfo').innerHTML = '';
         importBtn.textContent = '🚀 Import Data Sekarang';
@@ -1044,19 +1074,75 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
 
 // ========== DRAG AND DROP ==========
 function initDragAndDrop() {
+    // Customer Drag & Drop dengan batasan status berurutan
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
-    const customerStatusMap = { baruList: 'baru', followupList: 'followup', pendingList: 'pending', closingList: 'closing' };
+    const customerStatusMap = { 
+        baruList: 'baru', 
+        followupList: 'followup', 
+        pendingList: 'pending', 
+        closingList: 'closing' 
+    };
+    
+    // Urutan status yang diperbolehkan
+    const allowedCustomerMoves = {
+        'baru': ['followup'],      // Baru hanya bisa ke Follow Up
+        'followup': ['pending'],    // Follow Up hanya bisa ke Pending
+        'pending': ['closing'],     // Pending hanya bisa ke Closing
+        'closing': []               // Closing tidak bisa kemana-mana
+    };
+    
     customerGroups.forEach(groupId => {
         const el = document.getElementById(groupId);
         if (el && !el.hasAttribute('data-sortable')) {
             new Sortable(el, {
-                group: 'customers', animation: 200, draggable: '.card-item',
+                group: {
+                    name: 'customers',
+                    pull: function(to, from, drag) {
+                        const dragItem = drag;
+                        const currentStatus = dragItem?.dataset?.status;
+                        const targetGroupId = to.el.id;
+                        const targetStatus = customerStatusMap[targetGroupId];
+                        
+                        // Cek apakah pindah diperbolehkan
+                        if (currentStatus && targetStatus) {
+                            const allowed = allowedCustomerMoves[currentStatus]?.includes(targetStatus);
+                            if (!allowed) {
+                                showNotif(`⚠️ Tidak bisa pindah dari ${currentStatus} ke ${targetStatus}!`, true);
+                                return false;
+                            }
+                            return true;
+                        }
+                        return true;
+                    },
+                    put: true
+                },
+                animation: 200,
+                draggable: '.card-item',
                 onEnd: async function(evt) {
                     const id = evt.item.dataset.id;
                     const newStatus = customerStatusMap[evt.to.id];
+                    const currentStatus = evt.item.dataset.status;
+                    
                     if (id && newStatus && currentUser) {
-                        if (newStatus === 'closing') await window.confirmClosing(id);
-                        else await db.collection('customers').doc(id).update({ status: newStatus });
+                        // Validasi ulang
+                        if (allowedCustomerMoves[currentStatus]?.includes(newStatus)) {
+                            if (newStatus === 'closing') {
+                                await window.confirmClosing(id);
+                            } else {
+                                // Konfirmasi sebelum pindah
+                                const confirmMove = confirm(`⚠️ Pindahkan customer ke status ${newStatus === 'followup' ? 'Follow Up' : newStatus}?\n\n✅ OK = Ya\n❌ CANCEL = Tidak`);
+                                if (confirmMove) {
+                                    await db.collection('customers').doc(id).update({ status: newStatus });
+                                    showNotif(`Status berhasil diupdate ke ${newStatus === 'followup' ? 'Follow Up' : newStatus}`);
+                                } else {
+                                    // Refresh data
+                                    loadAllData();
+                                }
+                            }
+                        } else {
+                            showNotif(`⚠️ Tidak bisa pindah dari ${currentStatus} ke ${newStatus}!`, true);
+                            loadAllData(); // Refresh untuk reset posisi
+                        }
                     }
                 }
             });
@@ -1064,19 +1150,70 @@ function initDragAndDrop() {
         }
     });
     
+    // Prospek Drag & Drop dengan batasan status berurutan
     const prospekGroups = ['prospekBaruList', 'prospekDihubungiList', 'prospekTertarikList', 'prospekTidakList'];
-    const prospekStatusMap = { prospekBaruList: 'Baru', prospekDihubungiList: 'Sudah Dihubungi', prospekTertarikList: 'Tertarik', prospekTidakList: 'Tidak Tertarik' };
+    const prospekStatusMap = { 
+        prospekBaruList: 'Baru', 
+        prospekDihubungiList: 'Sudah Dihubungi', 
+        prospekTertarikList: 'Tertarik', 
+        prospekTidakList: 'Tidak Tertarik' 
+    };
+    
+    const allowedProspekMoves = {
+        'Baru': ['Sudah Dihubungi'],           // Baru hanya ke Dihubungi
+        'Sudah Dihubungi': ['Tertarik', 'Tidak Tertarik'], // Dihubungi bisa ke Tertarik atau Tidak Tertarik
+        'Tertarik': [],                        // Tertarik tidak bisa drag
+        'Tidak Tertarik': []                   // Tidak Tertarik tidak bisa drag
+    };
+    
     prospekGroups.forEach(groupId => {
         const el = document.getElementById(groupId);
         if (el && !el.hasAttribute('data-sortable')) {
             new Sortable(el, {
-                group: 'prospek', animation: 200, draggable: '.card-item',
+                group: {
+                    name: 'prospek',
+                    pull: function(to, from, drag) {
+                        const dragItem = drag;
+                        const currentStatus = dragItem?.dataset?.status;
+                        const targetGroupId = to.el.id;
+                        const targetStatus = prospekStatusMap[targetGroupId];
+                        
+                        if (currentStatus && targetStatus) {
+                            const allowed = allowedProspekMoves[currentStatus]?.includes(targetStatus);
+                            if (!allowed) {
+                                showNotif(`⚠️ Tidak bisa pindah dari ${currentStatus} ke ${targetStatus}!`, true);
+                                return false;
+                            }
+                            return true;
+                        }
+                        return true;
+                    },
+                    put: true
+                },
+                animation: 200,
+                draggable: '.card-item',
                 onEnd: async function(evt) {
                     const id = evt.item.dataset.id;
                     const newStatus = prospekStatusMap[evt.to.id];
+                    const currentStatus = evt.item.dataset.status;
+                    
                     if (id && newStatus && currentUser) {
-                        if (newStatus === 'Tidak Tertarik') await window.confirmTidakTertarik(id);
-                        else await db.collection('prospek').doc(id).update({ status: newStatus });
+                        if (allowedProspekMoves[currentStatus]?.includes(newStatus)) {
+                            if (newStatus === 'Tidak Tertarik') {
+                                await window.confirmTidakTertarik(id);
+                            } else {
+                                const confirmMove = confirm(`⚠️ Pindahkan prospek ke status ${newStatus}?\n\n✅ OK = Ya\n❌ CANCEL = Tidak`);
+                                if (confirmMove) {
+                                    await db.collection('prospek').doc(id).update({ status: newStatus });
+                                    showNotif(`Status berhasil diupdate ke ${newStatus}`);
+                                } else {
+                                    loadAllData();
+                                }
+                            }
+                        } else {
+                            showNotif(`⚠️ Tidak bisa pindah dari ${currentStatus} ke ${newStatus}!`, true);
+                            loadAllData();
+                        }
                     }
                 }
             });
@@ -1702,56 +1839,97 @@ function showConvertToCustomerModal(prospekId) {
     document.getElementById('convertModal').style.display = 'flex';
 }
 
-document.getElementById('confirmConvertBtn')?.addEventListener('click', async () => {
-    const agentId = document.getElementById('convertAgentId').value;
-    const followupDate = document.getElementById('convertFollowupDate').value;
+// Pastikan tombol konfirmasi terhubung
+const confirmConvertBtn = document.getElementById('confirmConvertBtn');
+if (confirmConvertBtn) {
+    // Hapus event listener lama jika ada
+    const newBtn = confirmConvertBtn.cloneNode(true);
+    confirmConvertBtn.parentNode.replaceChild(newBtn, confirmConvertBtn);
     
-    if (!agentId) {
-        showNotif('ID Agent wajib diisi!', true);
-        return;
-    }
-    
-    if (!followupDate) {
-        showNotif('Tanggal followup wajib diisi!', true);
-        return;
-    }
-    
-    if (!currentConvertProspekId) return;
-    
-    try {
-        // Ambil data prospek
-        const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
-        const prospekData = prospekDoc.data();
+    newBtn.addEventListener('click', async () => {
+        console.log("Tombol konfirmasi diklik");
+        const agentId = document.getElementById('convertAgentId').value;
+        const followupDate = document.getElementById('convertFollowupDate').value;
         
-        if (!prospekData) {
-            showNotif('Data prospek tidak ditemukan', true);
+        if (!agentId) {
+            showNotif('ID Agent wajib diisi!', true);
             return;
         }
         
-        // Tambah ke customers (Followup Agen) dengan status 'baru'
-        await db.collection('customers').add({
-            agent_id: agentId,
-            nama: prospekData.nama,
-            hp: prospekData.hp,
-            tanggal: followupDate,
-            status: 'baru',
-            user_id: currentUser.uid,
-            created_at: new Date().toISOString(),
-            converted_from: 'prospek',
-            original_prospek_id: currentConvertProspekId
-        });
+        if (!followupDate) {
+            showNotif('Tanggal followup wajib diisi!', true);
+            return;
+        }
         
-        // Hapus dari prospek
-        await db.collection('prospek').doc(currentConvertProspekId).delete();
+        if (!currentConvertProspekId) {
+            showNotif('Error: Data prospek tidak ditemukan', true);
+            return;
+        }
         
-        closeModal('convertModal');
-        closeModal('detailModal');
-        showNotif('✅ Berhasil dipindahkan ke Followup Agen!');
+        // Konfirmasi sebelum pindah
+        const confirmMove = confirm(`⚠️ KONFIRMASI PEMINDAHAN\n\nAnda akan memindahkan prospek ke FOLLOWUP AGEN dengan data:\n\nID Agent: ${agentId}\nTanggal Followup: ${followupDate}\n\n✅ OK = Lanjutkan\n❌ CANCEL = Batalkan`);
         
-        // Refresh data
-        loadAllData();
+        if (!confirmMove) return;
         
-    } catch (error) {
-        showNotif('Gagal: ' + error.message, true);
-    }
+        try {
+            showNotif('⏳ Memproses pemindahan...');
+            
+            const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
+            const prospekData = prospekDoc.data();
+            
+            if (!prospekData) {
+                showNotif('Data prospek tidak ditemukan', true);
+                return;
+            }
+            
+            await db.collection('customers').add({
+                agent_id: agentId,
+                nama: prospekData.nama,
+                hp: prospekData.hp,
+                tanggal: followupDate,
+                status: 'baru',
+                apk: '', // Aplikasi akan diisi nanti di popup
+                user_id: currentUser.uid,
+                created_at: new Date().toISOString(),
+                converted_from: 'prospek',
+                original_prospek_id: currentConvertProspekId
+            });
+            
+            await db.collection('prospek').doc(currentConvertProspekId).delete();
+            
+            closeModal('convertModal');
+            closeModal('detailModal');
+            showNotif('✅ Berhasil dipindahkan ke Followup Agen!');
+            loadAllData();
+            
+        } catch (error) {
+            console.error('Error:', error);
+            showNotif('Gagal: ' + error.message, true);
+        }
+    });
+}
+
+// Download contoh file Excel
+document.getElementById('downloadCustomerExample')?.addEventListener('click', () => {
+    const data = [
+        { agent_id: 'AG-001', nama: 'Budi Santoso', hp: '6281234567890', apk: 'GNP' },
+        { agent_id: 'AG-002', nama: 'Siti Aminah', hp: '6281234567891', apk: 'BSB' },
+        { agent_id: 'AG-003', nama: 'Andi Wijaya', hp: '6281234567892', apk: 'BTN' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Customer');
+    XLSX.writeFile(wb, 'contoh_customer.xlsx');
+});
+
+document.getElementById('downloadProspekExample')?.addEventListener('click', () => {
+    const data = [
+        { nama: 'Rina Marlina', hp: '6281234567893' },
+        { nama: 'Ahmad Fauzi', hp: '6281234567894' },
+        { nama: 'Dewi Sartika', hp: '6281234567895' }
+    ];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Prospek');
+    XLSX.writeFile(wb, 'contoh_prospek.xlsx');
 });
