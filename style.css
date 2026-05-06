@@ -216,6 +216,8 @@ body {
 .card-item.deadline-today { border: 2px solid #f59e0b !important; background: #fffbeb; }
 .card-item.deadline-overdue { border: 2px solid #ef4444 !important; background: #fef2f2; animation: blinkWarning 1s step-start infinite; }
 @keyframes blinkWarning { 50% { border-color: #b91c1c; background: #fee2e2; } }
+.btn-edit-deadline { background: #eef2ff; border: none; border-radius: 6px; cursor: pointer; font-size: 10px; padding: 2px 8px; transition: all 0.2s; }
+.btn-edit-deadline:hover { background: #e0e7ff; transform: scale(1.02); }
 
 /* Import Section */
 .import-section { background: white; border-radius: 20px; padding: 20px; border: 1px solid #e5e7eb; }
