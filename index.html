@@ -118,10 +118,26 @@
                 <div id="dbNomorSalahPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📵 Database Nomor Salah</h3><div class="db-actions"><button class="db-select-all" id="selectAllNomorSalah">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedNomorSalah">🗑️ Hapus Terpilih</button></div></div><div id="dbNomorSalahList" class="db-list"></div></div></div>
                 <div id="dbCommitmentPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions"><button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button></div></div><div id="dbCommitmentList" class="db-list"></div></div></div>
 
-                <!-- REMINDER, PESAN, BROADCAST -->
+                <!-- REMINDER PAGE -->
                 <div id="reminderPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>⏰ Pengingat (Reminder)</h3><button class="add-btn" id="addReminderBtn">+ Tambah Pengingat</button></div><div id="reminderList" class="db-list"><p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p></div></div></div>
+
+                <!-- PESAN PAGE -->
                 <div id="pesanPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>💬 Pesan</h3><button class="add-btn" id="addPesanBtn">+ Kirim Pesan</button></div><div id="pesanList" class="db-list"><p style="text-align:center;padding:40px;">💬 Belum ada pesan</p></div></div></div>
-                <div id="broadcastPage" class="page-content" style="display:none"><div class="broadcast-section"><div class="broadcast-header"><h3>📢 Broadcast WhatsApp</h3><p>Kirim pesan ke banyak nomor sekaligus</p></div><div class="broadcast-grid"><!-- isi broadcast --></div></div></div>
+
+                <!-- BROADCAST PAGE -->
+                <div id="broadcastPage" class="page-content" style="display:none">
+                    <div class="broadcast-section">
+                        <div class="broadcast-header"><h3>📢 Broadcast WhatsApp</h3><p>Kirim pesan ke banyak nomor sekaligus</p></div>
+                        <div class="broadcast-grid">
+                            <div class="broadcast-card"><h4>📋 Pilih Sumber Nomor</h4><div class="radio-group"><label class="radio-label"><input type="radio" name="sourceType" value="customer" checked> <span>📞 Followup Agen (Customer)</span></label><label class="radio-label"><input type="radio" name="sourceType" value="prospek"> <span>🎯 Prospek Agen</span></label><label class="radio-label"><input type="radio" name="sourceType" value="closing"> <span>📁 Database Closing</span></label><label class="radio-label"><input type="radio" name="sourceType" value="dbTidak"> <span>📁 Database Tidak Tertarik</span></label><label class="radio-label"><input type="radio" name="sourceType" value="custom"> <span>✏️ Custom Nomor</span></label></div></div>
+                            <div class="broadcast-card" id="filterStatusCard"><h4>🎯 Filter Status</h4><div class="filter-status-group" id="customerFilter"><label><input type="checkbox" value="baru"> Baru</label><label><input type="checkbox" value="followup" checked> Follow Up</label><label><input type="checkbox" value="pending"> Pending</label><label><input type="checkbox" value="closing"> Closing</label></div><div class="filter-status-group" id="prospekFilter" style="display:none;"><label><input type="checkbox" value="Baru"> Baru</label><label><input type="checkbox" value="Sudah Dihubungi" checked> Dihubungi</label><label><input type="checkbox" value="Tertarik"> Tertarik</label><label><input type="checkbox" value="Tidak Tertarik"> Tidak Tertarik</label></div></div>
+                            <div class="broadcast-card" id="customNumbersCard" style="display:none;"><h4>✏️ Daftar Nomor</h4><textarea id="customNumbers" rows="4" placeholder="Contoh:&#10;6281234567890&#10;6281234567891"></textarea><small>Format: 628xxxxx (tanpa +62 atau 0)</small></div>
+                            <div class="broadcast-card"><h4>📱 Nomor Terpilih (<span id="selectedCount">0</span>)</h4><div class="selected-numbers" id="selectedNumbersList"><p style="color:#9ca3af;">Pilih sumber nomor terlebih dahulu</p></div><button class="btn-refresh" id="refreshNumbersBtn">🔄 Refresh Nomor</button></div>
+                            <div class="broadcast-card"><h4>✏️ Pesan Broadcast</h4><textarea id="broadcastMessage" rows="5" placeholder="Tulis pesan...&#10;Gunakan {nama} untuk personalisasi"></textarea><div class="variable-hint"><small>Gunakan <code>{nama}</code> untuk mengganti dengan nama customer</small></div></div>
+                            <div class="broadcast-card"><h4>📤 Kirim Broadcast</h4><div class="send-options"><label><input type="checkbox" id="openAllWA"> Buka semua di tab baru</label><label><input type="checkbox" id="sendOneByOne" checked> Kirim satu per satu (manual)</label></div><button class="broadcast-btn" id="sendBroadcastBtn">📢 Kirim Broadcast</button><div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
