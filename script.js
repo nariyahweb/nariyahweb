@@ -113,6 +113,42 @@ if (loginBtn) {
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) logoutBtn.addEventListener('click', () => auth.signOut());
 
+// ========== NOTIFIKASI (DEFINISIKAN SEBELUM DIPANGGIL) ==========
+async function updateDeadlineBadge() {
+    if (!currentUser) return;
+    const badge = document.getElementById('deadlineCount');
+    if (!badge) return;
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const customerOverdue = await db.collection('customers').where('user_id', '==', currentUser.uid).where('tanggal', '<', today).get();
+        const prospekOverdue = await db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today).get();
+        const deadlineCount = customerOverdue.size + prospekOverdue.size;
+        badge.innerText = deadlineCount;
+        if (deadlineCount > 0) badge.classList.add('has-notif');
+        else badge.classList.remove('has-notif');
+        console.log(`📅 Deadline terlewat: ${deadlineCount}`);
+    } catch(e) { console.error(e); }
+}
+
+async function updatePesanBadge() {
+    if (!currentUser) return;
+    const badge = document.getElementById('pesanCount');
+    if (!badge) return;
+    try {
+        const pesanSnapshot = await db.collection('messages').where('to_id', '==', currentUser.uid).where('is_read', '==', false).get();
+        const pesanCount = pesanSnapshot.size;
+        badge.innerText = pesanCount;
+        if (pesanCount > 0) badge.classList.add('has-notif');
+        else badge.classList.remove('has-notif');
+        console.log(`💬 Pesan belum dibaca: ${pesanCount}`);
+    } catch(e) { console.error(e); }
+}
+
+async function updateAllBadges() {
+    await updateDeadlineBadge();
+    await updatePesanBadge();
+}
+
 // ========== AUTH STATE ==========
 auth.onAuthStateChanged(async user => {
     const loginPage = document.getElementById('loginPage');
@@ -496,45 +532,6 @@ window.confirmTidakTertarik = async function(id) {
     loadAllData();
     updateAllBadges();
 };
-
-// ========== NOTIFIKASI TERPISAH ==========
-async function updateDeadlineBadge() {
-    if (!currentUser) return;
-    const badge = document.getElementById('deadlineCount');
-    if (!badge) return;
-    try {
-        const today = new Date().toISOString().split('T')[0];
-        const customerOverdue = await db.collection('customers').where('user_id', '==', currentUser.uid).where('tanggal', '<', today).get();
-        const prospekOverdue = await db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today).get();
-        const deadlineCount = customerOverdue.size + prospekOverdue.size;
-        badge.innerText = deadlineCount;
-        // Warna badge hanya jika ada notifikasi
-        if (deadlineCount > 0) {
-            badge.classList.add('has-notif');
-        } else {
-            badge.classList.remove('has-notif');
-        }
-        console.log(`📅 Deadline terlewat: ${deadlineCount}`);
-    } catch(e) { console.error(e); }
-}
-
-async function updatePesanBadge() {
-    if (!currentUser) return;
-    const badge = document.getElementById('pesanCount');
-    if (!badge) return;
-    try {
-        const pesanSnapshot = await db.collection('messages').where('to_id', '==', currentUser.uid).where('is_read', '==', false).get();
-        const pesanCount = pesanSnapshot.size;
-        badge.innerText = pesanCount;
-        // Warna badge hanya jika ada notifikasi
-        if (pesanCount > 0) {
-            badge.classList.add('has-notif');
-        } else {
-            badge.classList.remove('has-notif');
-        }
-        console.log(`💬 Pesan belum dibaca: ${pesanCount}`);
-    } catch(e) { console.error(e); }
-}
 
 // ========== EVENT LISTENER NOTIFIKASI ==========
 const deadlineNotifBtn = document.getElementById('deadlineNotifBtn');
