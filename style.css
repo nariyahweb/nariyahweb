@@ -1965,9 +1965,36 @@ body:has(.modal[style*="display: flex"]) {
     .toggle-btn { display: block !important; }
 }
 
-/* Kartu dengan deadline hari ini */
+/* Tambahan untuk deadline overdue dan today */
 .card-item.deadline-today {
-    border: 2px solid #ef4444 !important;
-    background: #fff5f5;
-    box-shadow: 0 0 0 1px #ef4444;
+    border: 2px solid #f59e0b !important;
+    background: #fffbeb;
 }
+.card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #fef2f2;
+    animation: blinkWarning 1s step-start infinite;
+}
+@keyframes blinkWarning {
+    50% { border-color: #b91c1c; background: #fee2e2; }
+}
+/* Tooltip pada nama dan nomor yang dipotong */
+.card-name, .card-phone span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: inline-block;
+}
+.card-name {
+    cursor: help;
+}
+.card-deadline {
+    font-size: 9px;
+    color: #6b7280;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+/* Untuk tooltip bawaan browser (title) sudah cukup */
