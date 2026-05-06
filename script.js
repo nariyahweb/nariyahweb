@@ -116,7 +116,7 @@ if (loginBtn) {
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) logoutBtn.addEventListener('click', () => auth.signOut());
 
-// ========== NOTIFIKASI (deadline & pesan) ==========
+// ========== NOTIFIKASI ==========
 async function updateDeadlineBadge() {
     if (!currentUser) return;
     const badge = document.getElementById('deadlineCount');
@@ -317,7 +317,7 @@ document.getElementById('saveProspekBtn')?.addEventListener('click', () => {
         .catch(e => showNotif('Error: ' + e.message, true));
 });
 
-// ========== DETAIL MODAL (customer & prospek) ==========
+// ========== DETAIL MODAL ==========
 function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }
 function getStatusBadge(status) {
     const statusMap = { 'baru':'status-baru', 'followup':'status-followup', 'pending':'status-pending', 'closing':'status-closing', 'Baru':'status-baru', 'Sudah Dihubungi':'status-dihubungi', 'Tertarik':'status-tertarik', 'Tidak Tertarik':'status-tidak' };
@@ -568,7 +568,9 @@ async function saveToClosingDB(id, data) {
     try { 
         await db.collection('db_closing').add({ 
             nama: data.nama, hp: data.hp, tanggal: data.tanggal || new Date().toISOString().split('T')[0], 
-            closing_date: new Date().toISOString(), user_id: currentUser.uid 
+            closing_date: new Date().toISOString(), user_id: currentUser.uid,
+            followup_data: data.followup_data || null,
+            pending_data: data.pending_data || []
         }); 
         await db.collection('customers').doc(id).delete(); 
         showNotif('✅ Data berhasil masuk Database Closing!'); 
@@ -582,7 +584,8 @@ async function saveToClosingDB(id, data) {
 async function saveToTidakTertarikDB(id, data) { 
     try { 
         await db.collection('db_tidak_tertarik').add({ 
-            nama: data.nama, hp: data.hp, tanggal: new Date().toISOString(), user_id: currentUser.uid, dihubungi_data: data.dihubungi_data || null
+            nama: data.nama, hp: data.hp, tanggal: new Date().toISOString(), user_id: currentUser.uid, 
+            dihubungi_data: data.dihubungi_data || null
         }); 
         await db.collection('prospek').doc(id).delete(); 
         showNotif('✅ Data berhasil masuk Database Tidak Tertarik!'); 
@@ -642,7 +645,6 @@ window.showConvertToCustomerModal = async function(prospekId) {
         openProspekDihubungiModal(prospekId);
         return;
     }
-    // Simpan ke DB Commitment
     await db.collection('db_commitment').add({
         nama: data.nama,
         hp: data.hp,
@@ -651,7 +653,6 @@ window.showConvertToCustomerModal = async function(prospekId) {
         user_id: currentUser.uid,
         original_prospek_id: prospekId
     });
-    // Tambah ke customers
     const today = new Date();
     const nextMonth = new Date(today);
     nextMonth.setMonth(today.getMonth() + 1);
@@ -664,7 +665,7 @@ window.showConvertToCustomerModal = async function(prospekId) {
         user_id: currentUser.uid,
         created_at: new Date().toISOString(),
         converted_from: 'prospek_commitment',
-        apk: '', agent_id: ''
+        apk: '', agent_id: '', followup_data: null, pending_data: []
     });
     await db.collection('prospek').doc(prospekId).delete();
     showNotif('✅ Prospek telah dijadikan customer dan disimpan ke DB Commitment');
@@ -694,7 +695,7 @@ function setupConvertModal() {
                 const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
                 const prospekData = prospekDoc.data();
                 if (!prospekData) { showNotif('❌ Data prospek tidak ditemukan', true); return; }
-                await db.collection('customers').add({ agent_id: agentId, nama: prospekData.nama, hp: prospekData.hp, tanggal: followupDate, status: 'baru', apk: '', user_id: currentUser.uid, created_at: new Date().toISOString() });
+                await db.collection('customers').add({ agent_id: agentId, nama: prospekData.nama, hp: prospekData.hp, tanggal: followupDate, status: 'baru', apk: '', user_id: currentUser.uid, created_at: new Date().toISOString(), followup_data: null, pending_data: [] });
                 await db.collection('prospek').doc(currentConvertProspekId).delete();
                 modal.style.display = 'none'; document.body.classList.remove('modal-open'); closeModal('detailModal');
                 showNotif('✅ Berhasil dipindahkan ke Followup Agen!'); loadAllData();
@@ -709,14 +710,14 @@ function setupConvertModal() {
     modal.onclick = function(e) { if (e.target === modal) { modal.style.display = 'none'; document.body.classList.remove('modal-open'); } };
 }
 
-// ========== DATABASE ARCHIVES (Closing, Tidak, Nomor Salah, Commitment) ==========
+// ========== DATABASE ARCHIVES ==========
 let selectedClosingIds = new Map(), selectedTidakIds = new Map(), selectedNomorSalahIds = new Map(), selectedCommitmentIds = new Map();
 
 function loadDBClosing() {
     if (!currentUser) return;
     db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, closing_date: d.closing_date, checked: selectedClosingIds.get(doc.id) || false }); });
+        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, closing_date: d.closing_date, followup_data: d.followup_data, pending_data: d.pending_data, checked: selectedClosingIds.get(doc.id) || false }); });
         items.sort((a,b) => new Date(b.closing_date) - new Date(a.closing_date));
         const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Closing: ${new Date(item.closing_date).toLocaleDateString('id-ID')}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('closing', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
         const container = document.getElementById('dbClosingList');
@@ -729,7 +730,7 @@ function loadDBTidak() {
     if (!currentUser) return;
     db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, checked: selectedTidakIds.get(doc.id) || false }); });
+        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, dihubungi_data: d.dihubungi_data, checked: selectedTidakIds.get(doc.id) || false }); });
         items.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
         const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Tanggal: ${new Date(item.tanggal).toLocaleDateString('id-ID')}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('tidak', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
         const container = document.getElementById('dbTidakList');
@@ -798,8 +799,20 @@ window.deleteDBItem = async function(type, id) {
     } catch(e) { showNotif('Gagal hapus: ' + e.message, true); }
 };
 
-window.deleteSelectedClosing = async function() { /* sama seperti sebelumnya */ };
-window.deleteSelectedTidak = async function() { /* sama */ };
+window.deleteSelectedClosing = async function() {
+    const selectedIds = Array.from(selectedClosingIds.keys());
+    if (selectedIds.length === 0) { showNotif('Tidak ada data yang dipilih', true); return; }
+    if (confirm(`Hapus ${selectedIds.length} data closing yang dipilih?`)) {
+        try { const batch = db.batch(); selectedIds.forEach(id => batch.delete(db.collection('db_closing').doc(id))); await batch.commit(); selectedClosingIds.clear(); showNotif(`${selectedIds.length} data closing berhasil dihapus`); } catch(e) { showNotif('Gagal hapus: ' + e.message, true); }
+    }
+};
+window.deleteSelectedTidak = async function() {
+    const selectedIds = Array.from(selectedTidakIds.keys());
+    if (selectedIds.length === 0) { showNotif('Tidak ada data yang dipilih', true); return; }
+    if (confirm(`Hapus ${selectedIds.length} data tidak tertarik yang dipilih?`)) {
+        try { const batch = db.batch(); selectedIds.forEach(id => batch.delete(db.collection('db_tidak_tertarik').doc(id))); await batch.commit(); selectedTidakIds.clear(); showNotif(`${selectedIds.length} data tidak tertarik berhasil dihapus`); } catch(e) { showNotif('Gagal hapus: ' + e.message, true); }
+    }
+};
 window.deleteSelectedNomorSalah = async function() {
     const selectedIds = Array.from(selectedNomorSalahIds.keys());
     if (selectedIds.length === 0) { showNotif('Tidak ada data yang dipilih', true); return; }
@@ -849,7 +862,7 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     });
 }
 
-// ========== DRAG AND DROP (dengan batasan) ==========
+// ========== DRAG AND DROP ==========
 function initDragAndDrop() {
     const customerGroups = ['baruList', 'followupList', 'pendingList', 'closingList'];
     const customerStatusMap = { baruList: 'baru', followupList: 'followup', pendingList: 'pending', closingList: 'closing' };
@@ -916,7 +929,7 @@ function initDragAndDrop() {
     });
 }
 
-// ========== LOAD ALL DATA (dashboard kanban) ==========
+// ========== LOAD ALL DATA ==========
 function loadAllData() {
     if (!currentUser) return;
     const today = new Date().toISOString().split('T')[0];
@@ -1035,15 +1048,119 @@ document.getElementById('savePesanBtn')?.addEventListener('click', async () => {
 
 // ========== BROADCAST WHATSAPP FUNCTIONS ==========
 let currentNumbers = [], currentBroadcastIndex = 0, broadcastNumbers = [], broadcastMessageTemplate = '', isBroadcasting = false, broadcastStatus = [];
-function initBroadcast() { /* sama seperti sebelumnya, tidak diubah */ }
-async function loadNumbers() { /* sama */ }
-async function sendBroadcast() { /* sama */ }
-function showBroadcastPanel() { /* sama */ }
-function displayCurrentBroadcast() { /* sama */ }
-function updateBroadcastPanel() { /* sama */ }
-function finishBroadcast() { /* sama */ }
 
-// ========== NOTIFIKASI HEADER (sudah di atas) ==========
+function initBroadcast() {
+    document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const value = this.value;
+            document.getElementById('filterStatusCard').style.display = value === 'custom' ? 'none' : 'block';
+            document.getElementById('customNumbersCard').style.display = value === 'custom' ? 'block' : 'none';
+            document.getElementById('prospekFilter').style.display = value === 'prospek' ? 'flex' : 'none';
+            document.getElementById('customerFilter').style.display = value === 'customer' ? 'flex' : 'none';
+            loadNumbers();
+        });
+    });
+    document.querySelectorAll('#customerFilter input, #prospekFilter input').forEach(cb => cb.addEventListener('change', () => loadNumbers()));
+    document.getElementById('customNumbers')?.addEventListener('input', () => loadNumbers());
+    document.getElementById('refreshNumbersBtn')?.addEventListener('click', () => loadNumbers());
+    document.getElementById('sendBroadcastBtn')?.addEventListener('click', sendBroadcast);
+    loadNumbers();
+}
+
+async function loadNumbers() {
+    const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
+    let numbers = [];
+    if (sourceType === 'custom') {
+        const customText = document.getElementById('customNumbers')?.value || '';
+        numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
+    } else {
+        let collection = 'customers', statusField = 'status', statusValues = [];
+        if (sourceType === 'prospek') { collection = 'prospek'; statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value); }
+        else if (sourceType === 'customer') { collection = 'customers'; statusValues = Array.from(document.querySelectorAll('#customerFilter input:checked')).map(cb => cb.value); }
+        else if (sourceType === 'closing') { collection = 'db_closing'; statusField = null; }
+        else if (sourceType === 'dbTidak') { collection = 'db_tidak_tertarik'; statusField = null; }
+        let query = db.collection(collection).where('user_id', '==', currentUser.uid);
+        if (statusValues && statusValues.length > 0 && statusField) query = query.where(statusField, 'in', statusValues);
+        const snapshot = await query.get();
+        snapshot.forEach(doc => { const data = doc.data(); numbers.push({ hp: data.hp, nama: data.nama }); });
+    }
+    currentNumbers = numbers;
+    document.getElementById('selectedCount').innerText = numbers.length;
+    const listDiv = document.getElementById('selectedNumbersList');
+    if (numbers.length === 0) listDiv.innerHTML = '<p style="color:#9ca3af;">Tidak ada nomor yang dipilih</p>';
+    else if (typeof numbers[0] === 'string') listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n)}</div>`).join('');
+    else listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n.nama)} - ${escapeHtml(n.hp)}</div>`).join('');
+}
+
+async function sendBroadcast() {
+    const messageTemplate = document.getElementById('broadcastMessage')?.value, sendOneByOne = document.getElementById('sendOneByOne')?.checked;
+    if (!messageTemplate) { showNotif('Pesan tidak boleh kosong!', true); return; }
+    if (currentNumbers.length === 0) { showNotif('Tidak ada nomor tujuan!', true); return; }
+    if (!sendOneByOne) {
+        for (const item of currentNumbers) { const hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, message = messageTemplate.replace(/{nama}/g, nama || 'Customer'), nomor = hp.toString().replace('+', '').replace(/^0/, '62'); window.open('https://wa.me/' + nomor + '?text=' + encodeURIComponent(message), '_blank'); }
+        showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`); return;
+    }
+    if (isBroadcasting) { showNotif('⚠️ Broadcast sedang berjalan!', true); return; }
+    broadcastNumbers = [...currentNumbers]; broadcastMessageTemplate = messageTemplate; currentBroadcastIndex = 0; broadcastStatus = []; isBroadcasting = true;
+    showBroadcastPanel(); displayCurrentBroadcast();
+}
+
+function showBroadcastPanel() {
+    let panelDiv = document.getElementById('broadcastPanel');
+    if (!panelDiv) {
+        const broadcastCard = document.querySelector('#broadcastPage .broadcast-card:last-child');
+        if (broadcastCard) {
+            panelDiv = document.createElement('div'); panelDiv.id = 'broadcastPanel'; panelDiv.className = 'broadcast-panel';
+            panelDiv.innerHTML = `<div class="panel-header"><span>📢 Broadcast Manual</span><button id="closeBroadcastPanelBtn" class="close-panel-btn">✕</button></div><div class="panel-content"><div class="current-info"><div class="current-label">Sedang Diproses:</div><div class="current-name" id="currentName">-</div><div class="current-number" id="currentNumber">-</div></div><div class="message-preview" id="messagePreview"></div><div class="action-buttons"><button id="markSentBtn" class="mark-sent-btn">✅ Tandai Terkirim & Lanjut</button><button id="markFailedBtn" class="mark-failed-btn">❌ Tandai Gagal Kirim & Lanjut</button><button id="stopBroadcastPanelBtn" class="stop-btn">⏹️ Hentikan Broadcast</button></div><div class="whatsapp-link-container"><a href="#" id="whatsappLink" target="_blank" class="whatsapp-link-btn">💬 Buka WhatsApp</a></div></div><div class="progress-panel"><div class="progress-bar-container"><div class="progress-bar-fill" id="progressBarFillPanel"></div></div><div class="progress-text" id="progressTextPanel">0 / 0</div><div class="progress-list" id="progressListPanel"></div></div>`;
+            broadcastCard.parentNode.insertBefore(panelDiv, broadcastCard.nextSibling);
+            document.getElementById('closeBroadcastPanelBtn')?.addEventListener('click', () => { document.getElementById('broadcastPanel').style.display = 'none'; isBroadcasting = false; });
+            document.getElementById('markSentBtn')?.addEventListener('click', () => { if (isBroadcasting) { broadcastStatus[currentBroadcastIndex] = 'success'; currentBroadcastIndex++; updateBroadcastPanel(); if (currentBroadcastIndex >= broadcastNumbers.length) finishBroadcast(); else displayCurrentBroadcast(); } });
+            document.getElementById('markFailedBtn')?.addEventListener('click', () => { if (isBroadcasting) { broadcastStatus[currentBroadcastIndex] = 'failed'; currentBroadcastIndex++; updateBroadcastPanel(); if (currentBroadcastIndex >= broadcastNumbers.length) finishBroadcast(); else displayCurrentBroadcast(); } });
+            document.getElementById('stopBroadcastPanelBtn')?.addEventListener('click', () => { if (confirm('⏹️ Hentikan broadcast?')) { isBroadcasting = false; document.getElementById('broadcastPanel').style.display = 'none'; showNotif('⏹️ Broadcast dihentikan'); } });
+        }
+    } else panelDiv.style.display = 'block';
+}
+
+function displayCurrentBroadcast() {
+    if (!isBroadcasting) return;
+    if (currentBroadcastIndex >= broadcastNumbers.length) { finishBroadcast(); return; }
+    const item = broadcastNumbers[currentBroadcastIndex], hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, message = broadcastMessageTemplate.replace(/{nama}/g, nama || 'Customer'), nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+    document.getElementById('currentName').innerHTML = escapeHtml(nama || '-'); document.getElementById('currentNumber').innerHTML = escapeHtml(hp); document.getElementById('messagePreview').innerHTML = `<strong>Pesan:</strong><br>${escapeHtml(message)}`; document.getElementById('whatsappLink').href = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
+    updateBroadcastPanel();
+}
+
+function updateBroadcastPanel() {
+    const total = broadcastNumbers.length, processed = currentBroadcastIndex, percent = total > 0 ? (processed / total) * 100 : 0;
+    document.getElementById('progressBarFillPanel').style.width = `${percent}%`; document.getElementById('progressTextPanel').innerText = `${processed} / ${total} terproses`;
+    const progressList = document.getElementById('progressListPanel');
+    if (progressList && broadcastNumbers.length > 0) {
+        let html = '';
+        for (let i = 0; i < broadcastNumbers.length; i++) {
+            const item = broadcastNumbers[i], hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, displayName = nama ? `${nama} (${hp})` : hp, isCurrent = i === currentBroadcastIndex, status = broadcastStatus[i];
+            let statusIcon = '⭕', statusClass = '';
+            if (status === 'success') { statusIcon = '✅'; statusClass = 'success'; }
+            else if (status === 'failed') { statusIcon = '❌'; statusClass = 'failed'; }
+            else if (i < currentBroadcastIndex) { statusIcon = '✅'; statusClass = 'success'; }
+            html += `<div class="panel-progress-item ${statusClass} ${isCurrent ? 'current' : ''}"><span class="panel-status">${statusIcon}</span><span class="panel-number">${escapeHtml(displayName)}</span></div>`;
+        }
+        progressList.innerHTML = html;
+        const currentElement = progressList.querySelector('.panel-progress-item.current');
+        if (currentElement) currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function finishBroadcast() {
+    let successCount = 0, failedCount = 0;
+    for (let i = 0; i < broadcastNumbers.length; i++) {
+        if (broadcastStatus[i] === 'success') successCount++;
+        else if (broadcastStatus[i] === 'failed') failedCount++;
+        else if (i < currentBroadcastIndex) successCount++;
+    }
+    showNotif(`✅ Broadcast selesai! Terkirim: ${successCount}, Gagal: ${failedCount}, Total: ${broadcastNumbers.length}`);
+    isBroadcasting = false; document.getElementById('broadcastPanel').style.display = 'none'; broadcastStatus = [];
+}
+
+// ========== NOTIFIKASI HEADER EVENT ==========
 const deadlineNotifBtn = document.getElementById('deadlineNotifBtn');
 if (deadlineNotifBtn) {
     deadlineNotifBtn.addEventListener('click', async () => {
