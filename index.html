@@ -201,26 +201,11 @@
                             <div class="broadcast-card">
                                 <h4>📋 Pilih Sumber Nomor</h4>
                                 <div class="radio-group">
-                                    <label class="radio-label">
-                                        <input type="radio" name="sourceType" value="customer" checked> 
-                                        <span>📞 Followup Agen (Customer)</span>
-                                    </label>
-                                    <label class="radio-label">
-                                        <input type="radio" name="sourceType" value="prospek"> 
-                                        <span>🎯 Prospek Agen</span>
-                                    </label>
-                                    <label class="radio-label">
-                                        <input type="radio" name="sourceType" value="closing"> 
-                                        <span>📁 Database Closing</span>
-                                    </label>
-                                    <label class="radio-label">
-                                        <input type="radio" name="sourceType" value="dbTidak"> 
-                                        <span>📁 Database Tidak Tertarik</span>
-                                    </label>
-                                    <label class="radio-label">
-                                        <input type="radio" name="sourceType" value="custom"> 
-                                        <span>✏️ Custom Nomor</span>
-                                    </label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="customer" checked> <span>📞 Followup Agen (Customer)</span></label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="prospek"> <span>🎯 Prospek Agen</span></label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="closing"> <span>📁 Database Closing</span></label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="dbTidak"> <span>📁 Database Tidak Tertarik</span></label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="custom"> <span>✏️ Custom Nomor</span></label>
                                 </div>
                             </div>
                             
@@ -248,35 +233,24 @@
                             
                             <div class="broadcast-card">
                                 <h4>📱 Nomor Terpilih (<span id="selectedCount">0</span>)</h4>
-                                <div class="selected-numbers" id="selectedNumbersList">
-                                    <p style="color:#9ca3af;">Pilih sumber nomor terlebih dahulu</p>
-                                </div>
+                                <div class="selected-numbers" id="selectedNumbersList"><p style="color:#9ca3af;">Pilih sumber nomor terlebih dahulu</p></div>
                                 <button class="btn-refresh" id="refreshNumbersBtn">🔄 Refresh Nomor</button>
                             </div>
                             
                             <div class="broadcast-card">
                                 <h4>✏️ Pesan Broadcast</h4>
-                                <textarea id="broadcastMessage" rows="5" placeholder="Tulis pesan yang akan dikirim...&#10;&#10;Contoh:&#10;Halo *{nama}*, kami ingin menginformasikan..."></textarea>
-                                <div class="variable-hint">
-                                    <small>Gunakan <code>{nama}</code> untuk mengganti dengan nama customer</small>
-                                </div>
+                                <textarea id="broadcastMessage" rows="5" placeholder="Tulis pesan...&#10;Gunakan {nama} untuk personalisasi"></textarea>
+                                <div class="variable-hint"><small>Gunakan <code>{nama}</code> untuk mengganti dengan nama customer</small></div>
                             </div>
                             
                             <div class="broadcast-card">
                                 <h4>📤 Kirim Broadcast</h4>
                                 <div class="send-options">
-                                    <label>
-                                        <input type="checkbox" id="openAllWA"> Buka semua di tab baru
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="sendOneByOne" checked> Kirim satu per satu (manual)
-                                    </label>
+                                    <label><input type="checkbox" id="openAllWA"> Buka semua di tab baru</label>
+                                    <label><input type="checkbox" id="sendOneByOne" checked> Kirim satu per satu (manual)</label>
                                 </div>
                                 <button class="broadcast-btn" id="sendBroadcastBtn">📢 Kirim Broadcast</button>
-                                <div class="warning-text">
-                                    ⚠️ Perhatian: Setiap klik akan membuka chat WhatsApp di tab baru. 
-                                    Anda harus mengirim pesan secara manual di WhatsApp Web.
-                                </div>
+                                <div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div>
                             </div>
                         </div>
                     </div>
@@ -291,50 +265,12 @@
     <div class="modal-content">
         <h3>Tambah Customer</h3>
         <div class="modal-subtitle">Isi data customer baru</div>
-        <div class="form-group">
-            <label>ID Agent <span class="required">*</span></label>
-            <div class="input-icon">
-                <span>🆔</span>
-                <input type="text" id="customerId" placeholder="Contoh: AG-001">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Nama Lengkap <span class="required">*</span></label>
-            <div class="input-icon">
-                <span>👤</span>
-                <input type="text" id="customerName" placeholder="Masukkan nama lengkap">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Nomor WhatsApp <span class="required">*</span></label>
-            <div class="phone-input">
-                <div class="phone-prefix">+62</div>
-                <input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Aplikasi <span class="required">*</span></label>
-            <div class="input-icon">
-                <span>📱</span>
-                <select id="customerApk">
-                    <option value="">Pilih Aplikasi</option>
-                    <option value="GNP">🏦 GNP</option>
-                    <option value="BSB">🏦 BSB</option>
-                    <option value="BTN">🏦 BTN</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Tanggal Input</label>
-            <div class="input-icon">
-                <span>📅</span>
-                <input type="date" id="customerDate">
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveCustomerBtn">Simpan Data</button>
-            <button class="closeModalBtn" data-modal="customerModal">Batal</button>
-        </div>
+        <div class="form-group"><label>ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="customerId" placeholder="Contoh: AG-001"></div></div>
+        <div class="form-group"><label>Nama Lengkap <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="customerName" placeholder="Masukkan nama lengkap"></div></div>
+        <div class="form-group"><label>Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1"></div></div>
+        <div class="form-group"><label>Aplikasi <span class="required">*</span></label><div class="input-icon"><span>📱</span><select id="customerApk"><option value="">Pilih Aplikasi</option><option value="GNP">🏦 GNP</option><option value="BSB">🏦 BSB</option><option value="BTN">🏦 BTN</option></select></div></div>
+        <div class="form-group"><label>Tanggal Input</label><div class="input-icon"><span>📅</span><input type="date" id="customerDate"></div></div>
+        <div class="modal-buttons"><button id="saveCustomerBtn">Simpan Data</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div>
     </div>
 </div>
 
@@ -343,7 +279,7 @@
         <h3>Tambah Prospek</h3>
         <div class="modal-subtitle">Isi data prospek baru</div>
         <div class="form-group"><label>Nama Agen <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="prospekName" placeholder="Masukkan nama agen"></div></div>
-        <div class="form-group"><label>Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1"></div><small style="font-size:11px;color:#9ca3af;margin-top:6px;display:block;">Contoh: 81234567890</small></div>
+        <div class="form-group"><label>Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1"></div></div>
         <div class="form-group"><label>Status Awal</label><div class="input-icon"><span>📌</span><select id="prospekStatusSelect"><option value="Baru">🆕 Baru</option><option value="Sudah Dihubungi">📞 Sudah Dihubungi</option><option value="Tertarik">⭐ Tertarik</option><option value="Tidak Tertarik">❌ Tidak Tertarik</option></select></div></div>
         <div class="modal-buttons"><button id="saveProspekBtn">Simpan Data</button><button class="closeModalBtn" data-modal="prospekModal">Batal</button></div>
     </div>
@@ -371,72 +307,28 @@
 
 <div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
 
-<!-- MODAL REMINDER -->
 <div class="modal" id="reminderModal">
     <div class="modal-content">
         <h3>⏰ Tambah Pengingat</h3>
         <div class="modal-subtitle">Buat pengingat untuk tugas Anda</div>
-        <div class="form-group">
-            <label>Judul Pengingat <span class="required">*</span></label>
-            <div class="input-icon">
-                <span>📝</span>
-                <input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer">
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Deskripsi</label>
-            <div class="input-icon">
-                <span>📄</span>
-                <textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Tanggal & Waktu</label>
-            <div class="input-icon">
-                <span>📅</span>
-                <input type="datetime-local" id="reminderDateTime">
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveReminderBtn">Simpan</button>
-            <button class="closeModalBtn" data-modal="reminderModal">Batal</button>
-        </div>
+        <div class="form-group"><label>Judul Pengingat <span class="required">*</span></label><div class="input-icon"><span>📝</span><input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer"></div></div>
+        <div class="form-group"><label>Deskripsi</label><div class="input-icon"><span>📄</span><textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea></div></div>
+        <div class="form-group"><label>Tanggal & Waktu</label><div class="input-icon"><span>📅</span><input type="datetime-local" id="reminderDateTime"></div></div>
+        <div class="modal-buttons"><button id="saveReminderBtn">Simpan</button><button class="closeModalBtn" data-modal="reminderModal">Batal</button></div>
     </div>
 </div>
 
-<!-- MODAL PESAN -->
 <div class="modal" id="pesanModal">
     <div class="modal-content">
         <h3>💬 Kirim Pesan</h3>
         <div class="modal-subtitle">Kirim pesan ke CS lain</div>
-        <div class="form-group">
-            <label>Kepada <span class="required">*</span></label>
-            <div class="input-icon">
-                <span>👥</span>
-                <select id="pesanTo">
-                    <option value="">Pilih CS Tujuan</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Pesan <span class="required">*</span></label>
-            <div class="input-icon">
-                <span>💬</span>
-                <textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="savePesanBtn">Kirim</button>
-            <button class="closeModalBtn" data-modal="pesanModal">Batal</button>
-        </div>
+        <div class="form-group"><label>Kepada <span class="required">*</span></label><div class="input-icon"><span>👥</span><select id="pesanTo"><option value="">Pilih CS Tujuan</option></select></div></div>
+        <div class="form-group"><label>Pesan <span class="required">*</span></label><div class="input-icon"><span>💬</span><textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea></div></div>
+        <div class="modal-buttons"><button id="savePesanBtn">Kirim</button><button class="closeModalBtn" data-modal="pesanModal">Batal</button></div>
     </div>
 </div>
 
-<div id="notifBox"></div>
-
-<script src="script.js"></script>
-
-<!-- Modal Konversi Tertarik ke Customer -->
+<!-- MODAL KONVERSI -->
 <div class="modal" id="convertModal">
     <div class="modal-content">
         <h3>🔄 Jadikan Customer (Followup Agen)</h3>
@@ -463,6 +355,9 @@
         </div>
     </div>
 </div>
-    
+
+<div id="notifBox"></div>
+
+<script src="script.js"></script>
 </body>
 </html>
