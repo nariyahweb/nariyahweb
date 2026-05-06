@@ -506,33 +506,49 @@ async function getDeadlineCount() {
 }
 
 async function updateNotifBadge() {
-    if (!currentUser) return;
-    const pesanSnapshot = await db.collection('messages').where('to_id', '==', currentUser.uid).where('is_read', '==', false).get();
-    const deadlineCount = await getDeadlineCount();
-    const totalNotif = pesanSnapshot.size + deadlineCount;
-    const badge = document.getElementById('notifCount');
-    if (badge) badge.innerText = totalNotif;
-}
-
-document.getElementById('notifBtn')?.addEventListener('click', async () => {
-    // Arahkan ke halaman pesan
-    const pesanMenu = document.querySelector('.menu-item[data-page="pesan"]');
-    if (pesanMenu) pesanMenu.click();
-    
-    // Tampilkan daftar deadline overdue
-    const today = new Date().toISOString().split('T')[0];
-    const overdueCustomers = await db.collection('customers').where('user_id', '==', currentUser.uid).where('tanggal', '<', today).get();
-    const overdueProspek = await db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today).get();
-    
-    if (overdueCustomers.size + overdueProspek.size > 0) {
-        let names = [];
-        overdueCustomers.forEach(doc => names.push(`${doc.data().nama} (Customer)`));
-        overdueProspek.forEach(doc => names.push(`${doc.data().nama} (Prospek)`));
-        showNotif(`📅 Ada ${overdueCustomers.size + overdueProspek.size} deadline terlewat:\n${names.slice(0,5).join(', ')}${names.length>5 ? '...' : ''}`);
-    } else {
-        showNotif('✅ Tidak ada deadline terlewat.');
+    if (!currentUser) {
+        console.log("No current user");
+        return;
     }
-});
+    
+    const badge = document.getElementById('notifCount');
+    if (!badge) {
+        console.log("Badge element not found");
+        return;
+    }
+    
+    try {
+        // Hitung pesan belum dibaca
+        const pesanSnapshot = await db.collection('messages')
+            .where('to_id', '==', currentUser.uid)
+            .where('is_read', '==', false)
+            .get();
+        const pesanCount = pesanSnapshot.size;
+        
+        // Hitung deadline terlewat (tanggal < hari ini)
+        const today = new Date().toISOString().split('T')[0];
+        
+        const customerOverdue = await db.collection('customers')
+            .where('user_id', '==', currentUser.uid)
+            .where('tanggal', '<', today)
+            .get();
+        
+        const prospekOverdue = await db.collection('prospek')
+            .where('user_id', '==', currentUser.uid)
+            .where('deadline', '<', today)
+            .get();
+        
+        const deadlineCount = customerOverdue.size + prospekOverdue.size;
+        const totalNotif = pesanCount + deadlineCount;
+        
+        badge.innerText = totalNotif;
+        
+        console.log(`🔔 Notifikasi: ${totalNotif} (Pesan: ${pesanCount}, Deadline: ${deadlineCount})`);
+        
+    } catch(e) {
+        console.error("Error updateNotifBadge:", e);
+    }
+}
 
 // ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
@@ -1004,6 +1020,42 @@ function setupConvertModal() {
         newCancelBtn.onclick = function(e) { e.preventDefault(); e.stopPropagation(); modal.style.display = 'none'; document.body.classList.remove('modal-open'); };
     }
     modal.onclick = function(e) { if (e.target === modal) { modal.style.display = 'none'; document.body.classList.remove('modal-open'); } };
+}
+
+// ========== NOTIFIKASI HEADER ==========
+const notifBtn = document.getElementById('notifBtn');
+if (notifBtn) {
+    notifBtn.addEventListener('click', async () => {
+        // Arahkan ke halaman pesan
+        const pesanMenu = document.querySelector('.menu-item[data-page="pesan"]');
+        if (pesanMenu) pesanMenu.click();
+        
+        // Tampilkan daftar deadline overdue
+        if (currentUser) {
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                const overdueCustomers = await db.collection('customers')
+                    .where('user_id', '==', currentUser.uid)
+                    .where('tanggal', '<', today)
+                    .get();
+                const overdueProspek = await db.collection('prospek')
+                    .where('user_id', '==', currentUser.uid)
+                    .where('deadline', '<', today)
+                    .get();
+                
+                if (overdueCustomers.size + overdueProspek.size > 0) {
+                    let names = [];
+                    overdueCustomers.forEach(doc => names.push(`${doc.data().nama} (Customer - ${doc.data().tanggal})`));
+                    overdueProspek.forEach(doc => names.push(`${doc.data().nama} (Prospek - ${doc.data().deadline})`));
+                    showNotif(`📅 ${overdueCustomers.size + overdueProspek.size} deadline terlewat:\n${names.slice(0,5).join(', ')}${names.length>5 ? '...' : ''}`);
+                } else {
+                    showNotif('✅ Semua deadline terpenuhi.');
+                }
+            } catch(e) {
+                console.error("Error get overdue:", e);
+            }
+        }
+    });
 }
 
 // ========== DOWNLOAD CONTOH FILE ==========
