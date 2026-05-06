@@ -112,9 +112,9 @@ body {
     min-height: 100vh;
 }
 
-/* ========== SIDEBAR HOVER MODE ========== */
+/* ========== SIDEBAR ========== */
 .sidebar {
-    width: 260px;
+    width: 280px;
     background: white;
     border-right: 1px solid #e5e7eb;
     position: fixed;
@@ -124,7 +124,7 @@ body {
     overflow-y: auto;
     z-index: 1000;
     transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 2px 0 10px rgba(0,0,0,0.05);
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
@@ -132,7 +132,7 @@ body {
 
 .sidebar.active {
     transform: translateX(0);
-    animation: sidebarSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    animation: sidebarSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes sidebarSlideIn {
@@ -169,6 +169,184 @@ body {
 .sidebar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
 .sidebar::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; transition: all 0.3s ease; }
 .sidebar::-webkit-scrollbar-thumb:hover { background: #4f46e5; width: 6px; }
+
+/* Header sidebar */
+.sidebar-header {
+    padding: 24px 20px;
+    border-bottom: 1px solid #eef2ff;
+    margin-bottom: 8px;
+}
+
+.sidebar-header h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #4f46e5;
+    position: relative;
+    display: inline-block;
+    animation: logoGlow 2s ease-in-out infinite;
+    transition: all 0.3s ease;
+}
+
+.sidebar-header h2:hover {
+    transform: scale(1.05) rotate(-2deg);
+    text-shadow: 0 0 15px rgba(79,70,229,0.5);
+}
+
+@keyframes logoGlow {
+    0% { text-shadow: 0 0 0px rgba(79,70,229,0); letter-spacing: 0px; }
+    50% { text-shadow: 0 0 10px rgba(79,70,229,0.5); letter-spacing: 1px; }
+    100% { text-shadow: 0 0 0px rgba(79,70,229,0); letter-spacing: 0px; }
+}
+
+/* Menu wrapper */
+.sidebar-menu {
+    padding: 8px 12px;
+}
+
+/* Menu label */
+.menu-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9ca3af;
+    padding: 16px 12px 8px 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.menu-label:hover {
+    color: #4f46e5;
+    letter-spacing: 1px;
+}
+
+/* Menu item */
+.menu-item {
+    padding: 12px 16px;
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    color: #4b5563;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    animation: slideInFromLeft 0.3s ease forwards;
+    opacity: 0;
+}
+
+/* Delay animasi menu item */
+.sidebar-menu .menu-item:nth-child(1) { animation-delay: 0.05s; }
+.sidebar-menu .menu-item:nth-child(2) { animation-delay: 0.1s; }
+.sidebar-menu .menu-item:nth-child(3) { animation-delay: 0.15s; }
+.sidebar-menu .menu-item:nth-child(4) { animation-delay: 0.2s; }
+.sidebar-menu .menu-item:nth-child(5) { animation-delay: 0.25s; }
+.sidebar-menu .menu-item:nth-child(6) { animation-delay: 0.3s; }
+.sidebar-menu .menu-item:nth-child(7) { animation-delay: 0.35s; }
+.sidebar-menu .menu-item:nth-child(8) { animation-delay: 0.4s; }
+.sidebar-menu .menu-item:nth-child(9) { animation-delay: 0.45s; }
+.sidebar-menu .menu-item:nth-child(10) { animation-delay: 0.5s; }
+.sidebar-menu .menu-item:nth-child(11) { animation-delay: 0.55s; }
+
+@keyframes slideInFromLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Hover efek menu item */
+.menu-item:hover {
+    background: linear-gradient(90deg, #eef2ff, #ffffff);
+    transform: translateX(6px);
+    color: #4f46e5;
+}
+
+/* Icon hover bounce */
+.menu-item:hover .icon {
+    animation: iconBounce 0.5s ease;
+}
+
+@keyframes iconBounce {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(5px); }
+    60% { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+}
+
+/* Icon style */
+.menu-item .icon {
+    font-size: 20px;
+    width: 28px;
+    text-align: center;
+}
+
+/* Aktif menu item */
+.menu-item.active {
+    background: #eef2ff;
+    color: #4f46e5;
+    border-right: none;
+    position: relative;
+}
+
+.menu-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10%;
+    height: 80%;
+    width: 3px;
+    background: #4f46e5;
+    border-radius: 0 3px 3px 0;
+}
+
+/* Menu divider */
+.menu-divider {
+    height: 1px;
+    background: #eef2ff;
+    margin: 12px 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.menu-divider::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #4f46e5, transparent);
+    animation: dividerShine 3s ease-in-out infinite;
+}
+
+@keyframes dividerShine {
+    0% { left: -100%; }
+    50% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* Logout button khusus */
+#logoutBtn {
+    margin-top: 16px;
+    color: #ef4444;
+}
+
+#logoutBtn:hover {
+    background: linear-gradient(90deg, #fef2f2, #ffffff);
+    transform: translateX(6px);
+}
+
+#logoutBtn:hover .icon {
+    animation: logoutShake 0.5s ease;
+}
+
+@keyframes logoutShake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    50% { transform: translateX(3px); }
+    75% { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+}
 
 /* ========== HOVER ZONE ========== */
 #hoverZone {
@@ -302,8 +480,8 @@ body {
 
 @media (min-width: 769px) {
     body.sidebar-open .main-content {
-        margin-left: 260px !important;
-        width: calc(100% - 260px) !important;
+        margin-left: 280px !important;
+        width: calc(100% - 280px) !important;
     }
 }
 
@@ -582,10 +760,22 @@ body {
     border-color: #c7d2fe;
 }
 
+.card-id {
+    font-size: 10px;
+    font-weight: 600;
+    color: #4f46e5;
+    background: #eef2ff;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
 .card-name {
     font-weight: 600;
-    font-size: 11px;
-    margin-bottom: 2px;
+    font-size: 12px;
+    margin-bottom: 4px;
     color: #1f2937;
     white-space: nowrap;
     overflow: hidden;
@@ -710,6 +900,24 @@ body {
     font-size: 13px;
 }
 
+.download-example-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    background: #10b981;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.download-example-btn:hover {
+    background: #059669;
+    transform: translateY(-2px);
+}
+
 /* ========== DATABASE SECTIONS ========== */
 .db-section {
     background: white;
@@ -776,6 +984,11 @@ body {
 .db-item:hover {
     transform: translateX(4px);
     background: #f9fafb;
+}
+
+.db-item.unread {
+    background: #eef2ff;
+    border-left: 3px solid #4f46e5;
 }
 
 .db-item-info {
@@ -1680,99 +1893,29 @@ body:has(.modal[style*="display: flex"]) {
     font-size: 14px;
 }
 
-/* ========== SIDEBAR MENU ITEM ANIMATIONS ========== */
-.sidebar-menu .menu-item {
-    animation: slideInFromLeft 0.3s ease forwards;
-    opacity: 0;
+/* ========== MODAL KONVERSI ========== */
+#convertModal .modal-content {
+    max-width: 450px;
 }
 
-.sidebar-menu .menu-item:nth-child(1) { animation-delay: 0.05s; }
-.sidebar-menu .menu-item:nth-child(2) { animation-delay: 0.1s; }
-.sidebar-menu .menu-item:nth-child(3) { animation-delay: 0.15s; }
-.sidebar-menu .menu-item:nth-child(4) { animation-delay: 0.2s; }
-.sidebar-menu .menu-item:nth-child(5) { animation-delay: 0.25s; }
-.sidebar-menu .menu-item:nth-child(6) { animation-delay: 0.3s; }
-.sidebar-menu .menu-item:nth-child(7) { animation-delay: 0.35s; }
-.sidebar-menu .menu-item:nth-child(8) { animation-delay: 0.4s; }
-.sidebar-menu .menu-item:nth-child(9) { animation-delay: 0.45s; }
-
-@keyframes slideInFromLeft {
-    from { opacity: 0; transform: translateX(-20px); }
-    to { opacity: 1; transform: translateX(0); }
+.confirm-convert-btn {
+    background: #4f46e5 !important;
+    color: white !important;
 }
 
-.menu-item {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
+.confirm-convert-btn:hover {
+    background: #4338ca !important;
+    transform: translateY(-2px);
 }
 
-.menu-item:hover {
-    background: linear-gradient(90deg, #eef2ff, #ffffff);
-    transform: translateX(5px);
+#cancelConvertBtn {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
 }
 
-.menu-item:hover .icon {
-    animation: iconBounce 0.5s ease;
-}
-
-@keyframes iconBounce {
-    0% { transform: translateX(0); }
-    30% { transform: translateX(5px); }
-    60% { transform: translateX(-2px); }
-    100% { transform: translateX(0); }
-}
-
-.menu-label {
-    position: relative;
-    transition: all 0.3s ease;
-}
-
-.menu-label:hover {
-    color: #4f46e5;
-    letter-spacing: 1px;
-}
-
-.menu-divider {
-    position: relative;
-    overflow: hidden;
-}
-
-.menu-divider::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, #4f46e5, transparent);
-    animation: dividerShine 3s ease-in-out infinite;
-}
-
-@keyframes dividerShine {
-    0% { left: -100%; }
-    50% { left: 100%; }
-    100% { left: 100%; }
-}
-
-#logoutBtn {
-    transition: all 0.3s ease;
-}
-
-#logoutBtn:hover {
-    background: linear-gradient(90deg, #fef2f2, #ffffff);
-    transform: translateX(5px);
-}
-
-#logoutBtn:hover .icon {
-    animation: logoutShake 0.5s ease;
-}
-
-@keyframes logoutShake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-3px); }
-    50% { transform: translateX(3px); }
-    75% { transform: translateX(-2px); }
-    100% { transform: translateX(0); }
+#cancelConvertBtn:hover {
+    background: #e5e7eb !important;
+    transform: translateY(-2px);
 }
 
 /* ========== NOTIFIKASI ========== */
@@ -1820,376 +1963,4 @@ body:has(.modal[style*="display: flex"]) {
     .content-area { padding: 12px; }
     .topbar-center { display: none; }
     .toggle-btn { display: block !important; }
-}
-
-/* ========== UNREAD PESAN STYLE ========== */
-.db-item.unread {
-    background: #eef2ff;
-    border-left: 3px solid #4f46e5;
-}
-
-/* ========== PERBAIKAN SIDEBAR - TIDAK RAPAT & ANIMASI GERAKAN ========== */
-
-/* Sidebar container */
-.sidebar {
-    width: 280px !important;
-    background: white !important;
-    border-right: 1px solid #e5e7eb !important;
-    position: fixed !important;
-    left: 0 !important;
-    top: 60px !important;
-    height: calc(100vh - 60px) !important;
-    overflow-y: auto !important;
-    z-index: 1000 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.05) !important;
-}
-
-.sidebar.active {
-    transform: translateX(0) !important;
-    animation: sidebarSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* Animasi sidebar slide in */
-@keyframes sidebarSlideIn {
-    from {
-        transform: translateX(-100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Header sidebar */
-.sidebar-header {
-    padding: 24px 20px !important;
-    border-bottom: 1px solid #eef2ff !important;
-    margin-bottom: 8px !important;
-}
-
-.sidebar-header h2 {
-    font-size: 22px !important;
-    font-weight: 700 !important;
-    color: #4f46e5 !important;
-    position: relative !important;
-    display: inline-block !important;
-    animation: logoGlow 2s ease-in-out infinite !important;
-    transition: all 0.3s ease !important;
-}
-
-.sidebar-header h2:hover {
-    transform: scale(1.05) rotate(-2deg) !important;
-    text-shadow: 0 0 15px rgba(79,70,229,0.5) !important;
-}
-
-@keyframes logoGlow {
-    0% {
-        text-shadow: 0 0 0px rgba(79,70,229,0);
-        letter-spacing: 0px;
-    }
-    50% {
-        text-shadow: 0 0 10px rgba(79,70,229,0.5);
-        letter-spacing: 1px;
-    }
-    100% {
-        text-shadow: 0 0 0px rgba(79,70,229,0);
-        letter-spacing: 0px;
-    }
-}
-
-/* Menu wrapper */
-.sidebar-menu {
-    padding: 8px 12px !important;
-}
-
-/* Menu label */
-.menu-label {
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    color: #9ca3af !important;
-    padding: 16px 12px 8px 12px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    transition: all 0.3s ease !important;
-}
-
-.menu-label:hover {
-    color: #4f46e5 !important;
-    letter-spacing: 1px !important;
-}
-
-/* Menu item */
-.menu-item {
-    padding: 12px 16px !important;
-    margin: 4px 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 14px !important;
-    cursor: pointer !important;
-    color: #4b5563 !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    border-radius: 12px !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    animation: slideInFromLeft 0.3s ease forwards !important;
-    opacity: 0;
-}
-
-/* Delay animasi menu item */
-.sidebar-menu .menu-item:nth-child(1) { animation-delay: 0.05s; }
-.sidebar-menu .menu-item:nth-child(2) { animation-delay: 0.1s; }
-.sidebar-menu .menu-item:nth-child(3) { animation-delay: 0.15s; }
-.sidebar-menu .menu-item:nth-child(4) { animation-delay: 0.2s; }
-.sidebar-menu .menu-item:nth-child(5) { animation-delay: 0.25s; }
-.sidebar-menu .menu-item:nth-child(6) { animation-delay: 0.3s; }
-.sidebar-menu .menu-item:nth-child(7) { animation-delay: 0.35s; }
-.sidebar-menu .menu-item:nth-child(8) { animation-delay: 0.4s; }
-.sidebar-menu .menu-item:nth-child(9) { animation-delay: 0.45s; }
-.sidebar-menu .menu-item:nth-child(10) { animation-delay: 0.5s; }
-.sidebar-menu .menu-item:nth-child(11) { animation-delay: 0.55s; }
-
-@keyframes slideInFromLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Hover efek menu item */
-.menu-item:hover {
-    background: linear-gradient(90deg, #eef2ff, #ffffff) !important;
-    transform: translateX(6px) !important;
-    color: #4f46e5 !important;
-}
-
-/* Icon hover bounce */
-.menu-item:hover .icon {
-    animation: iconBounce 0.5s ease !important;
-}
-
-@keyframes iconBounce {
-    0% { transform: translateX(0); }
-    30% { transform: translateX(5px); }
-    60% { transform: translateX(-2px); }
-    100% { transform: translateX(0); }
-}
-
-/* Icon style */
-.menu-item .icon {
-    font-size: 20px !important;
-    width: 28px !important;
-    text-align: center !important;
-}
-
-/* Aktif menu item */
-.menu-item.active {
-    background: #eef2ff !important;
-    color: #4f46e5 !important;
-    border-right: none !important;
-    position: relative !important;
-}
-
-.menu-item.active::before {
-    content: '' !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 10% !important;
-    height: 80% !important;
-    width: 3px !important;
-    background: #4f46e5 !important;
-    border-radius: 0 3px 3px 0 !important;
-}
-
-/* Menu divider */
-.menu-divider {
-    height: 1px !important;
-    background: #eef2ff !important;
-    margin: 12px 12px !important;
-    position: relative !important;
-    overflow: hidden !important;
-}
-
-.menu-divider::after {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(90deg, transparent, #4f46e5, transparent) !important;
-    animation: dividerShine 3s ease-in-out infinite !important;
-}
-
-@keyframes dividerShine {
-    0% { left: -100%; }
-    50% { left: 100%; }
-    100% { left: 100%; }
-}
-
-/* Border gradient pada sidebar saat aktif */
-.sidebar::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 0 !important;
-    right: 0 !important;
-    width: 3px !important;
-    height: 100% !important;
-    background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5) !important;
-    opacity: 0 !important;
-    transition: opacity 0.3s ease !important;
-}
-
-.sidebar.active::before {
-    opacity: 1 !important;
-    animation: borderGlow 2s ease-in-out infinite !important;
-}
-
-@keyframes borderGlow {
-    0% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
-    50% { background: linear-gradient(180deg, #8b5cf6, #4f46e5, #8b5cf6); }
-    100% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
-}
-
-/* Logout button khusus */
-#logoutBtn {
-    margin-top: 16px !important;
-    color: #ef4444 !important;
-}
-
-#logoutBtn:hover {
-    background: linear-gradient(90deg, #fef2f2, #ffffff) !important;
-    transform: translateX(6px) !important;
-}
-
-#logoutBtn:hover .icon {
-    animation: logoutShake 0.5s ease !important;
-}
-
-@keyframes logoutShake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-3px); }
-    50% { transform: translateX(3px); }
-    75% { transform: translateX(-2px); }
-    100% { transform: translateX(0); }
-}
-
-/* Sidebar scrollbar kustom */
-.sidebar::-webkit-scrollbar {
-    width: 4px !important;
-}
-
-.sidebar::-webkit-scrollbar-track {
-    background: #f1f1f1 !important;
-    border-radius: 10px !important;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-    background: #c7d2fe !important;
-    border-radius: 10px !important;
-    transition: all 0.3s ease !important;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-    background: #4f46e5 !important;
-    width: 6px !important;
-}
-
-/* Hover zone untuk buka sidebar */
-#hoverZone {
-    position: fixed !important;
-    left: 0 !important;
-    top: 60px !important;
-    width: 20px !important;
-    height: calc(100vh - 60px) !important;
-    z-index: 2000 !important;
-    background: transparent !important;
-    transition: all 0.2s ease !important;
-}
-
-#hoverZone:hover {
-    width: 30px !important;
-    background: linear-gradient(90deg, rgba(79,70,229,0.1), transparent) !important;
-}
-
-/* Toggle button animasi */
-.toggle-btn {
-    transition: all 0.3s ease !important;
-}
-
-.toggle-btn:hover {
-    transform: rotate(90deg) !important;
-    background: rgba(255,255,255,0.3) !important;
-}
-
-/* ========== ID AGENT STYLE ========== */
-.card-id {
-    font-size: 10px;
-    font-weight: 600;
-    color: #4f46e5;
-    background: #eef2ff;
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    margin-bottom: 6px;
-    letter-spacing: 0.5px;
-}
-
-.card-name {
-    font-weight: 600;
-    font-size: 12px;
-    margin-bottom: 4px;
-    color: #1f2937;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.download-example-btn {
-    width: 100%;
-    padding: 10px;
-    margin-top: 8px;
-    background: #10b981;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.download-example-btn:hover {
-    background: #059669;
-    transform: translateY(-2px);
-}
-
-/* Modal Konversi */
-#convertModal .modal-content {
-    max-width: 450px;
-}
-
-.confirm-convert-btn {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-.confirm-convert-btn:hover {
-    background: #4338ca !important;
-    transform: translateY(-2px);
-}
-
-#cancelConvertBtn {
-    background: #f3f4f6 !important;
-    color: #374151 !important;
-}
-
-#cancelConvertBtn:hover {
-    background: #e5e7eb !important;
-    transform: translateY(-2px);
 }
