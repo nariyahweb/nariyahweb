@@ -222,7 +222,7 @@ body {
 .orange-header { color: #c2410c; }
 .green-header { color: #15803d; }
 .red-header { color: #b91c1c; }
-.kanban-cards { min-height: 200px; }
+.kanban-cards { min-height: 200px; overflow-x: }
 .card-item {
     background: white; border-radius: 8px; padding: 6px 8px; margin-bottom: 5px;
     cursor: grab; border: 1px solid #e5e7eb; transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
@@ -446,3 +446,40 @@ body:has(.modal[style*="display: flex"]) { overflow: hidden !important; position
 @media (max-width: 1200px) { .kanban-board { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .charts-row { grid-template-columns: 1fr; } .import-grid { grid-template-columns: 1fr; } .broadcast-grid { grid-template-columns: 1fr; } }
 @media (max-width: 768px) { .boards-wrapper { flex-direction: column; } .kanban-board { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr; } .content-area { padding: 12px; } .topbar-center { display: none; } .toggle-btn { display: block !important; } }
+
+/* Perbaikan agar teks panjang pada kartu tidak keluar */
+.card-item {
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+/* Teks pada ID, nama, dan nomor telepon akan dipotong dengan ellipsis jika terlalu panjang */
+.card-id,
+.card-name,
+.card-phone span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+}
+
+/* Pastikan kolom kanban dapat menyusut */
+.kanban-column {
+    min-width: 0;
+    width: 100%;
+}
+
+.kanban-cards {
+    overflow-x: hidden;
+}
+
+/* Opsional: untuk layar yang lebih kecil, batasi lebar maksimum lebih ketat */
+@media (max-width: 768px) {
+    .card-phone span:first-child {
+        max-width: 80px;
+    }
+    .card-name {
+        max-width: 120px;
+    }
+}
