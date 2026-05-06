@@ -132,14 +132,20 @@ body {
     position: absolute;
     top: -8px;
     right: -10px;
-    background: #ef4444;
+    background: transparent;
     color: white;
     font-size: 10px;
     padding: 2px 6px;
     border-radius: 50%;
     min-width: 18px;
     text-align: center;
+    transition: background 0.2s;
 }
+
+.notif-icon .badge.has-notif {
+    background: #ef4444;
+}
+
 .profile-img { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 2px solid white; }
 
 /* Main Content */
