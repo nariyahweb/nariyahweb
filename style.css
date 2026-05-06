@@ -1964,3 +1964,10 @@ body:has(.modal[style*="display: flex"]) {
     .topbar-center { display: none; }
     .toggle-btn { display: block !important; }
 }
+
+/* Kartu dengan deadline hari ini */
+.card-item.deadline-today {
+    border: 2px solid #ef4444 !important;
+    background: #fff5f5;
+    box-shadow: 0 0 0 1px #ef4444;
+}
