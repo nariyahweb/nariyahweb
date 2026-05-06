@@ -1250,60 +1250,131 @@ function finishBroadcast() {
 
 // ========== KONVERSI MODAL FUNCTIONS ==========
 function showConvertToCustomerModal(prospekId) {
+    console.log("Membuka modal konversi untuk prospek ID:", prospekId);
     currentConvertProspekId = prospekId;
-    const today = new Date(), nextMonth = new Date(today);
+    
+    const today = new Date();
+    const nextMonth = new Date(today);
     nextMonth.setMonth(today.getMonth() + 1);
-    document.getElementById('convertFollowupDate').value = nextMonth.toISOString().split('T')[0];
-    document.getElementById('convertAgentId').value = '';
-    document.getElementById('convertModal').style.display = 'flex';
-    document.body.classList.add('modal-open');
+    const formattedDate = nextMonth.toISOString().split('T')[0];
+    
+    const dateInput = document.getElementById('convertFollowupDate');
+    const agentInput = document.getElementById('convertAgentId');
+    
+    if (dateInput) dateInput.value = formattedDate;
+    if (agentInput) agentInput.value = '';
+    
+    const modal = document.getElementById('convertModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+    } else {
+        console.error("Modal convertModal tidak ditemukan!");
+        alert("Error: Modal konversi tidak ditemukan. Silakan refresh halaman.");
+    }
 }
 
 function setupConvertModal() {
+    console.log("Setup Convert Modal dijalankan");
+    
     const confirmBtn = document.getElementById('confirmConvertBtn');
     const cancelBtn = document.getElementById('cancelConvertBtn');
     const modal = document.getElementById('convertModal');
     
+    if (!modal) {
+        console.log("Modal convertModal tidak ditemukan!");
+        return;
+    }
+    
+    // Tombol Konfirmasi
     if (confirmBtn) {
         const newConfirmBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-        newConfirmBtn.addEventListener('click', async function(e) {
-            e.preventDefault(); e.stopPropagation();
-            const agentId = document.getElementById('convertAgentId')?.value, followupDate = document.getElementById('convertFollowupDate')?.value;
-            if (!agentId) { showNotif('⚠️ ID Agent wajib diisi!', true); return; }
-            if (!followupDate) { showNotif('⚠️ Tanggal followup wajib diisi!', true); return; }
-            if (!currentConvertProspekId) { showNotif('⚠️ Error: Data prospek tidak ditemukan', true); return; }
-            if (!confirm(`⚠️ KONFIRMASI PEMINDAHAN\n\nID Agent: ${agentId}\nTanggal Followup: ${followupDate}\n\n✅ OK = Lanjutkan`)) return;
+        
+        newConfirmBtn.onclick = async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("Tombol Konfirmasi Pindah diklik");
+            
+            const agentId = document.getElementById('convertAgentId')?.value;
+            const followupDate = document.getElementById('convertFollowupDate')?.value;
+            
+            if (!agentId) {
+                alert('⚠️ ID Agent wajib diisi!');
+                return;
+            }
+            
+            if (!followupDate) {
+                alert('⚠️ Tanggal followup wajib diisi!');
+                return;
+            }
+            
+            if (!currentConvertProspekId) {
+                alert('⚠️ Error: Data prospek tidak ditemukan');
+                return;
+            }
+            
+            const confirmMove = confirm(`⚠️ KONFIRMASI PEMINDAHAN\n\nID Agent: ${agentId}\nTanggal Followup: ${followupDate}\n\n✅ OK = Lanjutkan`);
+            if (!confirmMove) return;
+            
             try {
                 showNotif('⏳ Memproses pemindahan...');
+                
                 const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
                 const prospekData = prospekDoc.data();
-                if (!prospekData) { showNotif('❌ Data prospek tidak ditemukan', true); return; }
-                await db.collection('customers').add({ agent_id: agentId, nama: prospekData.nama, hp: prospekData.hp, tanggal: followupDate, status: 'baru', apk: '', user_id: currentUser.uid, created_at: new Date().toISOString(), converted_from: 'prospek', original_prospek_id: currentConvertProspekId });
+                
+                if (!prospekData) {
+                    showNotif('❌ Data prospek tidak ditemukan', true);
+                    return;
+                }
+                
+                await db.collection('customers').add({
+                    agent_id: agentId,
+                    nama: prospekData.nama,
+                    hp: prospekData.hp,
+                    tanggal: followupDate,
+                    status: 'baru',
+                    apk: '',
+                    user_id: currentUser.uid,
+                    created_at: new Date().toISOString()
+                });
+                
                 await db.collection('prospek').doc(currentConvertProspekId).delete();
-                document.getElementById('convertModal').style.display = 'none';
+                
+                modal.style.display = 'none';
+                document.body.classList.remove('modal-open');
                 closeModal('detailModal');
+                
                 showNotif('✅ Berhasil dipindahkan ke Followup Agen!');
                 loadAllData();
-            } catch (error) { showNotif('❌ Gagal: ' + error.message, true); }
-        });
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotif('❌ Gagal: ' + error.message, true);
+            }
+        };
     }
     
+    // Tombol Batal
     if (cancelBtn) {
         const newCancelBtn = cancelBtn.cloneNode(true);
         cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-        newCancelBtn.addEventListener('click', function(e) {
-            e.preventDefault(); e.stopPropagation();
-            document.getElementById('convertModal').style.display = 'none';
+        
+        newCancelBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            modal.style.display = 'none';
             document.body.classList.remove('modal-open');
-        });
+        };
     }
     
-    if (modal) {
-        const newModal = modal.cloneNode(true);
-        modal.parentNode.replaceChild(newModal, modal);
-        newModal.addEventListener('click', function(e) { if (e.target === newModal) { newModal.style.display = 'none'; document.body.classList.remove('modal-open'); } });
-    }
+    // Klik di luar modal untuk menutup
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+    };
 }
 
 // ========== DOWNLOAD CONTOH FILE ==========
