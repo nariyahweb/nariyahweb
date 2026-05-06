@@ -120,8 +120,26 @@ body {
 @keyframes logoFloat { 0% { transform: translateY(0px); } 50% { transform: translateY(-2px); } 100% { transform: translateY(0px); } }
 .topbar-center { font-weight: 500; color: white; font-size: 16px; }
 .topbar-right { display: flex; align-items: center; gap: 20px; }
-.notif-icon { position: relative; cursor: pointer; font-size: 20px; color: white; }
-.notif-icon .badge { position: absolute; top: -6px; right: -10px; background: #ef4444; color: white; font-size: 10px; padding: 2px 6px; border-radius: 50%; }
+.notif-icon {
+    position: relative;
+    cursor: pointer;
+    font-size: 20px;
+    color: white;
+    margin: 0 4px;
+}
+
+.notif-icon .badge {
+    position: absolute;
+    top: -8px;
+    right: -10px;
+    background: #ef4444;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 50%;
+    min-width: 18px;
+    text-align: center;
+}
 .profile-img { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; object-fit: cover; border: 2px solid white; }
 
 /* Main Content */
