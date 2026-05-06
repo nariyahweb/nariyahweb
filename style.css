@@ -483,3 +483,16 @@ body:has(.modal[style*="display: flex"]) { overflow: hidden !important; position
         max-width: 120px;
     }
 }
+
+.pending-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 8px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+.pending-item input[type="text"] { flex: 1; }
+.pending-item input[type="checkbox"] { width: 20px; height: 20px; }
+.delete-pending-item { background: none; border: none; cursor: pointer; font-size: 16px; }
