@@ -508,6 +508,12 @@ async function updateDeadlineBadge() {
         const prospekOverdue = await db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today).get();
         const deadlineCount = customerOverdue.size + prospekOverdue.size;
         badge.innerText = deadlineCount;
+        // Warna badge hanya jika ada notifikasi
+        if (deadlineCount > 0) {
+            badge.classList.add('has-notif');
+        } else {
+            badge.classList.remove('has-notif');
+        }
         console.log(`📅 Deadline terlewat: ${deadlineCount}`);
     } catch(e) { console.error(e); }
 }
@@ -520,13 +526,14 @@ async function updatePesanBadge() {
         const pesanSnapshot = await db.collection('messages').where('to_id', '==', currentUser.uid).where('is_read', '==', false).get();
         const pesanCount = pesanSnapshot.size;
         badge.innerText = pesanCount;
+        // Warna badge hanya jika ada notifikasi
+        if (pesanCount > 0) {
+            badge.classList.add('has-notif');
+        } else {
+            badge.classList.remove('has-notif');
+        }
         console.log(`💬 Pesan belum dibaca: ${pesanCount}`);
     } catch(e) { console.error(e); }
-}
-
-async function updateAllBadges() {
-    await updateDeadlineBadge();
-    await updatePesanBadge();
 }
 
 // ========== EVENT LISTENER NOTIFIKASI ==========
