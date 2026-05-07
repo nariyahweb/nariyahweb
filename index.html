@@ -78,14 +78,21 @@
             <div class="content-area">
                 <!-- DASHBOARD PAGE -->
                 <div id="dashboardPage" class="page-content">
+                    <!-- STATS GRID -->
                     <div class="stats-grid">
                         <div class="stat-card"><div class="stat-info"><h4>Total Data</h4><div class="value" id="totalData">0</div><small>Semua Data</small></div><div class="stat-icon bg-purple">👥</div></div>
                         <div class="stat-card"><div class="stat-info"><h4>Closing</h4><div class="value" id="closingTotal">0</div><small>Data Closing</small></div><div class="stat-icon bg-green">✔</div></div>
                         <div class="stat-card"><div class="stat-info"><h4>Rate Closing</h4><div class="value" id="rateClosing">0%</div><small>Dari Total Data</small></div><div class="stat-icon bg-blue">📊</div></div>
                         <div class="stat-card"><div class="stat-info"><h4>Prospek Aktif</h4><div class="value" id="activeProspek">0</div><small>Dalam Proses</small></div><div class="stat-icon bg-orange">👤</div></div>
                     </div>
-                    
-                    <!-- TWO COLUMN LAYOUT FOR BOARDS -->
+
+                    <!-- CHARTS ROW (DIAGRAM) -->
+                    <div class="charts-row">
+                        <div class="chart-card"><h3>Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
+                        <div class="chart-card"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
+                    </div>
+
+                    <!-- DASHBOARD TWO COLUMNS (Followup & Prospek) -->
                     <div class="dashboard-two-columns">
                         <!-- LEFT COLUMN: Followup Agen -->
                         <div class="dashboard-column">
