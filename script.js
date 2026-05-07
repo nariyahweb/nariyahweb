@@ -979,6 +979,7 @@ document.getElementById('deleteSelectedNomorSalah')?.addEventListener('click', d
 document.getElementById('selectAllCommitment')?.addEventListener('click', () => {});
 document.getElementById('deleteSelectedCommitment')?.addEventListener('click', deleteSelectedCommitment);
 
+// ========== CHARTS ==========
 function updateChartCustomer(total, closing, pending, followup) {
     const ctx = document.getElementById('chartCustomer');
     if (!ctx) return;
@@ -986,8 +987,54 @@ function updateChartCustomer(total, closing, pending, followup) {
     const baru = total - (closing + pending + followup);
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: [closing, pending, followup, baru], backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) { const data = chart.data, dataset = data.datasets[0], total = dataset.data.reduce((a,b)=>a+b,0); return data.labels.map((label,i) => ({ text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i]/total)*100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i })); } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } }
+        data: {
+            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
+            datasets: [{
+                data: [closing, pending, followup, baru],
+                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                borderWidth: 0,
+                hoverOffset: 15,
+                cutout: '65%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 12,
+                        font: { size: 11 },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            const dataset = data.datasets[0];
+                            const total = dataset.data.reduce((a, b) => a + b, 0);
+                            return data.labels.map((label, i) => ({
+                                text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i] / total) * 100).toFixed(1) : 0}%)`,
+                                fillStyle: dataset.backgroundColor[i],
+                                strokeStyle: dataset.backgroundColor[i],
+                                lineWidth: 0,
+                                hidden: false,
+                                index: i
+                            }));
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            return `${label}: ${value} (${total ? ((value / total) * 100).toFixed(1) : 0}%)`;
+                        }
+                    }
+                }
+            }
+        }
     });
 }
 
@@ -999,14 +1046,61 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'], datasets: [{ data: dataArr, backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) { const data = chart.data, dataset = data.datasets[0], total = dataset.data.reduce((a,b)=>a+b,0); return data.labels.map((label,i) => ({ text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i]/total)*100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i })); } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } }
+        data: {
+            labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'],
+            datasets: [{
+                data: dataArr,
+                backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 15,
+                cutout: '65%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 12,
+                        font: { size: 11 },
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            const dataset = data.datasets[0];
+                            const total = dataset.data.reduce((a, b) => a + b, 0);
+                            return data.labels.map((label, i) => ({
+                                text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i] / total) * 100).toFixed(1) : 0}%)`,
+                                fillStyle: dataset.backgroundColor[i],
+                                strokeStyle: dataset.backgroundColor[i],
+                                lineWidth: 0,
+                                hidden: false,
+                                index: i
+                            }));
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            return `${label}: ${value} (${total ? ((value / total) * 100).toFixed(1) : 0}%)`;
+                        }
+                    }
+                }
+            }
+        }
     });
 }
 
 function loadAllData() {
     if (!currentUser) return;
     const today = new Date().toISOString().split('T')[0];
+    
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
@@ -1034,6 +1128,7 @@ function loadAllData() {
         document.getElementById('closingTotal').innerText = closing;
         document.getElementById('activeProspek').innerText = total - closing;
         document.getElementById('rateClosing').innerText = total ? Math.round((closing/total)*100)+'%' : '0%';
+        
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
@@ -1043,15 +1138,25 @@ function loadAllData() {
                     let deadlineClass = '';
                     if (isOverdue) deadlineClass = 'deadline-overdue';
                     else if (isToday) deadlineClass = 'deadline-today';
-                    return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}" data-deadline="${item.tanggal || ''}"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
+                    return `
+                        <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}" data-deadline="${item.tanggal || ''}">
+                            <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                            <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                            <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                            <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                        </div>
+                    `;
                 }).join('');
-                container.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); });
+                container.querySelectorAll('.card-item').forEach(card => {
+                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
+                });
             }
         }
         updateChartCustomer(total, closing, pending, followup);
         updateAllBadges();
         renderFullFollowupKanban();
     });
+    
     db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let baru = 0, dihubungi = 0, tertarik = 0, tidak = 0;
         const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
@@ -1082,9 +1187,17 @@ function loadAllData() {
                     let deadlineClass = '';
                     if (isOverdue) deadlineClass = 'deadline-overdue';
                     else if (isToday) deadlineClass = 'deadline-today';
-                    return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${item.status}" data-deadline="${item.deadline || ''}"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
+                    return `
+                        <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${item.status}" data-deadline="${item.deadline || ''}">
+                            <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                            <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                            <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                        </div>
+                    `;
                 }).join('');
-                container.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); }); });
+                container.querySelectorAll('.card-item').forEach(card => {
+                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
+                });
             }
         }
         updateChartProspek(baru, dihubungi, tertarik, tidak);
