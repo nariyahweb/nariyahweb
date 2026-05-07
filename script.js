@@ -19,11 +19,9 @@ let currentPendingId = null;
 let pendingItems = [];
 let currentProspekId = null;
 
-// Data untuk full page
 let customersData = [];
 let prospekData = [];
 
-// ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
     const notif = document.createElement('div');
     notif.textContent = msg;
@@ -71,7 +69,6 @@ function getStatusBadge(status) {
     return `<span class="status-badge ${className}">${displayName}</span>`;
 }
 
-// ========== SIDEBAR ==========
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const hoverZone = document.getElementById('hoverZone');
@@ -104,7 +101,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setupConvertModal();
 });
 
-// ========== TOGGLE PASSWORD ==========
 const togglePasswordBtn = document.getElementById('togglePasswordBtn');
 const loginPassword = document.getElementById('loginPassword');
 if (togglePasswordBtn && loginPassword) {
@@ -114,7 +110,6 @@ if (togglePasswordBtn && loginPassword) {
     });
 }
 
-// ========== LOGIN ==========
 const loginBtn = document.getElementById('loginBtn');
 if (loginBtn) {
     loginBtn.addEventListener('click', function() {
@@ -131,11 +126,9 @@ if (loginBtn) {
     });
 }
 
-// ========== LOGOUT ==========
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) logoutBtn.addEventListener('click', () => auth.signOut());
 
-// ========== NOTIFIKASI ==========
 async function updateDeadlineBadge() {
     if (!currentUser) return;
     const badge = document.getElementById('deadlineCount');
@@ -169,7 +162,6 @@ async function updateAllBadges() {
     await updatePesanBadge();
 }
 
-// ========== AUTH STATE ==========
 auth.onAuthStateChanged(async user => {
     const loginPage = document.getElementById('loginPage');
     const app = document.getElementById('app');
@@ -202,7 +194,6 @@ auth.onAuthStateChanged(async user => {
     }
 });
 
-// ========== PAGE NAVIGATION ==========
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
@@ -226,11 +217,9 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     });
 });
 
-// ========== CLOSE MODALS ==========
 document.querySelectorAll('.closeModalBtn').forEach(btn => btn.addEventListener('click', () => closeModal(btn.dataset.modal)));
 document.querySelectorAll('.modal').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); }));
 
-// ========== PROFILE ==========
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
     profileImg.addEventListener('click', () => {
@@ -299,7 +288,6 @@ formatPhoneInput(document.getElementById('prospekPhone'));
 formatPhoneInput(document.getElementById('profilePhone'));
 document.getElementById('previewPhotoModal')?.addEventListener('click', (e) => { if (e.target === document.getElementById('previewPhotoModal')) closeModal('previewPhotoModal'); });
 
-// ========== CUSTOMER CRUD ==========
 document.getElementById('addCustomerBtn')?.addEventListener('click', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('customerDate').value = today;
@@ -319,7 +307,6 @@ document.getElementById('saveCustomerBtn')?.addEventListener('click', () => {
         .catch(e => showNotif('Error: ' + e.message, true));
 });
 
-// ========== PROSPEK CRUD ==========
 document.getElementById('addProspekBtn')?.addEventListener('click', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('prospekDeadline').value = today;
@@ -338,7 +325,6 @@ document.getElementById('saveProspekBtn')?.addEventListener('click', () => {
         .catch(e => showNotif('Error: ' + e.message, true));
 });
 
-// ========== DETAIL MODAL ==========
 function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }
 
 function openDetailCustomer(id) {
@@ -455,7 +441,6 @@ window.updateProspekStatus = async function(id, newStatus) {
 window.deleteCustomer = function(id) { if (confirm('Yakin hapus customer ini?')) { db.collection('customers').doc(id).delete(); closeModal('detailModal'); showNotif('Data dihapus'); updateAllBadges(); } };
 window.deleteProspek = function(id) { if (confirm('Yakin hapus prospek ini?')) { db.collection('prospek').doc(id).delete(); closeModal('detailModal'); showNotif('Data dihapus'); updateAllBadges(); } };
 
-// ========== FOLLOWUP CONFIRMATION ==========
 function openFollowupConfirm(id) {
     currentPendingId = id;
     document.getElementById('followup_terkirim').checked = false;
@@ -489,7 +474,6 @@ function openFollowupConfirm(id) {
     };
 }
 
-// ========== PENDING MODAL DINAMIS ==========
 function openPendingModal(id) {
     currentPendingId = id;
     db.collection('customers').doc(id).get().then(doc => {
@@ -539,7 +523,6 @@ function updatePendingCloseButton() {
     }
 }
 
-// ========== PROSPEK DIHUBUNGI KUESIONER ==========
 function openProspekDihubungiModal(id) {
     currentProspekId = id;
     const fields = ['prospek_aplikasi', 'prospek_domisili', 'prospek_transaksi', 'prospek_deposit', 'prospek_tertarik', 'prospek_penawaran'];
@@ -575,7 +558,6 @@ document.getElementById('prospekDihubungiSave')?.addEventListener('click', async
     closeModal('prospekDihubungiModal');
 });
 
-// ========== CLOSING & TIDAK TERTARIK ==========
 async function saveToClosingDB(id, data) { 
     try { 
         await db.collection('db_closing').add({ 
@@ -647,7 +629,6 @@ window.saveToClosingNow = async function(id) {
     }
 };
 
-// ========== KONVERSI PROSPEK TERTARIK KE CUSTOMER ==========
 window.showConvertToCustomerModal = async function(prospekId) {
     const doc = await db.collection('prospek').doc(prospekId).get();
     const data = doc.data();
@@ -721,17 +702,9 @@ function setupConvertModal() {
     modal.onclick = function(e) { if (e.target === modal) { modal.style.display = 'none'; document.body.classList.remove('modal-open'); } };
 }
 
-// ========== FULL PAGE KANBAN (tanpa drag drop) ==========
 function renderFullFollowupKanban() {
     const today = new Date().toISOString().split('T')[0];
-    
-    const lists = {
-        baru: [],
-        followup: [],
-        pending: [],
-        closing: []
-    };
-    
+    const lists = { baru: [], followup: [], pending: [], closing: [] };
     customersData.forEach(item => {
         const status = item.status || 'baru';
         if (status === 'closing') lists.closing.push(item);
@@ -739,17 +712,14 @@ function renderFullFollowupKanban() {
         else if (status === 'followup') lists.followup.push(item);
         else lists.baru.push(item);
     });
-    
     lists.baru.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
     lists.followup.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
     lists.pending.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
     lists.closing.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
-    
     document.getElementById('fullCountBaru').innerText = lists.baru.length;
     document.getElementById('fullCountFollowup').innerText = lists.followup.length;
     document.getElementById('fullCountPending').innerText = lists.pending.length;
     document.getElementById('fullCountClosing').innerText = lists.closing.length;
-    
     const baruContainer = document.getElementById('fullBaruList');
     if (baruContainer) {
         baruContainer.innerHTML = lists.baru.map(item => {
@@ -758,20 +728,10 @@ function renderFullFollowupKanban() {
             let deadlineClass = '';
             if (isOverdue) deadlineClass = 'deadline-overdue';
             else if (isToday) deadlineClass = 'deadline-today';
-            return `
-                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru">
-                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                </div>
-            `;
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
         }).join('');
-        baruContainer.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
-        });
+        baruContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); });
     }
-    
     const followupContainer = document.getElementById('fullFollowupList');
     if (followupContainer) {
         followupContainer.innerHTML = lists.followup.map(item => {
@@ -780,20 +740,10 @@ function renderFullFollowupKanban() {
             let deadlineClass = '';
             if (isOverdue) deadlineClass = 'deadline-overdue';
             else if (isToday) deadlineClass = 'deadline-today';
-            return `
-                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup">
-                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                </div>
-            `;
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
         }).join('');
-        followupContainer.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
-        });
+        followupContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); });
     }
-    
     const pendingContainer = document.getElementById('fullPendingList');
     if (pendingContainer) {
         pendingContainer.innerHTML = lists.pending.map(item => {
@@ -802,20 +752,10 @@ function renderFullFollowupKanban() {
             let deadlineClass = '';
             if (isOverdue) deadlineClass = 'deadline-overdue';
             else if (isToday) deadlineClass = 'deadline-today';
-            return `
-                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending">
-                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                </div>
-            `;
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
         }).join('');
-        pendingContainer.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
-        });
+        pendingContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); });
     }
-    
     const closingContainer = document.getElementById('fullClosingList');
     if (closingContainer) {
         closingContainer.innerHTML = lists.closing.map(item => {
@@ -824,31 +764,15 @@ function renderFullFollowupKanban() {
             let deadlineClass = '';
             if (isOverdue) deadlineClass = 'deadline-overdue';
             else if (isToday) deadlineClass = 'deadline-today';
-            return `
-                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing">
-                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                </div>
-            `;
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
         }).join('');
-        closingContainer.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
-        });
+        closingContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); });
     }
 }
 
 function renderFullProspekKanban() {
     const today = new Date().toISOString().split('T')[0];
-    
-    const lists = {
-        prospekBaru: [],
-        prospekDihubungi: [],
-        prospekTertarik: [],
-        prospekTidak: []
-    };
-    
+    const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
     prospekData.forEach(item => {
         const status = item.status || 'Baru';
         if (status === 'Baru') lists.prospekBaru.push(item);
@@ -856,17 +780,14 @@ function renderFullProspekKanban() {
         else if (status === 'Tertarik') lists.prospekTertarik.push(item);
         else lists.prospekTidak.push(item);
     });
-    
     lists.prospekBaru.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
     lists.prospekDihubungi.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
     lists.prospekTertarik.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
     lists.prospekTidak.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
-    
     document.getElementById('fullCountProspekBaru').innerText = lists.prospekBaru.length;
     document.getElementById('fullCountDihubungi').innerText = lists.prospekDihubungi.length;
     document.getElementById('fullCountTertarik').innerText = lists.prospekTertarik.length;
     document.getElementById('fullCountTidakTertarik').innerText = lists.prospekTidak.length;
-    
     const baruContainer = document.getElementById('fullProspekBaruList');
     if (baruContainer) {
         baruContainer.innerHTML = lists.prospekBaru.map(item => {
@@ -875,19 +796,10 @@ function renderFullProspekKanban() {
             let deadlineClass = '';
             if (isOverdue) deadlineClass = 'deadline-overdue';
             else if (isToday) deadlineClass = 'deadline-today';
-            return `
-                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Baru">
-                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                    <div class="card-deadline">📅 ${item.deadline || '-'}</div>
-                </div>
-            `;
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Baru"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
         }).join('');
-        baruContainer.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
-        });
+        baruContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); }); });
     }
-    
     const dihubungiContainer = document.getElementById('fullProspekDihubungiList');
     if (dihubungiContainer) {
         dihubungiContainer.innerHTML = lists.prospekDihubungi.map(item => {
@@ -896,19 +808,10 @@ function renderFullProspekKanban() {
             let deadlineClass = '';
             if (isOverdue) deadlineClass = 'deadline-overdue';
             else if (isToday) deadlineClass = 'deadline-today';
-            return `
-                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Sudah Dihubungi">
-                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                    <div class="card-deadline">📅 ${item.deadline || '-'}</div>
-                </div>
-            `;
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Sudah Dihubungi"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
         }).join('');
-        dihubungiContainer.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
-        });
+        dihubungiContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); }); });
     }
-    
     const tertarikContainer = document.getElementById('fullProspekTertarikList');
     if (tertarikContainer) {
         tertarikContainer.innerHTML = lists.prospekTertarik.map(item => {
@@ -917,19 +820,10 @@ function renderFullProspekKanban() {
             let deadlineClass = '';
             if (isOverdue) deadlineClass = 'deadline-overdue';
             else if (isToday) deadlineClass = 'deadline-today';
-            return `
-                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tertarik">
-                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                    <div class="card-deadline">📅 ${item.deadline || '-'}</div>
-                </div>
-            `;
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tertarik"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
         }).join('');
-        tertarikContainer.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
-        });
+        tertarikContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); }); });
     }
-    
     const tidakContainer = document.getElementById('fullProspekTidakList');
     if (tidakContainer) {
         tidakContainer.innerHTML = lists.prospekTidak.map(item => {
@@ -938,21 +832,12 @@ function renderFullProspekKanban() {
             let deadlineClass = '';
             if (isOverdue) deadlineClass = 'deadline-overdue';
             else if (isToday) deadlineClass = 'deadline-today';
-            return `
-                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tidak Tertarik">
-                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                    <div class="card-deadline">📅 ${item.deadline || '-'}</div>
-                </div>
-            `;
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tidak Tertarik"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
         }).join('');
-        tidakContainer.querySelectorAll('.card-item').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
-        });
+        tidakContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); }); });
     }
 }
 
-// Tombol tambah data di full page
 document.getElementById('addCustomerFullBtn')?.addEventListener('click', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('customerDate').value = today;
@@ -964,12 +849,10 @@ document.getElementById('addProspekFullBtn')?.addEventListener('click', () => {
     document.getElementById('prospekModal').style.display = 'flex';
 });
 
-// ========== DRAG AND DROP (DIHAPUS - TIDAK ADA FUNGSI) ==========
 function initDragAndDrop() {
     console.log("Drag and drop disabled");
 }
 
-// ========== DATABASE ARCHIVES ==========
 let selectedClosingIds = new Map(), selectedTidakIds = new Map(), selectedNomorSalahIds = new Map(), selectedCommitmentIds = new Map();
 
 function loadDBClosing() {
@@ -1096,7 +979,6 @@ document.getElementById('deleteSelectedNomorSalah')?.addEventListener('click', d
 document.getElementById('selectAllCommitment')?.addEventListener('click', () => {});
 document.getElementById('deleteSelectedCommitment')?.addEventListener('click', deleteSelectedCommitment);
 
-// ========== CHARTS ==========
 function updateChartCustomer(total, closing, pending, followup) {
     const ctx = document.getElementById('chartCustomer');
     if (!ctx) return;
@@ -1122,11 +1004,9 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     });
 }
 
-// ========== LOAD ALL DATA ==========
 function loadAllData() {
     if (!currentUser) return;
     const today = new Date().toISOString().split('T')[0];
-    
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
@@ -1154,7 +1034,6 @@ function loadAllData() {
         document.getElementById('closingTotal').innerText = closing;
         document.getElementById('activeProspek').innerText = total - closing;
         document.getElementById('rateClosing').innerText = total ? Math.round((closing/total)*100)+'%' : '0%';
-        
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
@@ -1164,25 +1043,15 @@ function loadAllData() {
                     let deadlineClass = '';
                     if (isOverdue) deadlineClass = 'deadline-overdue';
                     else if (isToday) deadlineClass = 'deadline-today';
-                    return `
-                        <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}" data-deadline="${item.tanggal || ''}">
-                            <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                            <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                            <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                            <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                        </div>
-                    `;
+                    return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}" data-deadline="${item.tanggal || ''}"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
                 }).join('');
-                container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
-                });
+                container.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); });
             }
         }
         updateChartCustomer(total, closing, pending, followup);
         updateAllBadges();
         renderFullFollowupKanban();
     });
-    
     db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let baru = 0, dihubungi = 0, tertarik = 0, tidak = 0;
         const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
@@ -1213,17 +1082,9 @@ function loadAllData() {
                     let deadlineClass = '';
                     if (isOverdue) deadlineClass = 'deadline-overdue';
                     else if (isToday) deadlineClass = 'deadline-today';
-                    return `
-                        <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${item.status}" data-deadline="${item.deadline || ''}">
-                            <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                            <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                            <div class="card-deadline">📅 ${item.deadline || '-'}</div>
-                        </div>
-                    `;
+                    return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${item.status}" data-deadline="${item.deadline || ''}"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
                 }).join('');
-                container.querySelectorAll('.card-item').forEach(card => {
-                    card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
-                });
+                container.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); }); });
             }
         }
         updateChartProspek(baru, dihubungi, tertarik, tidak);
@@ -1232,7 +1093,6 @@ function loadAllData() {
     });
 }
 
-// ========== REMINDER FUNCTIONS ==========
 async function loadReminders() { 
     try { 
         const snapshot = await db.collection('reminders').where('user_id', '==', currentUser.uid).get(); 
@@ -1258,19 +1118,12 @@ window.deleteReminder = async function(id) {
 };
 
 document.getElementById('addReminderBtn')?.addEventListener('click', () => document.getElementById('reminderModal').style.display = 'flex');
-
 document.getElementById('saveReminderBtn')?.addEventListener('click', async () => { 
     const title = document.getElementById('reminderTitle').value; 
     const description = document.getElementById('reminderDesc').value; 
     const datetime = document.getElementById('reminderDateTime').value; 
     if (!title) { showNotif('Judul wajib diisi', true); return; } 
-    await db.collection('reminders').add({ 
-        title, 
-        description: description || '', 
-        datetime: datetime || null, 
-        user_id: currentUser.uid, 
-        created_at: new Date().toISOString() 
-    }); 
+    await db.collection('reminders').add({ title, description: description || '', datetime: datetime || null, user_id: currentUser.uid, created_at: new Date().toISOString() }); 
     closeModal('reminderModal'); 
     document.getElementById('reminderTitle').value = ''; 
     document.getElementById('reminderDesc').value = ''; 
@@ -1279,7 +1132,6 @@ document.getElementById('saveReminderBtn')?.addEventListener('click', async () =
     loadReminders(); 
 });
 
-// ========== PESAN FUNCTIONS ==========
 async function loadUsersForSelect() { 
     const snapshot = await db.collection('users').get(); 
     const select = document.getElementById('pesanTo'); 
@@ -1331,22 +1183,12 @@ window.deletePesan = async function(id) {
     } 
 };
 
-document.getElementById('addPesanBtn')?.addEventListener('click', async () => { 
-    await loadUsersForSelect(); 
-    document.getElementById('pesanModal').style.display = 'flex'; 
-});
-
+document.getElementById('addPesanBtn')?.addEventListener('click', async () => { await loadUsersForSelect(); document.getElementById('pesanModal').style.display = 'flex'; });
 document.getElementById('savePesanBtn')?.addEventListener('click', async () => { 
     const toId = document.getElementById('pesanTo').value; 
     const message = document.getElementById('pesanMessage').value; 
     if (!toId || !message) { showNotif('Lengkapi data!', true); return; } 
-    await db.collection('messages').add({ 
-        from_id: currentUser.uid, 
-        to_id: toId, 
-        message, 
-        is_read: false, 
-        created_at: new Date().toISOString() 
-    }); 
+    await db.collection('messages').add({ from_id: currentUser.uid, to_id: toId, message, is_read: false, created_at: new Date().toISOString() }); 
     closeModal('pesanModal'); 
     document.getElementById('pesanTo').value = ''; 
     document.getElementById('pesanMessage').value = ''; 
@@ -1354,7 +1196,6 @@ document.getElementById('savePesanBtn')?.addEventListener('click', async () => {
     updateAllBadges(); 
 });
 
-// ========== BROADCAST WHATSAPP FUNCTIONS ==========
 let currentNumbers = [], currentBroadcastIndex = 0, broadcastNumbers = [], broadcastMessageTemplate = '', isBroadcasting = false, broadcastStatus = [];
 
 function initBroadcast() {
@@ -1468,7 +1309,6 @@ function finishBroadcast() {
     isBroadcasting = false; document.getElementById('broadcastPanel').style.display = 'none'; broadcastStatus = [];
 }
 
-// ========== NOTIFIKASI HEADER EVENT ==========
 const deadlineNotifBtn = document.getElementById('deadlineNotifBtn');
 if (deadlineNotifBtn) {
     deadlineNotifBtn.addEventListener('click', async () => {
@@ -1495,7 +1335,6 @@ if (pesanNotifBtn) {
     });
 }
 
-// ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
 if (dropZone) dropZone.addEventListener('click', () => excelFileInput?.click());
@@ -1540,7 +1379,6 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
     reader.readAsArrayBuffer(file);
 });
 
-// ========== DOWNLOAD CONTOH FILE ==========
 document.getElementById('downloadCustomerExample')?.addEventListener('click', () => {
     const data = [{ agent_id: 'AG-001', nama: 'Budi Santoso', hp: '6281234567890', apk: 'GNP', deadline: new Date().toISOString().split('T')[0] }];
     const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Customer'); XLSX.writeFile(wb, 'contoh_customer.xlsx');
