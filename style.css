@@ -485,11 +485,26 @@ body {
     display: flex;
     gap: 20px;
     flex-wrap: wrap;
+    align-items: stretch;
 }
 
 .dashboard-column {
     flex: 1;
-    min-width: 0; /* allow flex shrinking */
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Pastikan board section memiliki tinggi yang sama dalam satu kolom */
+.dashboard-column .board-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Kanban container dalam board section */
+.dashboard-column .kanban-board {
+    flex: 1;
 }
 
 /* Responsive: stack on mobile */
@@ -648,10 +663,10 @@ body {
 }
 
 /* ========== DASHBOARD KANBAN ========== */
-/* Grid 4 kolom dengan lebar minimal 120px, tidak overflow horizontal */
+/* Grid 4 kolom dengan lebar minimal, tidak overflow horizontal */
 .kanban-board {
     display: grid !important;
-    grid-template-columns: repeat(4, minmax(120px, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(130px, 1fr)) !important;
     gap: 12px !important;
     width: 100% !important;
     overflow-x: visible !important;
@@ -665,7 +680,6 @@ body {
     padding: 16px;
     border: 1px solid #e5e7eb;
     transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-    height: 100%;
     overflow-x: visible !important;
 }
 
@@ -681,6 +695,8 @@ body {
     margin-bottom: 16px;
     padding-bottom: 12px;
     border-bottom: 2px solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .board-header h3 {
@@ -699,6 +715,7 @@ body {
     font-size: 12px;
     font-weight: 500;
     transition: all 0.2s ease;
+    white-space: nowrap;
 }
 
 .add-btn:hover {
@@ -711,8 +728,10 @@ body {
 .kanban-board .kanban-column {
     border-radius: 12px;
     padding: 10px;
-    min-width: 0; /* penting agar grid bisa mengecil */
+    min-width: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .kanban-board .kanban-column[data-status="baru"],
@@ -732,6 +751,7 @@ body {
     margin-bottom: 8px;
     font-weight: 700;
     font-size: 11px;
+    flex-shrink: 0;
 }
 
 .kanban-board .column-header .count {
@@ -749,20 +769,21 @@ body {
 
 .kanban-board .kanban-cards {
     overflow-x: visible;
+    overflow-y: auto;
+    flex: 1;
     min-height: 200px;
 }
 
-/* Card item untuk dashboard */
+/* Card item untuk dashboard - semua dalam satu baris */
 .kanban-board .card-item {
     background: white;
     border-radius: 8px;
-    padding: 6px 8px;
-    margin-bottom: 5px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
     cursor: pointer;
     border: 1px solid #e5e7eb;
     transition: all 0.2s;
     overflow: hidden;
-    word-break: break-word; /* mencegah teks panjang keluar */
 }
 
 .kanban-board .card-item:hover {
@@ -771,6 +792,7 @@ body {
     border-color: #c7d2fe;
 }
 
+/* ID Agent - satu baris dengan potongan */
 .kanban-board .card-id {
     font-size: 9px;
     font-weight: 600;
@@ -780,50 +802,58 @@ body {
     padding: 2px 6px;
     border-radius: 12px;
     margin-bottom: 4px;
+    max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 100%;
 }
 
+/* Nama - satu baris dengan potongan */
 .kanban-board .card-name {
     font-size: 11px;
     font-weight: 600;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     color: #1f2937;
-    overflow-wrap: break-word;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: help;
 }
 
+/* Nomor WhatsApp - satu baris dengan ikon WA di samping */
 .kanban-board .card-phone {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 6px;
     font-size: 9px;
     color: #6b7280;
-    overflow-wrap: break-word;
 }
 
 .kanban-board .card-phone span:first-child {
-    overflow-wrap: break-word;
-    word-break: break-all;
-    max-width: calc(100% - 24px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
     cursor: help;
 }
 
 .kanban-board .whatsapp-icon {
     cursor: pointer;
-    font-size: 10px;
+    font-size: 11px;
     color: #25D366;
     flex-shrink: 0;
 }
 
+/* Deadline - satu baris */
 .kanban-board .card-deadline {
     font-size: 8px;
     color: #9ca3af;
     margin-top: 4px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ========== FULL PAGE KANBAN ========== */
@@ -872,7 +902,7 @@ body {
 
 .kanban-board-full {
     display: grid;
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
     gap: 16px;
     width: 100%;
     overflow-x: visible;
@@ -883,6 +913,8 @@ body {
     padding: 12px;
     min-width: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .kanban-board-full .kanban-column[data-status="baru"],
@@ -902,6 +934,7 @@ body {
     margin-bottom: 12px;
     font-weight: 700;
     font-size: 13px;
+    flex-shrink: 0;
 }
 
 .kanban-board-full .column-header .count {
@@ -912,6 +945,7 @@ body {
 }
 
 .kanban-board-full .kanban-cards {
+    flex: 1;
     min-height: 400px;
     max-height: calc(100vh - 250px);
     overflow-y: auto;
@@ -927,7 +961,6 @@ body {
     border: 1px solid #e5e7eb;
     transition: all 0.2s;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    word-break: break-word;
 }
 
 .kanban-board-full .card-item:hover {
@@ -954,10 +987,11 @@ body {
 .kanban-board-full .card-name {
     font-size: 13px;
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     color: #1f2937;
-    overflow-wrap: break-word;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: help;
 }
 
@@ -965,21 +999,23 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     font-size: 11px;
     color: #6b7280;
-    overflow-wrap: break-word;
 }
 
 .kanban-board-full .card-phone span:first-child {
-    overflow-wrap: break-word;
-    word-break: break-all;
-    max-width: calc(100% - 28px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
     cursor: help;
 }
 
 .kanban-board-full .whatsapp-icon {
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     color: #25D366;
     flex-shrink: 0;
 }
@@ -988,6 +1024,9 @@ body {
     font-size: 10px;
     color: #9ca3af;
     margin-top: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Deadline styling untuk kedua kanban */
@@ -1034,14 +1073,6 @@ body {
     border: none;
     cursor: pointer;
     font-size: 16px;
-}
-
-/* ========== BOARDS WRAPPER (untuk kompatibilitas) ========== */
-.boards-wrapper {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
 }
 
 /* ========== IMPORT SECTION ========== */
@@ -2175,7 +2206,7 @@ body:has(.modal[style*="display: flex"]) {
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1200px) {
     .kanban-board-full {
-        grid-template-columns: repeat(2, minmax(120px, 1fr));
+        grid-template-columns: repeat(2, minmax(150px, 1fr));
     }
 }
 
@@ -2207,6 +2238,11 @@ body:has(.modal[style*="display: flex"]) {
     .board-header .add-btn {
         width: 100%;
     }
+    /* Pada layar kecil, kolom tetap 4 tapi lebih kecil */
+    .kanban-board {
+        grid-template-columns: repeat(4, minmax(110px, 1fr)) !important;
+        gap: 8px;
+    }
 }
 
 @media (max-width: 640px) {
@@ -2216,9 +2252,20 @@ body:has(.modal[style*="display: flex"]) {
     .kanban-board-full .card-phone {
         font-size: 9px;
     }
-    /* Pastikan di layar sangat kecil kolom tetap proporsional tanpa scroll */
+}
+
+@media (max-width: 550px) {
     .kanban-board {
-        grid-template-columns: repeat(4, minmax(100px, 1fr)) !important;
-        gap: 8px;
+        grid-template-columns: repeat(4, minmax(95px, 1fr)) !important;
+        gap: 6px;
+    }
+    .kanban-board .card-name {
+        font-size: 9px;
+    }
+    .kanban-board .card-phone span:first-child {
+        font-size: 8px;
+    }
+    .kanban-board .whatsapp-icon {
+        font-size: 9px;
     }
 }
