@@ -724,8 +724,16 @@ function setupConvertModal() {
 // ========== FULL PAGE KANBAN (tanpa drag drop) ==========
 function renderFullFollowupKanban() {
     const today = new Date().toISOString().split('T')[0];
-    const lists = { baru: [], followup: [], pending: [], closing: [] };
     
+    // Inisialisasi lists dengan benar
+    const lists = {
+        baru: [],
+        followup: [],
+        pending: [],
+        closing: []
+    };
+    
+    // Kelompokkan data berdasarkan status
     customersData.forEach(item => {
         const status = item.status || 'baru';
         if (status === 'closing') lists.closing.push(item);
@@ -734,50 +742,123 @@ function renderFullFollowupKanban() {
         else lists.baru.push(item);
     });
     
-    for (let status in lists) {
-        lists[status].sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
+    // Sort by deadline
+    lists.baru.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
+    lists.followup.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
+    lists.pending.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
+    lists.closing.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
+    
+    // Update counts
+    document.getElementById('fullCountBaru').innerText = lists.baru.length;
+    document.getElementById('fullCountFollowup').innerText = lists.followup.length;
+    document.getElementById('fullCountPending').innerText = lists.pending.length;
+    document.getElementById('fullCountClosing').innerText = lists.closing.length;
+    
+    // Render Baru
+    const baruContainer = document.getElementById('fullBaruList');
+    if (baruContainer) {
+        baruContainer.innerHTML = lists.baru.map(item => {
+            const isOverdue = item.tanggal && item.tanggal < today;
+            const isToday = item.tanggal === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            return `
+                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru">
+                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                </div>
+            `;
+        }).join('');
+        baruContainer.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
+        });
     }
     
-    const countIds = ['fullCountBaru', 'fullCountFollowup', 'fullCountPending', 'fullCountClosing'];
-    const counts = [lists.baru.length, lists.followup.length, lists.pending.length, lists.closing.length];
-    countIds.forEach((id, idx) => { const el = document.getElementById(id); if (el) el.innerText = counts[idx]; });
+    // Render Followup
+    const followupContainer = document.getElementById('fullFollowupList');
+    if (followupContainer) {
+        followupContainer.innerHTML = lists.followup.map(item => {
+            const isOverdue = item.tanggal && item.tanggal < today;
+            const isToday = item.tanggal === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            return `
+                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup">
+                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                </div>
+            `;
+        }).join('');
+        followupContainer.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
+        });
+    }
     
-    const containers = {
-        baruList: 'fullBaruList',
-        followupList: 'fullFollowupList',
-        pendingList: 'fullPendingList',
-        closingList: 'fullClosingList'
-    };
+    // Render Pending
+    const pendingContainer = document.getElementById('fullPendingList');
+    if (pendingContainer) {
+        pendingContainer.innerHTML = lists.pending.map(item => {
+            const isOverdue = item.tanggal && item.tanggal < today;
+            const isToday = item.tanggal === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            return `
+                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending">
+                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                </div>
+            `;
+        }).join('');
+        pendingContainer.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
+        });
+    }
     
-    for (let [status, containerId] of Object.entries(containers)) {
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.innerHTML = lists[status].map(item => {
-                const isOverdue = item.tanggal && item.tanggal < today;
-                const isToday = item.tanggal === today;
-                let deadlineClass = '';
-                if (isOverdue) deadlineClass = 'deadline-overdue';
-                else if (isToday) deadlineClass = 'deadline-today';
-                return `
-                    <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}">
-                        <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                        <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                    </div>
-                `;
-            }).join('');
-            container.querySelectorAll('.card-item').forEach(card => {
-                card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
-            });
-        }
+    // Render Closing
+    const closingContainer = document.getElementById('fullClosingList');
+    if (closingContainer) {
+        closingContainer.innerHTML = lists.closing.map(item => {
+            const isOverdue = item.tanggal && item.tanggal < today;
+            const isToday = item.tanggal === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            return `
+                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing">
+                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                </div>
+            `;
+        }).join('');
+        closingContainer.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); });
+        });
     }
 }
 
 function renderFullProspekKanban() {
     const today = new Date().toISOString().split('T')[0];
-    const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
     
+    // Inisialisasi lists dengan benar
+    const lists = {
+        prospekBaru: [],
+        prospekDihubungi: [],
+        prospekTertarik: [],
+        prospekTidak: []
+    };
+    
+    // Kelompokkan data berdasarkan status
     prospekData.forEach(item => {
         const status = item.status || 'Baru';
         if (status === 'Baru') lists.prospekBaru.push(item);
@@ -786,42 +867,104 @@ function renderFullProspekKanban() {
         else lists.prospekTidak.push(item);
     });
     
-    for (let col in lists) {
-        lists[col].sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    // Sort by deadline
+    lists.prospekBaru.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    lists.prospekDihubungi.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    lists.prospekTertarik.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    lists.prospekTidak.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    
+    // Update counts
+    document.getElementById('fullCountProspekBaru').innerText = lists.prospekBaru.length;
+    document.getElementById('fullCountDihubungi').innerText = lists.prospekDihubungi.length;
+    document.getElementById('fullCountTertarik').innerText = lists.prospekTertarik.length;
+    document.getElementById('fullCountTidakTertarik').innerText = lists.prospekTidak.length;
+    
+    // Render Baru
+    const baruContainer = document.getElementById('fullProspekBaruList');
+    if (baruContainer) {
+        baruContainer.innerHTML = lists.prospekBaru.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            return `
+                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Baru">
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                </div>
+            `;
+        }).join('');
+        baruContainer.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
+        });
     }
     
-    const countIds = ['fullCountProspekBaru', 'fullCountDihubungi', 'fullCountTertarik', 'fullCountTidakTertarik'];
-    const counts = [lists.prospekBaru.length, lists.prospekDihubungi.length, lists.prospekTertarik.length, lists.prospekTidak.length];
-    countIds.forEach((id, idx) => { const el = document.getElementById(id); if (el) el.innerText = counts[idx]; });
+    // Render Dihubungi
+    const dihubungiContainer = document.getElementById('fullProspekDihubungiList');
+    if (dihubungiContainer) {
+        dihubungiContainer.innerHTML = lists.prospekDihubungi.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            return `
+                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Sudah Dihubungi">
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                </div>
+            `;
+        }).join('');
+        dihubungiContainer.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
+        });
+    }
     
-    const containers = {
-        prospekBaruList: 'fullProspekBaruList',
-        prospekDihubungiList: 'fullProspekDihubungiList',
-        prospekTertarikList: 'fullProspekTertarikList',
-        prospekTidakList: 'fullProspekTidakList'
-    };
+    // Render Tertarik
+    const tertarikContainer = document.getElementById('fullProspekTertarikList');
+    if (tertarikContainer) {
+        tertarikContainer.innerHTML = lists.prospekTertarik.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            return `
+                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tertarik">
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                </div>
+            `;
+        }).join('');
+        tertarikContainer.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
+        });
+    }
     
-    for (let [status, containerId] of Object.entries(containers)) {
-        const container = document.getElementById(containerId);
-        if (container) {
-            container.innerHTML = lists[status].map(item => {
-                const isOverdue = item.deadline && item.deadline < today;
-                const isToday = item.deadline === today;
-                let deadlineClass = '';
-                if (isOverdue) deadlineClass = 'deadline-overdue';
-                else if (isToday) deadlineClass = 'deadline-today';
-                return `
-                    <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}">
-                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
-                        <div class="card-deadline">📅 ${item.deadline || '-'}</div>
-                    </div>
-                `;
-            }).join('');
-            container.querySelectorAll('.card-item').forEach(card => {
-                card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
-            });
-        }
+    // Render Tidak Tertarik
+    const tidakContainer = document.getElementById('fullProspekTidakList');
+    if (tidakContainer) {
+        tidakContainer.innerHTML = lists.prospekTidak.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            return `
+                <div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tidak Tertarik">
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                </div>
+            `;
+        }).join('');
+        tidakContainer.querySelectorAll('.card-item').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); });
+        });
     }
 }
 
