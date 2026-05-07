@@ -11,836 +11,12 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f7fb;
-            overflow-x: hidden;
-            position: relative;
-        }
-
-        /* ========== LOGIN PAGE ========== */
-        #loginPage {
-            display: flex;
-            height: 100vh;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        }
-
-        .login-container {
-            background: white;
-            padding: 40px;
-            border-radius: 24px;
-            width: 400px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-        }
-
-        .login-container h2 {
-            text-align: center;
-            color: #4f46e5;
-            margin-bottom: 30px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 6px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1.5px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 14px;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #4f46e5;
-        }
-
-        .password-wrapper {
-            position: relative;
-        }
-
-        .password-wrapper input {
-            padding-right: 45px;
-        }
-
-        .toggle-password {
-            position: absolute;
-            right: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 18px;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            background: #4f46e5;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .login-btn:hover {
-            background: #4338ca;
-        }
-
-        .error-msg {
-            color: #ef4444;
-            font-size: 12px;
-            text-align: center;
-            margin-top: 12px;
-        }
-
-        /* ========== MAIN APP ========== */
-        #app {
-            display: none;
-        }
-
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* ========== SIDEBAR ========== */
-        .sidebar {
-            width: 280px;
-            background: white;
-            border-right: 1px solid #e5e7eb;
-            position: fixed;
-            left: 0;
-            top: 60px;
-            height: calc(100vh - 60px);
-            overflow-y: auto;
-            z-index: 1000;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-            overscroll-behavior: contain;
-        }
-
-        .sidebar.active {
-            transform: translateX(0);
-            animation: sidebarSlideIn 0.3s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        @keyframes sidebarSlideIn {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .sidebar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 3px;
-            height: 100%;
-            background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar.active::before {
-            opacity: 1;
-            animation: borderGlow 2s ease-in-out infinite;
-        }
-
-        @keyframes borderGlow {
-            0% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
-            50% { background: linear-gradient(180deg, #8b5cf6, #4f46e5, #8b5cf6); }
-            100% { background: linear-gradient(180deg, #4f46e5, #8b5cf6, #4f46e5); }
-        }
-
-        .sidebar::-webkit-scrollbar { width: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
-
-        .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid #eef2ff;
-            margin-bottom: 8px;
-        }
-
-        .sidebar-header h2 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #4f46e5;
-            display: inline-block;
-            animation: logoGlow 2s ease-in-out infinite;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-header h2:hover {
-            transform: scale(1.05) rotate(-2deg);
-            text-shadow: 0 0 15px rgba(79,70,229,0.5);
-        }
-
-        @keyframes logoGlow {
-            0% { text-shadow: 0 0 0px rgba(79,70,229,0); letter-spacing: 0px; }
-            50% { text-shadow: 0 0 10px rgba(79,70,229,0.5); letter-spacing: 1px; }
-            100% { text-shadow: 0 0 0px rgba(79,70,229,0); letter-spacing: 0px; }
-        }
-
-        .sidebar-menu { padding: 8px 12px; }
-
-        .menu-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #9ca3af;
-            padding: 16px 12px 8px 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease;
-        }
-
-        .menu-label:hover {
-            color: #4f46e5;
-            letter-spacing: 1px;
-        }
-
-        .menu-item {
-            padding: 12px 16px;
-            margin: 4px 0;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            cursor: pointer;
-            color: #4b5563;
-            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 500;
-            animation: slideInFromLeft 0.3s ease forwards;
-            opacity: 0;
-        }
-
-        .sidebar-menu .menu-item:nth-child(1) { animation-delay: 0.05s; }
-        .sidebar-menu .menu-item:nth-child(2) { animation-delay: 0.1s; }
-        .sidebar-menu .menu-item:nth-child(3) { animation-delay: 0.15s; }
-        .sidebar-menu .menu-item:nth-child(4) { animation-delay: 0.2s; }
-        .sidebar-menu .menu-item:nth-child(5) { animation-delay: 0.25s; }
-        .sidebar-menu .menu-item:nth-child(6) { animation-delay: 0.3s; }
-        .sidebar-menu .menu-item:nth-child(7) { animation-delay: 0.35s; }
-        .sidebar-menu .menu-item:nth-child(8) { animation-delay: 0.4s; }
-        .sidebar-menu .menu-item:nth-child(9) { animation-delay: 0.45s; }
-        .sidebar-menu .menu-item:nth-child(10) { animation-delay: 0.5s; }
-        .sidebar-menu .menu-item:nth-child(11) { animation-delay: 0.55s; }
-        .sidebar-menu .menu-item:nth-child(12) { animation-delay: 0.6s; }
-        .sidebar-menu .menu-item:nth-child(13) { animation-delay: 0.65s; }
-        .sidebar-menu .menu-item:nth-child(14) { animation-delay: 0.7s; }
-        .sidebar-menu .menu-item:nth-child(15) { animation-delay: 0.75s; }
-
-        @keyframes slideInFromLeft {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-
-        .menu-item:hover {
-            background: linear-gradient(90deg, #eef2ff, #ffffff);
-            transform: translateX(6px);
-            color: #4f46e5;
-        }
-
-        .menu-item:hover .icon {
-            animation: iconBounce 0.5s ease;
-        }
-
-        @keyframes iconBounce {
-            0% { transform: translateX(0); }
-            30% { transform: translateX(5px); }
-            60% { transform: translateX(-2px); }
-            100% { transform: translateX(0); }
-        }
-
-        .menu-item .icon {
-            font-size: 20px;
-            width: 28px;
-            text-align: center;
-        }
-
-        .menu-item.active {
-            background: #eef2ff;
-            color: #4f46e5;
-            position: relative;
-        }
-
-        .menu-item.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 10%;
-            height: 80%;
-            width: 3px;
-            background: #4f46e5;
-            border-radius: 0 3px 3px 0;
-        }
-
-        .menu-divider {
-            height: 1px;
-            background: #eef2ff;
-            margin: 12px 12px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .menu-divider::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, #4f46e5, transparent);
-            animation: dividerShine 3s ease-in-out infinite;
-        }
-
-        @keyframes dividerShine {
-            0% { left: -100%; }
-            50% { left: 100%; }
-            100% { left: 100%; }
-        }
-
-        #logoutBtn {
-            margin-top: 16px;
-            color: #ef4444;
-        }
-
-        #logoutBtn:hover {
-            background: linear-gradient(90deg, #fef2f2, #ffffff);
-            transform: translateX(6px);
-        }
-
-        #logoutBtn:hover .icon {
-            animation: logoutShake 0.5s ease;
-        }
-
-        @keyframes logoutShake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-3px); }
-            50% { transform: translateX(3px); }
-            75% { transform: translateX(-2px); }
-            100% { transform: translateX(0); }
-        }
-
-        /* ========== HOVER ZONE ========== */
-        #hoverZone {
-            position: fixed;
-            left: 0;
-            top: 60px;
-            width: 20px;
-            height: calc(100vh - 60px);
-            z-index: 2000;
-            background: transparent;
-            transition: all 0.2s ease;
-        }
-
-        #hoverZone:hover {
-            width: 30px;
-            background: linear-gradient(90deg, rgba(79,70,229,0.1), transparent);
-        }
-
-        /* ========== TOPBAR ========== */
-        .topbar {
-            background: #4f46e5;
-            padding: 12px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            z-index: 999;
-        }
-
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .toggle-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-btn:hover {
-            transform: rotate(90deg);
-            background: rgba(255,255,255,0.3);
-        }
-
-        @media (min-width: 769px) {
-            .toggle-btn { display: block; }
-        }
-
-        .logo {
-            font-size: 18px;
-            font-weight: 700;
-            color: white;
-            display: inline-block;
-            animation: logoFloat 3s ease-in-out infinite;
-            transition: all 0.3s ease;
-        }
-
-        .logo:hover {
-            transform: scale(1.1);
-            text-shadow: 0 0 10px rgba(255,255,255,0.8);
-        }
-
-        @keyframes logoFloat {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-2px); }
-            100% { transform: translateY(0px); }
-        }
-
-        .topbar-center {
-            font-weight: 500;
-            color: white;
-            font-size: 16px;
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .notif-icon {
-            position: relative;
-            cursor: pointer;
-            font-size: 20px;
-            color: white;
-        }
-
-        .notif-icon .badge {
-            position: absolute;
-            top: -8px;
-            right: -10px;
-            background: transparent;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 50%;
-            min-width: 18px;
-            text-align: center;
-            transition: background 0.2s;
-        }
-
-        .notif-icon .badge.has-notif {
-            background: #ef4444;
-        }
-
-        .profile-img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            object-fit: cover;
-            border: 2px solid white;
-        }
-
-        /* ========== MAIN CONTENT ========== */
-        .main-content {
-            flex: 1;
-            margin-left: 0;
-            width: 100%;
-            margin-top: 60px;
-            overflow-y: auto;
-            height: calc(100vh - 60px);
-            position: relative;
-            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @media (min-width: 769px) {
-            body.sidebar-open .main-content {
-                margin-left: 280px;
-                width: calc(100% - 280px);
-            }
-        }
-
-        .content-area {
-            padding: 20px 24px;
-        }
-
-        /* ========== STATS CARDS ========== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 12px 16px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #e5e7eb;
-            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(79,70,229,0.1), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .stat-card:hover::before {
-            left: 100%;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15);
-            border-color: #c7d2fe;
-        }
-
-        .stat-card:hover .stat-info .value {
-            transform: scale(1.05);
-            color: #4338ca;
-        }
-
-        .stat-card:hover .stat-icon {
-            transform: scale(1.15) rotate(8deg);
-            box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
-        }
-
-        .stat-info h4 {
-            font-size: 11px;
-            color: #6b7280;
-            margin-bottom: 2px;
-        }
-
-        .stat-info .value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #4f46e5;
-            line-height: 1.2;
-        }
-
-        .stat-info small {
-            font-size: 9px;
-            color: #9ca3af;
-        }
-
-        .stat-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: white;
-        }
-
-        .bg-purple { background: linear-gradient(135deg, #8b5cf6, #6366f1); }
-        .bg-green { background: linear-gradient(135deg, #10b981, #059669); }
-        .bg-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        .bg-orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
-
-        /* ========== CHARTS ========== */
-        .charts-row {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .chart-card {
-            background: white;
-            padding: 12px 16px;
-            border-radius: 16px;
-            border: 1px solid #e5e7eb;
-            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .chart-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(79,70,229,0.08), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .chart-card:hover::before {
-            left: 100%;
-        }
-
-        .chart-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 20px 30px -12px rgba(0,0,0,0.15);
-            border-color: #c7d2fe;
-        }
-
-        .chart-card:hover h3 {
-            color: #4f46e5;
-        }
-
-        .chart-card:hover canvas {
-            transform: scale(1.02);
-        }
-
-        .chart-card h3 {
-            font-size: 13px;
-            margin-bottom: 8px;
-            color: #1f2937;
-        }
-
-        .chart-card canvas {
-            max-height: 140px;
-        }
-
-        /* ========== TWO COLUMN DASHBOARD LAYOUT ========== */
-        .dashboard-two-columns {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .dashboard-column {
-            flex: 1;
-            min-width: 280px;
-            background: #f9fafb;
-            border-radius: 24px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            border: 1px solid #eef2ff;
-        }
-
-        .column-header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        .column-header-section h3 {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1f2937;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .add-btn-small {
-            background: #4f46e5;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .add-btn-small:hover {
-            background: #4338ca;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(79,70,229,0.3);
-        }
-
-        /* KANBAN BOARD WITH 4 COLUMNS INSIDE EACH SECTION */
-        .mini-kanban {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .mini-column {
-            background: white;
-            border-radius: 16px;
-            padding: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #eef2ff;
-        }
-
-        .mini-column-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 4px 6px 8px 6px;
-            font-weight: 700;
-            font-size: 11px;
-            border-bottom: 1px solid #f0f0f0;
-            margin-bottom: 8px;
-        }
-
-        .mini-column-header .count {
-            background: #eef2ff;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 600;
-            color: #4f46e5;
-        }
-
-        .mini-cards {
-            min-height: 200px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .card-item-mini {
-            background: white;
-            border-radius: 10px;
-            padding: 8px;
-            margin-bottom: 6px;
-            border: 1px solid #e5e7eb;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .card-item-mini:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border-color: #c7d2fe;
-        }
-
-        .card-id-mini {
-            font-size: 8px;
-            font-weight: 600;
-            color: #4f46e5;
-            background: #eef2ff;
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 12px;
-            margin-bottom: 4px;
-        }
-
-        .card-name-mini {
-            font-size: 10px;
-            font-weight: 600;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .card-phone-mini {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 8px;
-            color: #6b7280;
-        }
-
-        .whatsapp-icon-mini {
-            cursor: pointer;
-            font-size: 10px;
-            color: #25D366;
-            flex-shrink: 0;
-        }
-
-        .card-deadline-mini {
-            font-size: 7px;
-            color: #9ca3af;
-            margin-top: 4px;
-        }
-
-        .deadline-today-mini {
-            border-left: 3px solid #f59e0b;
-        }
-
-        .deadline-overdue-mini {
-            border-left: 3px solid #ef4444;
-            background: #fef2f2;
-        }
-
-        @media (max-width: 1024px) {
-            .mini-kanban {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 10px;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .dashboard-two-columns {
-                flex-direction: column;
-            }
-            .mini-kanban {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* other existing styles from original (modals, badges, etc) - keep minimal but functional */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(4px); }
-        .modal-content { background: white; border-radius: 24px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; padding: 0; }
-        .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-        .status-baru { background: #f3e8ff; color: #9333ea; }
-        .status-followup { background: #eff6ff; color: #2563eb; }
-        .status-pending { background: #fff7ed; color: #ea580c; }
-        .status-closing { background: #ecfdf5; color: #16a34a; }
-        .status-tertarik { background: #ecfdf5; color: #16a34a; }
-        .status-tidak { background: #fef2f2; color: #dc2626; }
-        .status-dihubungi { background: #eff6ff; color: #2563eb; }
-        .btn-outline { background: #f3f4f6; }
-        .btn-primary { background: #4f46e5; color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-danger { background: #ef4444; color: white; }
-        #notifBox { position: fixed; top: 80px; right: 20px; z-index: 9999; }
-        .notif-toast { padding: 10px 16px; border-radius: 12px; margin-bottom: 10px; animation: slideIn 0.3s ease; font-size: 12px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .notif-success { background: #4f46e5; color: white; }
-        .notif-error { background: #ef4444; color: white; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="hoverZone"></div>
 
+<!-- LOGIN PAGE -->
 <div id="loginPage">
     <div class="login-container">
         <h2>🚀 FLOUPYUD</h2>
@@ -851,14 +27,24 @@
     </div>
 </div>
 
+<!-- MAIN APP -->
 <div id="app">
     <div class="app-container">
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header"><h2>FLOUPYUD</h2></div>
             <div class="sidebar-menu">
-                <div class="menu-item active" data-page="dashboard"><span class="icon">📊</span><span>Dashboard</span></div>
-                <div class="menu-item" data-page="followupFull"><span class="icon">📋</span><span>Data Followup Agen</span></div>
-                <div class="menu-item" data-page="prospekFull"><span class="icon">📋</span><span>Data Prospek Agen</span></div>
+                <div class="menu-item active" data-page="dashboard">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="menu-item" data-page="followupFull">
+                    <span class="icon">📋</span>
+                    <span>Data Followup Agen</span>
+                </div>
+                <div class="menu-item" data-page="prospekFull">
+                    <span class="icon">📋</span>
+                    <span>Data Prospek Agen</span>
+                </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
                 <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
@@ -870,13 +56,14 @@
                 <div class="menu-item" data-page="import"><span class="icon">📜</span><span>Import Data</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">KOMUNIKASI</div>
-                <div class="menu-item" data-page="reminder"><span class="icon">⏰</span><span>Pengingat</span></div>
+                <div class="menu-item" data-page="reminder"><span class="icon">⏰</span><span>Pengingat (Reminder)</span></div>
                 <div class="menu-item" data-page="pesan"><span class="icon">💬</span><span>Pesan</span></div>
-                <div class="menu-item" data-page="broadcast"><span class="icon">📢</span><span>Broadcast</span></div>
+                <div class="menu-item" data-page="broadcast"><span class="icon">📢</span><span>Broadcast WhatsApp</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-item" id="logoutBtn"><span class="icon">☕</span><span>Logout</span></div>
             </div>
         </div>
+
         <div class="main-content">
             <div class="topbar">
                 <div class="topbar-left"><button class="toggle-btn" id="toggleSidebarBtn">☰</button><span class="logo">FLOUPYUD</span></div>
@@ -887,8 +74,9 @@
                     <img class="profile-img" id="profileImg" src="https://i.pravatar.cc/40" alt="Profile">
                 </div>
             </div>
+
             <div class="content-area">
-                <!-- DASHBOARD PAGE WITH TWO COLUMN LAYOUT -->
+                <!-- DASHBOARD PAGE -->
                 <div id="dashboardPage" class="page-content">
                     <div class="stats-grid">
                         <div class="stat-card"><div class="stat-info"><h4>Total Data</h4><div class="value" id="totalData">0</div><small>Semua Data</small></div><div class="stat-icon bg-purple">👥</div></div>
@@ -896,166 +84,315 @@
                         <div class="stat-card"><div class="stat-info"><h4>Rate Closing</h4><div class="value" id="rateClosing">0%</div><small>Dari Total Data</small></div><div class="stat-icon bg-blue">📊</div></div>
                         <div class="stat-card"><div class="stat-info"><h4>Prospek Aktif</h4><div class="value" id="activeProspek">0</div><small>Dalam Proses</small></div><div class="stat-icon bg-orange">👤</div></div>
                     </div>
-                    <div class="charts-row">
-                        <div class="chart-card"><h3>Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
-                        <div class="chart-card"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
-                    </div>
                     
-                    <!-- TWO COLUMN LAYOUT: Followup Agen KIRI, Prospek Agen KANAN -->
+                    <!-- TWO COLUMN LAYOUT FOR BOARDS -->
                     <div class="dashboard-two-columns">
-                        <!-- KIRI: Followup Agen -->
+                        <!-- LEFT COLUMN: Followup Agen -->
                         <div class="dashboard-column">
-                            <div class="column-header-section">
-                                <h3>📞 Followup Agen</h3>
-                                <button class="add-btn-small" id="addCustomerBtn">+ Tambah Data</button>
-                            </div>
-                            <div class="mini-kanban">
-                                <div class="mini-column"><div class="mini-column-header"><span>Baru</span><span class="count" id="countBaru">0</span></div><div class="mini-cards" id="baruList"></div></div>
-                                <div class="mini-column"><div class="mini-column-header"><span>Follow Up</span><span class="count" id="countFollowup">0</span></div><div class="mini-cards" id="followupList"></div></div>
-                                <div class="mini-column"><div class="mini-column-header"><span>Pending</span><span class="count" id="countPending">0</span></div><div class="mini-cards" id="pendingList"></div></div>
-                                <div class="mini-column"><div class="mini-column-header"><span>Closing</span><span class="count" id="countClosing">0</span></div><div class="mini-cards" id="closingList"></div></div>
+                            <div class="board-section">
+                                <div class="board-header">
+                                    <h3>📞 Followup Agen</h3>
+                                    <button class="add-btn" id="addCustomerBtn">+ Tambah Data</button>
+                                </div>
+                                <div class="kanban-board">
+                                    <div class="kanban-column" data-status="baru">
+                                        <div class="column-header purple-header">
+                                            <span>Baru</span>
+                                            <span class="count" id="countBaru">0</span>
+                                        </div>
+                                        <div class="kanban-cards" id="baruList"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="followup">
+                                        <div class="column-header blue-header">
+                                            <span>Follow Up</span>
+                                            <span class="count" id="countFollowup">0</span>
+                                        </div>
+                                        <div class="kanban-cards" id="followupList"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="pending">
+                                        <div class="column-header orange-header">
+                                            <span>Pending</span>
+                                            <span class="count" id="countPending">0</span>
+                                        </div>
+                                        <div class="kanban-cards" id="pendingList"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="closing">
+                                        <div class="column-header green-header">
+                                            <span>Closing</span>
+                                            <span class="count" id="countClosing">0</span>
+                                        </div>
+                                        <div class="kanban-cards" id="closingList"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <!-- KANAN: Prospek Agen -->
+
+                        <!-- RIGHT COLUMN: Prospek Agen -->
                         <div class="dashboard-column">
-                            <div class="column-header-section">
-                                <h3>🎯 Prospek Agen</h3>
-                                <button class="add-btn-small" id="addProspekBtn">+ Tambah Data</button>
-                            </div>
-                            <div class="mini-kanban">
-                                <div class="mini-column"><div class="mini-column-header"><span>Baru</span><span class="count" id="countProspekBaru">0</span></div><div class="mini-cards" id="prospekBaruList"></div></div>
-                                <div class="mini-column"><div class="mini-column-header"><span>Dihubungi</span><span class="count" id="countDihubungi">0</span></div><div class="mini-cards" id="prospekDihubungiList"></div></div>
-                                <div class="mini-column"><div class="mini-column-header"><span>Tertarik</span><span class="count" id="countTertarik">0</span></div><div class="mini-cards" id="prospekTertarikList"></div></div>
-                                <div class="mini-column"><div class="mini-column-header"><span>Tidak Tertarik</span><span class="count" id="countTidakTertarik">0</span></div><div class="mini-cards" id="prospekTidakList"></div></div>
+                            <div class="board-section">
+                                <div class="board-header">
+                                    <h3>🎯 Prospek Agen</h3>
+                                    <button class="add-btn" id="addProspekBtn">+ Tambah Data</button>
+                                </div>
+                                <div class="kanban-board">
+                                    <div class="kanban-column" data-status="Baru">
+                                        <div class="column-header purple-header">
+                                            <span>Baru</span>
+                                            <span class="count" id="countProspekBaru">0</span>
+                                        </div>
+                                        <div class="kanban-cards" id="prospekBaruList"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="Sudah Dihubungi">
+                                        <div class="column-header blue-header">
+                                            <span>Dihubungi</span>
+                                            <span class="count" id="countDihubungi">0</span>
+                                        </div>
+                                        <div class="kanban-cards" id="prospekDihubungiList"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="Tertarik">
+                                        <div class="column-header green-header">
+                                            <span>Tertarik</span>
+                                            <span class="count" id="countTertarik">0</span>
+                                        </div>
+                                        <div class="kanban-cards" id="prospekTertarikList"></div>
+                                    </div>
+                                    <div class="kanban-column" data-status="Tidak Tertarik">
+                                        <div class="column-header red-header">
+                                            <span>Tidak Tertarik</span>
+                                            <span class="count" id="countTidakTertarik">0</span>
+                                        </div>
+                                        <div class="kanban-cards" id="prospekTidakList"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="followupFullPage" class="page-content" style="display:none"><div class="fullpage-kanban" style="background:white; padding:20px; border-radius:24px;"><h2>Followup Full Mode</h2><div id="fullKanbanPlaceholder"></div></div></div>
-                <div id="prospekFullPage" class="page-content" style="display:none"><div class="fullpage-kanban" style="background:white; padding:20px; border-radius:24px;"><h2>Prospek Full Mode</h2><div id="fullProspekPlaceholder"></div></div></div>
-                <div id="importPage" class="page-content" style="display:none">Import Page (same as original)</div>
-                <div id="dbClosingPage" class="page-content" style="display:none">DB Closing</div><div id="dbTidakPage" class="page-content" style="display:none">DB Tidak</div><div id="dbNomorSalahPage" class="page-content" style="display:none">DB Nomor Salah</div><div id="dbCommitmentPage" class="page-content" style="display:none">DB Commitment</div>
-                <div id="reminderPage" class="page-content" style="display:none">Reminder</div><div id="pesanPage" class="page-content" style="display:none">Pesan</div><div id="broadcastPage" class="page-content" style="display:none">Broadcast</div>
+                <!-- FULL PAGE FOLLOWUP AGEN (KANBAN FULL LAYAR) -->
+                <div id="followupFullPage" class="page-content" style="display:none">
+                    <div class="fullpage-kanban">
+                        <div class="fullpage-header">
+                            <h2>📋 Data Followup Agen (Full Mode)</h2>
+                            <button class="add-btn" id="addCustomerFullBtn">+ Tambah Data</button>
+                        </div>
+                        <div class="kanban-board-full">
+                            <div class="kanban-column" data-status="baru">
+                                <div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountBaru">0</span></div>
+                                <div class="kanban-cards" id="fullBaruList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="followup">
+                                <div class="column-header blue-header"><span>Follow Up</span><span class="count" id="fullCountFollowup">0</span></div>
+                                <div class="kanban-cards" id="fullFollowupList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="pending">
+                                <div class="column-header orange-header"><span>Pending</span><span class="count" id="fullCountPending">0</span></div>
+                                <div class="kanban-cards" id="fullPendingList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="closing">
+                                <div class="column-header green-header"><span>Closing</span><span class="count" id="fullCountClosing">0</span></div>
+                                <div class="kanban-cards" id="fullClosingList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FULL PAGE PROSPEK AGEN (KANBAN FULL LAYAR) -->
+                <div id="prospekFullPage" class="page-content" style="display:none">
+                    <div class="fullpage-kanban">
+                        <div class="fullpage-header">
+                            <h2>🎯 Data Prospek Agen (Full Mode)</h2>
+                            <button class="add-btn" id="addProspekFullBtn">+ Tambah Data</button>
+                        </div>
+                        <div class="kanban-board-full">
+                            <div class="kanban-column" data-status="Baru">
+                                <div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountProspekBaru">0</span></div>
+                                <div class="kanban-cards" id="fullProspekBaruList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="Sudah Dihubungi">
+                                <div class="column-header blue-header"><span>Dihubungi</span><span class="count" id="fullCountDihubungi">0</span></div>
+                                <div class="kanban-cards" id="fullProspekDihubungiList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="Tertarik">
+                                <div class="column-header green-header"><span>Tertarik</span><span class="count" id="fullCountTertarik">0</span></div>
+                                <div class="kanban-cards" id="fullProspekTertarikList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="Tidak Tertarik">
+                                <div class="column-header red-header"><span>Tidak Tertarik</span><span class="count" id="fullCountTidakTertarik">0</span></div>
+                                <div class="kanban-cards" id="fullProspekTidakList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IMPORT PAGE -->
+                <div id="importPage" class="page-content" style="display:none">
+                    <div class="import-section">
+                        <div class="import-header"><h3>📜 Import Data Excel</h3><p>Import data dengan mudah dan cepat</p></div>
+                        <div class="import-grid">
+                            <div class="import-card"><h4>1. Pilih File Excel</h4><div class="drop-zone" id="dropZone"><p>📂 Drag & Drop file di sini</p><small>atau klik untuk pilih file</small><input type="file" id="excelFile" hidden accept=".xlsx,.xls,.csv"></div><div id="fileInfo" class="file-info"></div></div>
+                            <div class="import-card"><h4>2. Pilih Tujuan Import</h4><div class="radio-option active" data-import="prospek"><b>📋 Import ke Prospek</b><p>Data akan masuk ke Prospek Agen</p></div><div class="radio-option" data-import="customer"><b>👥 Import ke Customer</b><p>Data akan masuk ke Followup Agen</p></div></div>
+                            <div class="import-card"><h4>3. Informasi Import</h4><ul class="info-list"><li>✔ Import ribuan data sekaligus</li><li>✔ Validasi nomor otomatis</li><li>✔ Data tidak valid akan dilewati</li></ul><button class="import-btn" id="importBtn">🚀 Import Data Sekarang</button></div>
+                            <div class="import-card"><h4>📥 Contoh File Import</h4><button class="download-example-btn" id="downloadCustomerExample">📋 Download Contoh Customer</button><button class="download-example-btn" id="downloadProspekExample">📋 Download Contoh Prospek</button></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DATABASE PAGES -->
+                <div id="dbClosingPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📁 Database Closing</h3><div class="db-actions"><button class="db-select-all" id="selectAllClosing">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedClosing">🗑️ Hapus Terpilih</button></div></div><div id="dbClosingList" class="db-list"></div></div></div>
+                <div id="dbTidakPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📁 Database Tidak Tertarik</h3><div class="db-actions"><button class="db-select-all" id="selectAllTidak">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedTidak">🗑️ Hapus Terpilih</button></div></div><div id="dbTidakList" class="db-list"></div></div></div>
+                <div id="dbNomorSalahPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📵 Database Nomor Salah</h3><div class="db-actions"><button class="db-select-all" id="selectAllNomorSalah">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedNomorSalah">🗑️ Hapus Terpilih</button></div></div><div id="dbNomorSalahList" class="db-list"></div></div></div>
+                <div id="dbCommitmentPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions"><button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button></div></div><div id="dbCommitmentList" class="db-list"></div></div></div>
+
+                <!-- REMINDER PAGE -->
+                <div id="reminderPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>⏰ Pengingat (Reminder)</h3><button class="add-btn" id="addReminderBtn">+ Tambah Pengingat</button></div><div id="reminderList" class="db-list"><p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p></div></div></div>
+
+                <!-- PESAN PAGE -->
+                <div id="pesanPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>💬 Pesan</h3><button class="add-btn" id="addPesanBtn">+ Kirim Pesan</button></div><div id="pesanList" class="db-list"><p style="text-align:center;padding:40px;">💬 Belum ada pesan</p></div></div></div>
+
+                <!-- BROADCAST PAGE -->
+                <div id="broadcastPage" class="page-content" style="display:none">
+                    <div class="broadcast-section">
+                        <div class="broadcast-header"><h3>📢 Broadcast WhatsApp</h3><p>Kirim pesan ke banyak nomor sekaligus</p></div>
+                        <div class="broadcast-grid">
+                            <div class="broadcast-card"><h4>📋 Pilih Sumber Nomor</h4><div class="radio-group"><label class="radio-label"><input type="radio" name="sourceType" value="customer" checked> <span>📞 Followup Agen (Customer)</span></label><label class="radio-label"><input type="radio" name="sourceType" value="prospek"> <span>🎯 Prospek Agen</span></label><label class="radio-label"><input type="radio" name="sourceType" value="closing"> <span>📁 Database Closing</span></label><label class="radio-label"><input type="radio" name="sourceType" value="dbTidak"> <span>📁 Database Tidak Tertarik</span></label><label class="radio-label"><input type="radio" name="sourceType" value="custom"> <span>✏️ Custom Nomor</span></label></div></div>
+                            <div class="broadcast-card" id="filterStatusCard"><h4>🎯 Filter Status</h4><div class="filter-status-group" id="customerFilter"><label><input type="checkbox" value="baru"> Baru</label><label><input type="checkbox" value="followup" checked> Follow Up</label><label><input type="checkbox" value="pending"> Pending</label><label><input type="checkbox" value="closing"> Closing</label></div><div class="filter-status-group" id="prospekFilter" style="display:none;"><label><input type="checkbox" value="Baru"> Baru</label><label><input type="checkbox" value="Sudah Dihubungi" checked> Dihubungi</label><label><input type="checkbox" value="Tertarik"> Tertarik</label><label><input type="checkbox" value="Tidak Tertarik"> Tidak Tertarik</label></div></div>
+                            <div class="broadcast-card" id="customNumbersCard" style="display:none;"><h4>✏️ Daftar Nomor</h4><textarea id="customNumbers" rows="4" placeholder="Contoh:&#10;6281234567890&#10;6281234567891"></textarea><small>Format: 628xxxxx (tanpa +62 atau 0)</small></div>
+                            <div class="broadcast-card"><h4>📱 Nomor Terpilih (<span id="selectedCount">0</span>)</h4><div class="selected-numbers" id="selectedNumbersList"><p style="color:#9ca3af;">Pilih sumber nomor terlebih dahulu</p></div><button class="btn-refresh" id="refreshNumbersBtn">🔄 Refresh Nomor</button></div>
+                            <div class="broadcast-card"><h4>✏️ Pesan Broadcast</h4><textarea id="broadcastMessage" rows="5" placeholder="Tulis pesan...&#10;Gunakan {nama} untuk personalisasi"></textarea><div class="variable-hint"><small>Gunakan <code>{nama}</code> untuk mengganti dengan nama customer</small></div></div>
+                            <div class="broadcast-card"><h4>📤 Kirim Broadcast</h4><div class="send-options"><label><input type="checkbox" id="openAllWA"> Buka semua di tab baru</label><label><input type="checkbox" id="sendOneByOne" checked> Kirim satu per satu (manual)</label></div><button class="broadcast-btn" id="sendBroadcastBtn">📢 Kirim Broadcast</button><div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Firebase Config (same as original)
-    const firebaseConfig = {
-        apiKey: "AIzaSyCfj2Xdj6et3fThyA2gg-GWG8yZOhoqREA",
-        authDomain: "floupyud.firebaseapp.com",
-        projectId: "floupyud"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    let currentUser = null;
-    let chartCustomer = null, chartProspek = null;
+<!-- MODALS -->
+<div class="modal" id="customerModal">
+    <div class="modal-content">
+        <h3>Tambah Customer</h3>
+        <div class="modal-subtitle">Isi data customer baru</div>
+        <div class="form-group"><label>ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="customerId" placeholder="Contoh: AG-001"></div></div>
+        <div class="form-group"><label>Nama Lengkap <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="customerName" placeholder="Masukkan nama lengkap"></div></div>
+        <div class="form-group"><label>Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1"></div></div>
+        <div class="form-group"><label>Aplikasi <span class="required">*</span></label><div class="input-icon"><span>📱</span><select id="customerApk"><option value="">Pilih Aplikasi</option><option value="GNP">🏦 GNP</option><option value="BSB">🏦 BSB</option><option value="BTN">🏦 BTN</option></select></div></div>
+        <div class="form-group"><label>Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="customerDate"></div></div>
+        <div class="modal-buttons"><button id="saveCustomerBtn">Simpan Data</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div>
+    </div>
+</div>
 
-    function showNotif(msg, isError=false){ const n=document.createElement('div'); n.textContent=msg; n.className=`notif-toast ${isError?'notif-error':'notif-success'}`; document.getElementById('notifBox').appendChild(n); setTimeout(()=>n.remove(),5000); }
-    function escapeHtml(t){ if(!t) return ''; return t.replace(/[&<>]/g,m=>m==='&'?'&amp;':m==='<'?'&lt;':'&gt;'); }
-    function openWA(hp){ if(!hp) return; let nomor=hp.toString().replace('+','').replace(/^0/,'62'); window.open('https://wa.me/'+nomor,'_blank'); }
-    
-    auth.onAuthStateChanged(user=>{
-        if(user){
-            currentUser=user;
-            document.getElementById('loginPage').style.display='none';
-            document.getElementById('app').style.display='block';
-            loadAllData();
-        } else {
-            document.getElementById('loginPage').style.display='flex';
-            document.getElementById('app').style.display='none';
-        }
-    });
+<div class="modal" id="prospekModal">
+    <div class="modal-content">
+        <h3>Tambah Prospek</h3>
+        <div class="modal-subtitle">Isi data prospek baru</div>
+        <div class="form-group"><label>Nama Agen <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="prospekName" placeholder="Masukkan nama agen"></div></div>
+        <div class="form-group"><label>Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1"></div></div>
+        <div class="form-group"><label>Status Awal</label><div class="input-icon"><span>📌</span><select id="prospekStatusSelect"><option value="Baru">🆕 Baru</option><option value="Sudah Dihubungi">📞 Sudah Dihubungi</option><option value="Tertarik">⭐ Tertarik</option><option value="Tidak Tertarik">❌ Tidak Tertarik</option></select></div></div>
+        <div class="form-group"><label>Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="prospekDeadline"></div></div>
+        <div class="modal-buttons"><button id="saveProspekBtn">Simpan Data</button><button class="closeModalBtn" data-modal="prospekModal">Batal</button></div>
+    </div>
+</div>
 
-    function updateChartCustomer(total,closing,pending,followup){
-        const ctx=document.getElementById('chartCustomer'); if(!ctx) return;
-        if(chartCustomer) chartCustomer.destroy();
-        const baru=total-(closing+pending+followup);
-        chartCustomer=new Chart(ctx,{type:'doughnut',data:{labels:['Closing','Pending','Follow Up','Baru'],datasets:[{data:[closing,pending,followup,baru],backgroundColor:['#10b981','#f59e0b','#3b82f6','#8b5cf6'],borderWidth:0,cutout:'65%'}]},options:{responsive:true,maintainAspectRatio:true}});
-    }
-    function updateChartProspek(baru,dihubungi,tertarik,tidak){
-        const ctx=document.getElementById('chartProspek'); if(!ctx) return;
-        if(chartProspek) chartProspek.destroy();
-        chartProspek=new Chart(ctx,{type:'doughnut',data:{labels:['Baru','Dihubungi','Tertarik','Tidak Tertarik'],datasets:[{data:[baru,dihubungi,tertarik,tidak],backgroundColor:['#8b5cf6','#3b82f6','#10b981','#ef4444'],borderWidth:0,cutout:'65%'}]},options:{responsive:true}});
-    }
+<div class="modal" id="profileModal">
+    <div class="modal-content">
+        <h3>Profile CS Agent</h3>
+        <div class="modal-subtitle">Kelola informasi akun Anda</div>
+        <div class="profile-photo"><img id="previewFoto" src="https://i.pravatar.cc/100"><div class="camera-icon" id="cameraIcon">📷</div><input type="file" id="profileFoto" hidden accept="image/*"><p>🔍 Klik foto untuk memperbesar | 📷 Klik kamera untuk ganti foto</p></div>
+        <div class="form-group"><label>Nama Lengkap</label><div class="input-icon"><span>👤</span><input type="text" id="profileName" placeholder="Nama Anda"></div></div>
+        <div class="form-group"><label>Email</label><div class="input-icon"><span>📧</span><input type="email" id="profileEmail" placeholder="Email" disabled></div></div>
+        <div class="form-group"><label>Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="profilePhone" placeholder="81234567890" style="flex:1"></div></div>
+        <div class="modal-buttons"><button id="saveProfileBtn">Simpan Perubahan</button><button class="closeModalBtn" data-modal="profileModal">Batal</button></div>
+    </div>
+</div>
 
-    function loadAllData(){
-        if(!currentUser) return;
-        const today=new Date().toISOString().split('T')[0];
-        db.collection('customers').where('user_id','==',currentUser.uid).onSnapshot(snap=>{
-            let total=0,closing=0,pending=0,followup=0;
-            let lists={baru:[],followup:[],pending:[],closing:[]};
-            snap.forEach(doc=>{ let d=doc.data(); total++; if(d.status==='closing') closing++; else if(d.status==='pending') pending++; else if(d.status==='followup') followup++; else lists.baru.push({id:doc.id,agent_id:d.agent_id,nama:d.nama,hp:d.hp,tanggal:d.tanggal});
-            if(d.status==='followup') lists.followup.push({id:doc.id,agent_id:d.agent_id,nama:d.nama,hp:d.hp,tanggal:d.tanggal});
-            if(d.status==='pending') lists.pending.push({id:doc.id,agent_id:d.agent_id,nama:d.nama,hp:d.hp,tanggal:d.tanggal});
-            if(d.status==='closing') lists.closing.push({id:doc.id,agent_id:d.agent_id,nama:d.nama,hp:d.hp,tanggal:d.tanggal}); });
-            for(let k in lists) lists[k].sort((a,b)=>(a.tanggal||'9999-12-31').localeCompare(b.tanggal||'9999-12-31'));
-            document.getElementById('countBaru').innerText=total-(closing+pending+followup);
-            document.getElementById('countFollowup').innerText=followup;
-            document.getElementById('countPending').innerText=pending;
-            document.getElementById('countClosing').innerText=closing;
-            document.getElementById('totalData').innerText=total;
-            document.getElementById('closingTotal').innerText=closing;
-            document.getElementById('activeProspek').innerText=total-closing;
-            document.getElementById('rateClosing').innerText=total?Math.round((closing/total)*100)+'%':'0%';
-            for(let s in lists){
-                let container=document.getElementById(s+'List');
-                if(container){
-                    container.innerHTML=lists[s].map(item=>`<div class="card-item-mini" data-id="${item.id}"><div class="card-id-mini">🆔 ${escapeHtml(item.agent_id||'-')}</div><div class="card-name-mini">${escapeHtml(item.nama)}</div><div class="card-phone-mini"><span>${item.hp}</span><span class="whatsapp-icon-mini" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline-mini">📅 ${item.tanggal||'-'}</div></div>`).join('');
-                    container.querySelectorAll('.card-item-mini').forEach(c=>c.addEventListener('click',(e)=>{ if(!e.target.classList.contains('whatsapp-icon-mini')) alert('Detail customer: '+c.dataset.id); }));
-                }
-            }
-            updateChartCustomer(total,closing,pending,followup);
-        });
-        db.collection('prospek').where('user_id','==',currentUser.uid).onSnapshot(snap=>{
-            let baru=0,dihubungi=0,tertarik=0,tidak=0;
-            let lists={prospekBaru:[],prospekDihubungi:[],prospekTertarik:[],prospekTidak:[]};
-            snap.forEach(doc=>{ let d=doc.data(); let st=d.status||'Baru'; 
-                if(st==='Baru'){ baru++; lists.prospekBaru.push({id:doc.id,nama:d.nama,hp:d.hp,deadline:d.deadline});}
-                else if(st==='Sudah Dihubungi'){ dihubungi++; lists.prospekDihubungi.push({id:doc.id,nama:d.nama,hp:d.hp,deadline:d.deadline});}
-                else if(st==='Tertarik'){ tertarik++; lists.prospekTertarik.push({id:doc.id,nama:d.nama,hp:d.hp,deadline:d.deadline});}
-                else { tidak++; lists.prospekTidak.push({id:doc.id,nama:d.nama,hp:d.hp,deadline:d.deadline});} });
-            for(let k in lists) lists[k].sort((a,b)=>(a.deadline||'9999-12-31').localeCompare(b.deadline||'9999-12-31'));
-            document.getElementById('countProspekBaru').innerText=baru;
-            document.getElementById('countDihubungi').innerText=dihubungi;
-            document.getElementById('countTertarik').innerText=tertarik;
-            document.getElementById('countTidakTertarik').innerText=tidak;
-            for(let s in lists){
-                let container=document.getElementById(s+'List');
-                if(container){
-                    container.innerHTML=lists[s].map(item=>`<div class="card-item-mini" data-id="${item.id}"><div class="card-name-mini">${escapeHtml(item.nama)}</div><div class="card-phone-mini"><span>${item.hp}</span><span class="whatsapp-icon-mini" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline-mini">📅 ${item.deadline||'-'}</div></div>`).join('');
-                    container.querySelectorAll('.card-item-mini').forEach(c=>c.addEventListener('click',(e)=>{ if(!e.target.classList.contains('whatsapp-icon-mini')) alert('Detail prospek: '+c.dataset.id); }));
-                }
-            }
-            updateChartProspek(baru,dihubungi,tertarik,tidak);
-        });
-    }
-    document.getElementById('addCustomerBtn')?.addEventListener('click',()=>alert('Fitur tambah customer (integrasi penuh di file asli)'));
-    document.getElementById('addProspekBtn')?.addEventListener('click',()=>alert('Fitur tambah prospek (integrasi penuh di file asli)'));
-    document.querySelectorAll('.menu-item[data-page]').forEach(item=>{
-        item.addEventListener('click',()=>{
-            let page=item.dataset.page;
-            document.querySelectorAll('.page-content').forEach(p=>p.style.display='none');
-            if(page==='dashboard') document.getElementById('dashboardPage').style.display='block';
-            else if(page==='followupFull') document.getElementById('followupFullPage').style.display='block';
-            else if(page==='prospekFull') document.getElementById('prospekFullPage').style.display='block';
-            else alert('Halaman lain (sambungkan kembali dengan script lengkap)');
-            document.querySelectorAll('.menu-item').forEach(m=>m.classList.remove('active'));
-            item.classList.add('active');
-        });
-    });
-    document.getElementById('toggleSidebarBtn')?.addEventListener('click',()=>{ document.getElementById('sidebar').classList.toggle('active'); document.body.classList.toggle('sidebar-open'); });
-    document.getElementById('togglePasswordBtn')?.addEventListener('click',()=>{ let p=document.getElementById('loginPassword'); if(p.type==='password'){ p.type='text'; document.getElementById('togglePasswordBtn').textContent='🙈'; }else{ p.type='password'; document.getElementById('togglePasswordBtn').textContent='👁️'; } });
-    document.getElementById('loginBtn')?.addEventListener('click',()=>{ let email=document.getElementById('loginEmail').value,pass=document.getElementById('loginPassword').value; auth.signInWithEmailAndPassword(email,pass).catch(e=>document.getElementById('loginError').innerText='Login gagal: '+e.message); });
-</script>
+<div class="modal" id="previewPhotoModal">
+    <div class="modal-content preview-photo-content">
+        <div class="preview-photo-header"><h3>Foto Profile</h3><button class="close-preview" onclick="closeModal('previewPhotoModal')">✕</button></div>
+        <div class="preview-photo-body"><img id="previewPhotoLarge" src=""></div>
+        <div class="modal-buttons"><button onclick="closeModal('previewPhotoModal')">Tutup</button></div>
+    </div>
+</div>
+
+<div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
+
+<div class="modal" id="reminderModal">
+    <div class="modal-content">
+        <h3>⏰ Tambah Pengingat</h3>
+        <div class="modal-subtitle">Buat pengingat untuk tugas Anda</div>
+        <div class="form-group"><label>Judul Pengingat <span class="required">*</span></label><div class="input-icon"><span>📝</span><input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer"></div></div>
+        <div class="form-group"><label>Deskripsi</label><div class="input-icon"><span>📄</span><textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea></div></div>
+        <div class="form-group"><label>Tanggal & Waktu</label><div class="input-icon"><span>📅</span><input type="datetime-local" id="reminderDateTime"></div></div>
+        <div class="modal-buttons"><button id="saveReminderBtn">Simpan</button><button class="closeModalBtn" data-modal="reminderModal">Batal</button></div>
+    </div>
+</div>
+
+<div class="modal" id="pesanModal">
+    <div class="modal-content">
+        <h3>💬 Kirim Pesan</h3>
+        <div class="modal-subtitle">Kirim pesan ke CS lain</div>
+        <div class="form-group"><label>Kepada <span class="required">*</span></label><div class="input-icon"><span>👥</span><select id="pesanTo"><option value="">Pilih CS Tujuan</option></select></div></div>
+        <div class="form-group"><label>Pesan <span class="required">*</span></label><div class="input-icon"><span>💬</span><textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea></div></div>
+        <div class="modal-buttons"><button id="savePesanBtn">Kirim</button><button class="closeModalBtn" data-modal="pesanModal">Batal</button></div>
+    </div>
+</div>
+
+<div class="modal" id="convertModal">
+    <div class="modal-content">
+        <h3>🔄 Jadikan Customer (Followup Agen)</h3>
+        <div class="modal-subtitle">Isi data untuk memindahkan ke Followup Agen</div>
+        <div class="form-group"><label>ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="convertAgentId" placeholder="Contoh: AG-001"></div><small>ID unik untuk agent terdaftar</small></div>
+        <div class="form-group"><label>Tanggal Followup <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="convertFollowupDate"></div><small>Otomatis +1 bulan dari sekarang</small></div>
+        <div class="modal-buttons"><button id="confirmConvertBtn" class="confirm-convert-btn">✅ Konfirmasi Pindah</button><button id="cancelConvertBtn" class="closeModalBtn" data-modal="convertModal">❌ Batal</button></div>
+    </div>
+</div>
+
+<div class="modal" id="followupConfirmModal">
+    <div class="modal-content">
+        <h3>✅ Konfirmasi Follow Up</h3>
+        <div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div>
+        <div class="form-group"><label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label></div>
+        <div class="form-group"><label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label></div>
+        <div class="modal-buttons">
+            <button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button>
+            <button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button>
+            <button class="closeModalBtn" data-modal="followupConfirmModal">Batal</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="pendingModal">
+    <div class="modal-content">
+        <h3>📝 Catatan Pending</h3>
+        <div class="modal-subtitle">Catat setiap balasan/respon dari customer</div>
+        <div id="pendingItemsContainer"></div>
+        <button id="addPendingItemBtn" class="add-btn" style="margin: 10px 20px;">+ Tambah Balasan</button>
+        <div class="modal-buttons">
+            <button id="pendingCloseBtn" class="btn-success" disabled>✅ Selesai & Lanjut ke Closing</button>
+            <button class="closeModalBtn" data-modal="pendingModal">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="prospekDihubungiModal">
+    <div class="modal-content">
+        <h3>📋 Kuesioner Prospek</h3>
+        <div class="modal-subtitle">Isi data berikut sebelum melanjutkan</div>
+        <div class="form-group"><label>Aplikasi yang dipakai?</label><input type="text" id="prospek_aplikasi" placeholder="Contoh: GNP, BSB, BTN"></div>
+        <div class="form-group"><label>Domisili dimana?</label><input type="text" id="prospek_domisili" placeholder="Kota/Kabupaten"></div>
+        <div class="form-group"><label>Total transaksi per bulan?</label><input type="text" id="prospek_transaksi" placeholder="Nominal"></div>
+        <div class="form-group"><label>Apakah deposit atau saldo pinjaman?</label><input type="text" id="prospek_deposit" placeholder="Deposit / Saldo Pinjaman"></div>
+        <div class="form-group"><label>Apakah tertarik dengan penawaran kamu?</label><select id="prospek_tertarik"><option value="">Pilih</option><option value="Ya">Ya</option><option value="Tidak">Tidak</option></select></div>
+        <div class="form-group"><label>Penawaran apa yang diberikan?</label><input type="text" id="prospek_penawaran" placeholder="Penawaran"></div>
+        <div class="modal-buttons">
+            <button id="prospekDihubungiSave" class="btn-primary">Simpan & Lanjut</button>
+            <button class="closeModalBtn" data-modal="prospekDihubungiModal">Batal</button>
+        </div>
+    </div>
+</div>
+
 <div id="notifBox"></div>
+<script src="script.js"></script>
 </body>
 </html>
