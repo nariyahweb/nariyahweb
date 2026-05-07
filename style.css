@@ -647,8 +647,8 @@ body {
     max-height: 140px;
 }
 
-/* ========== DASHBOARD KANBAN (Tanpa Drag Drop) - 4 KOLOM ========== */
-/* Dashboard kanban board - 4 kolom dengan lebar minimal 120px, tanpa scroll */
+/* ========== DASHBOARD KANBAN ========== */
+/* Grid 4 kolom dengan lebar minimal 120px, tidak overflow horizontal */
 .kanban-board {
     display: grid !important;
     grid-template-columns: repeat(4, minmax(120px, 1fr)) !important;
@@ -660,180 +660,13 @@ body {
 
 /* Pastikan board-section tidak memicu scroll horizontal */
 .board-section {
-    overflow-x: visible !important;
-    overflow-y: auto; /* untuk vertical scroll jika konten terlalu panjang */
-    max-height: none;
-}
-
-/* Untuk kanban board di full page (opsional, biarkan tetap responsif) */
-.kanban-board-full {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(120px, 1fr));
-    gap: 16px;
-    width: 100%;
-    overflow-x: visible;
-}
-
-/* Pada layar yang sangat kecil, grid akan tetap proporsional tanpa scroll */
-@media (max-width: 640px) {
-    .kanban-board {
-        grid-template-columns: repeat(4, minmax(120px, 1fr)) !important;
-        gap: 8px;
-    }
-}
-
-.kanban-board .kanban-column {
-    border-radius: 12px;
-    padding: 10px;
-    min-width: 200px;
-    overflow: hidden;
-}
-
-/* Responsif: tetap 4 kolom, tapi bisa scroll horizontal jika layar terlalu kecil */
-@media (max-width: 1200px) {
-    .kanban-board {
-        grid-template-columns: repeat(4, minmax(220px, 1fr)) !important;
-        overflow-x: auto !important;
-    }
-}
-
-@media (max-width: 992px) {
-    .kanban-board {
-        grid-template-columns: repeat(4, minmax(240px, 1fr)) !important;
-        overflow-x: auto !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .kanban-board {
-        grid-template-columns: repeat(4, minmax(260px, 1fr)) !important;
-        overflow-x: auto !important;
-    }
-    /* Biarkan user scroll horizontal untuk melihat semua kolom */
-    .boards-wrapper {
-        overflow-x: auto !important;
-    }
-}
-
-.kanban-board .kanban-column[data-status="baru"],
-.kanban-board .kanban-column[data-status="Baru"] { background: #f3e8ff; }
-.kanban-board .kanban-column[data-status="followup"],
-.kanban-board .kanban-column[data-status="Sudah Dihubungi"] { background: #eff6ff; }
-.kanban-board .kanban-column[data-status="pending"] { background: #fff7ed; }
-.kanban-board .kanban-column[data-status="closing"] { background: #ecfdf5; }
-.kanban-board .kanban-column[data-status="Tertarik"] { background: #ecfdf5; }
-.kanban-board .kanban-column[data-status="Tidak Tertarik"] { background: #fef2f2; }
-
-.kanban-board .column-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 4px 6px 0;
-    margin-bottom: 8px;
-    font-weight: 700;
-    font-size: 11px;
-}
-
-.kanban-board .column-header .count {
-    background: rgba(0,0,0,0.08);
-    padding: 1px 5px;
-    border-radius: 20px;
-    font-size: 10px;
-}
-
-.purple-header { color: #6b21a5; }
-.blue-header { color: #1d4ed8; }
-.orange-header { color: #c2410c; }
-.green-header { color: #15803d; }
-.red-header { color: #b91c1c; }
-
-.kanban-board .kanban-cards {
-    overflow-x: hidden;
-    min-height: 200px;
-}
-
-/* Card item untuk dashboard (tanpa drag drop) */
-.kanban-board .card-item {
-    background: white;
-    border-radius: 8px;
-    padding: 6px 8px;
-    margin-bottom: 5px;
-    cursor: pointer;
-    border: 1px solid #e5e7eb;
-    transition: all 0.2s;
-    overflow: hidden;
-}
-
-.kanban-board .card-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-color: #c7d2fe;
-}
-
-.kanban-board .card-id {
-    font-size: 9px;
-    font-weight: 600;
-    color: #4f46e5;
-    background: #eef2ff;
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 12px;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-
-.kanban-board .card-name {
-    font-size: 11px;
-    font-weight: 600;
-    margin-bottom: 3px;
-    color: #1f2937;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: help;
-}
-
-.kanban-board .card-phone {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 9px;
-    color: #6b7280;
-}
-
-.kanban-board .card-phone span:first-child {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: calc(100% - 24px);
-    cursor: help;
-}
-
-.kanban-board .whatsapp-icon {
-    cursor: pointer;
-    font-size: 10px;
-    color: #25D366;
-    flex-shrink: 0;
-}
-
-.kanban-board .card-deadline {
-    font-size: 8px;
-    color: #9ca3af;
-    margin-top: 4px;
-    white-space: nowrap;
-}
-
-/* ========== BOARD SECTION STYLING ========== */
-.board-section {
     background: white;
     border-radius: 16px;
     padding: 16px;
     border: 1px solid #e5e7eb;
     transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
     height: 100%;
+    overflow-x: visible !important;
 }
 
 .board-section:hover {
@@ -872,6 +705,125 @@ body {
     background: #4338ca;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+}
+
+/* Kolom kanban */
+.kanban-board .kanban-column {
+    border-radius: 12px;
+    padding: 10px;
+    min-width: 0; /* penting agar grid bisa mengecil */
+    overflow: hidden;
+}
+
+.kanban-board .kanban-column[data-status="baru"],
+.kanban-board .kanban-column[data-status="Baru"] { background: #f3e8ff; }
+.kanban-board .kanban-column[data-status="followup"],
+.kanban-board .kanban-column[data-status="Sudah Dihubungi"] { background: #eff6ff; }
+.kanban-board .kanban-column[data-status="pending"] { background: #fff7ed; }
+.kanban-board .kanban-column[data-status="closing"] { background: #ecfdf5; }
+.kanban-board .kanban-column[data-status="Tertarik"] { background: #ecfdf5; }
+.kanban-board .kanban-column[data-status="Tidak Tertarik"] { background: #fef2f2; }
+
+.kanban-board .column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 4px 6px 0;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.kanban-board .column-header .count {
+    background: rgba(0,0,0,0.08);
+    padding: 1px 5px;
+    border-radius: 20px;
+    font-size: 10px;
+}
+
+.purple-header { color: #6b21a5; }
+.blue-header { color: #1d4ed8; }
+.orange-header { color: #c2410c; }
+.green-header { color: #15803d; }
+.red-header { color: #b91c1c; }
+
+.kanban-board .kanban-cards {
+    overflow-x: visible;
+    min-height: 200px;
+}
+
+/* Card item untuk dashboard */
+.kanban-board .card-item {
+    background: white;
+    border-radius: 8px;
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+    overflow: hidden;
+    word-break: break-word; /* mencegah teks panjang keluar */
+}
+
+.kanban-board .card-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: #c7d2fe;
+}
+
+.kanban-board .card-id {
+    font-size: 9px;
+    font-weight: 600;
+    color: #4f46e5;
+    background: #eef2ff;
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 12px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.kanban-board .card-name {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    color: #1f2937;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    cursor: help;
+}
+
+.kanban-board .card-phone {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    color: #6b7280;
+    overflow-wrap: break-word;
+}
+
+.kanban-board .card-phone span:first-child {
+    overflow-wrap: break-word;
+    word-break: break-all;
+    max-width: calc(100% - 24px);
+    cursor: help;
+}
+
+.kanban-board .whatsapp-icon {
+    cursor: pointer;
+    font-size: 10px;
+    color: #25D366;
+    flex-shrink: 0;
+}
+
+.kanban-board .card-deadline {
+    font-size: 8px;
+    color: #9ca3af;
+    margin-top: 4px;
+    white-space: nowrap;
 }
 
 /* ========== FULL PAGE KANBAN ========== */
@@ -920,9 +872,10 @@ body {
 
 .kanban-board-full {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
     gap: 16px;
     width: 100%;
+    overflow-x: visible;
 }
 
 .kanban-board-full .kanban-column {
@@ -974,6 +927,7 @@ body {
     border: 1px solid #e5e7eb;
     transition: all 0.2s;
     box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    word-break: break-word;
 }
 
 .kanban-board-full .card-item:hover {
@@ -1002,9 +956,8 @@ body {
     font-weight: 600;
     margin-bottom: 4px;
     color: #1f2937;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: break-word;
+    word-break: break-word;
     cursor: help;
 }
 
@@ -1014,12 +967,12 @@ body {
     align-items: center;
     font-size: 11px;
     color: #6b7280;
+    overflow-wrap: break-word;
 }
 
 .kanban-board-full .card-phone span:first-child {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: break-word;
+    word-break: break-all;
     max-width: calc(100% - 28px);
     cursor: help;
 }
@@ -1462,6 +1415,7 @@ body:has(.modal[style*="display: flex"]) {
     font-size: 13px;
     font-weight: 600;
     color: #1f2937;
+    word-break: break-word;
 }
 
 .detail-actions {
@@ -2221,7 +2175,7 @@ body:has(.modal[style*="display: flex"]) {
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1200px) {
     .kanban-board-full {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
     }
 }
 
@@ -2261,5 +2215,10 @@ body:has(.modal[style*="display: flex"]) {
     }
     .kanban-board-full .card-phone {
         font-size: 9px;
+    }
+    /* Pastikan di layar sangat kecil kolom tetap proporsional tanpa scroll */
+    .kanban-board {
+        grid-template-columns: repeat(4, minmax(100px, 1fr)) !important;
+        gap: 8px;
     }
 }
