@@ -2189,3 +2189,45 @@ body:has(.modal[style*="display: flex"]) {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* ========== FIX KANBAN COLUMN OVERFLOW ========== */
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    overflow-x: auto; /* jika layar terlalu kecil, muncul scroll horizontal */
+}
+
+.kanban-column {
+    min-width: 0; /* penting: mencegah kolom melebar melebihi grid */
+    width: 100%;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.kanban-cards {
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.card-item {
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.card-id, .card-name, .card-phone span:first-child {
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Pastikan tidak ada padding/margin yang menyebabkan overflow */
+.card-item {
+    padding: 6px 8px;
+    margin-bottom: 5px;
+}
