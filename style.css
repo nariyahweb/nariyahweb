@@ -480,43 +480,6 @@ body {
     padding: 20px 24px;
 }
 
-/* ========== DASHBOARD TWO COLUMNS LAYOUT ========== */
-.dashboard-two-columns {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    align-items: stretch;
-}
-
-.dashboard-column {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Pastikan board section memiliki tinggi yang sama dalam satu kolom */
-.dashboard-column .board-section {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Kanban container dalam board section */
-.dashboard-column .kanban-board {
-    flex: 1;
-}
-
-/* Responsive: stack on mobile */
-@media (max-width: 1200px) {
-    .dashboard-two-columns {
-        flex-direction: column;
-    }
-    .dashboard-column {
-        width: 100%;
-    }
-}
-
 /* ========== STATS CARDS ========== */
 .stats-grid {
     display: grid;
@@ -604,7 +567,7 @@ body {
 .bg-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 .bg-orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
 
-/* ========== CHARTS ========== */
+/* ========== CHARTS ROW - PASTIKAN TIDAK HILANG ========== */
 .charts-row {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -662,8 +625,41 @@ body {
     max-height: 140px;
 }
 
+/* ========== DASHBOARD TWO COLUMNS LAYOUT ========== */
+.dashboard-two-columns {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.dashboard-column {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-column .board-section {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-column .kanban-board {
+    flex: 1;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-two-columns {
+        flex-direction: column;
+    }
+    .dashboard-column {
+        width: 100%;
+    }
+}
+
 /* ========== DASHBOARD KANBAN ========== */
-/* Grid 4 kolom dengan lebar minimal, tidak overflow horizontal */
 .kanban-board {
     display: grid !important;
     grid-template-columns: repeat(4, minmax(130px, 1fr)) !important;
@@ -673,7 +669,6 @@ body {
     overflow-y: visible !important;
 }
 
-/* Pastikan board-section tidak memicu scroll horizontal */
 .board-section {
     background: white;
     border-radius: 16px;
@@ -724,7 +719,6 @@ body {
     box-shadow: 0 4px 12px rgba(79,70,229,0.3);
 }
 
-/* Kolom kanban */
 .kanban-board .kanban-column {
     border-radius: 12px;
     padding: 10px;
@@ -774,7 +768,6 @@ body {
     min-height: 200px;
 }
 
-/* Card item untuk dashboard - semua dalam satu baris */
 .kanban-board .card-item {
     background: white;
     border-radius: 8px;
@@ -792,7 +785,6 @@ body {
     border-color: #c7d2fe;
 }
 
-/* ID Agent - satu baris dengan potongan */
 .kanban-board .card-id {
     font-size: 9px;
     font-weight: 600;
@@ -808,7 +800,6 @@ body {
     text-overflow: ellipsis;
 }
 
-/* Nama - satu baris dengan potongan */
 .kanban-board .card-name {
     font-size: 11px;
     font-weight: 600;
@@ -820,7 +811,6 @@ body {
     cursor: help;
 }
 
-/* Nomor WhatsApp - satu baris dengan ikon WA di samping */
 .kanban-board .card-phone {
     display: flex;
     justify-content: space-between;
@@ -846,7 +836,6 @@ body {
     flex-shrink: 0;
 }
 
-/* Deadline - satu baris */
 .kanban-board .card-deadline {
     font-size: 8px;
     color: #9ca3af;
@@ -2238,7 +2227,6 @@ body:has(.modal[style*="display: flex"]) {
     .board-header .add-btn {
         width: 100%;
     }
-    /* Pada layar kecil, kolom tetap 4 tapi lebih kecil */
     .kanban-board {
         grid-template-columns: repeat(4, minmax(110px, 1fr)) !important;
         gap: 8px;
