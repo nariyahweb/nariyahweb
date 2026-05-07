@@ -19,6 +19,15 @@ let currentPendingId = null;
 let pendingItems = [];
 let currentProspekId = null;
 
+// Untuk full page tables
+let customersData = [];
+let prospekData = [];
+let filteredFollowupData = [];
+let filteredProspekData = [];
+let followupPage = 1;
+let prospekPage = 1;
+const rowsPerPage = 15;
+
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
     const notif = document.createElement('div');
@@ -50,6 +59,21 @@ function updateSidebarBodyClass() {
     const sidebar = document.getElementById('sidebar');
     if (sidebar && sidebar.classList.contains('active')) document.body.classList.add('sidebar-open');
     else document.body.classList.remove('sidebar-open');
+}
+
+function getStatusBadge(status) {
+    const statusMap = {
+        'baru': 'status-baru', 'followup': 'status-followup',
+        'pending': 'status-pending', 'closing': 'status-closing',
+        'Baru': 'status-baru', 'Sudah Dihubungi': 'status-dihubungi',
+        'Tertarik': 'status-tertarik', 'Tidak Tertarik': 'status-tidak'
+    };
+    const className = statusMap[status] || 'status-baru';
+    let displayName = status;
+    if (status === 'followup') displayName = 'Follow Up';
+    else if (status === 'Sudah Dihubungi') displayName = 'Dihubungi';
+    else if (status === 'Tidak Tertarik') displayName = 'Tidak Tertarik';
+    return `<span class="status-badge ${className}">${displayName}</span>`;
 }
 
 // ========== SIDEBAR ==========
@@ -187,7 +211,7 @@ auth.onAuthStateChanged(async user => {
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
-        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'reminderPage', 'pesanPage', 'broadcastPage'];
+        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage'];
         pages.forEach(p => { const el = document.getElementById(p); if (el) el.style.display = 'none'; });
         if (page === 'dashboard') document.getElementById('dashboardPage').style.display = 'block';
         else if (page === 'import') document.getElementById('importPage').style.display = 'block';
@@ -198,6 +222,8 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         else if (page === 'reminder') { document.getElementById('reminderPage').style.display = 'block'; loadReminders(); }
         else if (page === 'pesan') { document.getElementById('pesanPage').style.display = 'block'; loadPesan(); loadUsersForSelect(); }
         else if (page === 'broadcast') { document.getElementById('broadcastPage').style.display = 'block'; initBroadcast(); }
+        else if (page === 'followupFull') { document.getElementById('followupFullPage').style.display = 'block'; renderFollowupFullTable(); }
+        else if (page === 'prospekFull') { document.getElementById('prospekFullPage').style.display = 'block'; renderProspekFullTable(); }
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         if (window.innerWidth <= 768) document.getElementById('sidebar')?.classList.remove('active');
@@ -319,15 +345,6 @@ document.getElementById('saveProspekBtn')?.addEventListener('click', () => {
 
 // ========== DETAIL MODAL ==========
 function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }
-function getStatusBadge(status) {
-    const statusMap = { 'baru':'status-baru', 'followup':'status-followup', 'pending':'status-pending', 'closing':'status-closing', 'Baru':'status-baru', 'Sudah Dihubungi':'status-dihubungi', 'Tertarik':'status-tertarik', 'Tidak Tertarik':'status-tidak' };
-    const className = statusMap[status] || 'status-baru';
-    let displayName = status;
-    if (status === 'followup') displayName = 'Follow Up';
-    else if (status === 'Sudah Dihubungi') displayName = 'Dihubungi';
-    else if (status === 'Tidak Tertarik') displayName = 'Tidak Tertarik';
-    return `<span class="status-badge ${className}">${displayName}</span>`;
-}
 
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(doc => {
@@ -619,7 +636,6 @@ window.confirmTidakTertarik = async function(id) {
     updateAllBadges();
 };
 
-// ========== SIMPAN KE DB CLOSING DENGAN TOMBOL ==========
 window.saveToClosingNow = async function(id) {
     if (confirm('⚠️ Pindahkan customer ini ke Database Closing?\n\nData akan dihapus dari Followup Agen.\n\n✅ OK = Pindahkan\n❌ CANCEL = Batalkan')) {
         try {
@@ -710,6 +726,145 @@ function setupConvertModal() {
     modal.onclick = function(e) { if (e.target === modal) { modal.style.display = 'none'; document.body.classList.remove('modal-open'); } };
 }
 
+// ========== FULL PAGE TABLES ==========
+function renderFollowupFullTable() {
+    const searchTerm = document.getElementById('searchFollowup')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('filterFollowupStatus')?.value || '';
+    
+    filteredFollowupData = customersData.filter(item => {
+        const matchSearch = (item.nama || '').toLowerCase().includes(searchTerm) || (item.hp || '').includes(searchTerm);
+        const matchStatus = statusFilter === '' || item.status === statusFilter;
+        return matchSearch && matchStatus;
+    });
+    
+    const totalPages = Math.ceil(filteredFollowupData.length / rowsPerPage);
+    const start = (followupPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageData = filteredFollowupData.slice(start, end);
+    
+    const tbody = document.getElementById('followupTableBody');
+    if (!tbody) return;
+    if (pageData.length === 0) {
+        tbody.innerHTML = '<table><td colspan="7" style="text-align:center">Tidak ada data</td></tr>';
+    } else {
+        tbody.innerHTML = pageData.map(item => `
+            <tr>
+                <td>${escapeHtml(item.agent_id || '-')}</td>
+                <td>${escapeHtml(item.nama)}</td>
+                <td>${escapeHtml(item.hp)}</td>
+                <td>${escapeHtml(item.apk || '-')}</td>
+                <td>${item.tanggal || '-'}</td>
+                <td>${getStatusBadge(item.status)}</td>
+                <td class="action-buttons">
+                    <button class="action-btn action-btn-wa" onclick="openWA('${item.hp}')">💬 WA</button>
+                    <button class="action-btn action-btn-edit" onclick="openDetailCustomer('${item.id}')">👁️ Detail</button>
+                    <button class="action-btn action-btn-delete" onclick="deleteCustomer('${item.id}')">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    const paginationDiv = document.getElementById('followupPagination');
+    if (paginationDiv && totalPages > 1) {
+        let html = '';
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="${i === followupPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+        }
+        paginationDiv.innerHTML = html;
+        paginationDiv.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                followupPage = parseInt(btn.dataset.page);
+                renderFollowupFullTable();
+            });
+        });
+    } else if (paginationDiv) {
+        paginationDiv.innerHTML = '';
+    }
+}
+
+function renderProspekFullTable() {
+    const searchTerm = document.getElementById('searchProspek')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('filterProspekStatus')?.value || '';
+    
+    filteredProspekData = prospekData.filter(item => {
+        const matchSearch = (item.nama || '').toLowerCase().includes(searchTerm) || (item.hp || '').includes(searchTerm);
+        const matchStatus = statusFilter === '' || item.status === statusFilter;
+        return matchSearch && matchStatus;
+    });
+    
+    const totalPages = Math.ceil(filteredProspekData.length / rowsPerPage);
+    const start = (prospekPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageData = filteredProspekData.slice(start, end);
+    
+    const tbody = document.getElementById('prospekTableBody');
+    if (!tbody) return;
+    if (pageData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Tidak ada data</td></tr>';
+    } else {
+        tbody.innerHTML = pageData.map(item => `
+            <tr>
+                <td>${escapeHtml(item.nama)}</td>
+                <td>${escapeHtml(item.hp)}</td>
+                <td>${item.deadline || '-'}</td>
+                <td>${getStatusBadge(item.status)}</td>
+                <td class="action-buttons">
+                    <button class="action-btn action-btn-wa" onclick="openWA('${item.hp}')">💬 WA</button>
+                    <button class="action-btn action-btn-edit" onclick="openDetailProspek('${item.id}')">👁️ Detail</button>
+                    <button class="action-btn action-btn-delete" onclick="deleteProspek('${item.id}')">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    const paginationDiv = document.getElementById('prospekPagination');
+    if (paginationDiv && totalPages > 1) {
+        let html = '';
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<button class="${i === prospekPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+        }
+        paginationDiv.innerHTML = html;
+        paginationDiv.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                prospekPage = parseInt(btn.dataset.page);
+                renderProspekFullTable();
+            });
+        });
+    } else if (paginationDiv) {
+        paginationDiv.innerHTML = '';
+    }
+}
+
+// Event listeners untuk full page tables
+document.getElementById('searchFollowup')?.addEventListener('input', () => {
+    followupPage = 1;
+    renderFollowupFullTable();
+});
+document.getElementById('filterFollowupStatus')?.addEventListener('change', () => {
+    followupPage = 1;
+    renderFollowupFullTable();
+});
+document.getElementById('refreshFollowup')?.addEventListener('click', () => {
+    document.getElementById('searchFollowup').value = '';
+    document.getElementById('filterFollowupStatus').value = '';
+    followupPage = 1;
+    renderFollowupFullTable();
+});
+document.getElementById('searchProspek')?.addEventListener('input', () => {
+    prospekPage = 1;
+    renderProspekFullTable();
+});
+document.getElementById('filterProspekStatus')?.addEventListener('change', () => {
+    prospekPage = 1;
+    renderProspekFullTable();
+});
+document.getElementById('refreshProspek')?.addEventListener('click', () => {
+    document.getElementById('searchProspek').value = '';
+    document.getElementById('filterProspekStatus').value = '';
+    prospekPage = 1;
+    renderProspekFullTable();
+});
+
 // ========== DATABASE ARCHIVES ==========
 let selectedClosingIds = new Map(), selectedTidakIds = new Map(), selectedNomorSalahIds = new Map(), selectedCommitmentIds = new Map();
 
@@ -717,7 +872,7 @@ function loadDBClosing() {
     if (!currentUser) return;
     db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, closing_date: d.closing_date, followup_data: d.followup_data, pending_data: d.pending_data, checked: selectedClosingIds.get(doc.id) || false }); });
+        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, closing_date: d.closing_date, checked: selectedClosingIds.get(doc.id) || false }); });
         items.sort((a,b) => new Date(b.closing_date) - new Date(a.closing_date));
         const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Closing: ${new Date(item.closing_date).toLocaleDateString('id-ID')}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('closing', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
         const container = document.getElementById('dbClosingList');
@@ -730,7 +885,7 @@ function loadDBTidak() {
     if (!currentUser) return;
     db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, dihubungi_data: d.dihubungi_data, checked: selectedTidakIds.get(doc.id) || false }); });
+        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, checked: selectedTidakIds.get(doc.id) || false }); });
         items.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
         const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Tanggal: ${new Date(item.tanggal).toLocaleDateString('id-ID')}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('tidak', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
         const container = document.getElementById('dbTidakList');
@@ -933,11 +1088,14 @@ function initDragAndDrop() {
 function loadAllData() {
     if (!currentUser) return;
     const today = new Date().toISOString().split('T')[0];
+    
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
+        customersData = [];
         snap.forEach(doc => {
             const d = doc.data();
+            customersData.push({ id: doc.id, ...d });
             total++;
             if (d.status === 'closing') closing++;
             else if (d.status === 'pending') pending++;
@@ -958,6 +1116,7 @@ function loadAllData() {
         document.getElementById('closingTotal').innerText = closing;
         document.getElementById('activeProspek').innerText = total - closing;
         document.getElementById('rateClosing').innerText = total ? Math.round((closing/total)*100)+'%' : '0%';
+        
         for (let status in lists) {
             const container = document.getElementById(status + 'List');
             if (container) {
@@ -984,12 +1143,16 @@ function loadAllData() {
         updateChartCustomer(total, closing, pending, followup);
         initDragAndDrop();
         updateAllBadges();
+        renderFollowupFullTable();
     });
+    
     db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let baru = 0, dihubungi = 0, tertarik = 0, tidak = 0;
         const lists = { prospekBaru: [], prospekDihubungi: [], prospekTertarik: [], prospekTidak: [] };
+        prospekData = [];
         snap.forEach(doc => {
             const d = doc.data();
+            prospekData.push({ id: doc.id, ...d });
             const st = d.status || 'Baru';
             const deadline = d.deadline || '';
             if (st === 'Baru') { baru++; lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp, status: st, deadline }); }
@@ -1029,6 +1192,7 @@ function loadAllData() {
         updateChartProspek(baru, dihubungi, tertarik, tidak);
         initDragAndDrop();
         updateAllBadges();
+        renderProspekFullTable();
     });
 }
 
