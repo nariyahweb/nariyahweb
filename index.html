@@ -33,23 +33,61 @@
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header"><h2>FLOUPYUD</h2></div>
             <div class="sidebar-menu">
-                <div class="menu-item active" data-page="dashboard"><span class="icon">📊</span><span>Dashboard</span></div>
+                <div class="menu-item active" data-page="dashboard">
+                    <span class="icon">📊</span>
+                    <span>Dashboard</span>
+                </div>
+                <div class="menu-item" data-page="followupFull">
+                    <span class="icon">📋</span>
+                    <span>Data Followup Agen</span>
+                </div>
+                <div class="menu-item" data-page="prospekFull">
+                    <span class="icon">📋</span>
+                    <span>Data Prospek Agen</span>
+                </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
-                <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
-                <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
-                <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📵</span><span>DB Nomor Salah</span></div>
-                <div class="menu-item" data-page="dbCommitment"><span class="icon">🤝</span><span>DB Commitment</span></div>
+                <div class="menu-item" data-page="dbClosing">
+                    <span class="icon">📁</span>
+                    <span>DB Closing</span>
+                </div>
+                <div class="menu-item" data-page="dbTidak">
+                    <span class="icon">📁</span>
+                    <span>DB Tidak Tertarik</span>
+                </div>
+                <div class="menu-item" data-page="dbNomorSalah">
+                    <span class="icon">📵</span>
+                    <span>DB Nomor Salah</span>
+                </div>
+                <div class="menu-item" data-page="dbCommitment">
+                    <span class="icon">🤝</span>
+                    <span>DB Commitment</span>
+                </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">IMPORT DATA</div>
-                <div class="menu-item" data-page="import"><span class="icon">📜</span><span>Import Data</span></div>
+                <div class="menu-item" data-page="import">
+                    <span class="icon">📜</span>
+                    <span>Import Data</span>
+                </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">KOMUNIKASI</div>
-                <div class="menu-item" data-page="reminder"><span class="icon">⏰</span><span>Pengingat (Reminder)</span></div>
-                <div class="menu-item" data-page="pesan"><span class="icon">💬</span><span>Pesan</span></div>
-                <div class="menu-item" data-page="broadcast"><span class="icon">📢</span><span>Broadcast WhatsApp</span></div>
+                <div class="menu-item" data-page="reminder">
+                    <span class="icon">⏰</span>
+                    <span>Pengingat (Reminder)</span>
+                </div>
+                <div class="menu-item" data-page="pesan">
+                    <span class="icon">💬</span>
+                    <span>Pesan</span>
+                </div>
+                <div class="menu-item" data-page="broadcast">
+                    <span class="icon">📢</span>
+                    <span>Broadcast WhatsApp</span>
+                </div>
                 <div class="menu-divider"></div>
-                <div class="menu-item" id="logoutBtn"><span class="icon">☕</span><span>Logout</span></div>
+                <div class="menu-item" id="logoutBtn">
+                    <span class="icon">☕</span>
+                    <span>Logout</span>
+                </div>
             </div>
         </div>
 
@@ -96,6 +134,68 @@
                                 <div class="kanban-column" data-status="Tidak Tertarik"><div class="column-header red-header"><span>Tidak Tertarik</span><span class="count" id="countTidakTertarik">0</span></div><div class="kanban-cards" id="prospekTidakList"></div></div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- FULL PAGE FOLLOWUP AGEN -->
+                <div id="followupFullPage" class="page-content" style="display:none">
+                    <div class="fullpage-section">
+                        <div class="fullpage-header">
+                            <h2>📋 Data Followup Agen</h2>
+                            <div class="fullpage-controls">
+                                <input type="text" id="searchFollowup" placeholder="Cari nama atau nomor..." class="search-input">
+                                <select id="filterFollowupStatus" class="filter-select">
+                                    <option value="">Semua Status</option>
+                                    <option value="baru">Baru</option>
+                                    <option value="followup">Follow Up</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="closing">Closing</option>
+                                </select>
+                                <button class="refresh-btn" id="refreshFollowup">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div class="fullpage-table-container">
+                            <table class="data-table" id="followupTable">
+                                <thead>
+                                    <tr><th>ID Agent</th><th>Nama</th><th>WhatsApp</th><th>Aplikasi</th><th>Deadline</th><th>Status</th><th>Aksi</th></tr>
+                                </thead>
+                                <tbody id="followupTableBody">
+                                    <tr><td colspan="7" style="text-align:center">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="followupPagination"></div>
+                    </div>
+                </div>
+
+                <!-- FULL PAGE PROSPEK AGEN -->
+                <div id="prospekFullPage" class="page-content" style="display:none">
+                    <div class="fullpage-section">
+                        <div class="fullpage-header">
+                            <h2>🎯 Data Prospek Agen</h2>
+                            <div class="fullpage-controls">
+                                <input type="text" id="searchProspek" placeholder="Cari nama atau nomor..." class="search-input">
+                                <select id="filterProspekStatus" class="filter-select">
+                                    <option value="">Semua Status</option>
+                                    <option value="Baru">Baru</option>
+                                    <option value="Sudah Dihubungi">Sudah Dihubungi</option>
+                                    <option value="Tertarik">Tertarik</option>
+                                    <option value="Tidak Tertarik">Tidak Tertarik</option>
+                                </select>
+                                <button class="refresh-btn" id="refreshProspek">🔄 Refresh</button>
+                            </div>
+                        </div>
+                        <div class="fullpage-table-container">
+                            <table class="data-table" id="prospekTable">
+                                <thead>
+                                    <tr><th>Nama</th><th>WhatsApp</th><th>Deadline</th><th>Status</th><th>Aksi</th></tr>
+                                </thead>
+                                <tbody id="prospekTableBody">
+                                    <tr><td colspan="5" style="text-align:center">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="prospekPagination"></div>
                     </div>
                 </div>
 
@@ -222,7 +322,6 @@
     </div>
 </div>
 
-<!-- Modal untuk Followup Confirmation -->
 <div class="modal" id="followupConfirmModal">
     <div class="modal-content">
         <h3>✅ Konfirmasi Follow Up</h3>
@@ -237,7 +336,6 @@
     </div>
 </div>
 
-<!-- Modal untuk Pending (balasan/respon dinamis) -->
 <div class="modal" id="pendingModal">
     <div class="modal-content">
         <h3>📝 Catatan Pending</h3>
@@ -251,7 +349,6 @@
     </div>
 </div>
 
-<!-- Modal untuk Prospek Dihubungi (kuesioner) -->
 <div class="modal" id="prospekDihubungiModal">
     <div class="modal-content">
         <h3>📋 Kuesioner Prospek</h3>
