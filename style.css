@@ -682,7 +682,7 @@ body {
 /* ========== KANBAN BOARD ========== */
 .kanban-board {
     display: grid;
-    grid-template-columns: repeat(4, minmax(160px, 1fr));
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
     gap: 8px;
     width: 100%;
 }
