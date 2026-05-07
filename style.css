@@ -2122,3 +2122,70 @@ body:has(.modal[style*="display: flex"]) {
         font-size: 11px !important;
     }
 }
+
+/* ========== MEMPERKECIL KANBAN COLUMN ========== */
+.kanban-board {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(160px, 1fr)) !important; /* lebar minimal 160px */
+    gap: 8px !important;
+}
+
+.kanban-column {
+    padding: 6px !important;
+}
+
+.column-header {
+    padding: 2px 2px 4px 0 !important;
+    font-size: 10px !important;
+}
+
+.column-header .count {
+    font-size: 9px !important;
+    padding: 0 4px !important;
+}
+
+.card-item {
+    padding: 4px 6px !important;
+    margin-bottom: 4px !important;
+}
+
+.card-id {
+    font-size: 7px !important;
+    padding: 1px 4px !important;
+    margin-bottom: 2px !important;
+}
+
+.card-name {
+    font-size: 9px !important;
+    margin-bottom: 2px !important;
+}
+
+.card-phone {
+    font-size: 7px !important;
+}
+
+.card-phone span:first-child {
+    max-width: 70px !important;
+}
+
+.whatsapp-icon {
+    font-size: 8px !important;
+}
+
+.card-deadline {
+    font-size: 6px !important;
+    margin-top: 2px !important;
+}
+
+/* Responsif: jika layar terlalu kecil, tampilkan 2 kolom */
+@media (max-width: 1000px) {
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .kanban-board {
+        grid-template-columns: 1fr !important;
+    }
+}
