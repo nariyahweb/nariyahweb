@@ -966,7 +966,6 @@ document.getElementById('addProspekFullBtn')?.addEventListener('click', () => {
 
 // ========== DRAG AND DROP (DIHAPUS - TIDAK ADA FUNGSI) ==========
 function initDragAndDrop() {
-    // Drag and drop DINONAKTIFKAN
     console.log("Drag and drop disabled");
 }
 
