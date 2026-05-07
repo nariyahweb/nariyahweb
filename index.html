@@ -47,47 +47,20 @@
                 </div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
-                <div class="menu-item" data-page="dbClosing">
-                    <span class="icon">📁</span>
-                    <span>DB Closing</span>
-                </div>
-                <div class="menu-item" data-page="dbTidak">
-                    <span class="icon">📁</span>
-                    <span>DB Tidak Tertarik</span>
-                </div>
-                <div class="menu-item" data-page="dbNomorSalah">
-                    <span class="icon">📵</span>
-                    <span>DB Nomor Salah</span>
-                </div>
-                <div class="menu-item" data-page="dbCommitment">
-                    <span class="icon">🤝</span>
-                    <span>DB Commitment</span>
-                </div>
+                <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
+                <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
+                <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📵</span><span>DB Nomor Salah</span></div>
+                <div class="menu-item" data-page="dbCommitment"><span class="icon">🤝</span><span>DB Commitment</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">IMPORT DATA</div>
-                <div class="menu-item" data-page="import">
-                    <span class="icon">📜</span>
-                    <span>Import Data</span>
-                </div>
+                <div class="menu-item" data-page="import"><span class="icon">📜</span><span>Import Data</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">KOMUNIKASI</div>
-                <div class="menu-item" data-page="reminder">
-                    <span class="icon">⏰</span>
-                    <span>Pengingat (Reminder)</span>
-                </div>
-                <div class="menu-item" data-page="pesan">
-                    <span class="icon">💬</span>
-                    <span>Pesan</span>
-                </div>
-                <div class="menu-item" data-page="broadcast">
-                    <span class="icon">📢</span>
-                    <span>Broadcast WhatsApp</span>
-                </div>
+                <div class="menu-item" data-page="reminder"><span class="icon">⏰</span><span>Pengingat (Reminder)</span></div>
+                <div class="menu-item" data-page="pesan"><span class="icon">💬</span><span>Pesan</span></div>
+                <div class="menu-item" data-page="broadcast"><span class="icon">📢</span><span>Broadcast WhatsApp</span></div>
                 <div class="menu-divider"></div>
-                <div class="menu-item" id="logoutBtn">
-                    <span class="icon">☕</span>
-                    <span>Logout</span>
-                </div>
+                <div class="menu-item" id="logoutBtn"><span class="icon">☕</span><span>Logout</span></div>
             </div>
         </div>
 
@@ -115,7 +88,7 @@
                         <div class="chart-card"><h3>Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
                         <div class="chart-card"><h3>Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
                     </div>
-                    <div class="boards-wrapper">
+                    <div class="dashboard-kanban">
                         <div class="board-section">
                             <div class="board-header"><h3>📞 Followup Agen</h3><button class="add-btn" id="addCustomerBtn">+ Tambah Data</button></div>
                             <div class="kanban-board">
@@ -137,65 +110,59 @@
                     </div>
                 </div>
 
-                <!-- FULL PAGE FOLLOWUP AGEN -->
+                <!-- FULL PAGE FOLLOWUP AGEN (KANBAN FULL LAYAR) -->
                 <div id="followupFullPage" class="page-content" style="display:none">
-                    <div class="fullpage-section">
+                    <div class="fullpage-kanban">
                         <div class="fullpage-header">
-                            <h2>📋 Data Followup Agen</h2>
-                            <div class="fullpage-controls">
-                                <input type="text" id="searchFollowup" placeholder="Cari nama atau nomor..." class="search-input">
-                                <select id="filterFollowupStatus" class="filter-select">
-                                    <option value="">Semua Status</option>
-                                    <option value="baru">Baru</option>
-                                    <option value="followup">Follow Up</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="closing">Closing</option>
-                                </select>
-                                <button class="refresh-btn" id="refreshFollowup">🔄 Refresh</button>
+                            <h2>📋 Data Followup Agen (Full Mode)</h2>
+                            <button class="add-btn" id="addCustomerFullBtn">+ Tambah Data</button>
+                        </div>
+                        <div class="kanban-board-full">
+                            <div class="kanban-column" data-status="baru">
+                                <div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountBaru">0</span></div>
+                                <div class="kanban-cards" id="fullBaruList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="followup">
+                                <div class="column-header blue-header"><span>Follow Up</span><span class="count" id="fullCountFollowup">0</span></div>
+                                <div class="kanban-cards" id="fullFollowupList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="pending">
+                                <div class="column-header orange-header"><span>Pending</span><span class="count" id="fullCountPending">0</span></div>
+                                <div class="kanban-cards" id="fullPendingList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="closing">
+                                <div class="column-header green-header"><span>Closing</span><span class="count" id="fullCountClosing">0</span></div>
+                                <div class="kanban-cards" id="fullClosingList"></div>
                             </div>
                         </div>
-                        <div class="fullpage-table-container">
-                            <table class="data-table" id="followupTable">
-                                <thead>
-                                    <tr><th>ID Agent</th><th>Nama</th><th>WhatsApp</th><th>Aplikasi</th><th>Deadline</th><th>Status</th><th>Aksi</th></tr>
-                                </thead>
-                                <tbody id="followupTableBody">
-                                    <tr><td colspan="7" style="text-align:center">Memuat data...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="pagination" id="followupPagination"></div>
                     </div>
                 </div>
 
-                <!-- FULL PAGE PROSPEK AGEN -->
+                <!-- FULL PAGE PROSPEK AGEN (KANBAN FULL LAYAR) -->
                 <div id="prospekFullPage" class="page-content" style="display:none">
-                    <div class="fullpage-section">
+                    <div class="fullpage-kanban">
                         <div class="fullpage-header">
-                            <h2>🎯 Data Prospek Agen</h2>
-                            <div class="fullpage-controls">
-                                <input type="text" id="searchProspek" placeholder="Cari nama atau nomor..." class="search-input">
-                                <select id="filterProspekStatus" class="filter-select">
-                                    <option value="">Semua Status</option>
-                                    <option value="Baru">Baru</option>
-                                    <option value="Sudah Dihubungi">Sudah Dihubungi</option>
-                                    <option value="Tertarik">Tertarik</option>
-                                    <option value="Tidak Tertarik">Tidak Tertarik</option>
-                                </select>
-                                <button class="refresh-btn" id="refreshProspek">🔄 Refresh</button>
+                            <h2>🎯 Data Prospek Agen (Full Mode)</h2>
+                            <button class="add-btn" id="addProspekFullBtn">+ Tambah Data</button>
+                        </div>
+                        <div class="kanban-board-full">
+                            <div class="kanban-column" data-status="Baru">
+                                <div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountProspekBaru">0</span></div>
+                                <div class="kanban-cards" id="fullProspekBaruList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="Sudah Dihubungi">
+                                <div class="column-header blue-header"><span>Dihubungi</span><span class="count" id="fullCountDihubungi">0</span></div>
+                                <div class="kanban-cards" id="fullProspekDihubungiList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="Tertarik">
+                                <div class="column-header green-header"><span>Tertarik</span><span class="count" id="fullCountTertarik">0</span></div>
+                                <div class="kanban-cards" id="fullProspekTertarikList"></div>
+                            </div>
+                            <div class="kanban-column" data-status="Tidak Tertarik">
+                                <div class="column-header red-header"><span>Tidak Tertarik</span><span class="count" id="fullCountTidakTertarik">0</span></div>
+                                <div class="kanban-cards" id="fullProspekTidakList"></div>
                             </div>
                         </div>
-                        <div class="fullpage-table-container">
-                            <table class="data-table" id="prospekTable">
-                                <thead>
-                                    <tr><th>Nama</th><th>WhatsApp</th><th>Deadline</th><th>Status</th><th>Aksi</th></tr>
-                                </thead>
-                                <tbody id="prospekTableBody">
-                                    <tr><td colspan="5" style="text-align:center">Memuat data...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="pagination" id="prospekPagination"></div>
                     </div>
                 </div>
 
@@ -243,7 +210,7 @@
     </div>
 </div>
 
-<!-- MODALS -->
+<!-- MODALS (sama seperti sebelumnya) -->
 <div class="modal" id="customerModal">
     <div class="modal-content">
         <h3>Tambah Customer</h3>
