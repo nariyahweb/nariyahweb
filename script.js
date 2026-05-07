@@ -725,7 +725,6 @@ function setupConvertModal() {
 function renderFullFollowupKanban() {
     const today = new Date().toISOString().split('T')[0];
     
-    // Inisialisasi lists dengan benar
     const lists = {
         baru: [],
         followup: [],
@@ -733,7 +732,6 @@ function renderFullFollowupKanban() {
         closing: []
     };
     
-    // Kelompokkan data berdasarkan status
     customersData.forEach(item => {
         const status = item.status || 'baru';
         if (status === 'closing') lists.closing.push(item);
@@ -742,19 +740,16 @@ function renderFullFollowupKanban() {
         else lists.baru.push(item);
     });
     
-    // Sort by deadline
     lists.baru.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
     lists.followup.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
     lists.pending.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
     lists.closing.sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
     
-    // Update counts
     document.getElementById('fullCountBaru').innerText = lists.baru.length;
     document.getElementById('fullCountFollowup').innerText = lists.followup.length;
     document.getElementById('fullCountPending').innerText = lists.pending.length;
     document.getElementById('fullCountClosing').innerText = lists.closing.length;
     
-    // Render Baru
     const baruContainer = document.getElementById('fullBaruList');
     if (baruContainer) {
         baruContainer.innerHTML = lists.baru.map(item => {
@@ -777,7 +772,6 @@ function renderFullFollowupKanban() {
         });
     }
     
-    // Render Followup
     const followupContainer = document.getElementById('fullFollowupList');
     if (followupContainer) {
         followupContainer.innerHTML = lists.followup.map(item => {
@@ -800,7 +794,6 @@ function renderFullFollowupKanban() {
         });
     }
     
-    // Render Pending
     const pendingContainer = document.getElementById('fullPendingList');
     if (pendingContainer) {
         pendingContainer.innerHTML = lists.pending.map(item => {
@@ -823,7 +816,6 @@ function renderFullFollowupKanban() {
         });
     }
     
-    // Render Closing
     const closingContainer = document.getElementById('fullClosingList');
     if (closingContainer) {
         closingContainer.innerHTML = lists.closing.map(item => {
@@ -850,7 +842,6 @@ function renderFullFollowupKanban() {
 function renderFullProspekKanban() {
     const today = new Date().toISOString().split('T')[0];
     
-    // Inisialisasi lists dengan benar
     const lists = {
         prospekBaru: [],
         prospekDihubungi: [],
@@ -858,7 +849,6 @@ function renderFullProspekKanban() {
         prospekTidak: []
     };
     
-    // Kelompokkan data berdasarkan status
     prospekData.forEach(item => {
         const status = item.status || 'Baru';
         if (status === 'Baru') lists.prospekBaru.push(item);
@@ -867,19 +857,16 @@ function renderFullProspekKanban() {
         else lists.prospekTidak.push(item);
     });
     
-    // Sort by deadline
     lists.prospekBaru.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
     lists.prospekDihubungi.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
     lists.prospekTertarik.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
     lists.prospekTidak.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
     
-    // Update counts
     document.getElementById('fullCountProspekBaru').innerText = lists.prospekBaru.length;
     document.getElementById('fullCountDihubungi').innerText = lists.prospekDihubungi.length;
     document.getElementById('fullCountTertarik').innerText = lists.prospekTertarik.length;
     document.getElementById('fullCountTidakTertarik').innerText = lists.prospekTidak.length;
     
-    // Render Baru
     const baruContainer = document.getElementById('fullProspekBaruList');
     if (baruContainer) {
         baruContainer.innerHTML = lists.prospekBaru.map(item => {
@@ -901,7 +888,6 @@ function renderFullProspekKanban() {
         });
     }
     
-    // Render Dihubungi
     const dihubungiContainer = document.getElementById('fullProspekDihubungiList');
     if (dihubungiContainer) {
         dihubungiContainer.innerHTML = lists.prospekDihubungi.map(item => {
@@ -923,7 +909,6 @@ function renderFullProspekKanban() {
         });
     }
     
-    // Render Tertarik
     const tertarikContainer = document.getElementById('fullProspekTertarikList');
     if (tertarikContainer) {
         tertarikContainer.innerHTML = lists.prospekTertarik.map(item => {
@@ -945,7 +930,6 @@ function renderFullProspekKanban() {
         });
     }
     
-    // Render Tidak Tertarik
     const tidakContainer = document.getElementById('fullProspekTidakList');
     if (tidakContainer) {
         tidakContainer.innerHTML = lists.prospekTidak.map(item => {
@@ -983,7 +967,6 @@ document.getElementById('addProspekFullBtn')?.addEventListener('click', () => {
 // ========== DRAG AND DROP (DIHAPUS - TIDAK ADA FUNGSI) ==========
 function initDragAndDrop() {
     // Drag and drop DINONAKTIFKAN
-    // Semua perpindahan data dilakukan melalui popup detail
     console.log("Drag and drop disabled");
 }
 
@@ -1123,7 +1106,7 @@ function updateChartCustomer(total, closing, pending, followup) {
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
         data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: [closing, pending, followup, baru], backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) { const data = chart.data, dataset = data.datasets[0], total = dataset.data.reduce((a,b)=>a+b,0); return data.labels.map((label,i) => ({ text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i]/total)*100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i })); } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } } }
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) { const data = chart.data, dataset = data.datasets[0], total = dataset.data.reduce((a,b)=>a+b,0); return data.labels.map((label,i) => ({ text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i]/total)*100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i })); } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } }
     });
 }
 function updateChartProspek(baru, dihubungi, tertarik, tidak) {
@@ -1135,7 +1118,7 @@ function updateChartProspek(baru, dihubungi, tertarik, tidak) {
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: { labels: ['Baru', 'Dihubungi', 'Tertarik', 'Tidak Tertarik'], datasets: [{ data: dataArr, backgroundColor: ['#8b5cf6', '#3b82f6', '#10b981', '#ef4444'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) { const data = chart.data, dataset = data.datasets[0], total = dataset.data.reduce((a,b)=>a+b,0); return data.labels.map((label,i) => ({ text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i]/total)*100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i })); } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } } }
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) { const data = chart.data, dataset = data.datasets[0], total = dataset.data.reduce((a,b)=>a+b,0); return data.labels.map((label,i) => ({ text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i]/total)*100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i })); } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } }
     });
 }
 
