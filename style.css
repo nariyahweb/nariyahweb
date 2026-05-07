@@ -625,19 +625,46 @@ body {
     max-height: 140px;
 }
 
-/* ========== DASHBOARD KANBAN (Tanpa Drag Drop) ========== */
+/* ========== DASHBOARD KANBAN (Tanpa Drag Drop) - TETAP 4 KOLOM ========== */
 .kanban-board {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(160px, 1fr));
-    gap: 8px;
-    width: 100%;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(200px, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
 }
 
 .kanban-board .kanban-column {
     border-radius: 12px;
-    padding: 8px;
-    min-width: 0;
+    padding: 10px;
+    min-width: 200px;
     overflow: hidden;
+}
+
+/* Responsif: tetap 4 kolom, tapi bisa scroll horizontal jika layar terlalu kecil */
+@media (max-width: 1200px) {
+    .kanban-board {
+        grid-template-columns: repeat(4, minmax(220px, 1fr)) !important;
+        overflow-x: auto !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .kanban-board {
+        grid-template-columns: repeat(4, minmax(240px, 1fr)) !important;
+        overflow-x: auto !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .kanban-board {
+        grid-template-columns: repeat(4, minmax(260px, 1fr)) !important;
+        overflow-x: auto !important;
+    }
+    /* Biarkan user scroll horizontal untuk melihat semua kolom */
+    .boards-wrapper {
+        overflow-x: auto !important;
+    }
 }
 
 .kanban-board .kanban-column[data-status="baru"],
