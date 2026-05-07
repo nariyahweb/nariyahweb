@@ -625,6 +625,341 @@ body {
     max-height: 140px;
 }
 
+/* ========== DASHBOARD KANBAN (Tanpa Drag Drop) ========== */
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(160px, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+
+.kanban-board .kanban-column {
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.kanban-board .kanban-column[data-status="baru"],
+.kanban-board .kanban-column[data-status="Baru"] { background: #f3e8ff; }
+.kanban-board .kanban-column[data-status="followup"],
+.kanban-board .kanban-column[data-status="Sudah Dihubungi"] { background: #eff6ff; }
+.kanban-board .kanban-column[data-status="pending"] { background: #fff7ed; }
+.kanban-board .kanban-column[data-status="closing"] { background: #ecfdf5; }
+.kanban-board .kanban-column[data-status="Tertarik"] { background: #ecfdf5; }
+.kanban-board .kanban-column[data-status="Tidak Tertarik"] { background: #fef2f2; }
+
+.kanban-board .column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 4px 6px 0;
+    margin-bottom: 8px;
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.kanban-board .column-header .count {
+    background: rgba(0,0,0,0.08);
+    padding: 1px 5px;
+    border-radius: 20px;
+    font-size: 10px;
+}
+
+.purple-header { color: #6b21a5; }
+.blue-header { color: #1d4ed8; }
+.orange-header { color: #c2410c; }
+.green-header { color: #15803d; }
+.red-header { color: #b91c1c; }
+
+.kanban-board .kanban-cards {
+    overflow-x: hidden;
+    min-height: 200px;
+}
+
+/* Card item untuk dashboard (tanpa drag drop) */
+.kanban-board .card-item {
+    background: white;
+    border-radius: 8px;
+    padding: 6px 8px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+    overflow: hidden;
+}
+
+.kanban-board .card-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-color: #c7d2fe;
+}
+
+.kanban-board .card-id {
+    font-size: 9px;
+    font-weight: 600;
+    color: #4f46e5;
+    background: #eef2ff;
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 12px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.kanban-board .card-name {
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
+}
+
+.kanban-board .card-phone {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    color: #6b7280;
+}
+
+.kanban-board .card-phone span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 24px);
+    cursor: help;
+}
+
+.kanban-board .whatsapp-icon {
+    cursor: pointer;
+    font-size: 10px;
+    color: #25D366;
+    flex-shrink: 0;
+}
+
+.kanban-board .card-deadline {
+    font-size: 8px;
+    color: #9ca3af;
+    margin-top: 4px;
+    white-space: nowrap;
+}
+
+/* ========== FULL PAGE KANBAN ========== */
+.fullpage-kanban {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin: 0;
+}
+
+.fullpage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #eef2ff;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.fullpage-header h2 {
+    font-size: 22px;
+    color: #1f2937;
+    margin: 0;
+}
+
+.fullpage-header .add-btn {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.fullpage-header .add-btn:hover {
+    background: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+}
+
+.kanban-board-full {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    width: 100%;
+}
+
+.kanban-board-full .kanban-column {
+    border-radius: 16px;
+    padding: 12px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.kanban-board-full .kanban-column[data-status="baru"],
+.kanban-board-full .kanban-column[data-status="Baru"] { background: #f3e8ff; }
+.kanban-board-full .kanban-column[data-status="followup"],
+.kanban-board-full .kanban-column[data-status="Sudah Dihubungi"] { background: #eff6ff; }
+.kanban-board-full .kanban-column[data-status="pending"] { background: #fff7ed; }
+.kanban-board-full .kanban-column[data-status="closing"] { background: #ecfdf5; }
+.kanban-board-full .kanban-column[data-status="Tertarik"] { background: #ecfdf5; }
+.kanban-board-full .kanban-column[data-status="Tidak Tertarik"] { background: #fef2f2; }
+
+.kanban-board-full .column-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 4px 10px 0;
+    margin-bottom: 12px;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.kanban-board-full .column-header .count {
+    background: rgba(0,0,0,0.08);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+}
+
+.kanban-board-full .kanban-cards {
+    min-height: 400px;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    padding: 4px;
+}
+
+.kanban-board-full .card-item {
+    background: white;
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.kanban-board-full .card-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    border-color: #c7d2fe;
+}
+
+.kanban-board-full .card-id {
+    font-size: 10px;
+    font-weight: 600;
+    color: #4f46e5;
+    background: #eef2ff;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.kanban-board-full .card-name {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #1f2937;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: help;
+}
+
+.kanban-board-full .card-phone {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.kanban-board-full .card-phone span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 28px);
+    cursor: help;
+}
+
+.kanban-board-full .whatsapp-icon {
+    cursor: pointer;
+    font-size: 12px;
+    color: #25D366;
+    flex-shrink: 0;
+}
+
+.kanban-board-full .card-deadline {
+    font-size: 10px;
+    color: #9ca3af;
+    margin-top: 6px;
+}
+
+/* Deadline styling untuk kedua kanban */
+.card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #fffbeb;
+}
+
+.card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #fef2f2;
+    animation: blinkWarning 1s step-start infinite;
+}
+
+@keyframes blinkWarning {
+    50% { border-color: #b91c1c; background: #fee2e2; }
+}
+
+/* ========== PENDING ITEM ========== */
+.pending-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 8px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.pending-item input[type="text"] {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+}
+
+.pending-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+}
+
+.delete-pending-item {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
 /* ========== BOARD SECTIONS ========== */
 .boards-wrapper {
     display: flex;
@@ -679,335 +1014,6 @@ body {
     background: #4338ca;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(79,70,229,0.3);
-}
-
-/* ========== KANBAN BOARD ========== */
-.kanban-board {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(160px, 1fr));
-    gap: 8px;
-    width: 100%;
-}
-
-.kanban-column {
-    border-radius: 12px;
-    padding: 8px;
-    transition: all 0.2s ease;
-    min-width: 0;
-    overflow: hidden;
-}
-
-.kanban-column[data-status="baru"],
-.kanban-column[data-status="Baru"] { background: #f3e8ff; }
-.kanban-column[data-status="followup"],
-.kanban-column[data-status="Sudah Dihubungi"] { background: #eff6ff; }
-.kanban-column[data-status="pending"] { background: #fff7ed; }
-.kanban-column[data-status="closing"] { background: #ecfdf5; }
-.kanban-column[data-status="Tertarik"] { background: #ecfdf5; }
-.kanban-column[data-status="Tidak Tertarik"] { background: #fef2f2; }
-
-.column-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 4px 6px 0;
-    margin-bottom: 8px;
-    font-weight: 700;
-    font-size: 11px;
-}
-
-.column-header .count {
-    background: rgba(0,0,0,0.08);
-    padding: 1px 5px;
-    border-radius: 20px;
-    font-size: 10px;
-}
-
-.purple-header { color: #6b21a5; }
-.blue-header { color: #1d4ed8; }
-.orange-header { color: #c2410c; }
-.green-header { color: #15803d; }
-.red-header { color: #b91c1c; }
-
-.kanban-cards {
-    overflow-x: hidden;
-    min-height: 200px;
-}
-
-.card-item {
-    background: white;
-    border-radius: 8px;
-    padding: 6px 8px;
-    margin-bottom: 5px;
-    cursor: grab;
-    border: 1px solid #e5e7eb;
-    transition: all 0.2s;
-    overflow: hidden;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.card-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-    border-color: #c7d2fe;
-}
-
-.card-id {
-    font-size: 9px;
-    font-weight: 600;
-    color: #4f46e5;
-    background: #eef2ff;
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 12px;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-
-.card-name {
-    font-size: 11px;
-    font-weight: 600;
-    margin-bottom: 3px;
-    color: #1f2937;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: help;
-}
-
-.card-phone {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 9px;
-    color: #6b7280;
-}
-
-.card-phone span:first-child {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: calc(100% - 24px);
-    cursor: help;
-}
-
-.whatsapp-icon {
-    cursor: pointer;
-    font-size: 10px;
-    color: #25D366;
-    flex-shrink: 0;
-}
-
-.card-deadline {
-    font-size: 8px;
-    color: #9ca3af;
-    margin-top: 4px;
-    white-space: nowrap;
-}
-
-/* Deadline styling */
-.card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #fffbeb;
-}
-
-.card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #fef2f2;
-    animation: blinkWarning 1s step-start infinite;
-}
-
-@keyframes blinkWarning {
-    50% { border-color: #b91c1c; background: #fee2e2; }
-}
-
-/* ========== PENDING ITEM ========== */
-.pending-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-    padding: 8px;
-    background: #f9fafb;
-    border-radius: 8px;
-}
-
-.pending-item input[type="text"] {
-    flex: 1;
-    padding: 6px;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-}
-
-.pending-item input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-}
-
-.delete-pending-item {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-/* ========== FULL PAGE DATA TABLES ========== */
-.fullpage-section {
-    background: white;
-    border-radius: 24px;
-    padding: 24px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-
-.fullpage-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid #eef2ff;
-}
-
-.fullpage-header h2 {
-    font-size: 24px;
-    color: #1f2937;
-    margin: 0;
-}
-
-.fullpage-controls {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.search-input {
-    padding: 8px 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    font-size: 14px;
-    width: 250px;
-    transition: all 0.2s;
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 2px rgba(79,70,229,0.2);
-}
-
-.filter-select {
-    padding: 8px 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    font-size: 14px;
-    background: white;
-    cursor: pointer;
-}
-
-.refresh-btn {
-    padding: 8px 16px;
-    background: #4f46e5;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.refresh-btn:hover {
-    background: #4338ca;
-    transform: translateY(-1px);
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.data-table th {
-    text-align: left;
-    padding: 12px 16px;
-    background: #f9fafb;
-    color: #374151;
-    font-weight: 600;
-    border-bottom: 2px solid #e5e7eb;
-}
-
-.data-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f0f0f0;
-    vertical-align: middle;
-}
-
-.data-table tbody tr:hover {
-    background: #fef2f2;
-    cursor: pointer;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 8px;
-}
-
-.action-btn {
-    padding: 4px 8px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.action-btn-wa {
-    background: #25D366;
-    color: white;
-}
-
-.action-btn-edit {
-    background: #eef2ff;
-    color: #4f46e5;
-}
-
-.action-btn-delete {
-    background: #fef2f2;
-    color: #ef4444;
-}
-
-.pagination {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 24px;
-}
-
-.pagination button {
-    padding: 6px 12px;
-    border: 1px solid #e5e7eb;
-    background: white;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.pagination button:hover {
-    background: #eef2ff;
-    border-color: #4f46e5;
-}
-
-.pagination button.active {
-    background: #4f46e5;
-    color: white;
-    border-color: #4f46e5;
 }
 
 /* ========== IMPORT SECTION ========== */
@@ -2139,8 +2145,9 @@ body:has(.modal[style*="display: flex"]) {
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1200px) {
-    .kanban-board {
-        grid-template-columns: repeat(2, minmax(180px, 1fr)) !important;
+    .kanban-board,
+    .kanban-board-full {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -2153,29 +2160,26 @@ body:has(.modal[style*="display: flex"]) {
 
 @media (max-width: 768px) {
     .boards-wrapper { flex-direction: column; }
-    .kanban-board { grid-template-columns: 1fr !important; }
+    .kanban-board,
+    .kanban-board-full { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: 1fr; }
     .content-area { padding: 12px; }
     .topbar-center { display: none; }
     .toggle-btn { display: block !important; }
-}
-
-@media (max-width: 640px) {
     .fullpage-header {
         flex-direction: column;
         align-items: stretch;
     }
-    .fullpage-controls {
-        justify-content: stretch;
-    }
-    .search-input, .filter-select, .refresh-btn {
+    .fullpage-header .add-btn {
         width: 100%;
     }
-    .data-table th, .data-table td {
-        padding: 8px 12px;
-        font-size: 12px;
+}
+
+@media (max-width: 640px) {
+    .kanban-board-full .card-name {
+        font-size: 11px;
     }
-    .action-buttons {
-        flex-wrap: wrap;
+    .kanban-board-full .card-phone {
+        font-size: 9px;
     }
 }
