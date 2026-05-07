@@ -480,6 +480,28 @@ body {
     padding: 20px 24px;
 }
 
+/* ========== DASHBOARD TWO COLUMNS LAYOUT ========== */
+.dashboard-two-columns {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.dashboard-column {
+    flex: 1;
+    min-width: 0; /* allow flex shrinking */
+}
+
+/* Responsive: stack on mobile */
+@media (max-width: 1200px) {
+    .dashboard-two-columns {
+        flex-direction: column;
+    }
+    .dashboard-column {
+        width: 100%;
+    }
+}
+
 /* ========== STATS CARDS ========== */
 .stats-grid {
     display: grid;
@@ -625,7 +647,7 @@ body {
     max-height: 140px;
 }
 
-/* ========== DASHBOARD KANBAN (Tanpa Drag Drop) - TETAP 4 KOLOM ========== */
+/* ========== DASHBOARD KANBAN (Tanpa Drag Drop) - 4 KOLOM ========== */
 .kanban-board {
     display: grid !important;
     grid-template-columns: repeat(4, minmax(200px, 1fr)) !important;
@@ -776,6 +798,54 @@ body {
     color: #9ca3af;
     margin-top: 4px;
     white-space: nowrap;
+}
+
+/* ========== BOARD SECTION STYLING ========== */
+.board-section {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    height: 100%;
+}
+
+.board-section:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px -12px rgba(0,0,0,0.12);
+}
+
+.board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.board-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.add-btn {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.add-btn:hover {
+    background: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
 }
 
 /* ========== FULL PAGE KANBAN ========== */
@@ -987,60 +1057,12 @@ body {
     font-size: 16px;
 }
 
-/* ========== BOARD SECTIONS ========== */
+/* ========== BOARDS WRAPPER (untuk kompatibilitas) ========== */
 .boards-wrapper {
     display: flex;
     gap: 16px;
     margin-bottom: 16px;
     flex-wrap: wrap;
-}
-
-.board-section {
-    background: white;
-    border-radius: 16px;
-    padding: 12px 16px;
-    flex: 1;
-    min-width: 280px;
-    border: 1px solid #e5e7eb;
-    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
-}
-
-.board-section:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 30px -12px rgba(0,0,0,0.12);
-}
-
-.board-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #f0f0f0;
-}
-
-.board-header h3 {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1f2937;
-}
-
-.add-btn {
-    background: #4f46e5;
-    color: white;
-    border: none;
-    padding: 4px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 11px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.add-btn:hover {
-    background: #4338ca;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(79,70,229,0.3);
 }
 
 /* ========== IMPORT SECTION ========== */
@@ -2172,7 +2194,6 @@ body:has(.modal[style*="display: flex"]) {
 
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1200px) {
-    .kanban-board,
     .kanban-board-full {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -2186,8 +2207,6 @@ body:has(.modal[style*="display: flex"]) {
 }
 
 @media (max-width: 768px) {
-    .boards-wrapper { flex-direction: column; }
-    .kanban-board,
     .kanban-board-full { grid-template-columns: 1fr; }
     .stats-grid { grid-template-columns: 1fr; }
     .content-area { padding: 12px; }
@@ -2198,6 +2217,14 @@ body:has(.modal[style*="display: flex"]) {
         align-items: stretch;
     }
     .fullpage-header .add-btn {
+        width: 100%;
+    }
+    .board-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .board-header .add-btn {
         width: 100%;
     }
 }
