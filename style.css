@@ -2231,3 +2231,66 @@ body:has(.modal[style*="display: flex"]) {
     padding: 6px 8px;
     margin-bottom: 5px;
 }
+
+/* ========== FORCE TRUNCATE LONG TEXT IN KANBAN CARDS ========== */
+.kanban-column {
+    min-width: 0 !important;      /* kunci: cegah kolom melebar */
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+.kanban-cards {
+    overflow-x: hidden !important;
+}
+
+.card-item {
+    width: 100% !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+}
+
+/* ID Agent */
+.card-id {
+    display: block !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 9px !important;
+    padding: 2px 6px !important;
+}
+
+/* Nama Customer */
+.card-name {
+    display: block !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    font-size: 11px !important;
+    margin-bottom: 3px !important;
+}
+
+/* Nomor Telepon */
+.card-phone span:first-child {
+    display: inline-block !important;
+    max-width: calc(100% - 24px) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    vertical-align: middle !important;
+}
+
+/* Responsif: jika layar terlalu kecil, kurangi jumlah kolom */
+@media (max-width: 1100px) {
+    .kanban-board {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 700px) {
+    .kanban-board {
+        grid-template-columns: 1fr !important;
+    }
+}
