@@ -457,6 +457,17 @@ body {
     border: 2px solid white;
 }
 
+/* Tombol info di topbar */
+#infoBtn {
+    cursor: pointer;
+    font-size: 20px;
+    transition: transform 0.2s ease;
+}
+
+#infoBtn:hover {
+    transform: scale(1.1);
+}
+
 /* ========== MAIN CONTENT ========== */
 .main-content {
     flex: 1;
