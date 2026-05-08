@@ -2346,9 +2346,16 @@ function updateChartCustomer(total, closing, pending, followup) {
 function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
     const ctx = document.getElementById('chartProspek');
     if (!ctx) return;
-    if (chartProspek) chartProspek.destroy();
+    
+    // Hancurkan chart lama jika ada
+    if (chartProspek) {
+        chartProspek.destroy();
+        chartProspek = null;
+    }
+    
+    // Gunakan data apa adanya, jangan ubah dataArr jadi [1,0,0,0] saat semua 0
     let dataArr = [baru, dihubungi, negosiasi, tertarik];
-    if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
+    
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -2377,7 +2384,7 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
                             const dataset = data.datasets[0];
                             const total = dataset.data.reduce((a, b) => a + b, 0);
                             return data.labels.map((label, i) => ({
-                                text: `${label}: ${dataset.data[i]} (${total ? ((dataset.data[i] / total) * 100).toFixed(1) : 0}%)`,
+                                text: `${label}: ${dataset.data[i]} (${total > 0 ? ((dataset.data[i] / total) * 100).toFixed(1) : 0}%)`,
                                 fillStyle: dataset.backgroundColor[i],
                                 strokeStyle: dataset.backgroundColor[i],
                                 lineWidth: 0,
@@ -2393,7 +2400,7 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
                             const label = context.label || '';
                             const value = context.raw || 0;
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            return `${label}: ${value} (${total ? ((value / total) * 100).toFixed(1) : 0}%)`;
+                            return `${label}: ${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`;
                         }
                     }
                 }
