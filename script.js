@@ -113,6 +113,89 @@ function showConfirmDialog(title, message, onConfirm, onCancel) {
     };
 }
 
+// ========== FUNGSI INPUT DIALOG ==========
+function showInputDialog(title, message, fields, onConfirm) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    
+    let fieldsHtml = '';
+    fields.forEach(field => {
+        if (field.type === 'select') {
+            let optionsHtml = '';
+            field.options.forEach(opt => {
+                optionsHtml += `<option value="${opt}">${opt}</option>`;
+            });
+            fieldsHtml += `
+                <div class="form-group">
+                    <label>${field.label} ${field.required ? '<span class="required">*</span>' : ''}</label>
+                    <select id="${field.id}" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+                        <option value="">Pilih ${field.label}</option>
+                        ${optionsHtml}
+                    </select>
+                </div>
+            `;
+        } else {
+            fieldsHtml += `
+                <div class="form-group">
+                    <label>${field.label} ${field.required ? '<span class="required">*</span>' : ''}</label>
+                    <input type="${field.type}" id="${field.id}" placeholder="${field.placeholder}" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+                </div>
+            `;
+        }
+    });
+    
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>${title}</h3>
+            <div class="modal-subtitle" style="white-space: pre-line;">${message}</div>
+            <div style="padding: 0 20px;">
+                ${fieldsHtml}
+            </div>
+            <div class="modal-buttons">
+                <button id="inputConfirmBtn" class="btn-primary">✅ Lanjutkan</button>
+                <button id="inputCancelBtn" class="btn-outline">❌ Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+    
+    const confirmBtn = modal.querySelector('#inputConfirmBtn');
+    const cancelBtn = modal.querySelector('#inputCancelBtn');
+    
+    confirmBtn.onclick = () => {
+        const values = {};
+        let allFilled = true;
+        fields.forEach(field => {
+            const input = document.getElementById(field.id);
+            if (input) {
+                values[field.id] = input.value;
+                if (field.required && !input.value) {
+                    allFilled = false;
+                }
+            }
+        });
+        if (!allFilled) {
+            showNotif('⚠️ Semua field wajib diisi!', true);
+            return;
+        }
+        modal.remove();
+        document.body.classList.remove('modal-open');
+        if (onConfirm) onConfirm(values);
+    };
+    cancelBtn.onclick = () => {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+    };
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        }
+    };
+}
+
 // ========== SIDEBAR ==========
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
@@ -714,37 +797,76 @@ window.showConvertToCustomerModal = async function(prospekId) {
         return;
     }
     
-    showConfirmDialog(
-        'Jadikan Customer & Pindahkan ke DB Commitment?',
-        `Apakah Anda yakin ingin menjadikan "${escapeHtml(data.nama)}" sebagai Customer dan memindahkannya ke DATABASE COMMITMENT?\n\n⚠️ Proses ini TIDAK BISA dibatalkan dan data akan dihapus dari Prospek Agen!`,
-        async () => {
-            await db.collection('db_commitment').add({
-                nama: data.nama,
-                hp: data.hp,
-                dihubungi_data: data.dihubungi_data,
-                committed_at: new Date().toISOString(),
-                user_id: currentUser.uid,
-                original_prospek_id: prospekId
-            });
-            const today = new Date();
-            const nextMonth = new Date(today);
-            nextMonth.setMonth(today.getMonth() + 1);
-            const followupDate = nextMonth.toISOString().split('T')[0];
-            await db.collection('customers').add({
-                nama: data.nama,
-                hp: data.hp,
-                tanggal: followupDate,
-                status: 'baru',
-                user_id: currentUser.uid,
-                created_at: new Date().toISOString(),
-                converted_from: 'prospek_commitment',
-                apk: '', agent_id: '', followup_data: null, pending_data: []
-            });
-            await db.collection('prospek').doc(prospekId).delete();
-            showNotif('✅ Prospek telah dijadikan customer dan disimpan ke DB Commitment');
-            closeModal('detailModal');
-            closeModal('convertModal');
-            loadAllData();
+    const today = new Date();
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(today.getMonth() + 1);
+    const followupDate = nextMonth.toISOString().split('T')[0];
+    
+    showInputDialog(
+        '📋 Lengkapi Data Customer',
+        `Data prospek "${escapeHtml(data.nama)}" akan dipindahkan ke Followup Agen.\n\nSilakan lengkapi data berikut:`,
+        [
+            { id: 'inputAgentId', label: 'ID Agent', type: 'text', placeholder: 'Contoh: AG-001', required: true },
+            { id: 'inputAplikasi', label: 'Aplikasi', type: 'select', options: ['GNP', 'BSB', 'BTN'], required: true }
+        ],
+        async (values) => {
+            if (!values.inputAgentId || !values.inputAplikasi) {
+                showNotif('⚠️ ID Agent dan Aplikasi wajib diisi!', true);
+                return;
+            }
+            
+            showConfirmDialog(
+                'Jadikan Customer & Pindahkan ke DB Commitment?',
+                `Apakah Anda yakin ingin menjadikan "${escapeHtml(data.nama)}" sebagai Customer?\n\n` +
+                `🆔 ID Agent: ${values.inputAgentId}\n` +
+                `📱 Aplikasi: ${values.inputAplikasi}\n` +
+                `📅 Tanggal Followup: ${followupDate}\n\n` +
+                `📋 Data akan DISIMPAN ke DATABASE COMMITMENT sebagai arsip.\n` +
+                `📞 Data akan DIPINDAHKAN ke FOLLOWUP AGEN dengan status "Baru".\n\n` +
+                `⚠️ Proses ini TIDAK BISA dibatalkan dan data akan DIHAPUS dari Prospek Agen!`,
+                async () => {
+                    try {
+                        showNotif('⏳ Memproses pemindahan data...');
+                        
+                        await db.collection('db_commitment').add({
+                            nama: data.nama,
+                            hp: data.hp,
+                            dihubungi_data: data.dihubungi_data,
+                            agent_id: values.inputAgentId,
+                            aplikasi: values.inputAplikasi,
+                            committed_at: new Date().toISOString(),
+                            user_id: currentUser.uid,
+                            original_prospek_id: prospekId,
+                            followup_date: followupDate
+                        });
+                        
+                        await db.collection('customers').add({
+                            agent_id: values.inputAgentId,
+                            nama: data.nama,
+                            hp: data.hp,
+                            apk: values.inputAplikasi,
+                            tanggal: followupDate,
+                            status: 'baru',
+                            user_id: currentUser.uid,
+                            created_at: new Date().toISOString(),
+                            converted_from: 'prospek_commitment',
+                            followup_data: null,
+                            pending_data: []
+                        });
+                        
+                        await db.collection('prospek').doc(prospekId).delete();
+                        
+                        showNotif('✅ Berhasil! Customer telah ditambahkan ke Followup Agen dan disimpan ke DB Commitment');
+                        closeModal('detailModal');
+                        closeModal('convertModal');
+                        loadAllData();
+                        updateAllBadges();
+                    } catch(error) {
+                        showNotif('❌ Gagal: ' + error.message, true);
+                        console.error(error);
+                    }
+                }
+            );
         }
     );
 };
@@ -991,9 +1113,9 @@ function loadDBCommitment() {
     if (!currentUser) return;
     db.collection('db_commitment').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, committed_at: d.committed_at, dihubungi_data: d.dihubungi_data, checked: selectedCommitmentIds.get(doc.id) || false }); });
+        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, committed_at: d.committed_at, dihubungi_data: d.dihubungi_data, agent_id: d.agent_id, aplikasi: d.aplikasi, followup_date: d.followup_date, checked: selectedCommitmentIds.get(doc.id) || false }); });
         items.sort((a,b) => new Date(b.committed_at) - new Date(a.committed_at));
-        const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Komitmen: ${new Date(item.committed_at).toLocaleDateString('id-ID')}<br>Aplikasi: ${item.dihubungi_data?.aplikasi || '-'}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('db_commitment', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
+        const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Komitmen: ${new Date(item.committed_at).toLocaleDateString('id-ID')}<br>Followup: ${item.followup_date || '-'}<br>Agent: ${item.agent_id || '-'}<br>Aplikasi: ${item.aplikasi || item.dihubungi_data?.aplikasi || '-'}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('db_commitment', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
         const container = document.getElementById('dbCommitmentList');
         if (container) container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data komitmen</p>';
         attachCheckboxEvents('#dbCommitmentList', selectedCommitmentIds, 'selectAllCommitment');
