@@ -63,6 +63,12 @@
                 <div class="menu-label">PENCARIAN</div>
                 <div class="menu-item" data-page="search"><span class="icon">🔍</span><span>Pencarian Data</span></div>
                 <div class="menu-divider"></div>
+                <!-- Menu untuk Owner (akan ditampilkan jika role=owner) -->
+                <div id="ownerMenu" style="display:none;">
+                    <div class="menu-label">MANAJEMEN</div>
+                    <div class="menu-item" data-page="manageUsers"><span class="icon">👥</span><span>Kelola CS Agent</span></div>
+                    <div class="menu-divider"></div>
+                </div>
                 <div class="menu-item" id="logoutBtn"><span class="icon">☕</span><span>Logout</span></div>
             </div>
         </div>
@@ -150,10 +156,7 @@
                 <!-- SEARCH PAGE -->
                 <div id="searchPage" class="page-content" style="display:none">
                     <div class="search-section">
-                        <div class="search-header">
-                            <h3>🔍 Pencarian Data</h3>
-                            <p>Cari berdasarkan ID Agent, Nama, atau Nomor WhatsApp</p>
-                        </div>
+                        <div class="search-header"><h3>🔍 Pencarian Data</h3><p>Cari berdasarkan ID Agent, Nama, atau Nomor WhatsApp</p></div>
                         <div class="search-box">
                             <input type="text" id="searchInput" placeholder="Ketik ID Agent, Nama, atau Nomor WhatsApp..." class="search-input">
                             <button id="searchBtn" class="search-btn">🔍 Cari</button>
@@ -167,20 +170,26 @@
                             <label><input type="checkbox" id="searchNomorSalah"> DB Nomor Salah</label>
                             <label><input type="checkbox" id="searchCommitment"> DB Commitment</label>
                         </div>
-                        <div id="searchResults" class="search-results">
-                            <p style="text-align:center;padding:40px;color:#9ca3af;">🔍 Masukkan kata kunci untuk mencari data</p>
-                        </div>
+                        <div id="searchResults" class="search-results"><p style="text-align:center;padding:40px;color:#9ca3af;">🔍 Masukkan kata kunci untuk mencari data</p></div>
+                    </div>
+                </div>
+
+                <!-- MANAGE USERS PAGE (OWNER ONLY) -->
+                <div id="manageUsersPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header"><h3>👥 Kelola CS Agent</h3><button class="add-btn" id="addCsBtn">+ Tambah CS</button></div>
+                        <div id="usersList" class="db-list"><p style="text-align:center;padding:40px;">Loading...</p></div>
                     </div>
                 </div>
 
                 <!-- IMPORT PAGE -->
                 <div id="importPage" class="page-content" style="display:none">
                     <div class="import-section">
-                        <div class="import-header"><h3>📜 Import Data Excel</h3><p>Import data dengan mudah dan cepat</p></div>
+                        <div class="import-header"><h3>📜 Import Data Excel</h3><p>Import data dengan mudah dan cepat. Data yang sudah terdaftar akan ditolak.</p></div>
                         <div class="import-grid">
                             <div class="import-card"><h4>1. Pilih File Excel</h4><div class="drop-zone" id="dropZone"><p>📂 Drag & Drop file di sini</p><small>atau klik untuk pilih file</small><input type="file" id="excelFile" hidden accept=".xlsx,.xls,.csv"></div><div id="fileInfo" class="file-info"></div></div>
                             <div class="import-card"><h4>2. Pilih Tujuan Import</h4><div class="radio-option active" data-import="prospek"><b>📋 Import ke Prospek</b><p>Data akan masuk ke Prospek Agen</p></div><div class="radio-option" data-import="customer"><b>👥 Import ke Customer</b><p>Data akan masuk ke Followup Agen</p></div></div>
-                            <div class="import-card"><h4>3. Informasi Import</h4><ul class="info-list"><li>✔ Import ribuan data sekaligus</li><li>✔ Validasi nomor otomatis</li><li>✔ Data tidak valid akan dilewati</li></ul><button class="import-btn" id="importBtn">🚀 Import Data Sekarang</button></div>
+                            <div class="import-card"><h4>3. Informasi Import</h4><ul class="info-list"><li>✔ Import ribuan data sekaligus</li><li>✔ Validasi nomor otomatis</li><li>✔ Data duplikat akan dilewati</li></ul><button class="import-btn" id="importBtn">🚀 Import Data Sekarang</button></div>
                             <div class="import-card"><h4>📥 Contoh File Import</h4><button class="download-example-btn" id="downloadCustomerExample">📋 Download Contoh Customer</button><button class="download-example-btn" id="downloadProspekExample">📋 Download Contoh Prospek</button></div>
                         </div>
                     </div>
@@ -218,188 +227,34 @@
     </div>
 </div>
 
-<!-- ========== MODALS ========== -->
+<!-- MODALS -->
+<div class="modal" id="infoModal"><div class="modal-content" style="max-width: 500px;"><h3>📋 Panduan Followup & Prospek</h3><div class="modal-subtitle">Aturan penambahan deadline berdasarkan respon</div><div style="padding: 0 20px 20px 20px;"><div style="margin-bottom: 20px;"><h4 style="color: #10b981; margin-bottom: 8px;">✅ Respon Bagus (Aktif/Diam tapi respon)</h4><p style="font-size: 13px; color: #374151;">+3 hari untuk deadline berikutnya. Dapat terus diperpanjang tanpa batas selama status belum berubah menjadi "Pasif/Tidak Aktif".</p></div><div style="margin-bottom: 20px;"><h4 style="color: #f59e0b; margin-bottom: 8px;">⚠️ Respon Pasif (Kurang respon/membutuhkan followup berulang)</h4><p style="font-size: 13px; color: #374151;">+5 hari untuk deadline berikutnya. Maksimal 5 kali followup pasif sebelum data dipindahkan ke database.</p></div><div style="margin-bottom: 20px;"><h4 style="color: #ef4444; margin-bottom: 8px;">❌ Respon Jelek (Tidak tertarik/komplain)</h4><p style="font-size: 13px; color: #374151;">+1 Minggu (7 hari) untuk deadline berikutnya. Maksimal 3 kali followup jelek sebelum data dipindahkan ke database.</p></div><div style="background: #eef2ff; padding: 12px; border-radius: 12px; margin-top: 12px;"><p style="font-size: 12px; color: #4f46e5; margin: 0;">💡 <strong>Catatan:</strong> Setiap perubahan status atau penyimpanan data akan secara otomatis menambah deadline sesuai aturan di atas. Anda dapat mengedit deadline manual kapan saja dengan mengklik icon ✏️ di popup detail.</p></div></div><div class="modal-buttons"><button id="infoModalClose" class="btn-primary">Tutup</button></div></div></div>
 
-<!-- MODAL INFORMASI FOLLOWUP -->
-<div class="modal" id="infoModal">
-    <div class="modal-content" style="max-width: 500px;">
-        <h3>📋 Panduan Followup & Prospek</h3>
-        <div class="modal-subtitle">Aturan penambahan deadline berdasarkan respon</div>
-        <div style="padding: 0 20px 20px 20px;">
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #10b981; margin-bottom: 8px;">✅ Respon Bagus (Aktif/Diam tapi respon)</h4>
-                <p style="font-size: 13px; color: #374151;">+3 hari untuk deadline berikutnya. Dapat terus diperpanjang tanpa batas selama status belum berubah menjadi "Pasif/Tidak Aktif".</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #f59e0b; margin-bottom: 8px;">⚠️ Respon Pasif (Kurang respon/membutuhkan followup berulang)</h4>
-                <p style="font-size: 13px; color: #374151;">+5 hari untuk deadline berikutnya. Maksimal 5 kali followup pasif sebelum data dipindahkan ke database.</p>
-            </div>
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: #ef4444; margin-bottom: 8px;">❌ Respon Jelek (Tidak tertarik/komplain)</h4>
-                <p style="font-size: 13px; color: #374151;">+1 Minggu (7 hari) untuk deadline berikutnya. Maksimal 3 kali followup jelek sebelum data dipindahkan ke database.</p>
-            </div>
-            <div style="background: #eef2ff; padding: 12px; border-radius: 12px; margin-top: 12px;">
-                <p style="font-size: 12px; color: #4f46e5; margin: 0;">💡 <strong>Catatan:</strong> Setiap perubahan status atau penyimpanan data akan secara otomatis menambah deadline sesuai aturan di atas. Anda dapat mengedit deadline manual kapan saja dengan mengklik icon ✏️ di popup detail.</p>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="infoModalClose" class="btn-primary">Tutup</button>
-        </div>
-    </div>
-</div>
+<div class="modal" id="editDeadlineModal"><div class="modal-content" style="max-width: 400px;"><h3>📅 Edit Deadline</h3><div class="modal-subtitle">Ubah tanggal deadline untuk data ini</div><div style="padding: 0 20px 20px 20px;"><div class="form-group"><label for="editDeadlineDate">Tanggal Deadline Baru <span class="required">*</span></label><input type="date" id="editDeadlineDate" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div id="deadlineWarning" style="background: #fef3c7; padding: 10px; border-radius: 10px; margin-top: 10px;"><p style="font-size: 12px; color: #d97706; margin: 0;">⚠️ <strong>Peringatan:</strong> Perubahan deadline harus diketahui oleh Owner/Atasan. Pastikan Anda sudah mendapat persetujuan!</p></div></div><div class="modal-buttons"><button id="saveDeadlineBtn" class="btn-primary">💾 Simpan Perubahan</button><button id="cancelDeadlineBtn" class="btn-outline">Batal</button></div></div></div>
 
-<!-- MODAL EDIT DEADLINE -->
-<div class="modal" id="editDeadlineModal">
-    <div class="modal-content" style="max-width: 400px;">
-        <h3>📅 Edit Deadline</h3>
-        <div class="modal-subtitle">Ubah tanggal deadline untuk data ini</div>
-        <div style="padding: 0 20px 20px 20px;">
-            <div class="form-group">
-                <label for="editDeadlineDate">Tanggal Deadline Baru <span class="required">*</span></label>
-                <input type="date" id="editDeadlineDate" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
-            <div id="deadlineWarning" style="background: #fef3c7; padding: 10px; border-radius: 10px; margin-top: 10px;">
-                <p style="font-size: 12px; color: #d97706; margin: 0;">⚠️ <strong>Peringatan:</strong> Perubahan deadline harus diketahui oleh Owner/Atasan. Pastikan Anda sudah mendapat persetujuan!</p>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveDeadlineBtn" class="btn-primary">💾 Simpan Perubahan</button>
-            <button id="cancelDeadlineBtn" class="btn-outline">Batal</button>
-        </div>
-    </div>
-</div>
+<div class="modal" id="customerModal"><div class="modal-content"><h3>Tambah Customer</h3><div class="modal-subtitle">Isi data customer baru</div><div class="form-group"><label for="customerId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="customerId" placeholder="Contoh: AG-001"></div></div><div class="form-group"><label for="customerName">Nama Lengkap <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="customerName" placeholder="Masukkan nama lengkap"></div></div><div class="form-group"><label for="customerPhone">Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1"></div></div><div class="form-group"><label for="customerApk">Aplikasi <span class="required">*</span></label><div class="input-icon"><span>📱</span><select id="customerApk"><option value="">Pilih Aplikasi</option><option value="GNP">🏦 GNP</option><option value="BSB">🏦 BSB</option><option value="BTN">🏦 BTN</option></select></div></div><div class="form-group"><label for="customerDate">Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="customerDate"></div></div><div class="modal-buttons"><button id="saveCustomerBtn">Simpan Data</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div></div></div>
 
-<!-- MODAL CUSTOMER -->
-<div class="modal" id="customerModal">
-    <div class="modal-content">
-        <h3>Tambah Customer</h3>
-        <div class="modal-subtitle">Isi data customer baru</div>
-        <div class="form-group"><label for="customerId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="customerId" placeholder="Contoh: AG-001"></div></div>
-        <div class="form-group"><label for="customerName">Nama Lengkap <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="customerName" placeholder="Masukkan nama lengkap"></div></div>
-        <div class="form-group"><label for="customerPhone">Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1"></div></div>
-        <div class="form-group"><label for="customerApk">Aplikasi <span class="required">*</span></label><div class="input-icon"><span>📱</span><select id="customerApk"><option value="">Pilih Aplikasi</option><option value="GNP">🏦 GNP</option><option value="BSB">🏦 BSB</option><option value="BTN">🏦 BTN</option></select></div></div>
-        <div class="form-group"><label for="customerDate">Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="customerDate"></div></div>
-        <div class="modal-buttons"><button id="saveCustomerBtn">Simpan Data</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div>
-    </div>
-</div>
+<div class="modal" id="prospekModal"><div class="modal-content"><h3>Tambah Prospek</h3><div class="modal-subtitle">Isi data prospek baru</div><div class="form-group"><label for="prospekName">Nama Agen <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="prospekName" placeholder="Masukkan nama agen"></div></div><div class="form-group"><label for="prospekPhone">Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1"></div></div><div class="form-group"><label for="prospekStatusSelect">Status Awal</label><div class="input-icon"><span>📌</span><select id="prospekStatusSelect"><option value="Baru">🆕 Baru</option><option value="Dihubungi">📞 Dihubungi</option><option value="Negosiasi">📋 Negosiasi</option><option value="Tertarik">⭐ Tertarik</option></select></div></div><div class="form-group"><label for="prospekDeadline">Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="prospekDeadline"></div></div><div class="modal-buttons"><button id="saveProspekBtn">Simpan Data</button><button class="closeModalBtn" data-modal="prospekModal">Batal</button></div></div></div>
 
-<!-- MODAL PROSPEK -->
-<div class="modal" id="prospekModal">
-    <div class="modal-content">
-        <h3>Tambah Prospek</h3>
-        <div class="modal-subtitle">Isi data prospek baru</div>
-        <div class="form-group"><label for="prospekName">Nama Agen <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="prospekName" placeholder="Masukkan nama agen"></div></div>
-        <div class="form-group"><label for="prospekPhone">Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1"></div></div>
-        <div class="form-group"><label for="prospekStatusSelect">Status Awal</label><div class="input-icon"><span>📌</span><select id="prospekStatusSelect"><option value="Baru">🆕 Baru</option><option value="Dihubungi">📞 Dihubungi</option><option value="Negosiasi">📋 Negosiasi</option><option value="Tertarik">⭐ Tertarik</option></select></div></div>
-        <div class="form-group"><label for="prospekDeadline">Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="prospekDeadline"></div></div>
-        <div class="modal-buttons"><button id="saveProspekBtn">Simpan Data</button><button class="closeModalBtn" data-modal="prospekModal">Batal</button></div>
-    </div>
-</div>
+<div class="modal" id="prospekNegosiasiModal"><div class="modal-content"><h3>📋 Kuesioner Negosiasi</h3><div class="modal-subtitle">Isi data kuesioner di bawah ini</div><div class="form-group"><label for="prospek_aplikasi">Aplikasi yang dipakai? <span class="required">*</span></label><div class="input-icon"><span>📱</span><input type="text" id="prospek_aplikasi" placeholder="Contoh: GNP, BSB, BTN"></div></div><div class="form-group"><label for="prospek_domisili">Domisili dimana? <span class="required">*</span></label><div class="input-icon"><span>📍</span><input type="text" id="prospek_domisili" placeholder="Kota/Kabupaten"></div></div><div class="form-group"><label for="prospek_transaksi">Total transaksi per bulan? <span class="required">*</span></label><div class="input-icon"><span>💰</span><input type="text" id="prospek_transaksi" placeholder="Nominal"></div></div><div class="form-group"><label for="prospek_deposit">Apakah deposit atau saldo pinjaman? <span class="required">*</span></label><div class="input-icon"><span>🏦</span><input type="text" id="prospek_deposit" placeholder="Deposit / Saldo Pinjaman"></div></div><div class="form-group"><label for="prospek_tertarik">Apakah tertarik dengan penawaran kamu? <span class="required">*</span></label><div class="input-icon"><span>⭐</span><select id="prospek_tertarik"><option value="">Pilih</option><option value="Ya">Ya</option><option value="Tidak">Tidak</option></select></div></div><div class="form-group"><label for="prospek_penawaran">Penawaran apa yang diberikan? <span class="required">*</span></label><div class="input-icon"><span>📢</span><input type="text" id="prospek_penawaran" placeholder="Penawaran"></div></div><div class="modal-buttons"><button id="negosiasiTertarikBtn" class="btn-success">⭐ Tertarik</button><button id="negosiasiTidakTertarikBtn" class="btn-danger">❌ Tidak Tertarik</button><button id="negosiasiSimpanBtn" class="btn-primary">💾 Simpan</button><button id="negosiasiBatalBtn" class="btn-outline">Batal</button></div></div></div>
 
-<!-- MODAL NEGOSIASI -->
-<div class="modal" id="prospekNegosiasiModal">
-    <div class="modal-content">
-        <h3>📋 Kuesioner Negosiasi</h3>
-        <div class="modal-subtitle">Isi data kuesioner di bawah ini</div>
-        <div class="form-group"><label for="prospek_aplikasi">Aplikasi yang dipakai? <span class="required">*</span></label><div class="input-icon"><span>📱</span><input type="text" id="prospek_aplikasi" placeholder="Contoh: GNP, BSB, BTN"></div></div>
-        <div class="form-group"><label for="prospek_domisili">Domisili dimana? <span class="required">*</span></label><div class="input-icon"><span>📍</span><input type="text" id="prospek_domisili" placeholder="Kota/Kabupaten"></div></div>
-        <div class="form-group"><label for="prospek_transaksi">Total transaksi per bulan? <span class="required">*</span></label><div class="input-icon"><span>💰</span><input type="text" id="prospek_transaksi" placeholder="Nominal"></div></div>
-        <div class="form-group"><label for="prospek_deposit">Apakah deposit atau saldo pinjaman? <span class="required">*</span></label><div class="input-icon"><span>🏦</span><input type="text" id="prospek_deposit" placeholder="Deposit / Saldo Pinjaman"></div></div>
-        <div class="form-group"><label for="prospek_tertarik">Apakah tertarik dengan penawaran kamu? <span class="required">*</span></label><div class="input-icon"><span>⭐</span><select id="prospek_tertarik"><option value="">Pilih</option><option value="Ya">Ya</option><option value="Tidak">Tidak</option></select></div></div>
-        <div class="form-group"><label for="prospek_penawaran">Penawaran apa yang diberikan? <span class="required">*</span></label><div class="input-icon"><span>📢</span><input type="text" id="prospek_penawaran" placeholder="Penawaran"></div></div>
-        <div class="modal-buttons">
-            <button id="negosiasiTertarikBtn" class="btn-success">⭐ Tertarik</button>
-            <button id="negosiasiTidakTertarikBtn" class="btn-danger">❌ Tidak Tertarik</button>
-            <button id="negosiasiSimpanBtn" class="btn-primary">💾 Simpan</button>
-            <button id="negosiasiBatalBtn" class="btn-outline">Batal</button>
-        </div>
-    </div>
-</div>
+<div class="modal" id="profileModal"><div class="modal-content"><h3>Profile CS Agent</h3><div class="modal-subtitle">Kelola informasi akun Anda</div><div class="profile-photo"><img id="previewFoto" src="https://i.pravatar.cc/100" alt="Foto Profile"><div class="camera-icon" id="cameraIcon">📷</div><input type="file" id="profileFoto" hidden accept="image/*"><p>🔍 Klik foto untuk memperbesar | 📷 Klik kamera untuk ganti foto</p></div><div class="form-group"><label for="profileName">Nama Lengkap</label><div class="input-icon"><span>👤</span><input type="text" id="profileName" placeholder="Nama Anda"></div></div><div class="form-group"><label for="profileEmail">Email</label><div class="input-icon"><span>📧</span><input type="email" id="profileEmail" placeholder="Email" disabled></div></div><div class="form-group"><label for="profilePhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="profilePhone" placeholder="81234567890" style="flex:1"></div></div><div class="modal-buttons"><button id="saveProfileBtn">Simpan Perubahan</button><button class="closeModalBtn" data-modal="profileModal">Batal</button></div></div></div>
 
-<!-- MODAL PROFILE -->
-<div class="modal" id="profileModal">
-    <div class="modal-content">
-        <h3>Profile CS Agent</h3>
-        <div class="modal-subtitle">Kelola informasi akun Anda</div>
-        <div class="profile-photo"><img id="previewFoto" src="https://i.pravatar.cc/100" alt="Foto Profile"><div class="camera-icon" id="cameraIcon">📷</div><input type="file" id="profileFoto" hidden accept="image/*"><p>🔍 Klik foto untuk memperbesar | 📷 Klik kamera untuk ganti foto</p></div>
-        <div class="form-group"><label for="profileName">Nama Lengkap</label><div class="input-icon"><span>👤</span><input type="text" id="profileName" placeholder="Nama Anda"></div></div>
-        <div class="form-group"><label for="profileEmail">Email</label><div class="input-icon"><span>📧</span><input type="email" id="profileEmail" placeholder="Email" disabled></div></div>
-        <div class="form-group"><label for="profilePhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="profilePhone" placeholder="81234567890" style="flex:1"></div></div>
-        <div class="modal-buttons"><button id="saveProfileBtn">Simpan Perubahan</button><button class="closeModalBtn" data-modal="profileModal">Batal</button></div>
-    </div>
-</div>
+<div class="modal" id="previewPhotoModal"><div class="modal-content preview-photo-content"><div class="preview-photo-header"><h3>Foto Profile</h3><button class="close-preview" onclick="closeModal('previewPhotoModal')">✕</button></div><div class="preview-photo-body"><img id="previewPhotoLarge" src=""></div><div class="modal-buttons"><button onclick="closeModal('previewPhotoModal')">Tutup</button></div></div></div>
 
-<!-- MODAL PREVIEW PHOTO -->
-<div class="modal" id="previewPhotoModal">
-    <div class="modal-content preview-photo-content">
-        <div class="preview-photo-header"><h3>Foto Profile</h3><button class="close-preview" onclick="closeModal('previewPhotoModal')">✕</button></div>
-        <div class="preview-photo-body"><img id="previewPhotoLarge" src="" alt="Preview Foto"></div>
-        <div class="modal-buttons"><button onclick="closeModal('previewPhotoModal')">Tutup</button></div>
-    </div>
-</div>
-
-<!-- MODAL DETAIL -->
 <div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
 
-<!-- MODAL REMINDER -->
-<div class="modal" id="reminderModal">
-    <div class="modal-content">
-        <h3>⏰ Tambah Pengingat</h3>
-        <div class="modal-subtitle">Buat pengingat untuk tugas Anda</div>
-        <div class="form-group"><label for="reminderTitle">Judul Pengingat <span class="required">*</span></label><div class="input-icon"><span>📝</span><input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer"></div></div>
-        <div class="form-group"><label for="reminderDesc">Deskripsi</label><div class="input-icon"><span>📄</span><textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea></div></div>
-        <div class="form-group"><label for="reminderDateTime">Tanggal & Waktu</label><div class="input-icon"><span>📅</span><input type="datetime-local" id="reminderDateTime"></div></div>
-        <div class="modal-buttons"><button id="saveReminderBtn">Simpan</button><button class="closeModalBtn" data-modal="reminderModal">Batal</button></div>
-    </div>
-</div>
+<div class="modal" id="reminderModal"><div class="modal-content"><h3>⏰ Tambah Pengingat</h3><div class="modal-subtitle">Buat pengingat untuk tugas Anda</div><div class="form-group"><label for="reminderTitle">Judul Pengingat <span class="required">*</span></label><div class="input-icon"><span>📝</span><input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer"></div></div><div class="form-group"><label for="reminderDesc">Deskripsi</label><div class="input-icon"><span>📄</span><textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea></div></div><div class="form-group"><label for="reminderDateTime">Tanggal & Waktu</label><div class="input-icon"><span>📅</span><input type="datetime-local" id="reminderDateTime"></div></div><div class="modal-buttons"><button id="saveReminderBtn">Simpan</button><button class="closeModalBtn" data-modal="reminderModal">Batal</button></div></div></div>
 
-<!-- MODAL PESAN -->
-<div class="modal" id="pesanModal">
-    <div class="modal-content">
-        <h3>💬 Kirim Pesan</h3>
-        <div class="modal-subtitle">Kirim pesan ke CS lain</div>
-        <div class="form-group"><label for="pesanTo">Kepada <span class="required">*</span></label><div class="input-icon"><span>👥</span><select id="pesanTo"><option value="">Pilih CS Tujuan</option></select></div></div>
-        <div class="form-group"><label for="pesanMessage">Pesan <span class="required">*</span></label><div class="input-icon"><span>💬</span><textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea></div></div>
-        <div class="modal-buttons"><button id="savePesanBtn">Kirim</button><button class="closeModalBtn" data-modal="pesanModal">Batal</button></div>
-    </div>
-</div>
+<div class="modal" id="pesanModal"><div class="modal-content"><h3>💬 Kirim Pesan</h3><div class="modal-subtitle">Kirim pesan ke CS lain</div><div class="form-group"><label for="pesanTo">Kepada <span class="required">*</span></label><div class="input-icon"><span>👥</span><select id="pesanTo"><option value="">Pilih CS Tujuan</option></select></div></div><div class="form-group"><label for="pesanMessage">Pesan <span class="required">*</span></label><div class="input-icon"><span>💬</span><textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea></div></div><div class="modal-buttons"><button id="savePesanBtn">Kirim</button><button class="closeModalBtn" data-modal="pesanModal">Batal</button></div></div></div>
 
-<!-- MODAL CONVERT -->
-<div class="modal" id="convertModal">
-    <div class="modal-content">
-        <h3>🔄 Jadikan Customer (Followup Agen)</h3>
-        <div class="modal-subtitle">Isi data untuk memindahkan ke Followup Agen</div>
-        <div class="form-group"><label for="convertAgentId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="convertAgentId" placeholder="Contoh: AG-001"></div><small>ID unik untuk agent terdaftar</small></div>
-        <div class="form-group"><label for="convertFollowupDate">Tanggal Followup <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="convertFollowupDate"></div><small>Otomatis +1 bulan dari sekarang</small></div>
-        <div class="modal-buttons"><button id="confirmConvertBtn" class="confirm-convert-btn">✅ Konfirmasi Pindah</button><button id="cancelConvertBtn" class="closeModalBtn" data-modal="convertModal">❌ Batal</button></div>
-    </div>
-</div>
+<div class="modal" id="convertModal"><div class="modal-content"><h3>🔄 Jadikan Customer (Followup Agen)</h3><div class="modal-subtitle">Isi data untuk memindahkan ke Followup Agen</div><div class="form-group"><label for="convertAgentId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="convertAgentId" placeholder="Contoh: AG-001"></div><small>ID unik untuk agent terdaftar</small></div><div class="form-group"><label for="convertFollowupDate">Tanggal Followup <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="convertFollowupDate"></div><small>Otomatis +1 bulan dari sekarang</small></div><div class="modal-buttons"><button id="confirmConvertBtn" class="confirm-convert-btn">✅ Konfirmasi Pindah</button><button id="cancelConvertBtn" class="closeModalBtn" data-modal="convertModal">❌ Batal</button></div></div></div>
 
-<!-- MODAL KONFIRMASI FOLLOW UP -->
-<div class="modal" id="followupConfirmModal">
-    <div class="modal-content">
-        <h3>✅ Konfirmasi Follow Up</h3>
-        <div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div>
-        <div class="form-group"><label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label></div>
-        <div class="form-group"><label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label></div>
-        <div class="modal-buttons"><button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button><button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button><button class="closeModalBtn" data-modal="followupConfirmModal">Batal</button></div>
-    </div>
-</div>
+<div class="modal" id="followupConfirmModal"><div class="modal-content"><h3>✅ Konfirmasi Follow Up</h3><div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div><div class="form-group"><label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label></div><div class="form-group"><label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label></div><div class="modal-buttons"><button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button><button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button><button class="closeModalBtn" data-modal="followupConfirmModal">Batal</button></div></div></div>
 
-<!-- MODAL PENDING -->
-<div class="modal" id="pendingModal">
-    <div class="modal-content">
-        <h3>📝 Catatan Pending</h3>
-        <div class="modal-subtitle">Catat setiap balasan/respon dari customer</div>
-        <div id="pendingItemsContainer" style="max-height: 300px; overflow-y: auto; padding: 0 20px;"></div>
-        <button id="addPendingItemBtn" class="add-btn" style="margin: 10px 20px; width: calc(100% - 40px);">+ Tambah Balasan</button>
-        <div class="modal-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button id="pendingFinishBtn" class="btn-success" style="flex: 1;" disabled>✅ Selesai & Lanjut ke Closing</button>
-            <button id="pendingSaveBtn" class="btn-primary" style="flex: 1;">💾 Simpan</button>
-            <button id="pendingCancelBtn" class="btn-outline" style="flex: 1;">Batal</button>
-        </div>
-    </div>
-</div>
+<div class="modal" id="pendingModal"><div class="modal-content"><h3>📝 Catatan Pending</h3><div class="modal-subtitle">Catat setiap balasan/respon dari customer</div><div id="pendingItemsContainer" style="max-height: 300px; overflow-y: auto; padding: 0 20px;"></div><button id="addPendingItemBtn" class="add-btn" style="margin: 10px 20px; width: calc(100% - 40px);">+ Tambah Balasan</button><div class="modal-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;"><button id="pendingFinishBtn" class="btn-success" style="flex: 1;" disabled>✅ Selesai & Lanjut ke Closing</button><button id="pendingSaveBtn" class="btn-primary" style="flex: 1;">💾 Simpan</button><button id="pendingCancelBtn" class="btn-outline" style="flex: 1;">Batal</button></div></div></div>
+
+<div class="modal" id="addCsModal"><div class="modal-content"><h3>➕ Tambah CS Agent</h3><div class="modal-subtitle">Buat akun untuk CS Agent baru</div><div class="form-group"><label for="csEmail">Email <span class="required">*</span></label><input type="email" id="csEmail" placeholder="cs@example.com" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPassword">Password <span class="required">*</span></label><input type="password" id="csPassword" placeholder="******" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csName">Nama Lengkap <span class="required">*</span></label><input type="text" id="csName" placeholder="Nama CS" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="csPhone" placeholder="81234567890" style="flex:1"></div></div><div class="modal-buttons"><button id="saveCsBtn" class="btn-primary">Simpan</button><button class="closeModalBtn" data-modal="addCsModal">Batal</button></div></div></div>
 
 <div id="notifBox"></div>
 <script src="script.js"></script>
