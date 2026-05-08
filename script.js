@@ -1587,55 +1587,256 @@ if (pesanNotifBtn) {
     });
 }
 
+// ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
 if (dropZone) dropZone.addEventListener('click', () => excelFileInput?.click());
-if (excelFileInput) excelFileInput.addEventListener('change', function(e) { if (e.target.files[0]) document.getElementById('fileInfo').innerHTML = '📄 ' + e.target.files[0].name; });
-document.querySelectorAll('.radio-option').forEach(opt => opt.addEventListener('click', function() { importType = this.dataset.import; document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active')); this.classList.add('active'); }));
+if (excelFileInput) excelFileInput.addEventListener('change', function(e) { 
+    if (e.target.files[0]) document.getElementById('fileInfo').innerHTML = '📄 ' + e.target.files[0].name; 
+});
+
+document.querySelectorAll('.radio-option').forEach(opt => opt.addEventListener('click', function() { 
+    importType = this.dataset.import; 
+    document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active')); 
+    this.classList.add('active'); 
+}));
+
 document.getElementById('importBtn')?.addEventListener('click', async () => {
     const file = excelFileInput?.files[0];
-    if (!file) { showNotif('Pilih file dulu!', true); return; }
+    if (!file) { 
+        showNotif('Pilih file dulu!', true); 
+        return; 
+    }
+    
     const importBtn = document.getElementById('importBtn');
-    importBtn.textContent = 'Memproses...';
+    const originalText = importBtn.textContent;
+    importBtn.textContent = '⏳ Memproses...';
     importBtn.disabled = true;
+    
     const reader = new FileReader();
     reader.onload = async function(e) {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-        let success = 0, failed = 0;
-        for (let row of json) {
-            let agentId = row.agent_id || row.Agent_ID || row.id || row.ID;
-            let nama = row.nama || row.Nama;
-            let hp = row.hp || row.HP || row.phone || row.Phone;
-            let apk = row.apk || row.APK || row.aplikasi || row.Aplikasi;
-            let deadline = row.deadline || row.Deadline || row.tanggal || row.Tanggal;
-            if (importType === 'customer') {
-                if (!agentId || !nama || !hp || !apk) { failed++; continue; }
-                if (!deadline) deadline = new Date().toISOString().split('T')[0];
-                hp = hp.toString(); if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
-                await db.collection('customers').add({ agent_id: agentId, nama, hp, apk, tanggal: deadline, status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString(), followup_data: null, pending_data: [] });
-            } else {
-                if (!nama || !hp) { failed++; continue; }
-                if (!deadline) deadline = new Date().toISOString().split('T')[0];
-                hp = hp.toString(); if (!hp.startsWith('+62')) hp = '+' + hp.replace(/^0/, '62');
-                await db.collection('prospek').add({ nama, hp, status: 'Baru', deadline, user_id: currentUser.uid, created_at: new Date().toISOString(), dihubungi_data: null });
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            
+            if (!json || json.length === 0) {
+                showNotif('File Excel kosong!', true);
+                importBtn.textContent = originalText;
+                importBtn.disabled = false;
+                return;
             }
-            success++;
+            
+            let success = 0;
+            let failed = 0;
+            const errors = [];
+            
+            // Deteksi format kolom (case insensitive)
+            const firstRow = json[0];
+            const columnMap = {};
+            
+            // Mapping untuk berbagai kemungkinan nama kolom
+            if (importType === 'customer') {
+                // Mapping untuk Customer (Followup Agen)
+                const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
+                const possibleNama = ['nama', 'Nama', 'name', 'Name', 'customer_name', 'CustomerName'];
+                const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
+                const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app'];
+                const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
+                
+                for (let key in firstRow) {
+                    const lowerKey = key.toLowerCase();
+                    if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
+                    if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
+                    if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
+                    if (possibleApk.some(p => p.toLowerCase() === lowerKey)) columnMap.apk = key;
+                    if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
+                }
+            } else {
+                // Mapping untuk Prospek
+                const possibleNama = ['nama', 'Nama', 'name', 'Name', 'prospek_name', 'ProspekName'];
+                const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
+                const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
+                
+                for (let key in firstRow) {
+                    const lowerKey = key.toLowerCase();
+                    if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
+                    if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
+                    if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
+                }
+            }
+            
+            // Validasi kolom wajib
+            if (importType === 'customer') {
+                if (!columnMap.agentId || !columnMap.nama || !columnMap.hp || !columnMap.apk) {
+                    showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: agent_id, nama, hp, apk, deadline (opsional)', true);
+                    importBtn.textContent = originalText;
+                    importBtn.disabled = false;
+                    return;
+                }
+            } else {
+                if (!columnMap.nama || !columnMap.hp) {
+                    showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: nama, hp, deadline (opsional)', true);
+                    importBtn.textContent = originalText;
+                    importBtn.disabled = false;
+                    return;
+                }
+            }
+            
+            // Proses setiap baris
+            for (let row of json) {
+                try {
+                    let agentId = columnMap.agentId ? row[columnMap.agentId] : null;
+                    let nama = row[columnMap.nama];
+                    let hp = row[columnMap.hp];
+                    let apk = columnMap.apk ? row[columnMap.apk] : null;
+                    let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
+                    
+                    // Validasi data wajib
+                    if (!nama || !hp) {
+                        failed++;
+                        errors.push(`Baris ke-${json.indexOf(row)+2}: Nama atau HP kosong`);
+                        continue;
+                    }
+                    
+                    if (importType === 'customer') {
+                        if (!agentId || !apk) {
+                            failed++;
+                            errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent atau Aplikasi kosong`);
+                            continue;
+                        }
+                    }
+                    
+                    // Format nomor HP
+                    let cleanHp = hp.toString().trim();
+                    cleanHp = cleanHp.replace(/[^\d+]/g, '');
+                    if (!cleanHp.startsWith('+')) {
+                        cleanHp = cleanHp.replace(/^0+/, '');
+                        if (cleanHp.startsWith('62')) {
+                            cleanHp = '+' + cleanHp;
+                        } else if (cleanHp.match(/^\d+$/)) {
+                            cleanHp = '+62' + cleanHp;
+                        } else {
+                            cleanHp = '+' + cleanHp.replace(/^\+/, '');
+                        }
+                    }
+                    
+                    // Format deadline
+                    let formattedDeadline = deadline;
+                    if (deadline) {
+                        let dateObj = new Date(deadline);
+                        if (isNaN(dateObj.getTime())) {
+                            if (typeof deadline === 'number') {
+                                const excelEpoch = new Date(1900, 0, 1);
+                                dateObj = new Date(excelEpoch.getTime() + (deadline - 2) * 86400000);
+                            } else {
+                                const parts = deadline.toString().split(/[-/]/);
+                                if (parts.length === 3) {
+                                    dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+                                }
+                            }
+                        }
+                        if (!isNaN(dateObj.getTime())) {
+                            formattedDeadline = dateObj.toISOString().split('T')[0];
+                        } else {
+                            formattedDeadline = new Date().toISOString().split('T')[0];
+                        }
+                    } else {
+                        formattedDeadline = new Date().toISOString().split('T')[0];
+                    }
+                    
+                    // Simpan ke database
+                    if (importType === 'customer') {
+                        await db.collection('customers').add({
+                            agent_id: agentId.toString().trim(),
+                            nama: nama.toString().trim(),
+                            hp: cleanHp,
+                            apk: apk.toString().trim(),
+                            tanggal: formattedDeadline,
+                            status: 'baru',
+                            user_id: currentUser.uid,
+                            created_at: new Date().toISOString(),
+                            followup_data: null,
+                            pending_data: []
+                        });
+                    } else {
+                        await db.collection('prospek').add({
+                            nama: nama.toString().trim(),
+                            hp: cleanHp,
+                            status: 'Baru',
+                            deadline: formattedDeadline,
+                            user_id: currentUser.uid,
+                            created_at: new Date().toISOString(),
+                            dihubungi_data: null
+                        });
+                    }
+                    success++;
+                } catch(rowError) {
+                    failed++;
+                    errors.push(`Baris ke-${json.indexOf(row)+2}: ${rowError.message}`);
+                }
+            }
+            
+            // Tampilkan hasil
+            let resultMsg = `✅ Selesai!\nBerhasil: ${success}\nGagal: ${failed}`;
+            if (errors.length > 0 && errors.length <= 5) {
+                resultMsg += `\n\nDetail error:\n${errors.join('\n')}`;
+            } else if (errors.length > 5) {
+                resultMsg += `\n\n${errors.length} error terjadi. Periksa format data Anda.`;
+            }
+            alert(resultMsg);
+            
+            // Reset form
+            excelFileInput.value = '';
+            document.getElementById('fileInfo').innerHTML = '';
+            
+            // Refresh data
+            updateAllBadges();
+            loadAllData();
+            
+        } catch(error) {
+            console.error('Import error:', error);
+            showNotif('❌ Gagal memproses file: ' + error.message, true);
+        } finally {
+            importBtn.textContent = originalText;
+            importBtn.disabled = false;
         }
-        alert(`Selesai!\nBerhasil: ${success}\nGagal: ${failed}`);
-        excelFileInput.value = ''; document.getElementById('fileInfo').innerHTML = '';
-        importBtn.textContent = '🚀 Import Data Sekarang';
-        importBtn.disabled = false;
-        updateAllBadges();
     };
+    
+    reader.onerror = function() {
+        showNotif('❌ Gagal membaca file', true);
+        importBtn.textContent = originalText;
+        importBtn.disabled = false;
+    };
+    
     reader.readAsArrayBuffer(file);
 });
 
+// ========== DOWNLOAD CONTOH FILE ==========
 document.getElementById('downloadCustomerExample')?.addEventListener('click', () => {
-    const data = [{ agent_id: 'AG-001', nama: 'Budi Santoso', hp: '6281234567890', apk: 'GNP', deadline: new Date().toISOString().split('T')[0] }];
-    const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Customer'); XLSX.writeFile(wb, 'contoh_customer.xlsx');
+    const data = [{ 
+        agent_id: 'AG-001', 
+        nama: 'Budi Santoso', 
+        hp: '6281234567890', 
+        apk: 'GNP', 
+        deadline: new Date().toISOString().split('T')[0] 
+    }];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Customer');
+    XLSX.writeFile(wb, 'contoh_customer.xlsx');
 });
+
 document.getElementById('downloadProspekExample')?.addEventListener('click', () => {
-    const data = [{ nama: 'Rina Marlina', hp: '6281234567893', deadline: new Date().toISOString().split('T')[0] }];
-    const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Prospek'); XLSX.writeFile(wb, 'contoh_prospek.xlsx');
+    const data = [{ 
+        nama: 'Rina Marlina', 
+        hp: '6281234567893', 
+        deadline: new Date().toISOString().split('T')[0] 
+    }];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Prospek');
+    XLSX.writeFile(wb, 'contoh_prospek.xlsx');
 });
