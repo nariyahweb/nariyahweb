@@ -471,7 +471,7 @@ if (prospekPhoneInput2) {
     prospekPhoneInput2.addEventListener('blur', function() { formatPhone(this); });
 }
 
-// ========== CUSTOMER MODAL ==========
+// ========== CUSTOMER CRUD ==========
 document.getElementById('addCustomerBtn')?.addEventListener('click', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('customerDate').value = today;
@@ -528,7 +528,7 @@ if (saveCustomerBtn) {
     });
 }
 
-// ========== PROSPEK MODAL ==========
+// ========== PROSPEK CRUD ==========
 document.getElementById('addProspekBtn')?.addEventListener('click', () => {
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('prospekDeadline').value = today;
@@ -578,9 +578,215 @@ if (saveProspekBtn) {
     });
 }
 
-// ========== FUNGSI UNTUK PROSPEK (STATUS BARU) ==========
+// ========== DETAIL MODAL ==========
+function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }
 
-// Fungsi untuk konfirmasi Dihubungi
+function openDetailCustomer(id) {
+    db.collection('customers').doc(id).get().then(doc => {
+        const d = doc.data();
+        const statusIcon = d.status === 'closing' ? '🎉' : d.status === 'pending' ? '⏳' : d.status === 'followup' ? '📞' : '🆕';
+        let actionButtons = '';
+        if (d.status === 'baru') {
+            actionButtons = `<button class="btn-primary" onclick="updateCustomerStatus('${id}','followup')">📞 Lanjut ke Follow Up</button>`;
+        } else if (d.status === 'followup') {
+            actionButtons = `<button class="btn-primary" onclick="openFollowupConfirm('${id}')">📞 Konfirmasi Follow Up</button>`;
+        } else if (d.status === 'pending') {
+            actionButtons = `<button class="btn-warning" onclick="openPendingModal('${id}')">📝 Kelola Pending</button>`;
+        } else if (d.status === 'closing') {
+            actionButtons = `<button class="btn-success" onclick="saveToClosingNow('${id}')">💾 Simpan ke DB Closing</button>`;
+        }
+        let followupInfo = '';
+        if (d.followup_data) {
+            followupInfo = `<div class="detail-info-item"><div class="detail-info-icon">✅</div><div class="detail-info-content"><label>Follow Up</label><div class="value">Terkirim: ${d.followup_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.followup_data.dibalas ? 'Ya' : 'Tidak'}</div></div></div>`;
+        }
+        let pendingInfo = '';
+        if (d.pending_data && d.pending_data.length) {
+            pendingInfo = `<div class="detail-info-item"><div class="detail-info-icon">📝</div><div class="detail-info-content"><label>Pending Responses</label><div class="value">${d.pending_data.length} balasan tercatat</div></div></div>`;
+        }
+        document.getElementById('detailContent').innerHTML = `
+            <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
+            <div class="detail-body">
+                <div class="detail-info">
+                    <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${d.tanggal || '-'}</div></div></div>
+                    ${followupInfo}
+                    ${pendingInfo}
+                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status</label><div class="value">${d.status === 'followup' ? 'Follow Up' : d.status === 'baru' ? 'Baru' : d.status}</div></div></div>
+                </div>
+                <div class="detail-actions"><button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>${actionButtons}</div>
+            </div>
+            <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button><button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button></div>
+        `;
+        showModal('detailModal');
+    });
+}
+
+window.updateCustomerStatus = function(id, newStatus) {
+    if (newStatus === 'followup') {
+        db.collection('customers').doc(id).update({ status: 'followup' });
+        closeModal('detailModal');
+        showNotif('Status berhasil diupdate ke Follow Up');
+        loadAllData();
+    }
+};
+
+window.deleteCustomer = function(id) { if (confirm('Yakin hapus customer ini?')) { db.collection('customers').doc(id).delete(); closeModal('detailModal'); showNotif('Data dihapus'); updateAllBadges(); } };
+window.deleteProspek = function(id) { if (confirm('Yakin hapus prospek ini?')) { db.collection('prospek').doc(id).delete(); closeModal('detailModal'); showNotif('Data dihapus'); updateAllBadges(); } };
+
+// ========== FOLLOWUP CONFIRMATION ==========
+function openFollowupConfirm(id) {
+    currentPendingId = id;
+    document.getElementById('followup_terkirim').checked = false;
+    document.getElementById('followup_dibalas').checked = false;
+    document.getElementById('followupConfirmYes').disabled = true;
+    document.getElementById('followupConfirmModal').style.display = 'flex';
+    const cb1 = document.getElementById('followup_terkirim');
+    const cb2 = document.getElementById('followup_dibalas');
+    const yesBtn = document.getElementById('followupConfirmYes');
+    const noBtn = document.getElementById('followupConfirmNo');
+    const checkBoth = () => { yesBtn.disabled = !(cb1.checked && cb2.checked); };
+    cb1.onchange = checkBoth;
+    cb2.onchange = checkBoth;
+    yesBtn.onclick = async () => {
+        await db.collection('customers').doc(id).update({ followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, status: 'pending' });
+        closeModal('followupConfirmModal');
+        showNotif('✅ Customer dipindahkan ke Pending');
+        loadAllData();
+        closeModal('detailModal');
+    };
+    noBtn.onclick = async () => {
+        const doc = await db.collection('customers').doc(id).get();
+        if (doc.exists) {
+            showConfirmDialog(
+                'Pindahkan ke Database Nomor Salah?',
+                `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan ke Followup Agen!`,
+                async () => {
+                    await db.collection('nomor_salah').add({ ...doc.data(), alasan: 'Nomor tidak bisa dihubungi / tidak aktif', deleted_at: new Date().toISOString(), user_id: currentUser.uid });
+                    await db.collection('customers').doc(id).delete();
+                    showNotif('📵 Data dipindahkan ke Database Nomor Salah');
+                    closeModal('followupConfirmModal');
+                    closeModal('detailModal');
+                    loadAllData();
+                }
+            );
+        }
+    };
+}
+
+// ========== PENDING MODAL DENGAN TOMBOL SIMPAN ==========
+function openPendingModal(id) {
+    currentPendingId = id;
+    db.collection('customers').doc(id).get().then(doc => {
+        const data = doc.data();
+        pendingItems = data.pending_data || [];
+        renderPendingModal();
+        document.getElementById('pendingModal').style.display = 'flex';
+    });
+}
+
+function renderPendingModal() {
+    const container = document.getElementById('pendingItemsContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (pendingItems.length === 0) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.style.textAlign = 'center';
+        emptyDiv.style.padding = '20px';
+        emptyDiv.style.color = '#9ca3af';
+        emptyDiv.innerHTML = 'Belum ada catatan pending. Klik "+ Tambah Balasan" untuk menambahkan.';
+        container.appendChild(emptyDiv);
+    }
+    
+    pendingItems.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'pending-item';
+        div.innerHTML = `
+            <input type="text" value="${escapeHtml(item.text)}" placeholder="Balasan/respon..." style="flex:1; padding: 6px; border-radius: 6px; border: 1px solid #e5e7eb;">
+            <input type="checkbox" ${item.checked ? 'checked' : ''} style="width: 20px; height: 20px;">
+            <button class="delete-pending-item" data-idx="${idx}" style="background: none; border: none; cursor: pointer; font-size: 16px;">🗑️</button>
+        `;
+        const textInput = div.querySelector('input[type="text"]');
+        const checkBox = div.querySelector('input[type="checkbox"]');
+        const delBtn = div.querySelector('.delete-pending-item');
+        
+        textInput.addEventListener('change', (e) => { 
+            pendingItems[idx].text = e.target.value; 
+            updatePendingButtons();
+        });
+        checkBox.addEventListener('change', (e) => { 
+            pendingItems[idx].checked = e.target.checked; 
+            updatePendingButtons();
+        });
+        delBtn.addEventListener('click', () => { 
+            pendingItems.splice(idx, 1); 
+            renderPendingModal(); 
+            updatePendingButtons();
+        });
+        container.appendChild(div);
+    });
+    
+    const addBtn = document.getElementById('addPendingItemBtn');
+    if (addBtn) {
+        addBtn.onclick = () => { 
+            pendingItems.push({ text: '', checked: false }); 
+            renderPendingModal(); 
+            updatePendingButtons();
+        };
+    }
+    
+    updatePendingButtons();
+}
+
+function updatePendingButtons() {
+    const allFilledAndChecked = pendingItems.length > 0 && pendingItems.every(item => item.checked === true && item.text.trim() !== '');
+    
+    const finishBtn = document.getElementById('pendingFinishBtn');
+    if (finishBtn) {
+        finishBtn.disabled = !allFilledAndChecked;
+        if (allFilledAndChecked) {
+            finishBtn.onclick = async () => {
+                await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems });
+                await window.confirmClosing(currentPendingId);
+                closeModal('pendingModal');
+            };
+        }
+    }
+    
+    const saveBtn = document.getElementById('pendingSaveBtn');
+    if (saveBtn) {
+        saveBtn.onclick = async () => {
+            await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems });
+            showNotif('💾 Data pending berhasil disimpan');
+            closeModal('pendingModal');
+            loadAllData();
+        };
+    }
+    
+    const cancelBtn = document.getElementById('pendingCancelBtn');
+    if (cancelBtn) {
+        cancelBtn.onclick = () => {
+            closeModal('pendingModal');
+        };
+    }
+}
+
+// ========== FUNGSI UNTUK PROSPEK ==========
+
+// 1. Lanjut ke Dihubungi (dari status Baru)
+function lanjutKeDihubungi(id) {
+    db.collection('prospek').doc(id).update({ status: 'Dihubungi' })
+        .then(() => {
+            showNotif('✅ Status berubah menjadi Dihubungi');
+            loadAllData();
+            closeModal('detailModal');
+        })
+        .catch(err => showNotif('❌ Gagal: ' + err.message, true));
+}
+
+// 2. Konfirmasi Dihubungi (dari status Dihubungi ke Negosiasi)
 function openProspekDihubungiConfirm(id) {
     currentProspekId = id;
     const modal = document.createElement('div');
@@ -640,11 +846,12 @@ function openProspekDihubungiConfirm(id) {
     modal.onclick = (e) => { if (e.target === modal) { modal.remove(); document.body.classList.remove('modal-open'); } };
 }
 
-// Fungsi untuk mengisi Kuesioner di status Negosiasi
+// 3. Kelola Negosiasi (modal kuesioner dengan 4 tombol)
 function openProspekNegosiasiModal(id) {
     currentProspekId = id;
     const fields = ['prospek_aplikasi', 'prospek_domisili', 'prospek_transaksi', 'prospek_deposit', 'prospek_tertarik', 'prospek_penawaran'];
     fields.forEach(f => document.getElementById(f).value = '');
+    
     db.collection('prospek').doc(id).get().then(doc => {
         const data = doc.data();
         if (data.negosiasi_data) {
@@ -656,134 +863,95 @@ function openProspekNegosiasiModal(id) {
             document.getElementById('prospek_penawaran').value = data.negosiasi_data.penawaran || '';
         }
     });
-    document.getElementById('prospekNegosiasiModal').style.display = 'flex';
-}
-
-// Simpan Kuesioner dan lanjut ke Tertarik
-document.getElementById('prospekNegosiasiSave')?.addEventListener('click', async () => {
-    const aplikasi = document.getElementById('prospek_aplikasi').value;
-    const domisili = document.getElementById('prospek_domisili').value;
-    const transaksi = document.getElementById('prospek_transaksi').value;
-    const deposit = document.getElementById('prospek_deposit').value;
-    const tertarik = document.getElementById('prospek_tertarik').value;
-    const penawaran = document.getElementById('prospek_penawaran').value;
-    if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
-        showNotif('⚠️ Semua field harus diisi!', true);
-        return;
-    }
     
-    showConfirmDialog(
-        'Pindahkan ke Status Tertarik?',
-        `Apakah data kuesioner sudah lengkap dan prospek tertarik?\n\n⚠️ Setelah ini prospek akan masuk ke status TERTARIK dan siap dijadikan customer.`,
-        async () => {
-            const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
-            await db.collection('prospek').doc(currentProspekId).update({ 
-                status: 'Tertarik',
-                negosiasi_data: negosiasi_data
-            });
-            showNotif('✅ Prospek dipindahkan ke Tertarik');
-            closeModal('prospekNegosiasiModal');
-            loadAllData();
-            closeModal('detailModal');
-        }
-    );
-});
-
-// Fungsi khusus untuk Tidak Tertarik dari detail prospek (hanya di Negosiasi)
-window.confirmTidakTertarikProspek = async function(id) {
-    const doc = await db.collection('prospek').doc(id).get();
-    const data = doc.data();
-    if (data) {
-        showConfirmDialog(
-            'Pindahkan ke Database Tidak Tertarik?',
-            `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
-            async () => {
-                await db.collection('db_tidak_tertarik').add({
-                    nama: data.nama,
-                    hp: data.hp,
-                    tanggal: new Date().toISOString(),
-                    user_id: currentUser.uid,
-                    alasan: 'Tidak tertarik',
-                    status_sebelumnya: data.status,
-                    kuesioner: data.negosiasi_data || data.dihubungi_data || null
-                });
-                await db.collection('prospek').doc(id).delete();
-                showNotif('📵 Data dipindahkan ke Database Tidak Tertarik');
-                closeModal('detailModal');
-                loadAllData();
-                updateAllBadges();
-            }
-        );
-    }
-};
-
-// Update fungsi updateProspekStatus
-window.updateProspekStatus = async function(id, newStatus) {
-    if (newStatus === 'Tertarik') {
-        const doc = await db.collection('prospek').doc(id).get();
-        const data = doc.data();
-        if (!data.negosiasi_data && data.status === 'Negosiasi') {
-            showNotif('⚠️ Harap isi kuesioner Negosiasi terlebih dahulu!', true);
-            openProspekNegosiasiModal(id);
+    const modal = document.getElementById('prospekNegosiasiModal');
+    modal.style.display = 'flex';
+    
+    document.getElementById('negosiasiTertarikBtn').onclick = async () => {
+        const aplikasi = document.getElementById('prospek_aplikasi').value;
+        const domisili = document.getElementById('prospek_domisili').value;
+        const transaksi = document.getElementById('prospek_transaksi').value;
+        const deposit = document.getElementById('prospek_deposit').value;
+        const tertarik = document.getElementById('prospek_tertarik').value;
+        const penawaran = document.getElementById('prospek_penawaran').value;
+        
+        if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
+            showNotif('⚠️ Semua field harus diisi!', true);
             return;
         }
-        await db.collection('prospek').doc(id).update({ status: newStatus });
-        closeModal('detailModal');
-        showNotif(`Status berhasil diupdate ke ${newStatus}`);
+        
+        showConfirmDialog(
+            'Pindahkan ke Status Tertarik?',
+            `Apakah data kuesioner sudah lengkap dan prospek tertarik?\n\n⚠️ Setelah ini prospek akan masuk ke status TERTARIK.`,
+            async () => {
+                const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
+                await db.collection('prospek').doc(currentProspekId).update({ 
+                    status: 'Tertarik',
+                    negosiasi_data: negosiasi_data
+                });
+                showNotif('✅ Prospek dipindahkan ke Tertarik');
+                closeModal('prospekNegosiasiModal');
+                loadAllData();
+                closeModal('detailModal');
+            }
+        );
+    };
+    
+    document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
+        const doc = await db.collection('prospek').doc(currentProspekId).get();
+        const data = doc.data();
+        if (data) {
+            showConfirmDialog(
+                'Pindahkan ke Database Tidak Tertarik?',
+                `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
+                async () => {
+                    await db.collection('db_tidak_tertarik').add({
+                        nama: data.nama,
+                        hp: data.hp,
+                        tanggal: new Date().toISOString(),
+                        user_id: currentUser.uid,
+                        alasan: 'Tidak tertarik setelah negosiasi',
+                        status_sebelumnya: data.status,
+                        negosiasi_data: data.negosiasi_data || null
+                    });
+                    await db.collection('prospek').doc(currentProspekId).delete();
+                    showNotif('📵 Data dipindahkan ke Database Tidak Tertarik');
+                    closeModal('prospekNegosiasiModal');
+                    loadAllData();
+                    closeModal('detailModal');
+                    updateAllBadges();
+                }
+            );
+        }
+    };
+    
+    document.getElementById('negosiasiSimpanBtn').onclick = async () => {
+        const aplikasi = document.getElementById('prospek_aplikasi').value;
+        const domisili = document.getElementById('prospek_domisili').value;
+        const transaksi = document.getElementById('prospek_transaksi').value;
+        const deposit = document.getElementById('prospek_deposit').value;
+        const tertarik = document.getElementById('prospek_tertarik').value;
+        const penawaran = document.getElementById('prospek_penawaran').value;
+        
+        if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
+            showNotif('⚠️ Semua field harus diisi!', true);
+            return;
+        }
+        
+        const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
+        await db.collection('prospek').doc(currentProspekId).update({ negosiasi_data: negosiasi_data });
+        showNotif('💾 Data kuesioner berhasil disimpan');
+        closeModal('prospekNegosiasiModal');
         loadAllData();
-    } else {
-        await db.collection('prospek').doc(id).update({ status: newStatus });
         closeModal('detailModal');
-        showNotif(`Status berhasil diupdate ke ${newStatus}`);
-        loadAllData();
-    }
-};
-
-// ========== DETAIL MODAL ==========
-function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }
-
-function openDetailCustomer(id) {
-    db.collection('customers').doc(id).get().then(doc => {
-        const d = doc.data();
-        const statusIcon = d.status === 'closing' ? '🎉' : d.status === 'pending' ? '⏳' : d.status === 'followup' ? '📞' : '🆕';
-        let actionButtons = '';
-        if (d.status === 'baru') {
-            actionButtons = `<button class="btn-primary" onclick="updateCustomerStatus('${id}','followup')">📞 Lanjut ke Follow Up</button>`;
-        } else if (d.status === 'followup') {
-            actionButtons = `<button class="btn-primary" onclick="openFollowupConfirm('${id}')">📞 Konfirmasi Follow Up</button>`;
-        } else if (d.status === 'pending') {
-            actionButtons = `<button class="btn-warning" onclick="openPendingModal('${id}')">📝 Kelola Pending</button>`;
-        } else if (d.status === 'closing') {
-            actionButtons = `<button class="btn-success" onclick="saveToClosingNow('${id}')">💾 Simpan ke DB Closing</button>`;
-        }
-        let followupInfo = '';
-        if (d.followup_data) {
-            followupInfo = `<div class="detail-info-item"><div class="detail-info-icon">✅</div><div class="detail-info-content"><label>Follow Up</label><div class="value">Terkirim: ${d.followup_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.followup_data.dibalas ? 'Ya' : 'Tidak'}</div></div></div>`;
-        }
-        let pendingInfo = '';
-        if (d.pending_data && d.pending_data.length) {
-            pendingInfo = `<div class="detail-info-item"><div class="detail-info-icon">📝</div><div class="detail-info-content"><label>Pending Responses</label><div class="value">${d.pending_data.length} balasan tercatat</div></div></div>`;
-        }
-        document.getElementById('detailContent').innerHTML = `
-            <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
-            <div class="detail-body">
-                <div class="detail-info">
-                    <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${d.tanggal || '-'}</div></div></div>
-                    ${followupInfo}
-                    ${pendingInfo}
-                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status</label><div class="value">${d.status === 'followup' ? 'Follow Up' : d.status === 'baru' ? 'Baru' : d.status}</div></div></div>
-                </div>
-                <div class="detail-actions"><button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>${actionButtons}</div>
-            </div>
-            <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button><button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button></div>
-        `;
-        showModal('detailModal');
-    });
+    };
+    
+    document.getElementById('negosiasiBatalBtn').onclick = () => {
+        closeModal('prospekNegosiasiModal');
+    };
 }
 
+// 4. Update fungsi openDetailProspek
 function openDetailProspek(id) {
     db.collection('prospek').doc(id).get().then(doc => {
         const d = doc.data();
@@ -791,22 +959,18 @@ function openDetailProspek(id) {
         let actionButtons = '';
         
         if (d.status === 'Baru') {
-            actionButtons = `<button class="btn-primary" onclick="openProspekDihubungiConfirm('${id}')">📞 Konfirmasi Dihubungi</button>`;
+            actionButtons = `<button class="btn-primary" onclick="lanjutKeDihubungi('${id}')">📞 Lanjut ke Dihubungi</button>`;
         } else if (d.status === 'Dihubungi') {
-            actionButtons = `<button class="btn-primary" onclick="openProspekNegosiasiModal('${id}')">📝 Isi Kuesioner (Negosiasi)</button>`;
+            actionButtons = `<button class="btn-primary" onclick="openProspekDihubungiConfirm('${id}')">✅ Konfirmasi Dihubungi</button>`;
         } else if (d.status === 'Negosiasi') {
-            actionButtons = `
-                <button class="btn-primary" onclick="openProspekNegosiasiModal('${id}')">📝 Lanjutkan Kuesioner</button>
-                <button class="btn-success" onclick="updateProspekStatus('${id}','Tertarik')">⭐ Tertarik</button>
-                <button class="btn-danger" onclick="confirmTidakTertarikProspek('${id}')">❌ Tidak Tertarik</button>
-            `;
+            actionButtons = `<button class="btn-primary" onclick="openProspekNegosiasiModal('${id}')">📝 Kelola Negosiasi</button>`;
         } else if (d.status === 'Tertarik') {
             actionButtons = `<button class="btn-primary" onclick="showConvertToCustomerModal('${id}')">🔄 Jadikan Customer</button>`;
         }
         
         let negosiasiInfo = '';
         if (d.negosiasi_data) {
-            negosiasiInfo = `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Kuesioner Negosiasi</label><div class="value">Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>`;
+            negosiasiInfo = `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Data Negosiasi</label><div class="value">Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>`;
         }
         
         let dihubungiInfo = '';
@@ -822,7 +986,7 @@ function openDetailProspek(id) {
                     <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${d.deadline || '-'}</div></div></div>
                     ${dihubungiInfo}
                     ${negosiasiInfo}
-                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status</label><div class="value">${d.status === 'Negosiasi' ? 'Negosiasi' : d.status}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status</label><div class="value">${d.status}</div></div></div>
                 </div>
                 <div class="detail-actions">${actionButtons}</div>
             </div>
@@ -832,106 +996,7 @@ function openDetailProspek(id) {
     });
 }
 
-window.updateCustomerStatus = function(id, newStatus) {
-    if (newStatus === 'followup') {
-        db.collection('customers').doc(id).update({ status: 'followup' });
-        closeModal('detailModal');
-        showNotif('Status berhasil diupdate ke Follow Up');
-        loadAllData();
-    }
-};
-
-window.deleteCustomer = function(id) { if (confirm('Yakin hapus customer ini?')) { db.collection('customers').doc(id).delete(); closeModal('detailModal'); showNotif('Data dihapus'); updateAllBadges(); } };
-window.deleteProspek = function(id) { if (confirm('Yakin hapus prospek ini?')) { db.collection('prospek').doc(id).delete(); closeModal('detailModal'); showNotif('Data dihapus'); updateAllBadges(); } };
-
-function openFollowupConfirm(id) {
-    currentPendingId = id;
-    document.getElementById('followup_terkirim').checked = false;
-    document.getElementById('followup_dibalas').checked = false;
-    document.getElementById('followupConfirmYes').disabled = true;
-    document.getElementById('followupConfirmModal').style.display = 'flex';
-    const cb1 = document.getElementById('followup_terkirim');
-    const cb2 = document.getElementById('followup_dibalas');
-    const yesBtn = document.getElementById('followupConfirmYes');
-    const noBtn = document.getElementById('followupConfirmNo');
-    const checkBoth = () => { yesBtn.disabled = !(cb1.checked && cb2.checked); };
-    cb1.onchange = checkBoth;
-    cb2.onchange = checkBoth;
-    yesBtn.onclick = async () => {
-        await db.collection('customers').doc(id).update({ followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, status: 'pending' });
-        closeModal('followupConfirmModal');
-        showNotif('✅ Customer dipindahkan ke Pending');
-        loadAllData();
-        closeModal('detailModal');
-    };
-    noBtn.onclick = async () => {
-        const doc = await db.collection('customers').doc(id).get();
-        if (doc.exists) {
-            showConfirmDialog(
-                'Pindahkan ke Database Nomor Salah?',
-                `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan ke Followup Agen!`,
-                async () => {
-                    await db.collection('nomor_salah').add({ ...doc.data(), alasan: 'Nomor tidak bisa dihubungi / tidak aktif', deleted_at: new Date().toISOString(), user_id: currentUser.uid });
-                    await db.collection('customers').doc(id).delete();
-                    showNotif('📵 Data dipindahkan ke Database Nomor Salah');
-                    closeModal('followupConfirmModal');
-                    closeModal('detailModal');
-                    loadAllData();
-                }
-            );
-        }
-    };
-}
-
-function openPendingModal(id) {
-    currentPendingId = id;
-    db.collection('customers').doc(id).get().then(doc => {
-        const data = doc.data();
-        pendingItems = data.pending_data || [];
-        renderPendingModal();
-        document.getElementById('pendingModal').style.display = 'flex';
-    });
-}
-
-function renderPendingModal() {
-    const container = document.getElementById('pendingItemsContainer');
-    if (!container) return;
-    container.innerHTML = '';
-    pendingItems.forEach((item, idx) => {
-        const div = document.createElement('div');
-        div.className = 'pending-item';
-        div.innerHTML = `
-            <input type="text" value="${escapeHtml(item.text)}" placeholder="Balasan/respon..." style="flex:1; padding: 6px; border-radius: 6px; border: 1px solid #e5e7eb;">
-            <input type="checkbox" ${item.checked ? 'checked' : ''} style="width: 20px; height: 20px;">
-            <button class="delete-pending-item" data-idx="${idx}" style="background: none; border: none; cursor: pointer;">🗑️</button>
-        `;
-        const textInput = div.querySelector('input[type="text"]');
-        const checkBox = div.querySelector('input[type="checkbox"]');
-        const delBtn = div.querySelector('.delete-pending-item');
-        textInput.addEventListener('change', (e) => { pendingItems[idx].text = e.target.value; updatePendingCloseButton(); });
-        checkBox.addEventListener('change', (e) => { pendingItems[idx].checked = e.target.checked; updatePendingCloseButton(); });
-        delBtn.addEventListener('click', () => { pendingItems.splice(idx, 1); renderPendingModal(); updatePendingCloseButton(); });
-        container.appendChild(div);
-    });
-    const addBtn = document.getElementById('addPendingItemBtn');
-    if (addBtn) addBtn.onclick = () => { pendingItems.push({ text: '', checked: false }); renderPendingModal(); updatePendingCloseButton(); };
-    updatePendingCloseButton();
-}
-
-function updatePendingCloseButton() {
-    const closeBtn = document.getElementById('pendingCloseBtn');
-    if (!closeBtn) return;
-    const allChecked = pendingItems.length > 0 && pendingItems.every(item => item.checked === true && item.text.trim() !== '');
-    closeBtn.disabled = !allChecked;
-    if (allChecked) {
-        closeBtn.onclick = async () => {
-            await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems });
-            await window.confirmClosing(currentPendingId);
-            closeModal('pendingModal');
-        };
-    }
-}
-
+// ========== CLOSING & TIDAK TERTARIK ==========
 async function saveToClosingDB(id, data) { 
     try { 
         await db.collection('db_closing').add({ 
@@ -1209,7 +1274,6 @@ function renderFullProspekKanban() {
         if (status === 'Baru') lists.prospekBaru.push(item);
         else if (status === 'Dihubungi') lists.prospekDihubungi.push(item);
         else if (status === 'Negosiasi') lists.prospekNegosiasi.push(item);
-        else if (status === 'Tertarik') lists.prospekTertarik.push(item);
         else lists.prospekTertarik.push(item);
     });
     lists.prospekBaru.sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
