@@ -9,6 +9,11 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// 🔥 TAMBAHKAN INI - Nonaktifkan cache offline
+db.settings({
+    persistence: false
+});
+
 let currentUser = null;
 let currentUserRole = 'cs';
 let currentUserName = '';
@@ -835,8 +840,30 @@ window.updateCustomerStatus = async function(id, newStatus) {
     }
 };
 
-window.deleteCustomer = function(id) { if (confirm('Yakin hapus customer ini?')) { db.collection('customers').doc(id).delete(); closeModal('detailModal'); showNotif('Data dihapus'); updateAllBadges(); } };
-window.deleteProspek = function(id) { if (confirm('Yakin hapus prospek ini?')) { db.collection('prospek').doc(id).delete(); closeModal('detailModal'); showNotif('Data dihapus'); updateAllBadges(); } };
+window.deleteCustomer = async function(id) { 
+    if (confirm('Yakin hapus customer ini?')) { 
+        await db.collection('customers').doc(id).delete(); 
+        closeModal('detailModal'); 
+        showNotif('Data dihapus'); 
+        updateAllBadges();
+        setTimeout(() => {
+            loadAllData();
+        }, 300);
+    } 
+};
+
+window.deleteProspek = async function(id) { 
+    if (confirm('Yakin hapus prospek ini?')) { 
+        await db.collection('prospek').doc(id).delete(); 
+        closeModal('detailModal'); 
+        showNotif('Data dihapus'); 
+        updateAllBadges();
+        // Refresh data setelah hapus
+        setTimeout(() => {
+            loadAllData();
+        }, 300);
+    } 
+};
 
 // ========== FOLLOWUP CONFIRMATION ==========
 function openFollowupConfirm(id) {
@@ -1186,32 +1213,35 @@ function openProspekNegosiasiModal(id) {
     };
     
     document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
-        const doc = await db.collection('prospek').doc(currentProspekId).get();
-        const data = doc.data();
-        if (data) {
-            showConfirmDialog(
-                'Pindahkan ke Database Tidak Tertarik?',
-                `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
-                async () => {
-                    await db.collection('db_tidak_tertarik').add({
-                        nama: data.nama,
-                        hp: data.hp,
-                        tanggal: new Date().toISOString(),
-                        user_id: data.user_id,
-                        alasan: 'Tidak tertarik setelah negosiasi',
-                        status_sebelumnya: data.status,
-                        negosiasi_data: data.negosiasi_data || null
-                    });
-                    await db.collection('prospek').doc(currentProspekId).delete();
-                    showNotif('📵 Data dipindahkan ke Database Tidak Tertarik');
-                    closeModal('prospekNegosiasiModal');
+    const doc = await db.collection('prospek').doc(currentProspekId).get();
+    const data = doc.data();
+    if (data) {
+        showConfirmDialog(
+            'Pindahkan ke Database Tidak Tertarik?',
+            `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
+            async () => {
+                await db.collection('db_tidak_tertarik').add({
+                    nama: data.nama,
+                    hp: data.hp,
+                    tanggal: new Date().toISOString(),
+                    user_id: data.user_id,
+                    alasan: 'Tidak tertarik setelah negosiasi',
+                    status_sebelumnya: data.status,
+                    negosiasi_data: data.negosiasi_data || null
+                });
+                await db.collection('prospek').doc(currentProspekId).delete();
+                showNotif('📵 Data dipindahkan ke Database Tidak Tertarik');
+                closeModal('prospekNegosiasiModal');
+                closeModal('detailModal');
+                updateAllBadges();
+                // 🔥 TAMBAHKAN INI - Delay sebelum load ulang
+                setTimeout(() => {
                     loadAllData();
-                    closeModal('detailModal');
-                    updateAllBadges();
-                }
-            );
-        }
-    };
+                }, 300);
+            }
+        );
+    }
+};
     
     document.getElementById('negosiasiSimpanBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
