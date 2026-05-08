@@ -401,7 +401,7 @@ auth.onAuthStateChanged(async user => {
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
-        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage'];
+        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage', 'searchPage'];
         pages.forEach(p => { const el = document.getElementById(p); if (el) el.style.display = 'none'; });
         if (page === 'dashboard') document.getElementById('dashboardPage').style.display = 'block';
         else if (page === 'import') document.getElementById('importPage').style.display = 'block';
@@ -414,6 +414,7 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         else if (page === 'broadcast') { document.getElementById('broadcastPage').style.display = 'block'; initBroadcast(); }
         else if (page === 'followupFull') { document.getElementById('followupFullPage').style.display = 'block'; renderFullFollowupKanban(); }
         else if (page === 'prospekFull') { document.getElementById('prospekFullPage').style.display = 'block'; renderFullProspekKanban(); }
+        else if (page === 'search') { document.getElementById('searchPage').style.display = 'block'; }
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         if (window.innerWidth <= 768) document.getElementById('sidebar')?.classList.remove('active');
@@ -658,8 +659,21 @@ function openDetailCustomer(id) {
             followupInfo = `<div class="detail-info-item"><div class="detail-info-icon">✅</div><div class="detail-info-content"><label>Follow Up</label><div class="value">Terkirim: ${d.followup_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.followup_data.dibalas ? 'Ya' : 'Tidak'}</div></div></div>`;
         }
         let pendingInfo = '';
-        if (d.pending_data && d.pending_data.length) {
-            pendingInfo = `<div class="detail-info-item"><div class="detail-info-icon">📝</div><div class="detail-info-content"><label>Pending Responses</label><div class="value">${d.pending_data.length} balasan tercatat</div></div></div>`;
+        if (d.pending_data && d.pending_data.length > 0) {
+            const completedCount = d.pending_data.filter(item => item.checked === true && item.text?.trim() !== '').length;
+            const totalCount = d.pending_data.length;
+            pendingInfo = `
+                <div class="detail-info-item">
+                    <div class="detail-info-icon">📝</div>
+                    <div class="detail-info-content">
+                        <label>Pending Responses</label>
+                        <div class="value">${completedCount} / ${totalCount} balasan tercatat</div>
+                        <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
+                            ${d.pending_data.map(p => `<div>${p.checked ? '✅' : '⭕'} ${escapeHtml(p.text.substring(0, 50))}${p.text.length > 50 ? '...' : ''}</div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         
         const deadlineDisplay = d.tanggal || '-';
@@ -805,7 +819,9 @@ function renderPendingModal() {
     
     const addBtn = document.getElementById('addPendingItemBtn');
     if (addBtn) {
-        addBtn.onclick = () => { 
+        const newAddBtn = addBtn.cloneNode(true);
+        addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+        newAddBtn.onclick = () => { 
             pendingItems.push({ text: '', checked: false }); 
             renderPendingModal(); 
             updatePendingButtons();
@@ -822,7 +838,9 @@ function updatePendingButtons() {
     if (finishBtn) {
         finishBtn.disabled = !allFilledAndChecked;
         if (allFilledAndChecked) {
-            finishBtn.onclick = async () => {
+            const newFinishBtn = finishBtn.cloneNode(true);
+            finishBtn.parentNode.replaceChild(newFinishBtn, finishBtn);
+            newFinishBtn.onclick = async () => {
                 await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems });
                 await window.confirmClosing(currentPendingId);
                 closeModal('pendingModal');
@@ -832,7 +850,9 @@ function updatePendingButtons() {
     
     const saveBtn = document.getElementById('pendingSaveBtn');
     if (saveBtn) {
-        saveBtn.onclick = async () => {
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        newSaveBtn.onclick = async () => {
             const doc = await db.collection('customers').doc(currentPendingId).get();
             const currentDeadline = doc.data().tanggal || getTodayDate();
             const newDeadline = addDaysToDate(currentDeadline, 3);
@@ -848,7 +868,9 @@ function updatePendingButtons() {
     
     const cancelBtn = document.getElementById('pendingCancelBtn');
     if (cancelBtn) {
-        cancelBtn.onclick = () => {
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        newCancelBtn.onclick = () => {
             closeModal('pendingModal');
         };
     }
@@ -874,7 +896,24 @@ function openDetailProspek(id) {
         
         let negosiasiInfo = '';
         if (d.negosiasi_data) {
-            negosiasiInfo = `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Data Negosiasi</label><div class="value">Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>`;
+            const isComplete = d.negosiasi_data.is_complete || (d.negosiasi_data.aplikasi && d.negosiasi_data.domisili && d.negosiasi_data.transaksi);
+            negosiasiInfo = `
+                <div class="detail-info-item">
+                    <div class="detail-info-icon">📋</div>
+                    <div class="detail-info-content">
+                        <label>Data Negosiasi ${isComplete ? '✅ Lengkap' : '📝 Draft'}</label>
+                        <div class="value">
+                            Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>
+                            Domisili: ${d.negosiasi_data.domisili || '-'}<br>
+                            Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>
+                            Deposit: ${d.negosiasi_data.deposit || '-'}<br>
+                            Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>
+                            Penawaran: ${d.negosiasi_data.penawaran || '-'}
+                        </div>
+                        ${!isComplete ? '<small style="color: #f59e0b;">⚠️ Data belum lengkap, lanjutkan pengisian</small>' : ''}
+                    </div>
+                </div>
+            `;
         }
         
         let dihubungiInfo = '';
@@ -1004,7 +1043,11 @@ function openProspekNegosiasiModal(id) {
     const modal = document.getElementById('prospekNegosiasiModal');
     modal.style.display = 'flex';
     
-    document.getElementById('negosiasiTertarikBtn').onclick = async () => {
+    // Tertarik button
+    const tertarikBtn = document.getElementById('negosiasiTertarikBtn');
+    const newTertarikBtn = tertarikBtn.cloneNode(true);
+    tertarikBtn.parentNode.replaceChild(newTertarikBtn, tertarikBtn);
+    newTertarikBtn.onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
         const transaksi = document.getElementById('prospek_transaksi').value;
@@ -1034,7 +1077,11 @@ function openProspekNegosiasiModal(id) {
         );
     };
     
-    document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
+    // Tidak Tertarik button
+    const tidakTertarikBtn = document.getElementById('negosiasiTidakTertarikBtn');
+    const newTidakTertarikBtn = tidakTertarikBtn.cloneNode(true);
+    tidakTertarikBtn.parentNode.replaceChild(newTidakTertarikBtn, tidakTertarikBtn);
+    newTidakTertarikBtn.onclick = async () => {
         const doc = await db.collection('prospek').doc(currentProspekId).get();
         const data = doc.data();
         if (data) {
@@ -1062,7 +1109,11 @@ function openProspekNegosiasiModal(id) {
         }
     };
     
-    document.getElementById('negosiasiSimpanBtn').onclick = async () => {
+    // Simpan button
+    const simpanBtn = document.getElementById('negosiasiSimpanBtn');
+    const newSimpanBtn = simpanBtn.cloneNode(true);
+    simpanBtn.parentNode.replaceChild(newSimpanBtn, simpanBtn);
+    newSimpanBtn.onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
         const transaksi = document.getElementById('prospek_transaksi').value;
@@ -1070,16 +1121,21 @@ function openProspekNegosiasiModal(id) {
         const tertarik = document.getElementById('prospek_tertarik').value;
         const penawaran = document.getElementById('prospek_penawaran').value;
         
-        if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
-            showNotif('⚠️ Semua field harus diisi!', true);
-            return;
-        }
+        const negosiasi_data = { 
+            aplikasi: aplikasi || '',
+            domisili: domisili || '',
+            transaksi: transaksi || '',
+            deposit: deposit || '',
+            tertarik: tertarik || '',
+            penawaran: penawaran || '',
+            timestamp: new Date().toISOString(),
+            is_complete: !!(aplikasi && domisili && transaksi && deposit && tertarik && penawaran)
+        };
         
         const doc = await db.collection('prospek').doc(currentProspekId).get();
         const currentDeadline = doc.data().deadline || getTodayDate();
         const newDeadline = addDaysToDate(currentDeadline, 3);
         
-        const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
         await db.collection('prospek').doc(currentProspekId).update({ 
             negosiasi_data: negosiasi_data,
             deadline: newDeadline
@@ -1090,7 +1146,11 @@ function openProspekNegosiasiModal(id) {
         closeModal('detailModal');
     };
     
-    document.getElementById('negosiasiBatalBtn').onclick = () => {
+    // Batal button
+    const batalBtn = document.getElementById('negosiasiBatalBtn');
+    const newBatalBtn = batalBtn.cloneNode(true);
+    batalBtn.parentNode.replaceChild(newBatalBtn, batalBtn);
+    newBatalBtn.onclick = () => {
         closeModal('prospekNegosiasiModal');
     };
 }
@@ -1173,7 +1233,7 @@ window.saveToClosingNow = async function(id) {
 window.showConvertToCustomerModal = async function(prospekId) {
     const doc = await db.collection('prospek').doc(prospekId).get();
     const data = doc.data();
-    if (!data.negosiasi_data) {
+    if (!data.negosiasi_data || !data.negosiasi_data.is_complete) {
         showNotif('⚠️ Data prospek belum lengkap, isi kuesioner Negosiasi dulu!', true);
         openProspekNegosiasiModal(prospekId);
         return;
@@ -1295,219 +1355,182 @@ function setupConvertModal() {
     modal.onclick = function(e) { if (e.target === modal) { modal.style.display = 'none'; document.body.classList.remove('modal-open'); } };
 }
 
-// ========== FITUR SIMPAN TEMPLATE BROADCAST ==========
-let savedTemplates = [];
-
-function loadTemplates() {
-    const saved = localStorage.getItem('broadcast_templates');
-    if (saved) {
-        savedTemplates = JSON.parse(saved);
-    }
-    renderTemplateList();
-}
-
-function saveTemplate(name, message) {
-    if (!name || !message) {
-        showNotif('⚠️ Nama template dan pesan harus diisi!', true);
-        return;
-    }
-    savedTemplates.unshift({ name, message, created_at: new Date().toISOString() });
-    if (savedTemplates.length > 10) savedTemplates = savedTemplates.slice(0, 10);
-    localStorage.setItem('broadcast_templates', JSON.stringify(savedTemplates));
-    renderTemplateList();
-    showNotif('✅ Template berhasil disimpan');
-}
-
-function deleteTemplate(index) {
-    savedTemplates.splice(index, 1);
-    localStorage.setItem('broadcast_templates', JSON.stringify(savedTemplates));
-    renderTemplateList();
-    showNotif('🗑️ Template dihapus');
-}
-
-function renderTemplateList() {
-    const container = document.getElementById('templateList');
-    if (!container) return;
-    
-    if (savedTemplates.length === 0) {
-        container.innerHTML = '<p style="color:#9ca3af; text-align:center; padding:20px;">Belum ada template tersimpan</p>';
+// ========== FUNGSI PENCARIAN DATA ==========
+async function performSearch() {
+    const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+    if (!keyword) {
+        showNotif('⚠️ Masukkan kata kunci pencarian!', true);
         return;
     }
     
-    container.innerHTML = savedTemplates.map((template, idx) => `
-        <div class="template-item" style="background: #f9fafb; border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid #e5e7eb;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="font-size: 13px;">📝 ${escapeHtml(template.name)}</strong>
-                <div>
-                    <button class="template-use-btn" data-idx="${idx}" style="background: #4f46e5; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; margin-right: 5px; cursor: pointer;">Gunakan</button>
-                    <button class="template-delete-btn" data-idx="${idx}" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer;">Hapus</button>
+    const searchCustomer = document.getElementById('searchCustomer').checked;
+    const searchProspek = document.getElementById('searchProspek').checked;
+    const searchClosing = document.getElementById('searchClosing').checked;
+    const searchTidak = document.getElementById('searchTidak').checked;
+    const searchNomorSalah = document.getElementById('searchNomorSalah').checked;
+    const searchCommitment = document.getElementById('searchCommitment').checked;
+    
+    const results = [];
+    const today = getTodayDate();
+    
+    if (searchCustomer && currentUser) {
+        const snapshot = await db.collection('customers').where('user_id', '==', currentUser.uid).get();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const searchText = `${data.agent_id || ''} ${data.nama || ''} ${data.hp || ''}`.toLowerCase();
+            if (searchText.includes(keyword)) {
+                const isOverdue = data.tanggal && data.tanggal < today;
+                results.push({
+                    id: doc.id, type: 'customer', title: data.nama,
+                    subtitle: `ID: ${data.agent_id || '-'} | ${data.hp}`,
+                    detail: `Status: ${data.status === 'followup' ? 'Follow Up' : data.status === 'baru' ? 'Baru' : data.status} | Deadline: ${data.tanggal || '-'}`,
+                    deadline: data.tanggal, isOverdue: isOverdue,
+                    badge: 'Followup Agen', badgeClass: 'badge-customer'
+                });
+            }
+        });
+    }
+    
+    if (searchProspek && currentUser) {
+        const snapshot = await db.collection('prospek').where('user_id', '==', currentUser.uid).get();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
+            if (searchText.includes(keyword)) {
+                const isOverdue = data.deadline && data.deadline < today;
+                results.push({
+                    id: doc.id, type: 'prospek', title: data.nama,
+                    subtitle: data.hp,
+                    detail: `Status: ${data.status || 'Baru'} | Deadline: ${data.deadline || '-'}`,
+                    deadline: data.deadline, isOverdue: isOverdue,
+                    badge: 'Prospek Agen', badgeClass: 'badge-prospek'
+                });
+            }
+        });
+    }
+    
+    if (searchClosing && currentUser) {
+        const snapshot = await db.collection('db_closing').where('user_id', '==', currentUser.uid).get();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
+            if (searchText.includes(keyword)) {
+                results.push({
+                    id: doc.id, type: 'closing', title: data.nama,
+                    subtitle: data.hp,
+                    detail: `Closing: ${new Date(data.closing_date).toLocaleDateString('id-ID')}`,
+                    badge: 'DB Closing', badgeClass: 'badge-closing'
+                });
+            }
+        });
+    }
+    
+    if (searchTidak && currentUser) {
+        const snapshot = await db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
+            if (searchText.includes(keyword)) {
+                results.push({
+                    id: doc.id, type: 'tidak', title: data.nama,
+                    subtitle: data.hp,
+                    detail: `Tanggal: ${new Date(data.tanggal).toLocaleDateString('id-ID')} | Alasan: ${data.alasan || 'Tidak tertarik'}`,
+                    badge: 'DB Tidak Tertarik', badgeClass: 'badge-tidak'
+                });
+            }
+        });
+    }
+    
+    if (searchNomorSalah && currentUser) {
+        const snapshot = await db.collection('nomor_salah').where('user_id', '==', currentUser.uid).get();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
+            if (searchText.includes(keyword)) {
+                results.push({
+                    id: doc.id, type: 'nomor_salah', title: data.nama,
+                    subtitle: data.hp,
+                    detail: `Tanggal: ${new Date(data.deleted_at).toLocaleDateString('id-ID')} | Alasan: ${data.alasan || 'Nomor salah'}`,
+                    badge: 'DB Nomor Salah', badgeClass: 'badge-nomor-salah'
+                });
+            }
+        });
+    }
+    
+    if (searchCommitment && currentUser) {
+        const snapshot = await db.collection('db_commitment').where('user_id', '==', currentUser.uid).get();
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
+            if (searchText.includes(keyword)) {
+                results.push({
+                    id: doc.id, type: 'commitment', title: data.nama,
+                    subtitle: data.hp,
+                    detail: `Komitmen: ${new Date(data.committed_at).toLocaleDateString('id-ID')} | Agent: ${data.agent_id || '-'}`,
+                    badge: 'DB Commitment', badgeClass: 'badge-commitment'
+                });
+            }
+        });
+    }
+    
+    const resultsContainer = document.getElementById('searchResults');
+    if (results.length === 0) {
+        resultsContainer.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">🔍 Tidak ada data yang ditemukan</p>';
+        return;
+    }
+    
+    results.sort((a, b) => {
+        if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+        if (a.deadline) return -1;
+        if (b.deadline) return 1;
+        return 0;
+    });
+    
+    resultsContainer.innerHTML = results.map(result => {
+        const deadlineClass = result.isOverdue ? 'deadline-overdue' : (result.deadline === today ? 'deadline-today' : '');
+        return `
+            <div class="search-result-item ${deadlineClass}" data-id="${result.id}" data-type="${result.type}">
+                <div class="search-result-info">
+                    <h4>${escapeHtml(result.title)}</h4>
+                    <p>${escapeHtml(result.subtitle)}</p>
+                    <small>${escapeHtml(result.detail)}</small>
                 </div>
+                <span class="search-result-badge ${result.badgeClass}">${result.badge}</span>
             </div>
-            <div style="font-size: 11px; color: #6b7280; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(template.message.substring(0, 100))}${template.message.length > 100 ? '...' : ''}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     
-    document.querySelectorAll('.template-use-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const idx = parseInt(btn.dataset.idx);
-            const template = savedTemplates[idx];
-            if (template) {
-                document.getElementById('broadcastMessage').value = template.message;
-                showNotif(`✅ Template "${template.name}" diterapkan`);
-            }
-        });
-    });
-    
-    document.querySelectorAll('.template-delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const idx = parseInt(btn.dataset.idx);
-            if (confirm('Hapus template ini?')) {
-                deleteTemplate(idx);
-            }
+    document.querySelectorAll('.search-result-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const id = el.dataset.id;
+            const type = el.dataset.type;
+            openSearchResultDetail(id, type);
         });
     });
 }
 
-function initTemplateFeature() {
-    loadTemplates();
-    const saveTemplateBtn = document.getElementById('saveTemplateBtn');
-    if (saveTemplateBtn) {
-        saveTemplateBtn.onclick = () => {
-            const name = document.getElementById('templateName').value;
-            const message = document.getElementById('broadcastMessage').value;
-            if (!name) {
-                showNotif('⚠️ Masukkan nama template!', true);
-                return;
-            }
-            if (!message) {
-                showNotif('⚠️ Pesan tidak boleh kosong!', true);
-                return;
-            }
-            saveTemplate(name, message);
-            document.getElementById('templateName').value = '';
-        };
-    }
-}
-
-// ========== BROADCAST WHATSAPP FUNCTIONS ==========
-let currentNumbers = [], currentBroadcastIndex = 0, broadcastNumbers = [], broadcastMessageTemplate = '', isBroadcasting = false, broadcastStatus = [];
-
-function initBroadcast() {
-    document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            const value = this.value;
-            document.getElementById('filterStatusCard').style.display = value === 'custom' ? 'none' : 'block';
-            document.getElementById('customNumbersCard').style.display = value === 'custom' ? 'block' : 'none';
-            document.getElementById('prospekFilter').style.display = value === 'prospek' ? 'flex' : 'none';
-            document.getElementById('customerFilter').style.display = value === 'customer' ? 'flex' : 'none';
-            loadNumbers();
-        });
-    });
-    document.querySelectorAll('#customerFilter input, #prospekFilter input').forEach(cb => cb.addEventListener('change', () => loadNumbers()));
-    document.getElementById('customNumbers')?.addEventListener('input', () => loadNumbers());
-    document.getElementById('refreshNumbersBtn')?.addEventListener('click', () => loadNumbers());
-    document.getElementById('sendBroadcastBtn')?.addEventListener('click', sendBroadcast);
-    
-    initTemplateFeature();
-    loadNumbers();
-}
-
-async function loadNumbers() {
-    const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
-    let numbers = [];
-    if (sourceType === 'custom') {
-        const customText = document.getElementById('customNumbers')?.value || '';
-        numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
+function openSearchResultDetail(id, type) {
+    if (type === 'customer') {
+        openDetailCustomer(id);
+    } else if (type === 'prospek') {
+        openDetailProspek(id);
     } else {
-        let collection = 'customers', statusField = 'status', statusValues = [];
-        if (sourceType === 'prospek') { collection = 'prospek'; statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value); }
-        else if (sourceType === 'customer') { collection = 'customers'; statusValues = Array.from(document.querySelectorAll('#customerFilter input:checked')).map(cb => cb.value); }
-        else if (sourceType === 'closing') { collection = 'db_closing'; statusField = null; }
-        else if (sourceType === 'dbTidak') { collection = 'db_tidak_tertarik'; statusField = null; }
-        let query = db.collection(collection).where('user_id', '==', currentUser.uid);
-        if (statusValues && statusValues.length > 0 && statusField) query = query.where(statusField, 'in', statusValues);
-        const snapshot = await query.get();
-        snapshot.forEach(doc => { const data = doc.data(); numbers.push({ hp: data.hp, nama: data.nama }); });
-    }
-    currentNumbers = numbers;
-    document.getElementById('selectedCount').innerText = numbers.length;
-    const listDiv = document.getElementById('selectedNumbersList');
-    if (numbers.length === 0) listDiv.innerHTML = '<p style="color:#9ca3af;">Tidak ada nomor yang dipilih</p>';
-    else if (typeof numbers[0] === 'string') listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n)}</div>`).join('');
-    else listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n.nama)} - ${escapeHtml(n.hp)}</div>`).join('');
-}
-
-async function sendBroadcast() {
-    const messageTemplate = document.getElementById('broadcastMessage')?.value, sendOneByOne = document.getElementById('sendOneByOne')?.checked;
-    if (!messageTemplate) { showNotif('Pesan tidak boleh kosong!', true); return; }
-    if (currentNumbers.length === 0) { showNotif('Tidak ada nomor tujuan!', true); return; }
-    if (!sendOneByOne) {
-        for (const item of currentNumbers) { const hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, message = messageTemplate.replace(/{nama}/g, nama || 'Customer'), nomor = hp.toString().replace('+', '').replace(/^0/, '62'); window.open('https://wa.me/' + nomor + '?text=' + encodeURIComponent(message), '_blank'); }
-        showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`); return;
-    }
-    if (isBroadcasting) { showNotif('⚠️ Broadcast sedang berjalan!', true); return; }
-    broadcastNumbers = [...currentNumbers]; broadcastMessageTemplate = messageTemplate; currentBroadcastIndex = 0; broadcastStatus = []; isBroadcasting = true;
-    showBroadcastPanel(); displayCurrentBroadcast();
-}
-
-function showBroadcastPanel() {
-    let panelDiv = document.getElementById('broadcastPanel');
-    if (!panelDiv) {
-        const broadcastCard = document.querySelector('#broadcastPage .broadcast-card:last-child');
-        if (broadcastCard) {
-            panelDiv = document.createElement('div'); panelDiv.id = 'broadcastPanel'; panelDiv.className = 'broadcast-panel';
-            panelDiv.innerHTML = `<div class="panel-header"><span>📢 Broadcast Manual</span><button id="closeBroadcastPanelBtn" class="close-panel-btn">✕</button></div><div class="panel-content"><div class="current-info"><div class="current-label">Sedang Diproses:</div><div class="current-name" id="currentName">-</div><div class="current-number" id="currentNumber">-</div></div><div class="message-preview" id="messagePreview"></div><div class="action-buttons"><button id="markSentBtn" class="mark-sent-btn">✅ Tandai Terkirim & Lanjut</button><button id="markFailedBtn" class="mark-failed-btn">❌ Tandai Gagal Kirim & Lanjut</button><button id="stopBroadcastPanelBtn" class="stop-btn">⏹️ Hentikan Broadcast</button></div><div class="whatsapp-link-container"><a href="#" id="whatsappLink" target="_blank" class="whatsapp-link-btn">💬 Buka WhatsApp</a></div></div><div class="progress-panel"><div class="progress-bar-container"><div class="progress-bar-fill" id="progressBarFillPanel"></div></div><div class="progress-text" id="progressTextPanel">0 / 0</div><div class="progress-list" id="progressListPanel"></div></div>`;
-            broadcastCard.parentNode.insertBefore(panelDiv, broadcastCard.nextSibling);
-            document.getElementById('closeBroadcastPanelBtn')?.addEventListener('click', () => { document.getElementById('broadcastPanel').style.display = 'none'; isBroadcasting = false; });
-            document.getElementById('markSentBtn')?.addEventListener('click', () => { if (isBroadcasting) { broadcastStatus[currentBroadcastIndex] = 'success'; currentBroadcastIndex++; updateBroadcastPanel(); if (currentBroadcastIndex >= broadcastNumbers.length) finishBroadcast(); else displayCurrentBroadcast(); } });
-            document.getElementById('markFailedBtn')?.addEventListener('click', () => { if (isBroadcasting) { broadcastStatus[currentBroadcastIndex] = 'failed'; currentBroadcastIndex++; updateBroadcastPanel(); if (currentBroadcastIndex >= broadcastNumbers.length) finishBroadcast(); else displayCurrentBroadcast(); } });
-            document.getElementById('stopBroadcastPanelBtn')?.addEventListener('click', () => { if (confirm('⏹️ Hentikan broadcast?')) { isBroadcasting = false; document.getElementById('broadcastPanel').style.display = 'none'; showNotif('⏹️ Broadcast dihentikan'); } });
-        }
-    } else panelDiv.style.display = 'block';
-}
-
-function displayCurrentBroadcast() {
-    if (!isBroadcasting) return;
-    if (currentBroadcastIndex >= broadcastNumbers.length) { finishBroadcast(); return; }
-    const item = broadcastNumbers[currentBroadcastIndex], hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, message = broadcastMessageTemplate.replace(/{nama}/g, nama || 'Customer'), nomor = hp.toString().replace('+', '').replace(/^0/, '62');
-    document.getElementById('currentName').innerHTML = escapeHtml(nama || '-'); document.getElementById('currentNumber').innerHTML = escapeHtml(hp); document.getElementById('messagePreview').innerHTML = `<strong>Pesan:</strong><br>${escapeHtml(message)}`; document.getElementById('whatsappLink').href = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
-    updateBroadcastPanel();
-}
-
-function updateBroadcastPanel() {
-    const total = broadcastNumbers.length, processed = currentBroadcastIndex, percent = total > 0 ? (processed / total) * 100 : 0;
-    document.getElementById('progressBarFillPanel').style.width = `${percent}%`; document.getElementById('progressTextPanel').innerText = `${processed} / ${total} terproses`;
-    const progressList = document.getElementById('progressListPanel');
-    if (progressList && broadcastNumbers.length > 0) {
-        let html = '';
-        for (let i = 0; i < broadcastNumbers.length; i++) {
-            const item = broadcastNumbers[i], hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, displayName = nama ? `${nama} (${hp})` : hp, isCurrent = i === currentBroadcastIndex, status = broadcastStatus[i];
-            let statusIcon = '⭕', statusClass = '';
-            if (status === 'success') { statusIcon = '✅'; statusClass = 'success'; }
-            else if (status === 'failed') { statusIcon = '❌'; statusClass = 'failed'; }
-            else if (i < currentBroadcastIndex) { statusIcon = '✅'; statusClass = 'success'; }
-            html += `<div class="panel-progress-item ${statusClass} ${isCurrent ? 'current' : ''}"><span class="panel-status">${statusIcon}</span><span class="panel-number">${escapeHtml(displayName)}</span></div>`;
-        }
-        progressList.innerHTML = html;
-        const currentElement = progressList.querySelector('.panel-progress-item.current');
-        if (currentElement) currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        openDBDetailModal(id, type);
     }
 }
 
-function finishBroadcast() {
-    let successCount = 0, failedCount = 0;
-    for (let i = 0; i < broadcastNumbers.length; i++) {
-        if (broadcastStatus[i] === 'success') successCount++;
-        else if (broadcastStatus[i] === 'failed') failedCount++;
-        else if (i < currentBroadcastIndex) successCount++;
-    }
-    showNotif(`✅ Broadcast selesai! Terkirim: ${successCount}, Gagal: ${failedCount}, Total: ${broadcastNumbers.length}`);
-    isBroadcasting = false; document.getElementById('broadcastPanel').style.display = 'none'; broadcastStatus = [];
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchResults').innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">🔍 Masukkan kata kunci untuk mencari data</p>';
 }
 
-// ========== FULL PAGE KANBAN (DISEDERHANAKAN KARENA PANJANG) ==========
+document.getElementById('searchBtn')?.addEventListener('click', performSearch);
+document.getElementById('clearSearchBtn')?.addEventListener('click', clearSearch);
+document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') performSearch();
+});
+
+// ========== FULL PAGE KANBAN ==========
 function renderFullFollowupKanban() {
     const today = getTodayDate();
     const lists = { baru: [], followup: [], pending: [], closing: [] };
@@ -1551,7 +1574,7 @@ function renderFullFollowupKanban() {
         }).join('');
         followupContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); });
     }
-    const pendingContainer = document.getElementById('fullPendingList');
+        const pendingContainer = document.getElementById('fullPendingList');
     if (pendingContainer) {
         pendingContainer.innerHTML = lists.pending.map(item => {
             const isOverdue = item.tanggal && item.tanggal < today;
@@ -1662,6 +1685,99 @@ function initDragAndDrop() {
     console.log("Drag and drop disabled");
 }
 
+// ========== FUNGSI DETAIL DATABASE ARCHIVES ==========
+function openDBDetailModal(id, type) {
+    let collectionName = '';
+    let title = '';
+    
+    switch(type) {
+        case 'closing':
+            collectionName = 'db_closing';
+            title = 'Detail Database Closing';
+            break;
+        case 'tidak':
+            collectionName = 'db_tidak_tertarik';
+            title = 'Detail Database Tidak Tertarik';
+            break;
+        case 'nomor_salah':
+            collectionName = 'nomor_salah';
+            title = 'Detail Database Nomor Salah';
+            break;
+        case 'commitment':
+            collectionName = 'db_commitment';
+            title = 'Detail Database Commitment';
+            break;
+        default:
+            return;
+    }
+    
+    db.collection(collectionName).doc(id).get().then(doc => {
+        if (!doc.exists) return;
+        const d = doc.data();
+        
+        let detailHtml = '';
+        
+        if (type === 'closing') {
+            const pendingItems = d.pending_data || [];
+            const completedCount = pendingItems.filter(item => item.checked === true && item.text?.trim() !== '').length;
+            detailHtml = `
+                <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Closing</label><div class="value">${new Date(d.closing_date).toLocaleDateString('id-ID')}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline Terakhir</label><div class="value">${d.tanggal || '-'}</div></div></div>
+                ${d.followup_data ? `<div class="detail-info-item"><div class="detail-info-icon">✅</div><div class="detail-info-content"><label>Follow Up</label><div class="value">Terkirim: ${d.followup_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.followup_data.dibalas ? 'Ya' : 'Tidak'}</div></div></div>` : ''}
+                ${pendingItems.length > 0 ? `<div class="detail-info-item"><div class="detail-info-icon">📝</div><div class="detail-info-content"><label>Pending Responses</label><div class="value">${completedCount} / ${pendingItems.length} balasan tercatat</div></div></div>` : ''}
+            `;
+        } 
+        else if (type === 'tidak') {
+            detailHtml = `
+                <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal</label><div class="value">${new Date(d.tanggal).toLocaleDateString('id-ID')}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">❌</div><div class="detail-info-content"><label>Alasan</label><div class="value">${d.alasan || 'Tidak tertarik'}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status Sebelumnya</label><div class="value">${d.status_sebelumnya || '-'}</div></div></div>
+                ${d.negosiasi_data ? `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Data Negosiasi</label><div class="value">Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>` : ''}
+            `;
+        }
+        else if (type === 'nomor_salah') {
+            detailHtml = `
+                <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Dihapus</label><div class="value">${new Date(d.deleted_at).toLocaleDateString('id-ID')}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📵</div><div class="detail-info-content"><label>Alasan</label><div class="value">${d.alasan || 'Nomor tidak bisa dihubungi'}</div></div></div>
+            `;
+        }
+        else if (type === 'commitment') {
+            detailHtml = `
+                <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Komitmen</label><div class="value">${new Date(d.committed_at).toLocaleDateString('id-ID')}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Followup</label><div class="value">${d.followup_date || '-'}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${d.agent_id || '-'}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${d.aplikasi || d.negosiasi_data?.aplikasi || '-'}</div></div></div>
+                ${d.negosiasi_data ? `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Data Negosiasi</label><div class="value">Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>` : ''}
+            `;
+        }
+        
+        document.getElementById('detailContent').innerHTML = `
+            <div class="detail-header"><div class="detail-avatar">📁</div><h3>${title}</h3><div class="detail-status">Arsip</div></div>
+            <div class="detail-body">
+                <div class="detail-info">
+                    ${detailHtml}
+                </div>
+                <div class="detail-actions">
+                    <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
+                </div>
+            </div>
+            <div class="detail-footer">
+                <button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button>
+                <button class="btn-danger" onclick="deleteDBItem('${type}', '${id}'); closeModal('detailModal');">🗑️ Hapus</button>
+            </div>
+        `;
+        showModal('detailModal');
+    });
+}
+
 // ========== DATABASE ARCHIVES ==========
 let selectedClosingIds = new Map(), selectedTidakIds = new Map(), selectedNomorSalahIds = new Map(), selectedCommitmentIds = new Map();
 
@@ -1669,11 +1785,47 @@ function loadDBClosing() {
     if (!currentUser) return;
     db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, closing_date: d.closing_date, checked: selectedClosingIds.get(doc.id) || false }); });
+        snap.forEach(doc => { 
+            const d = doc.data(); 
+            items.push({ 
+                id: doc.id, 
+                nama: d.nama, 
+                hp: d.hp, 
+                closing_date: d.closing_date,
+                tanggal: d.tanggal,
+                followup_data: d.followup_data,
+                pending_data: d.pending_data,
+                checked: selectedClosingIds.get(doc.id) || false 
+            }); 
+        });
         items.sort((a,b) => new Date(b.closing_date) - new Date(a.closing_date));
-        const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Closing: ${new Date(item.closing_date).toLocaleDateString('id-ID')}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('closing', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
+        const html = items.map(item => `
+            <div class="db-item" data-id="${item.id}" data-type="closing" style="cursor: pointer;">
+                <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
+                <div class="db-item-info">
+                    <h4>${escapeHtml(item.nama)}</h4>
+                    <p>${item.hp}</p>
+                    <small>Closing: ${new Date(item.closing_date).toLocaleDateString('id-ID')}</small>
+                </div>
+                <div class="db-item-actions">
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
+                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('closing', '${item.id}')">🗑️ Hapus</button>
+                </div>
+            </div>
+        `).join('');
         const container = document.getElementById('dbClosingList');
-        if (container) container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data closing</p>';
+        if (container) {
+            container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data closing</p>';
+            document.querySelectorAll('#dbClosingList .db-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-delete')) {
+                        const id = el.dataset.id;
+                        const type = el.dataset.type;
+                        openDBDetailModal(id, type);
+                    }
+                });
+            });
+        }
         attachCheckboxEvents('#dbClosingList', selectedClosingIds, 'selectAllClosing');
     });
 }
@@ -1682,11 +1834,48 @@ function loadDBTidak() {
     if (!currentUser) return;
     db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, checked: selectedTidakIds.get(doc.id) || false }); });
+        snap.forEach(doc => { 
+            const d = doc.data(); 
+            items.push({ 
+                id: doc.id, 
+                nama: d.nama, 
+                hp: d.hp, 
+                tanggal: d.tanggal,
+                alasan: d.alasan,
+                status_sebelumnya: d.status_sebelumnya,
+                dihubungi_data: d.dihubungi_data,
+                negosiasi_data: d.negosiasi_data,
+                checked: selectedTidakIds.get(doc.id) || false 
+            }); 
+        });
         items.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
-        const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Tanggal: ${new Date(item.tanggal).toLocaleDateString('id-ID')}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('tidak', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
+        const html = items.map(item => `
+            <div class="db-item" data-id="${item.id}" data-type="tidak" style="cursor: pointer;">
+                <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
+                <div class="db-item-info">
+                    <h4>${escapeHtml(item.nama)}</h4>
+                    <p>${item.hp}</p>
+                    <small>Tanggal: ${new Date(item.tanggal).toLocaleDateString('id-ID')}</small>
+                </div>
+                <div class="db-item-actions">
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
+                                        <button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('tidak', '${item.id}')">🗑️ Hapus</button>
+                </div>
+            </div>
+        `).join('');
         const container = document.getElementById('dbTidakList');
-        if (container) container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data tidak tertarik</p>';
+        if (container) {
+            container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data tidak tertarik</p>';
+            document.querySelectorAll('#dbTidakList .db-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-delete')) {
+                        const id = el.dataset.id;
+                        const type = el.dataset.type;
+                        openDBDetailModal(id, type);
+                    }
+                });
+            });
+        }
         attachCheckboxEvents('#dbTidakList', selectedTidakIds, 'selectAllTidak');
     });
 }
@@ -1695,11 +1884,45 @@ function loadDBNomorSalah() {
     if (!currentUser) return;
     db.collection('nomor_salah').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, alasan: d.alasan, deleted_at: d.deleted_at, checked: selectedNomorSalahIds.get(doc.id) || false }); });
+        snap.forEach(doc => { 
+            const d = doc.data(); 
+            items.push({ 
+                id: doc.id, 
+                nama: d.nama, 
+                hp: d.hp, 
+                alasan: d.alasan, 
+                deleted_at: d.deleted_at,
+                checked: selectedNomorSalahIds.get(doc.id) || false 
+            }); 
+        });
         items.sort((a,b) => new Date(b.deleted_at) - new Date(a.deleted_at));
-        const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Alasan: ${item.alasan}<br>Tanggal: ${new Date(item.deleted_at).toLocaleDateString('id-ID')}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('nomor_salah', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
+        const html = items.map(item => `
+            <div class="db-item" data-id="${item.id}" data-type="nomor_salah" style="cursor: pointer;">
+                <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
+                <div class="db-item-info">
+                    <h4>${escapeHtml(item.nama)}</h4>
+                    <p>${item.hp}</p>
+                    <small>Alasan: ${item.alasan}<br>Tanggal: ${new Date(item.deleted_at).toLocaleDateString('id-ID')}</small>
+                </div>
+                <div class="db-item-actions">
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
+                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('nomor_salah', '${item.id}')">🗑️ Hapus</button>
+                </div>
+            </div>
+        `).join('');
         const container = document.getElementById('dbNomorSalahList');
-        if (container) container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data nomor salah</p>';
+        if (container) {
+            container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data nomor salah</p>';
+            document.querySelectorAll('#dbNomorSalahList .db-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-delete')) {
+                        const id = el.dataset.id;
+                        const type = el.dataset.type;
+                        openDBDetailModal(id, type);
+                    }
+                });
+            });
+        }
         attachCheckboxEvents('#dbNomorSalahList', selectedNomorSalahIds, 'selectAllNomorSalah');
     });
 }
@@ -1708,11 +1931,48 @@ function loadDBCommitment() {
     if (!currentUser) return;
     db.collection('db_commitment').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let items = [];
-        snap.forEach(doc => { const d = doc.data(); items.push({ id: doc.id, nama: d.nama, hp: d.hp, committed_at: d.committed_at, negosiasi_data: d.negosiasi_data, agent_id: d.agent_id, aplikasi: d.aplikasi, followup_date: d.followup_date, checked: selectedCommitmentIds.get(doc.id) || false }); });
+        snap.forEach(doc => { 
+            const d = doc.data(); 
+            items.push({ 
+                id: doc.id, 
+                nama: d.nama, 
+                hp: d.hp, 
+                committed_at: d.committed_at, 
+                negosiasi_data: d.negosiasi_data, 
+                agent_id: d.agent_id, 
+                aplikasi: d.aplikasi, 
+                followup_date: d.followup_date,
+                checked: selectedCommitmentIds.get(doc.id) || false 
+            }); 
+        });
         items.sort((a,b) => new Date(b.committed_at) - new Date(a.committed_at));
-        const html = items.map(item => `<div class="db-item"><input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}><div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Komitmen: ${new Date(item.committed_at).toLocaleDateString('id-ID')}<br>Followup: ${item.followup_date || '-'}<br>Agent: ${item.agent_id || '-'}<br>Aplikasi: ${item.aplikasi || item.negosiasi_data?.aplikasi || '-'}</small></div><div class="db-item-actions"><button class="db-item-wa" onclick="openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="deleteDBItem('db_commitment', '${item.id}')">🗑️ Hapus</button></div></div>`).join('');
+        const html = items.map(item => `
+            <div class="db-item" data-id="${item.id}" data-type="commitment" style="cursor: pointer;">
+                <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
+                <div class="db-item-info">
+                    <h4>${escapeHtml(item.nama)}</h4>
+                    <p>${item.hp}</p>
+                    <small>Komitmen: ${new Date(item.committed_at).toLocaleDateString('id-ID')}<br>Followup: ${item.followup_date || '-'}<br>Agent: ${item.agent_id || '-'}<br>Aplikasi: ${item.aplikasi || item.negosiasi_data?.aplikasi || '-'}</small>
+                </div>
+                <div class="db-item-actions">
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
+                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('db_commitment', '${item.id}')">🗑️ Hapus</button>
+                </div>
+            </div>
+        `).join('');
         const container = document.getElementById('dbCommitmentList');
-        if (container) container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data komitmen</p>';
+        if (container) {
+            container.innerHTML = html || '<p style="text-align:center;padding:40px;">📭 Belum ada data komitmen</p>';
+            document.querySelectorAll('#dbCommitmentList .db-item').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-delete')) {
+                        const id = el.dataset.id;
+                        const type = el.dataset.type;
+                        openDBDetailModal(id, type);
+                    }
+                });
+            });
+        }
         attachCheckboxEvents('#dbCommitmentList', selectedCommitmentIds, 'selectAllCommitment');
     });
 }
@@ -2044,6 +2304,218 @@ document.getElementById('savePesanBtn')?.addEventListener('click', async () => {
     updateAllBadges(); 
 });
 
+// ========== FITUR SIMPAN TEMPLATE BROADCAST ==========
+let savedTemplates = [];
+
+function loadTemplates() {
+    const saved = localStorage.getItem('broadcast_templates');
+    if (saved) {
+        savedTemplates = JSON.parse(saved);
+    }
+    renderTemplateList();
+}
+
+function saveTemplate(name, message) {
+    if (!name || !message) {
+        showNotif('⚠️ Nama template dan pesan harus diisi!', true);
+        return;
+    }
+    savedTemplates.unshift({ name, message, created_at: new Date().toISOString() });
+    if (savedTemplates.length > 10) savedTemplates = savedTemplates.slice(0, 10);
+    localStorage.setItem('broadcast_templates', JSON.stringify(savedTemplates));
+    renderTemplateList();
+    showNotif('✅ Template berhasil disimpan');
+}
+
+function deleteTemplate(index) {
+    savedTemplates.splice(index, 1);
+    localStorage.setItem('broadcast_templates', JSON.stringify(savedTemplates));
+    renderTemplateList();
+    showNotif('🗑️ Template dihapus');
+}
+
+function renderTemplateList() {
+    const container = document.getElementById('templateList');
+    if (!container) return;
+    
+    if (savedTemplates.length === 0) {
+        container.innerHTML = '<p style="color:#9ca3af; text-align:center; padding:20px;">Belum ada template tersimpan</p>';
+        return;
+    }
+    
+    container.innerHTML = savedTemplates.map((template, idx) => `
+        <div class="template-item">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong style="font-size: 13px;">📝 ${escapeHtml(template.name)}</strong>
+                <div>
+                    <button class="template-use-btn" data-idx="${idx}" style="background: #4f46e5; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; margin-right: 5px; cursor: pointer;">Gunakan</button>
+                    <button class="template-delete-btn" data-idx="${idx}" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer;">Hapus</button>
+                </div>
+            </div>
+            <div style="font-size: 11px; color: #6b7280; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(template.message.substring(0, 100))}${template.message.length > 100 ? '...' : ''}</div>
+        </div>
+    `).join('');
+    
+    document.querySelectorAll('.template-use-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.dataset.idx);
+            const template = savedTemplates[idx];
+            if (template) {
+                document.getElementById('broadcastMessage').value = template.message;
+                showNotif(`✅ Template "${template.name}" diterapkan`);
+            }
+        });
+    });
+    
+    document.querySelectorAll('.template-delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.dataset.idx);
+            if (confirm('Hapus template ini?')) {
+                deleteTemplate(idx);
+            }
+        });
+    });
+}
+
+function initTemplateFeature() {
+    loadTemplates();
+    const saveTemplateBtn = document.getElementById('saveTemplateBtn');
+    if (saveTemplateBtn) {
+        saveTemplateBtn.onclick = () => {
+            const name = document.getElementById('templateName').value;
+            const message = document.getElementById('broadcastMessage').value;
+            if (!name) {
+                showNotif('⚠️ Masukkan nama template!', true);
+                return;
+            }
+            if (!message) {
+                showNotif('⚠️ Pesan tidak boleh kosong!', true);
+                return;
+            }
+            saveTemplate(name, message);
+            document.getElementById('templateName').value = '';
+        };
+    }
+}
+
+// ========== BROADCAST WHATSAPP FUNCTIONS ==========
+let currentNumbers = [], currentBroadcastIndex = 0, broadcastNumbers = [], broadcastMessageTemplate = '', isBroadcasting = false, broadcastStatus = [];
+
+function initBroadcast() {
+    document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const value = this.value;
+            document.getElementById('filterStatusCard').style.display = value === 'custom' ? 'none' : 'block';
+            document.getElementById('customNumbersCard').style.display = value === 'custom' ? 'block' : 'none';
+            document.getElementById('prospekFilter').style.display = value === 'prospek' ? 'flex' : 'none';
+            document.getElementById('customerFilter').style.display = value === 'customer' ? 'flex' : 'none';
+            loadNumbers();
+        });
+    });
+    document.querySelectorAll('#customerFilter input, #prospekFilter input').forEach(cb => cb.addEventListener('change', () => loadNumbers()));
+    document.getElementById('customNumbers')?.addEventListener('input', () => loadNumbers());
+    document.getElementById('refreshNumbersBtn')?.addEventListener('click', () => loadNumbers());
+    document.getElementById('sendBroadcastBtn')?.addEventListener('click', sendBroadcast);
+    
+    initTemplateFeature();
+    loadNumbers();
+}
+
+async function loadNumbers() {
+    const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
+    let numbers = [];
+    if (sourceType === 'custom') {
+        const customText = document.getElementById('customNumbers')?.value || '';
+        numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
+    } else {
+        let collection = 'customers', statusField = 'status', statusValues = [];
+        if (sourceType === 'prospek') { collection = 'prospek'; statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value); }
+        else if (sourceType === 'customer') { collection = 'customers'; statusValues = Array.from(document.querySelectorAll('#customerFilter input:checked')).map(cb => cb.value); }
+        else if (sourceType === 'closing') { collection = 'db_closing'; statusField = null; }
+        else if (sourceType === 'dbTidak') { collection = 'db_tidak_tertarik'; statusField = null; }
+        let query = db.collection(collection).where('user_id', '==', currentUser.uid);
+        if (statusValues && statusValues.length > 0 && statusField) query = query.where(statusField, 'in', statusValues);
+        const snapshot = await query.get();
+        snapshot.forEach(doc => { const data = doc.data(); numbers.push({ hp: data.hp, nama: data.nama }); });
+    }
+    currentNumbers = numbers;
+    document.getElementById('selectedCount').innerText = numbers.length;
+    const listDiv = document.getElementById('selectedNumbersList');
+    if (numbers.length === 0) listDiv.innerHTML = '<p style="color:#9ca3af;">Tidak ada nomor yang dipilih</p>';
+    else if (typeof numbers[0] === 'string') listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n)}</div>`).join('');
+    else listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n.nama)} - ${escapeHtml(n.hp)}</div>`).join('');
+}
+
+async function sendBroadcast() {
+    const messageTemplate = document.getElementById('broadcastMessage')?.value, sendOneByOne = document.getElementById('sendOneByOne')?.checked;
+    if (!messageTemplate) { showNotif('Pesan tidak boleh kosong!', true); return; }
+    if (currentNumbers.length === 0) { showNotif('Tidak ada nomor tujuan!', true); return; }
+    if (!sendOneByOne) {
+        for (const item of currentNumbers) { const hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, message = messageTemplate.replace(/{nama}/g, nama || 'Customer'), nomor = hp.toString().replace('+', '').replace(/^0/, '62'); window.open('https://wa.me/' + nomor + '?text=' + encodeURIComponent(message), '_blank'); }
+        showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`); return;
+    }
+    if (isBroadcasting) { showNotif('⚠️ Broadcast sedang berjalan!', true); return; }
+    broadcastNumbers = [...currentNumbers]; broadcastMessageTemplate = messageTemplate; currentBroadcastIndex = 0; broadcastStatus = []; isBroadcasting = true;
+    showBroadcastPanel(); displayCurrentBroadcast();
+}
+
+function showBroadcastPanel() {
+    let panelDiv = document.getElementById('broadcastPanel');
+    if (!panelDiv) {
+        const broadcastCard = document.querySelector('#broadcastPage .broadcast-card:last-child');
+        if (broadcastCard) {
+            panelDiv = document.createElement('div'); panelDiv.id = 'broadcastPanel'; panelDiv.className = 'broadcast-panel';
+            panelDiv.innerHTML = `<div class="panel-header"><span>📢 Broadcast Manual</span><button id="closeBroadcastPanelBtn" class="close-panel-btn">✕</button></div><div class="panel-content"><div class="current-info"><div class="current-label">Sedang Diproses:</div><div class="current-name" id="currentName">-</div><div class="current-number" id="currentNumber">-</div></div><div class="message-preview" id="messagePreview"></div><div class="action-buttons"><button id="markSentBtn" class="mark-sent-btn">✅ Tandai Terkirim & Lanjut</button><button id="markFailedBtn" class="mark-failed-btn">❌ Tandai Gagal Kirim & Lanjut</button><button id="stopBroadcastPanelBtn" class="stop-btn">⏹️ Hentikan Broadcast</button></div><div class="whatsapp-link-container"><a href="#" id="whatsappLink" target="_blank" class="whatsapp-link-btn">💬 Buka WhatsApp</a></div></div><div class="progress-panel"><div class="progress-bar-container"><div class="progress-bar-fill" id="progressBarFillPanel"></div></div><div class="progress-text" id="progressTextPanel">0 / 0</div><div class="progress-list" id="progressListPanel"></div></div>`;
+            broadcastCard.parentNode.insertBefore(panelDiv, broadcastCard.nextSibling);
+            document.getElementById('closeBroadcastPanelBtn')?.addEventListener('click', () => { document.getElementById('broadcastPanel').style.display = 'none'; isBroadcasting = false; });
+            document.getElementById('markSentBtn')?.addEventListener('click', () => { if (isBroadcasting) { broadcastStatus[currentBroadcastIndex] = 'success'; currentBroadcastIndex++; updateBroadcastPanel(); if (currentBroadcastIndex >= broadcastNumbers.length) finishBroadcast(); else displayCurrentBroadcast(); } });
+            document.getElementById('markFailedBtn')?.addEventListener('click', () => { if (isBroadcasting) { broadcastStatus[currentBroadcastIndex] = 'failed'; currentBroadcastIndex++; updateBroadcastPanel(); if (currentBroadcastIndex >= broadcastNumbers.length) finishBroadcast(); else displayCurrentBroadcast(); } });
+            document.getElementById('stopBroadcastPanelBtn')?.addEventListener('click', () => { if (confirm('⏹️ Hentikan broadcast?')) { isBroadcasting = false; document.getElementById('broadcastPanel').style.display = 'none'; showNotif('⏹️ Broadcast dihentikan'); } });
+        }
+    } else panelDiv.style.display = 'block';
+}
+
+function displayCurrentBroadcast() {
+    if (!isBroadcasting) return;
+    if (currentBroadcastIndex >= broadcastNumbers.length) { finishBroadcast(); return; }
+    const item = broadcastNumbers[currentBroadcastIndex], hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, message = broadcastMessageTemplate.replace(/{nama}/g, nama || 'Customer'), nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+    document.getElementById('currentName').innerHTML = escapeHtml(nama || '-'); document.getElementById('currentNumber').innerHTML = escapeHtml(hp); document.getElementById('messagePreview').innerHTML = `<strong>Pesan:</strong><br>${escapeHtml(message)}`; document.getElementById('whatsappLink').href = 'https://wa.me/' + nomor + '?text=' + encodeURIComponent(message);
+    updateBroadcastPanel();
+}
+
+function updateBroadcastPanel() {
+    const total = broadcastNumbers.length, processed = currentBroadcastIndex, percent = total > 0 ? (processed / total) * 100 : 0;
+    document.getElementById('progressBarFillPanel').style.width = `${percent}%`; document.getElementById('progressTextPanel').innerText = `${processed} / ${total} terproses`;
+    const progressList = document.getElementById('progressListPanel');
+    if (progressList && broadcastNumbers.length > 0) {
+        let html = '';
+        for (let i = 0; i < broadcastNumbers.length; i++) {
+            const item = broadcastNumbers[i], hp = typeof item === 'string' ? item : item.hp, nama = typeof item === 'string' ? '' : item.nama, displayName = nama ? `${nama} (${hp})` : hp, isCurrent = i === currentBroadcastIndex, status = broadcastStatus[i];
+            let statusIcon = '⭕', statusClass = '';
+            if (status === 'success') { statusIcon = '✅'; statusClass = 'success'; }
+            else if (status === 'failed') { statusIcon = '❌'; statusClass = 'failed'; }
+            else if (i < currentBroadcastIndex) { statusIcon = '✅'; statusClass = 'success'; }
+            html += `<div class="panel-progress-item ${statusClass} ${isCurrent ? 'current' : ''}"><span class="panel-status">${statusIcon}</span><span class="panel-number">${escapeHtml(displayName)}</span></div>`;
+        }
+        progressList.innerHTML = html;
+        const currentElement = progressList.querySelector('.panel-progress-item.current');
+        if (currentElement) currentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function finishBroadcast() {
+    let successCount = 0, failedCount = 0;
+    for (let i = 0; i < broadcastNumbers.length; i++) {
+        if (broadcastStatus[i] === 'success') successCount++;
+        else if (broadcastStatus[i] === 'failed') failedCount++;
+        else if (i < currentBroadcastIndex) successCount++;
+    }
+    showNotif(`✅ Broadcast selesai! Terkirim: ${successCount}, Gagal: ${failedCount}, Total: ${broadcastNumbers.length}`);
+    isBroadcasting = false; document.getElementById('broadcastPanel').style.display = 'none'; broadcastStatus = [];
+}
+
 const deadlineNotifBtn = document.getElementById('deadlineNotifBtn');
 if (deadlineNotifBtn) {
     deadlineNotifBtn.addEventListener('click', async () => {
@@ -2070,7 +2542,7 @@ if (pesanNotifBtn) {
     });
 }
 
-// ========== IMPORT EXCEL (SEDERHANAKAN KARENA PANJANG) ==========
+// ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
 if (dropZone) dropZone.addEventListener('click', () => excelFileInput?.click());
