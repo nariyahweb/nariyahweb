@@ -60,6 +60,9 @@
                 <div class="menu-item" data-page="pesan"><span class="icon">💬</span><span>Pesan</span></div>
                 <div class="menu-item" data-page="broadcast"><span class="icon">📢</span><span>Broadcast WhatsApp</span></div>
                 <div class="menu-divider"></div>
+                <div class="menu-label">PENCARIAN</div>
+                <div class="menu-item" data-page="search"><span class="icon">🔍</span><span>Pencarian Data</span></div>
+                <div class="menu-divider"></div>
                 <div class="menu-item" id="logoutBtn"><span class="icon">☕</span><span>Logout</span></div>
             </div>
         </div>
@@ -140,6 +143,32 @@
                             <div class="kanban-column" data-status="Dihubungi"><div class="column-header blue-header"><span>Dihubungi</span><span class="count" id="fullCountDihubungi">0</span></div><div class="kanban-cards" id="fullProspekDihubungiList"></div></div>
                             <div class="kanban-column" data-status="Negosiasi"><div class="column-header orange-header"><span>Negosiasi</span><span class="count" id="fullCountNegosiasi">0</span></div><div class="kanban-cards" id="fullProspekNegosiasiList"></div></div>
                             <div class="kanban-column" data-status="Tertarik"><div class="column-header green-header"><span>Tertarik</span><span class="count" id="fullCountTertarik">0</span></div><div class="kanban-cards" id="fullProspekTertarikList"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEARCH PAGE -->
+                <div id="searchPage" class="page-content" style="display:none">
+                    <div class="search-section">
+                        <div class="search-header">
+                            <h3>🔍 Pencarian Data</h3>
+                            <p>Cari berdasarkan ID Agent, Nama, atau Nomor WhatsApp</p>
+                        </div>
+                        <div class="search-box">
+                            <input type="text" id="searchInput" placeholder="Ketik ID Agent, Nama, atau Nomor WhatsApp..." class="search-input">
+                            <button id="searchBtn" class="search-btn">🔍 Cari</button>
+                            <button id="clearSearchBtn" class="clear-btn">✖ Bersihkan</button>
+                        </div>
+                        <div class="search-filter">
+                            <label><input type="checkbox" id="searchCustomer" checked> Followup Agen</label>
+                            <label><input type="checkbox" id="searchProspek" checked> Prospek Agen</label>
+                            <label><input type="checkbox" id="searchClosing"> DB Closing</label>
+                            <label><input type="checkbox" id="searchTidak"> DB Tidak Tertarik</label>
+                            <label><input type="checkbox" id="searchNomorSalah"> DB Nomor Salah</label>
+                            <label><input type="checkbox" id="searchCommitment"> DB Commitment</label>
+                        </div>
+                        <div id="searchResults" class="search-results">
+                            <p style="text-align:center;padding:40px;color:#9ca3af;">🔍 Masukkan kata kunci untuk mencari data</p>
                         </div>
                     </div>
                 </div>
@@ -245,26 +274,11 @@
     <div class="modal-content">
         <h3>Tambah Customer</h3>
         <div class="modal-subtitle">Isi data customer baru</div>
-        <div class="form-group">
-            <label for="customerId">ID Agent <span class="required">*</span></label>
-            <div class="input-icon"><span>🆔</span><input type="text" id="customerId" placeholder="Contoh: AG-001"></div>
-        </div>
-        <div class="form-group">
-            <label for="customerName">Nama Lengkap <span class="required">*</span></label>
-            <div class="input-icon"><span>👤</span><input type="text" id="customerName" placeholder="Masukkan nama lengkap"></div>
-        </div>
-        <div class="form-group">
-            <label for="customerPhone">Nomor WhatsApp <span class="required">*</span></label>
-            <div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1"></div>
-        </div>
-        <div class="form-group">
-            <label for="customerApk">Aplikasi <span class="required">*</span></label>
-            <div class="input-icon"><span>📱</span><select id="customerApk"><option value="">Pilih Aplikasi</option><option value="GNP">🏦 GNP</option><option value="BSB">🏦 BSB</option><option value="BTN">🏦 BTN</option></select></div>
-        </div>
-        <div class="form-group">
-            <label for="customerDate">Deadline <span class="required">*</span></label>
-            <div class="input-icon"><span>📅</span><input type="date" id="customerDate"></div>
-        </div>
+        <div class="form-group"><label for="customerId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="customerId" placeholder="Contoh: AG-001"></div></div>
+        <div class="form-group"><label for="customerName">Nama Lengkap <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="customerName" placeholder="Masukkan nama lengkap"></div></div>
+        <div class="form-group"><label for="customerPhone">Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1"></div></div>
+        <div class="form-group"><label for="customerApk">Aplikasi <span class="required">*</span></label><div class="input-icon"><span>📱</span><select id="customerApk"><option value="">Pilih Aplikasi</option><option value="GNP">🏦 GNP</option><option value="BSB">🏦 BSB</option><option value="BTN">🏦 BTN</option></select></div></div>
+        <div class="form-group"><label for="customerDate">Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="customerDate"></div></div>
         <div class="modal-buttons"><button id="saveCustomerBtn">Simpan Data</button><button class="closeModalBtn" data-modal="customerModal">Batal</button></div>
     </div>
 </div>
@@ -274,22 +288,10 @@
     <div class="modal-content">
         <h3>Tambah Prospek</h3>
         <div class="modal-subtitle">Isi data prospek baru</div>
-        <div class="form-group">
-            <label for="prospekName">Nama Agen <span class="required">*</span></label>
-            <div class="input-icon"><span>👤</span><input type="text" id="prospekName" placeholder="Masukkan nama agen"></div>
-        </div>
-        <div class="form-group">
-            <label for="prospekPhone">Nomor WhatsApp <span class="required">*</span></label>
-            <div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1"></div>
-        </div>
-        <div class="form-group">
-            <label for="prospekStatusSelect">Status Awal</label>
-            <div class="input-icon"><span>📌</span><select id="prospekStatusSelect"><option value="Baru">🆕 Baru</option><option value="Dihubungi">📞 Dihubungi</option><option value="Negosiasi">📋 Negosiasi</option><option value="Tertarik">⭐ Tertarik</option></select></div>
-        </div>
-        <div class="form-group">
-            <label for="prospekDeadline">Deadline <span class="required">*</span></label>
-            <div class="input-icon"><span>📅</span><input type="date" id="prospekDeadline"></div>
-        </div>
+        <div class="form-group"><label for="prospekName">Nama Agen <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="prospekName" placeholder="Masukkan nama agen"></div></div>
+        <div class="form-group"><label for="prospekPhone">Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1"></div></div>
+        <div class="form-group"><label for="prospekStatusSelect">Status Awal</label><div class="input-icon"><span>📌</span><select id="prospekStatusSelect"><option value="Baru">🆕 Baru</option><option value="Dihubungi">📞 Dihubungi</option><option value="Negosiasi">📋 Negosiasi</option><option value="Tertarik">⭐ Tertarik</option></select></div></div>
+        <div class="form-group"><label for="prospekDeadline">Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="prospekDeadline"></div></div>
         <div class="modal-buttons"><button id="saveProspekBtn">Simpan Data</button><button class="closeModalBtn" data-modal="prospekModal">Batal</button></div>
     </div>
 </div>
@@ -299,30 +301,12 @@
     <div class="modal-content">
         <h3>📋 Kuesioner Negosiasi</h3>
         <div class="modal-subtitle">Isi data kuesioner di bawah ini</div>
-        <div class="form-group">
-            <label for="prospek_aplikasi">Aplikasi yang dipakai? <span class="required">*</span></label>
-            <div class="input-icon"><span>📱</span><input type="text" id="prospek_aplikasi" placeholder="Contoh: GNP, BSB, BTN"></div>
-        </div>
-        <div class="form-group">
-            <label for="prospek_domisili">Domisili dimana? <span class="required">*</span></label>
-            <div class="input-icon"><span>📍</span><input type="text" id="prospek_domisili" placeholder="Kota/Kabupaten"></div>
-        </div>
-        <div class="form-group">
-            <label for="prospek_transaksi">Total transaksi per bulan? <span class="required">*</span></label>
-            <div class="input-icon"><span>💰</span><input type="text" id="prospek_transaksi" placeholder="Nominal"></div>
-        </div>
-        <div class="form-group">
-            <label for="prospek_deposit">Apakah deposit atau saldo pinjaman? <span class="required">*</span></label>
-            <div class="input-icon"><span>🏦</span><input type="text" id="prospek_deposit" placeholder="Deposit / Saldo Pinjaman"></div>
-        </div>
-        <div class="form-group">
-            <label for="prospek_tertarik">Apakah tertarik dengan penawaran kamu? <span class="required">*</span></label>
-            <div class="input-icon"><span>⭐</span><select id="prospek_tertarik"><option value="">Pilih</option><option value="Ya">Ya</option><option value="Tidak">Tidak</option></select></div>
-        </div>
-        <div class="form-group">
-            <label for="prospek_penawaran">Penawaran apa yang diberikan? <span class="required">*</span></label>
-            <div class="input-icon"><span>📢</span><input type="text" id="prospek_penawaran" placeholder="Penawaran"></div>
-        </div>
+        <div class="form-group"><label for="prospek_aplikasi">Aplikasi yang dipakai? <span class="required">*</span></label><div class="input-icon"><span>📱</span><input type="text" id="prospek_aplikasi" placeholder="Contoh: GNP, BSB, BTN"></div></div>
+        <div class="form-group"><label for="prospek_domisili">Domisili dimana? <span class="required">*</span></label><div class="input-icon"><span>📍</span><input type="text" id="prospek_domisili" placeholder="Kota/Kabupaten"></div></div>
+        <div class="form-group"><label for="prospek_transaksi">Total transaksi per bulan? <span class="required">*</span></label><div class="input-icon"><span>💰</span><input type="text" id="prospek_transaksi" placeholder="Nominal"></div></div>
+        <div class="form-group"><label for="prospek_deposit">Apakah deposit atau saldo pinjaman? <span class="required">*</span></label><div class="input-icon"><span>🏦</span><input type="text" id="prospek_deposit" placeholder="Deposit / Saldo Pinjaman"></div></div>
+        <div class="form-group"><label for="prospek_tertarik">Apakah tertarik dengan penawaran kamu? <span class="required">*</span></label><div class="input-icon"><span>⭐</span><select id="prospek_tertarik"><option value="">Pilih</option><option value="Ya">Ya</option><option value="Tidak">Tidak</option></select></div></div>
+        <div class="form-group"><label for="prospek_penawaran">Penawaran apa yang diberikan? <span class="required">*</span></label><div class="input-icon"><span>📢</span><input type="text" id="prospek_penawaran" placeholder="Penawaran"></div></div>
         <div class="modal-buttons">
             <button id="negosiasiTertarikBtn" class="btn-success">⭐ Tertarik</button>
             <button id="negosiasiTidakTertarikBtn" class="btn-danger">❌ Tidak Tertarik</button>
@@ -337,24 +321,10 @@
     <div class="modal-content">
         <h3>Profile CS Agent</h3>
         <div class="modal-subtitle">Kelola informasi akun Anda</div>
-        <div class="profile-photo">
-            <img id="previewFoto" src="https://i.pravatar.cc/100" alt="Foto Profile">
-            <div class="camera-icon" id="cameraIcon">📷</div>
-            <input type="file" id="profileFoto" hidden accept="image/*">
-            <p>🔍 Klik foto untuk memperbesar | 📷 Klik kamera untuk ganti foto</p>
-        </div>
-        <div class="form-group">
-            <label for="profileName">Nama Lengkap</label>
-            <div class="input-icon"><span>👤</span><input type="text" id="profileName" placeholder="Nama Anda"></div>
-        </div>
-        <div class="form-group">
-            <label for="profileEmail">Email</label>
-            <div class="input-icon"><span>📧</span><input type="email" id="profileEmail" placeholder="Email" disabled></div>
-        </div>
-        <div class="form-group">
-            <label for="profilePhone">Nomor WhatsApp</label>
-            <div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="profilePhone" placeholder="81234567890" style="flex:1"></div>
-        </div>
+        <div class="profile-photo"><img id="previewFoto" src="https://i.pravatar.cc/100" alt="Foto Profile"><div class="camera-icon" id="cameraIcon">📷</div><input type="file" id="profileFoto" hidden accept="image/*"><p>🔍 Klik foto untuk memperbesar | 📷 Klik kamera untuk ganti foto</p></div>
+        <div class="form-group"><label for="profileName">Nama Lengkap</label><div class="input-icon"><span>👤</span><input type="text" id="profileName" placeholder="Nama Anda"></div></div>
+        <div class="form-group"><label for="profileEmail">Email</label><div class="input-icon"><span>📧</span><input type="email" id="profileEmail" placeholder="Email" disabled></div></div>
+        <div class="form-group"><label for="profilePhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="profilePhone" placeholder="81234567890" style="flex:1"></div></div>
         <div class="modal-buttons"><button id="saveProfileBtn">Simpan Perubahan</button><button class="closeModalBtn" data-modal="profileModal">Batal</button></div>
     </div>
 </div>
@@ -376,18 +346,9 @@
     <div class="modal-content">
         <h3>⏰ Tambah Pengingat</h3>
         <div class="modal-subtitle">Buat pengingat untuk tugas Anda</div>
-        <div class="form-group">
-            <label for="reminderTitle">Judul Pengingat <span class="required">*</span></label>
-            <div class="input-icon"><span>📝</span><input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer"></div>
-        </div>
-        <div class="form-group">
-            <label for="reminderDesc">Deskripsi</label>
-            <div class="input-icon"><span>📄</span><textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea></div>
-        </div>
-        <div class="form-group">
-            <label for="reminderDateTime">Tanggal & Waktu</label>
-            <div class="input-icon"><span>📅</span><input type="datetime-local" id="reminderDateTime"></div>
-        </div>
+        <div class="form-group"><label for="reminderTitle">Judul Pengingat <span class="required">*</span></label><div class="input-icon"><span>📝</span><input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer"></div></div>
+        <div class="form-group"><label for="reminderDesc">Deskripsi</label><div class="input-icon"><span>📄</span><textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea></div></div>
+        <div class="form-group"><label for="reminderDateTime">Tanggal & Waktu</label><div class="input-icon"><span>📅</span><input type="datetime-local" id="reminderDateTime"></div></div>
         <div class="modal-buttons"><button id="saveReminderBtn">Simpan</button><button class="closeModalBtn" data-modal="reminderModal">Batal</button></div>
     </div>
 </div>
@@ -397,14 +358,8 @@
     <div class="modal-content">
         <h3>💬 Kirim Pesan</h3>
         <div class="modal-subtitle">Kirim pesan ke CS lain</div>
-        <div class="form-group">
-            <label for="pesanTo">Kepada <span class="required">*</span></label>
-            <div class="input-icon"><span>👥</span><select id="pesanTo"><option value="">Pilih CS Tujuan</option></select></div>
-        </div>
-        <div class="form-group">
-            <label for="pesanMessage">Pesan <span class="required">*</span></label>
-            <div class="input-icon"><span>💬</span><textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea></div>
-        </div>
+        <div class="form-group"><label for="pesanTo">Kepada <span class="required">*</span></label><div class="input-icon"><span>👥</span><select id="pesanTo"><option value="">Pilih CS Tujuan</option></select></div></div>
+        <div class="form-group"><label for="pesanMessage">Pesan <span class="required">*</span></label><div class="input-icon"><span>💬</span><textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea></div></div>
         <div class="modal-buttons"><button id="savePesanBtn">Kirim</button><button class="closeModalBtn" data-modal="pesanModal">Batal</button></div>
     </div>
 </div>
@@ -414,16 +369,8 @@
     <div class="modal-content">
         <h3>🔄 Jadikan Customer (Followup Agen)</h3>
         <div class="modal-subtitle">Isi data untuk memindahkan ke Followup Agen</div>
-        <div class="form-group">
-            <label for="convertAgentId">ID Agent <span class="required">*</span></label>
-            <div class="input-icon"><span>🆔</span><input type="text" id="convertAgentId" placeholder="Contoh: AG-001"></div>
-            <small>ID unik untuk agent terdaftar</small>
-        </div>
-        <div class="form-group">
-            <label for="convertFollowupDate">Tanggal Followup <span class="required">*</span></label>
-            <div class="input-icon"><span>📅</span><input type="date" id="convertFollowupDate"></div>
-            <small>Otomatis +1 bulan dari sekarang</small>
-        </div>
+        <div class="form-group"><label for="convertAgentId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="convertAgentId" placeholder="Contoh: AG-001"></div><small>ID unik untuk agent terdaftar</small></div>
+        <div class="form-group"><label for="convertFollowupDate">Tanggal Followup <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="convertFollowupDate"></div><small>Otomatis +1 bulan dari sekarang</small></div>
         <div class="modal-buttons"><button id="confirmConvertBtn" class="confirm-convert-btn">✅ Konfirmasi Pindah</button><button id="cancelConvertBtn" class="closeModalBtn" data-modal="convertModal">❌ Batal</button></div>
     </div>
 </div>
@@ -433,17 +380,9 @@
     <div class="modal-content">
         <h3>✅ Konfirmasi Follow Up</h3>
         <div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div>
-        <div class="form-group">
-            <label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label>
-        </div>
-        <div class="form-group">
-            <label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label>
-        </div>
-        <div class="modal-buttons">
-            <button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button>
-            <button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button>
-            <button class="closeModalBtn" data-modal="followupConfirmModal">Batal</button>
-        </div>
+        <div class="form-group"><label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label></div>
+        <div class="form-group"><label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label></div>
+        <div class="modal-buttons"><button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button><button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button><button class="closeModalBtn" data-modal="followupConfirmModal">Batal</button></div>
     </div>
 </div>
 
