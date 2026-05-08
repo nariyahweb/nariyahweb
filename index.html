@@ -69,9 +69,10 @@
                 <div class="topbar-left"><button class="toggle-btn" id="toggleSidebarBtn" aria-label="Toggle sidebar">☰</button><span class="logo">FLOUPYUD</span></div>
                 <div class="topbar-center" id="topUserName">CS Agent</div>
                 <div class="topbar-right">
-                    <div class="notif-icon" id="deadlineNotifBtn" aria-label="Notifikasi deadline">📅<span class="badge" id="deadlineCount">0</span></div>
-                    <div class="notif-icon" id="pesanNotifBtn" aria-label="Notifikasi pesan">💬<span class="badge" id="pesanCount">0</span></div>
-                    <img class="profile-img" id="profileImg" src="https://i.pravatar.cc/40" alt="Profile">
+                <div class="notif-icon" id="infoBtn" style="cursor: pointer;">ℹ️<span class="badge" style="background: none;"></span></div>
+                <div class="notif-icon" id="deadlineNotifBtn" aria-label="Notifikasi deadline">📅<span class="badge" id="deadlineCount">0</span></div>
+                <div class="notif-icon" id="pesanNotifBtn" aria-label="Notifikasi pesan">💬<span class="badge" id="pesanCount">0</span></div>
+                <img class="profile-img" id="profileImg" src="https://i.pravatar.cc/40" alt="Profile">
                 </div>
             </div>
 
@@ -278,6 +279,55 @@
             <button id="negosiasiTidakTertarikBtn" class="btn-danger">❌ Tidak Tertarik</button>
             <button id="negosiasiSimpanBtn" class="btn-primary">💾 Simpan</button>
             <button id="negosiasiBatalBtn" class="btn-outline">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDIT DEADLINE -->
+<div class="modal" id="editDeadlineModal">
+    <div class="modal-content" style="max-width: 400px;">
+        <h3>📅 Edit Deadline</h3>
+        <div class="modal-subtitle">Ubah tanggal deadline untuk data ini</div>
+        <div style="padding: 0 20px 20px 20px;">
+            <div class="form-group">
+                <label for="editDeadlineDate">Tanggal Deadline Baru <span class="required">*</span></label>
+                <input type="date" id="editDeadlineDate" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+            </div>
+            <div id="deadlineWarning" style="background: #fef3c7; padding: 10px; border-radius: 10px; margin-top: 10px; display: none;">
+                <p style="font-size: 12px; color: #d97706; margin: 0;">⚠️ <strong>Peringatan:</strong> Perubahan deadline harus diketahui oleh Owner/Atasan. Pastikan Anda sudah mendapat persetujuan!</p>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="saveDeadlineBtn" class="btn-primary">💾 Simpan Perubahan</button>
+            <button id="cancelDeadlineBtn" class="btn-outline">Batal</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL INFORMASI FOLLOWUP -->
+<div class="modal" id="infoModal">
+    <div class="modal-content" style="max-width: 500px;">
+        <h3>📋 Panduan Followup & Prospek</h3>
+        <div class="modal-subtitle">Aturan penambahan deadline berdasarkan respon</div>
+        <div style="padding: 0 20px 20px 20px;">
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #10b981; margin-bottom: 8px;">✅ Respon Bagus (Aktif/Diam tapi respon)</h4>
+                <p style="font-size: 13px; color: #374151;">+3 hari untuk deadline berikutnya. Dapat terus diperpanjang tanpa batas selama status belum berubah menjadi "Pasif/Tidak Aktif".</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #f59e0b; margin-bottom: 8px;">⚠️ Respon Pasif (Kurang respon/dibuutuhkan followup berulang)</h4>
+                <p style="font-size: 13px; color: #374151;">+5 hari untuk deadline berikutnya. Maksimal 5 kali followup pasif sebelum data dipindahkan ke database.</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h4 style="color: #ef4444; margin-bottom: 8px;">❌ Respon Jelek (Tidak tertarik/komplain)</h4>
+                <p style="font-size: 13px; color: #374151;">+1 Minggu (7 hari) untuk deadline berikutnya. Maksimal 3 kali followup jelek sebelum data dipindahkan ke database.</p>
+            </div>
+            <div style="background: #eef2ff; padding: 12px; border-radius: 12px; margin-top: 12px;">
+                <p style="font-size: 12px; color: #4f46e5; margin: 0;">💡 <strong>Catatan:</strong> Setiap perubahan status atau penyimpanan data akan secara otomatis menambah deadline sesuai aturan di atas. Anda dapat mengedit deadline manual kapan saja dengan mengklik icon 📅 di popup detail.</p>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="infoModalClose" class="btn-primary">Tutup</button>
         </div>
     </div>
 </div>
