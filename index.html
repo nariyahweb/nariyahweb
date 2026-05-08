@@ -302,6 +302,24 @@
     </div>
 </div>
 
+<!-- MODAL NEGOSIASI PROSPEK -->
+<div class="modal" id="prospekNegosiasiModal">
+    <div class="modal-content">
+        <h3>📋 Kuesioner Negosiasi</h3>
+        <div class="modal-subtitle">Isi data berikut untuk melanjutkan ke status Tertarik</div>
+        <div class="form-group"><label>Aplikasi yang dipakai?</label><input type="text" id="prospek_aplikasi" placeholder="Contoh: GNP, BSB, BTN"></div>
+        <div class="form-group"><label>Domisili dimana?</label><input type="text" id="prospek_domisili" placeholder="Kota/Kabupaten"></div>
+        <div class="form-group"><label>Total transaksi per bulan?</label><input type="text" id="prospek_transaksi" placeholder="Nominal"></div>
+        <div class="form-group"><label>Apakah deposit atau saldo pinjaman?</label><input type="text" id="prospek_deposit" placeholder="Deposit / Saldo Pinjaman"></div>
+        <div class="form-group"><label>Apakah tertarik dengan penawaran kamu?</label><select id="prospek_tertarik"><option value="">Pilih</option><option value="Ya">Ya</option><option value="Tidak">Tidak</option></select></div>
+        <div class="form-group"><label>Penawaran apa yang diberikan?</label><input type="text" id="prospek_penawaran" placeholder="Penawaran"></div>
+        <div class="modal-buttons">
+            <button id="prospekNegosiasiSave" class="btn-primary">Simpan & Lanjut ke Tertarik</button>
+            <button class="closeModalBtn" data-modal="prospekNegosiasiModal">Batal</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal" id="profileModal">
     <div class="modal-content">
         <h3>Profile CS Agent</h3>
