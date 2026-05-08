@@ -1408,7 +1408,7 @@ body:has(.modal[style*="display: flex"]) {
 .status-pending { background: #fff7ed; color: #ea580c; }
 .status-closing { background: #ecfdf5; color: #16a34a; }
 .status-tertarik { background: #ecfdf5; color: #16a34a; }
-.status-tidak { background: #fef2f2; color: #dc2626; }
+.status-negosiasi { background: #fef3c7; color: #d97706; }
 .status-dihubungi { background: #eff6ff; color: #2563eb; }
 
 /* ========== PROFILE MODAL ========== */
