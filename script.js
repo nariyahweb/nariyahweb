@@ -2262,8 +2262,20 @@ function updateChartCustomer(total, closing, pending, followup) {
     const baru = total - (closing + pending + followup);
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: [closing, pending, followup, baru], backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } }
+        data: {
+            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
+            datasets: [{
+                data: [closing, pending, followup, baru],
+                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                borderWidth: 0,
+                hoverOffset: 15,
+                cutout: '65%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
     });
 }
 
@@ -2275,8 +2287,20 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
     if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
-        data: { labels: ['Baru', 'Dihubungi', 'Negosiasi', 'Tertarik'], datasets: [{ data: dataArr, backgroundColor: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } }
+        data: {
+            labels: ['Baru', 'Dihubungi', 'Negosiasi', 'Tertarik'],
+            datasets: [{
+                data: dataArr,
+                backgroundColor: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'],
+                borderWidth: 0,
+                hoverOffset: 15,
+                cutout: '65%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
     });
 }
 
