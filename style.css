@@ -716,7 +716,7 @@ body {
     box-shadow: 0 4px 12px rgba(79,70,229,0.3);
 }
 
-/* WARNA KOLOM KANBAN - LATAR BELAKANG PENUH */
+/* WARNA KOLOM KANBAN */
 .kanban-board .kanban-column {
     border-radius: 12px;
     padding: 10px;
