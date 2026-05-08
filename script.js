@@ -10,6 +10,8 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 let currentUser = null;
+let currentUserRole = 'cs';
+let currentUserName = '';
 let importType = "prospek";
 let chartCustomer = null;
 let chartProspek = null;
@@ -107,6 +109,76 @@ function formatPhone(input) {
         value = '8' + value;
     }
     input.value = value;
+}
+
+// ========== FUNGSI VALIDASI DUPLIKAT ==========
+async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
+    let query = db.collection('customers').where('user_id', '==', currentUser.uid);
+    const snapshot = await query.get();
+    let duplicateAgent = null;
+    let duplicateHp = null;
+    let ownerName = currentUserName;
+    
+    for (const doc of snapshot.docs) {
+        const data = doc.data();
+        if (excludeId && doc.id === excludeId) continue;
+        if (data.agent_id === agentId) {
+            duplicateAgent = { id: doc.id, nama: data.nama, owner: currentUserName };
+        }
+        if (data.hp === hp) {
+            duplicateHp = { id: doc.id, nama: data.nama, owner: currentUserName };
+        }
+    }
+    
+    // Jika owner, cek juga di semua CS
+    if (currentUserRole === 'owner') {
+        const allCustomers = await db.collection('customers').get();
+        for (const doc of allCustomers.docs) {
+            const data = doc.data();
+            if (excludeId && doc.id === excludeId) continue;
+            if (data.agent_id === agentId) {
+                const userDoc = await db.collection('users').doc(data.user_id).get();
+                const userName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
+                duplicateAgent = { id: doc.id, nama: data.nama, owner: userName };
+            }
+            if (data.hp === hp) {
+                const userDoc = await db.collection('users').doc(data.user_id).get();
+                const userName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
+                duplicateHp = { id: doc.id, nama: data.nama, owner: userName };
+            }
+        }
+    }
+    
+    return { duplicateAgent, duplicateHp };
+}
+
+async function checkDuplicateProspek(hp, excludeId = null) {
+    let query = db.collection('prospek').where('user_id', '==', currentUser.uid);
+    const snapshot = await query.get();
+    let duplicateHp = null;
+    
+    for (const doc of snapshot.docs) {
+        const data = doc.data();
+        if (excludeId && doc.id === excludeId) continue;
+        if (data.hp === hp) {
+            duplicateHp = { id: doc.id, nama: data.nama, owner: currentUserName };
+        }
+    }
+    
+    if (currentUserRole === 'owner') {
+        const allProspek = await db.collection('prospek').get();
+        for (const doc of allProspek.docs) {
+            const data = doc.data();
+            if (excludeId && doc.id === excludeId) continue;
+            if (data.hp === hp) {
+                const userDoc = await db.collection('users').doc(data.user_id).get();
+                const userName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
+                duplicateHp = { id: doc.id, nama: data.nama, owner: userName };
+            }
+        }
+    }
+    
+    return duplicateHp;
 }
 
 // ========== FUNGSI KONFIRMASI DENGAN POPUP ==========
@@ -339,8 +411,16 @@ async function updateDeadlineBadge() {
     if (!badge) return;
     try {
         const today = getTodayDate();
-        const customerOverdue = await db.collection('customers').where('user_id', '==', currentUser.uid).where('tanggal', '<', today).get();
-        const prospekOverdue = await db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today).get();
+        let customerQuery = db.collection('customers').where('user_id', '==', currentUser.uid).where('tanggal', '<', today);
+        let prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today);
+        
+        if (currentUserRole === 'owner') {
+            customerQuery = db.collection('customers').where('tanggal', '<', today);
+            prospekQuery = db.collection('prospek').where('deadline', '<', today);
+        }
+        
+        const customerOverdue = await customerQuery.get();
+        const prospekOverdue = await prospekQuery.get();
         const deadlineCount = customerOverdue.size + prospekOverdue.size;
         badge.innerText = deadlineCount;
         if (deadlineCount > 0) badge.classList.add('has-notif');
@@ -366,6 +446,7 @@ async function updateAllBadges() {
     await updatePesanBadge();
 }
 
+// ========== AUTH STATE ==========
 auth.onAuthStateChanged(async user => {
     const loginPage = document.getElementById('loginPage');
     const app = document.getElementById('app');
@@ -373,16 +454,33 @@ auth.onAuthStateChanged(async user => {
         currentUser = user;
         loginPage.style.display = 'none';
         app.style.display = 'block';
-        db.collection('users').doc(user.uid).get().then(doc => {
-            let nama = 'CS Agent', foto = 'https://i.pravatar.cc/40';
-            if (doc.exists && doc.data().nama) nama = doc.data().nama;
-            if (doc.exists && doc.data().foto) foto = doc.data().foto;
-            document.getElementById('topUserName').innerText = nama;
-            document.getElementById('profileName').value = nama;
-            document.getElementById('profileImg').src = foto;
-            document.getElementById('previewFoto').src = foto;
-        });
+        
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        let nama = 'CS Agent', foto = 'https://i.pravatar.cc/40';
+        currentUserRole = 'cs';
+        currentUserName = nama;
+        
+        if (userDoc.exists) {
+            nama = userDoc.data().nama || 'CS Agent';
+            foto = userDoc.data().foto || 'https://i.pravatar.cc/40';
+            currentUserRole = userDoc.data().role || 'cs';
+            currentUserName = nama;
+        }
+        
+        document.getElementById('topUserName').innerText = nama;
+        document.getElementById('profileName').value = nama;
+        document.getElementById('profileImg').src = foto;
+        document.getElementById('previewFoto').src = foto;
         document.getElementById('profileEmail').value = user.email;
+        
+        // Tampilkan menu owner jika role = owner
+        if (currentUserRole === 'owner') {
+            document.getElementById('ownerMenu').style.display = 'block';
+            // Owner bisa lihat semua data, jadi query tanpa filter user_id
+        } else {
+            document.getElementById('ownerMenu').style.display = 'none';
+        }
+        
         await updateAllBadges();
         loadAllData();
         loadReminders();
@@ -391,6 +489,7 @@ auth.onAuthStateChanged(async user => {
         loadDBTidak();
         loadDBNomorSalah();
         loadDBCommitment();
+        loadUsersList();
     } else {
         loginPage.style.display = 'flex';
         app.style.display = 'none';
@@ -398,10 +497,11 @@ auth.onAuthStateChanged(async user => {
     }
 });
 
+// ========== PAGE NAVIGATION ==========
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
-        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage', 'searchPage'];
+        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage'];
         pages.forEach(p => { const el = document.getElementById(p); if (el) el.style.display = 'none'; });
         if (page === 'dashboard') document.getElementById('dashboardPage').style.display = 'block';
         else if (page === 'import') document.getElementById('importPage').style.display = 'block';
@@ -415,6 +515,7 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         else if (page === 'followupFull') { document.getElementById('followupFullPage').style.display = 'block'; renderFullFollowupKanban(); }
         else if (page === 'prospekFull') { document.getElementById('prospekFullPage').style.display = 'block'; renderFullProspekKanban(); }
         else if (page === 'search') { document.getElementById('searchPage').style.display = 'block'; }
+        else if (page === 'manageUsers' && currentUserRole === 'owner') { document.getElementById('manageUsersPage').style.display = 'block'; loadUsersList(); }
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
         if (window.innerWidth <= 768) document.getElementById('sidebar')?.classList.remove('active');
@@ -486,7 +587,7 @@ if (saveProfileBtn) {
         if (hp) { hp = hp.replace(/\D/g, ''); if (hp.startsWith('0')) hp = hp.substring(1); hp = '+62' + hp; }
         else hp = '+62';
         try {
-            await db.collection('users').doc(currentUser.uid).set({ nama, hp, foto, email: currentUser.email, updated_at: new Date().toISOString() }, { merge: true });
+            await db.collection('users').doc(currentUser.uid).set({ nama, hp, foto, email: currentUser.email, role: currentUserRole, updated_at: new Date().toISOString() }, { merge: true });
             document.getElementById('topUserName').innerText = nama;
             document.getElementById('profileImg').src = foto;
             closeModal('profileModal');
@@ -542,7 +643,7 @@ if (saveCustomerBtn) {
     const newSaveCustomerBtn = saveCustomerBtn.cloneNode(true);
     saveCustomerBtn.parentNode.replaceChild(newSaveCustomerBtn, saveCustomerBtn);
     
-    newSaveCustomerBtn.addEventListener('click', () => {
+    newSaveCustomerBtn.addEventListener('click', async () => {
         let agentId = document.getElementById('customerId').value;
         let nama = document.getElementById('customerName').value;
         let hp = document.getElementById('customerPhone').value;
@@ -556,6 +657,19 @@ if (saveCustomerBtn) {
         if (hp.length > 12) { showNotif('Nomor WhatsApp maksimal 12 digit!', true); return; }
         if (!hp.startsWith('8')) { showNotif('Nomor WhatsApp harus diawali dengan 8!', true); return; }
         if (!apk) { showNotif('Aplikasi wajib dipilih!', true); return; }
+        
+        // Cek duplikat
+        const cleanHpForCheck = '+62' + hp;
+        const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHpForCheck);
+        
+        if (duplicateAgent) {
+            showNotif(`⚠️ ID Agent "${agentId}" sudah terdaftar oleh ${duplicateAgent.owner} (${duplicateAgent.nama})!`, true);
+            return;
+        }
+        if (duplicateHp) {
+            showNotif(`⚠️ Nomor WhatsApp "${cleanHpForCheck}" sudah terdaftar oleh ${duplicateHp.owner} (${duplicateHp.nama})!`, true);
+            return;
+        }
         
         if (!tanggal) tanggal = getTodayDate();
         let cleanHp = '+62' + hp;
@@ -599,7 +713,7 @@ if (saveProspekBtn) {
     const newSaveProspekBtn = saveProspekBtn.cloneNode(true);
     saveProspekBtn.parentNode.replaceChild(newSaveProspekBtn, saveProspekBtn);
     
-    newSaveProspekBtn.addEventListener('click', () => {
+    newSaveProspekBtn.addEventListener('click', async () => {
         let nama = document.getElementById('prospekName').value;
         let hp = document.getElementById('prospekPhone').value;
         const status = document.getElementById('prospekStatusSelect').value;
@@ -610,6 +724,15 @@ if (saveProspekBtn) {
         if (hp.length < 9) { showNotif('Nomor WhatsApp minimal 9 digit!', true); return; }
         if (hp.length > 12) { showNotif('Nomor WhatsApp maksimal 12 digit!', true); return; }
         if (!hp.startsWith('8')) { showNotif('Nomor WhatsApp harus diawali dengan 8!', true); return; }
+        
+        // Cek duplikat
+        const cleanHpForCheck = '+62' + hp;
+        const duplicateHp = await checkDuplicateProspek(cleanHpForCheck);
+        
+        if (duplicateHp) {
+            showNotif(`⚠️ Nomor WhatsApp "${cleanHpForCheck}" sudah terdaftar sebagai prospek oleh ${duplicateHp.owner} (${duplicateHp.nama})!`, true);
+            return;
+        }
         
         if (!deadline) deadline = getTodayDate();
         let cleanHp = '+62' + hp;
@@ -641,8 +764,16 @@ if (saveProspekBtn) {
 function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }
 
 function openDetailCustomer(id) {
-    db.collection('customers').doc(id).get().then(doc => {
+    db.collection('customers').doc(id).get().then(async doc => {
         const d = doc.data();
+        // Cek pemilik data (untuk owner, tampilkan siapa pemiliknya)
+        let ownerInfo = '';
+        if (currentUserRole === 'owner' && d.user_id !== currentUser.uid) {
+            const userDoc = await db.collection('users').doc(d.user_id).get();
+            const ownerName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
+            ownerInfo = `<div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Pemilik Data</label><div class="value">${escapeHtml(ownerName)}</div></div></div>`;
+        }
+        
         const statusIcon = d.status === 'closing' ? '🎉' : d.status === 'pending' ? '⏳' : d.status === 'followup' ? '📞' : '🆕';
         let actionButtons = '';
         if (d.status === 'baru') {
@@ -662,18 +793,7 @@ function openDetailCustomer(id) {
         if (d.pending_data && d.pending_data.length > 0) {
             const completedCount = d.pending_data.filter(item => item.checked === true && item.text?.trim() !== '').length;
             const totalCount = d.pending_data.length;
-            pendingInfo = `
-                <div class="detail-info-item">
-                    <div class="detail-info-icon">📝</div>
-                    <div class="detail-info-content">
-                        <label>Pending Responses</label>
-                        <div class="value">${completedCount} / ${totalCount} balasan tercatat</div>
-                        <div style="font-size: 11px; color: #6b7280; margin-top: 4px;">
-                            ${d.pending_data.map(p => `<div>${p.checked ? '✅' : '⭕'} ${escapeHtml(p.text.substring(0, 50))}${p.text.length > 50 ? '...' : ''}</div>`).join('')}
-                        </div>
-                    </div>
-                </div>
-            `;
+            pendingInfo = `<div class="detail-info-item"><div class="detail-info-icon">📝</div><div class="detail-info-content"><label>Pending Responses</label><div class="value">${completedCount} / ${totalCount} balasan tercatat</div></div></div>`;
         }
         
         const deadlineDisplay = d.tanggal || '-';
@@ -683,6 +803,7 @@ function openDetailCustomer(id) {
             <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
             <div class="detail-body">
                 <div class="detail-info">
+                    ${ownerInfo}
                     <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
@@ -752,7 +873,7 @@ function openFollowupConfirm(id) {
                 'Pindahkan ke Database Nomor Salah?',
                 `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan ke Followup Agen!`,
                 async () => {
-                    await db.collection('nomor_salah').add({ ...doc.data(), alasan: 'Nomor tidak bisa dihubungi / tidak aktif', deleted_at: new Date().toISOString(), user_id: currentUser.uid });
+                    await db.collection('nomor_salah').add({ ...doc.data(), alasan: 'Nomor tidak bisa dihubungi / tidak aktif', deleted_at: new Date().toISOString(), user_id: doc.data().user_id });
                     await db.collection('customers').doc(id).delete();
                     showNotif('📵 Data dipindahkan ke Database Nomor Salah');
                     closeModal('followupConfirmModal');
@@ -764,7 +885,7 @@ function openFollowupConfirm(id) {
     };
 }
 
-// ========== PENDING MODAL DENGAN TOMBOL SIMPAN ==========
+// ========== PENDING MODAL ==========
 function openPendingModal(id) {
     currentPendingId = id;
     db.collection('customers').doc(id).get().then(doc => {
@@ -877,10 +998,16 @@ function updatePendingButtons() {
 }
 
 // ========== FUNGSI UNTUK PROSPEK ==========
-
 function openDetailProspek(id) {
-    db.collection('prospek').doc(id).get().then(doc => {
+    db.collection('prospek').doc(id).get().then(async doc => {
         const d = doc.data();
+        let ownerInfo = '';
+        if (currentUserRole === 'owner' && d.user_id !== currentUser.uid) {
+            const userDoc = await db.collection('users').doc(d.user_id).get();
+            const ownerName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
+            ownerInfo = `<div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Pemilik Data</label><div class="value">${escapeHtml(ownerName)}</div></div></div>`;
+        }
+        
         let statusIcon = d.status === 'Negosiasi' ? '📋' : d.status === 'Dihubungi' ? '📞' : d.status === 'Tertarik' ? '⭐' : '🆕';
         let actionButtons = '';
         
@@ -897,23 +1024,7 @@ function openDetailProspek(id) {
         let negosiasiInfo = '';
         if (d.negosiasi_data) {
             const isComplete = d.negosiasi_data.is_complete || (d.negosiasi_data.aplikasi && d.negosiasi_data.domisili && d.negosiasi_data.transaksi);
-            negosiasiInfo = `
-                <div class="detail-info-item">
-                    <div class="detail-info-icon">📋</div>
-                    <div class="detail-info-content">
-                        <label>Data Negosiasi ${isComplete ? '✅ Lengkap' : '📝 Draft'}</label>
-                        <div class="value">
-                            Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>
-                            Domisili: ${d.negosiasi_data.domisili || '-'}<br>
-                            Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>
-                            Deposit: ${d.negosiasi_data.deposit || '-'}<br>
-                            Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>
-                            Penawaran: ${d.negosiasi_data.penawaran || '-'}
-                        </div>
-                        ${!isComplete ? '<small style="color: #f59e0b;">⚠️ Data belum lengkap, lanjutkan pengisian</small>' : ''}
-                    </div>
-                </div>
-            `;
+            negosiasiInfo = `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Data Negosiasi ${isComplete ? '✅ Lengkap' : '📝 Draft'}</label><div class="value">Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>`;
         }
         
         let dihubungiInfo = '';
@@ -928,6 +1039,7 @@ function openDetailProspek(id) {
             <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
             <div class="detail-body">
                 <div class="detail-info">
+                    ${ownerInfo}
                     <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${deadlineDisplay} ${editBtn}</div></div></div>
                     ${dihubungiInfo}
@@ -1043,11 +1155,7 @@ function openProspekNegosiasiModal(id) {
     const modal = document.getElementById('prospekNegosiasiModal');
     modal.style.display = 'flex';
     
-    // Tertarik button
-    const tertarikBtn = document.getElementById('negosiasiTertarikBtn');
-    const newTertarikBtn = tertarikBtn.cloneNode(true);
-    tertarikBtn.parentNode.replaceChild(newTertarikBtn, tertarikBtn);
-    newTertarikBtn.onclick = async () => {
+    document.getElementById('negosiasiTertarikBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
         const transaksi = document.getElementById('prospek_transaksi').value;
@@ -1077,11 +1185,7 @@ function openProspekNegosiasiModal(id) {
         );
     };
     
-    // Tidak Tertarik button
-    const tidakTertarikBtn = document.getElementById('negosiasiTidakTertarikBtn');
-    const newTidakTertarikBtn = tidakTertarikBtn.cloneNode(true);
-    tidakTertarikBtn.parentNode.replaceChild(newTidakTertarikBtn, tidakTertarikBtn);
-    newTidakTertarikBtn.onclick = async () => {
+    document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
         const doc = await db.collection('prospek').doc(currentProspekId).get();
         const data = doc.data();
         if (data) {
@@ -1093,7 +1197,7 @@ function openProspekNegosiasiModal(id) {
                         nama: data.nama,
                         hp: data.hp,
                         tanggal: new Date().toISOString(),
-                        user_id: currentUser.uid,
+                        user_id: data.user_id,
                         alasan: 'Tidak tertarik setelah negosiasi',
                         status_sebelumnya: data.status,
                         negosiasi_data: data.negosiasi_data || null
@@ -1109,11 +1213,7 @@ function openProspekNegosiasiModal(id) {
         }
     };
     
-    // Simpan button
-    const simpanBtn = document.getElementById('negosiasiSimpanBtn');
-    const newSimpanBtn = simpanBtn.cloneNode(true);
-    simpanBtn.parentNode.replaceChild(newSimpanBtn, simpanBtn);
-    newSimpanBtn.onclick = async () => {
+    document.getElementById('negosiasiSimpanBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
         const transaksi = document.getElementById('prospek_transaksi').value;
@@ -1146,11 +1246,7 @@ function openProspekNegosiasiModal(id) {
         closeModal('detailModal');
     };
     
-    // Batal button
-    const batalBtn = document.getElementById('negosiasiBatalBtn');
-    const newBatalBtn = batalBtn.cloneNode(true);
-    batalBtn.parentNode.replaceChild(newBatalBtn, batalBtn);
-    newBatalBtn.onclick = () => {
+    document.getElementById('negosiasiBatalBtn').onclick = () => {
         closeModal('prospekNegosiasiModal');
     };
 }
@@ -1160,7 +1256,7 @@ async function saveToClosingDB(id, data) {
     try { 
         await db.collection('db_closing').add({ 
             nama: data.nama, hp: data.hp, tanggal: data.tanggal || getTodayDate(), 
-            closing_date: new Date().toISOString(), user_id: currentUser.uid,
+            closing_date: new Date().toISOString(), user_id: data.user_id,
             followup_data: data.followup_data || null,
             pending_data: data.pending_data || []
         }); 
@@ -1177,7 +1273,7 @@ async function saveToClosingDB(id, data) {
 async function saveToTidakTertarikDB(id, data) { 
     try { 
         await db.collection('db_tidak_tertarik').add({ 
-            nama: data.nama, hp: data.hp, tanggal: new Date().toISOString(), user_id: currentUser.uid, 
+            nama: data.nama, hp: data.hp, tanggal: new Date().toISOString(), user_id: data.user_id, 
             dihubungi_data: data.dihubungi_data || null,
             negosiasi_data: data.negosiasi_data || null
         }); 
@@ -1244,6 +1340,18 @@ window.showConvertToCustomerModal = async function(prospekId) {
     nextMonth.setMonth(today.getMonth() + 1);
     const followupDate = nextMonth.toISOString().split('T')[0];
     
+    // Cek duplikat untuk customer baru
+    const cleanHp = data.hp;
+    const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer('', cleanHp);
+    
+    if (duplicateAgent || duplicateHp) {
+        let msg = '⚠️ Tidak dapat menambahkan customer karena:\n';
+        if (duplicateAgent) msg += `- ID Agent sudah terdaftar oleh ${duplicateAgent.owner}\n`;
+        if (duplicateHp) msg += `- Nomor WhatsApp sudah terdaftar oleh ${duplicateHp.owner}\n`;
+        showNotif(msg, true);
+        return;
+    }
+    
     showInputDialog(
         '📋 Lengkapi Data Customer',
         `Data prospek "${escapeHtml(data.nama)}" akan dipindahkan ke Followup Agen.\n\nSilakan lengkapi data berikut:`,
@@ -1254,6 +1362,19 @@ window.showConvertToCustomerModal = async function(prospekId) {
         async (values) => {
             if (!values.inputAgentId || !values.inputAplikasi) {
                 showNotif('⚠️ ID Agent dan Aplikasi wajib diisi!', true);
+                return;
+            }
+            
+            // Cek duplikat lagi setelah input ID Agent
+            const cleanHpFinal = data.hp;
+            const { duplicateAgent: dupAgent, duplicateHp: dupHp } = await checkDuplicateCustomer(values.inputAgentId, cleanHpFinal);
+            
+            if (dupAgent) {
+                showNotif(`⚠️ ID Agent "${values.inputAgentId}" sudah terdaftar oleh ${dupAgent.owner}!`, true);
+                return;
+            }
+            if (dupHp) {
+                showNotif(`⚠️ Nomor WhatsApp "${cleanHpFinal}" sudah terdaftar oleh ${dupHp.owner}!`, true);
                 return;
             }
             
@@ -1277,7 +1398,7 @@ window.showConvertToCustomerModal = async function(prospekId) {
                             agent_id: values.inputAgentId,
                             aplikasi: values.inputAplikasi,
                             committed_at: new Date().toISOString(),
-                            user_id: currentUser.uid,
+                            user_id: data.user_id,
                             original_prospek_id: prospekId,
                             followup_date: followupDate
                         });
@@ -1289,7 +1410,7 @@ window.showConvertToCustomerModal = async function(prospekId) {
                             apk: values.inputAplikasi,
                             tanggal: followupDate,
                             status: 'baru',
-                            user_id: currentUser.uid,
+                            user_id: data.user_id,
                             created_at: new Date().toISOString(),
                             converted_from: 'prospek_commitment',
                             followup_data: null,
@@ -1338,7 +1459,20 @@ function setupConvertModal() {
                         const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
                         const prospekData = prospekDoc.data();
                         if (!prospekData) { showNotif('❌ Data prospek tidak ditemukan', true); return; }
-                        await db.collection('customers').add({ agent_id: agentId, nama: prospekData.nama, hp: prospekData.hp, tanggal: followupDate, status: 'baru', apk: '', user_id: currentUser.uid, created_at: new Date().toISOString(), followup_data: null, pending_data: [] });
+                        
+                        // Cek duplikat
+                        const cleanHp = prospekData.hp;
+                        const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
+                        if (duplicateAgent) {
+                            showNotif(`⚠️ ID Agent "${agentId}" sudah terdaftar oleh ${duplicateAgent.owner}!`, true);
+                            return;
+                        }
+                        if (duplicateHp) {
+                            showNotif(`⚠️ Nomor WhatsApp "${cleanHp}" sudah terdaftar oleh ${duplicateHp.owner}!`, true);
+                            return;
+                        }
+                        
+                        await db.collection('customers').add({ agent_id: agentId, nama: prospekData.nama, hp: prospekData.hp, tanggal: followupDate, status: 'baru', apk: '', user_id: prospekData.user_id, created_at: new Date().toISOString(), followup_data: null, pending_data: [] });
                         await db.collection('prospek').doc(currentConvertProspekId).delete();
                         modal.style.display = 'none'; document.body.classList.remove('modal-open'); closeModal('detailModal');
                         showNotif('✅ Berhasil dipindahkan ke Followup Agen!'); loadAllData();
@@ -1373,45 +1507,73 @@ async function performSearch() {
     const results = [];
     const today = getTodayDate();
     
-    if (searchCustomer && currentUser) {
-        const snapshot = await db.collection('customers').where('user_id', '==', currentUser.uid).get();
-        snapshot.forEach(doc => {
+    let customersQuery, prospekQuery, closingQuery, tidakQuery, nomorSalahQuery, commitmentQuery;
+    
+    if (currentUserRole === 'owner') {
+        customersQuery = db.collection('customers');
+        prospekQuery = db.collection('prospek');
+        closingQuery = db.collection('db_closing');
+        tidakQuery = db.collection('db_tidak_tertarik');
+        nomorSalahQuery = db.collection('nomor_salah');
+        commitmentQuery = db.collection('db_commitment');
+    } else {
+        customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid);
+        prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid);
+        closingQuery = db.collection('db_closing').where('user_id', '==', currentUser.uid);
+        tidakQuery = db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid);
+        nomorSalahQuery = db.collection('nomor_salah').where('user_id', '==', currentUser.uid);
+        commitmentQuery = db.collection('db_commitment').where('user_id', '==', currentUser.uid);
+    }
+    
+    if (searchCustomer) {
+        const snapshot = await customersQuery.get();
+        for (const doc of snapshot.docs) {
             const data = doc.data();
             const searchText = `${data.agent_id || ''} ${data.nama || ''} ${data.hp || ''}`.toLowerCase();
             if (searchText.includes(keyword)) {
+                let ownerName = '';
+                if (currentUserRole === 'owner' && data.user_id !== currentUser.uid) {
+                    const userDoc = await db.collection('users').doc(data.user_id).get();
+                    ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+                }
                 const isOverdue = data.tanggal && data.tanggal < today;
                 results.push({
-                    id: doc.id, type: 'customer', title: data.nama,
+                    id: doc.id, type: 'customer', title: data.nama + ownerName,
                     subtitle: `ID: ${data.agent_id || '-'} | ${data.hp}`,
                     detail: `Status: ${data.status === 'followup' ? 'Follow Up' : data.status === 'baru' ? 'Baru' : data.status} | Deadline: ${data.tanggal || '-'}`,
                     deadline: data.tanggal, isOverdue: isOverdue,
                     badge: 'Followup Agen', badgeClass: 'badge-customer'
                 });
             }
-        });
+        }
     }
     
-    if (searchProspek && currentUser) {
-        const snapshot = await db.collection('prospek').where('user_id', '==', currentUser.uid).get();
-        snapshot.forEach(doc => {
+    if (searchProspek) {
+        const snapshot = await prospekQuery.get();
+        for (const doc of snapshot.docs) {
             const data = doc.data();
             const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
             if (searchText.includes(keyword)) {
+                let ownerName = '';
+                if (currentUserRole === 'owner' && data.user_id !== currentUser.uid) {
+                    const userDoc = await db.collection('users').doc(data.user_id).get();
+                    ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+                }
                 const isOverdue = data.deadline && data.deadline < today;
                 results.push({
-                    id: doc.id, type: 'prospek', title: data.nama,
+                    id: doc.id, type: 'prospek', title: data.nama + ownerName,
                     subtitle: data.hp,
                     detail: `Status: ${data.status || 'Baru'} | Deadline: ${data.deadline || '-'}`,
                     deadline: data.deadline, isOverdue: isOverdue,
                     badge: 'Prospek Agen', badgeClass: 'badge-prospek'
                 });
             }
-        });
+        }
     }
     
-    if (searchClosing && currentUser) {
-        const snapshot = await db.collection('db_closing').where('user_id', '==', currentUser.uid).get();
-        snapshot.forEach(doc => {
+    if (searchClosing) {
+        const snapshot = await closingQuery.get();
+        for (const doc of snapshot.docs) {
             const data = doc.data();
             const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
             if (searchText.includes(keyword)) {
@@ -1422,12 +1584,12 @@ async function performSearch() {
                     badge: 'DB Closing', badgeClass: 'badge-closing'
                 });
             }
-        });
+        }
     }
     
-    if (searchTidak && currentUser) {
-        const snapshot = await db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).get();
-        snapshot.forEach(doc => {
+    if (searchTidak) {
+        const snapshot = await tidakQuery.get();
+        for (const doc of snapshot.docs) {
             const data = doc.data();
             const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
             if (searchText.includes(keyword)) {
@@ -1438,12 +1600,12 @@ async function performSearch() {
                     badge: 'DB Tidak Tertarik', badgeClass: 'badge-tidak'
                 });
             }
-        });
+        }
     }
     
-    if (searchNomorSalah && currentUser) {
-        const snapshot = await db.collection('nomor_salah').where('user_id', '==', currentUser.uid).get();
-        snapshot.forEach(doc => {
+    if (searchNomorSalah) {
+        const snapshot = await nomorSalahQuery.get();
+        for (const doc of snapshot.docs) {
             const data = doc.data();
             const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
             if (searchText.includes(keyword)) {
@@ -1454,12 +1616,12 @@ async function performSearch() {
                     badge: 'DB Nomor Salah', badgeClass: 'badge-nomor-salah'
                 });
             }
-        });
+        }
     }
     
-    if (searchCommitment && currentUser) {
-        const snapshot = await db.collection('db_commitment').where('user_id', '==', currentUser.uid).get();
-        snapshot.forEach(doc => {
+    if (searchCommitment) {
+        const snapshot = await commitmentQuery.get();
+        for (const doc of snapshot.docs) {
             const data = doc.data();
             const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
             if (searchText.includes(keyword)) {
@@ -1470,7 +1632,7 @@ async function performSearch() {
                     badge: 'DB Commitment', badgeClass: 'badge-commitment'
                 });
             }
-        });
+        }
     }
     
     const resultsContainer = document.getElementById('searchResults');
@@ -1530,6 +1692,92 @@ document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') performSearch();
 });
 
+// ========== MANAGE USERS (OWNER ONLY) ==========
+async function loadUsersList() {
+    if (currentUserRole !== 'owner') return;
+    
+    const snapshot = await db.collection('users').get();
+    const users = [];
+    snapshot.forEach(doc => {
+        if (doc.id !== currentUser.uid) {
+            users.push({ id: doc.id, ...doc.data() });
+        }
+    });
+    
+    const container = document.getElementById('usersList');
+    if (users.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;">👥 Belum ada CS Agent selain Anda</p>';
+        return;
+    }
+    
+    container.innerHTML = users.map(user => `
+        <div class="db-item">
+            <div class="db-item-info">
+                <h4>${escapeHtml(user.nama || 'CS Agent')}</h4>
+                <p>${user.email || '-'}</p>
+                <small>HP: ${user.hp || '-'} | Role: ${user.role || 'cs'}</small>
+            </div>
+            <div class="db-item-actions">
+                <button class="db-item-delete" onclick="deleteUser('${user.id}')">🗑️ Hapus</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.deleteUser = async function(userId) {
+    if (!confirm('Yakin ingin menghapus CS Agent ini? Data CS akan tetap ada tetapi tidak bisa login.')) return;
+    try {
+        await db.collection('users').doc(userId).delete();
+        showNotif('✅ CS Agent berhasil dihapus');
+        loadUsersList();
+    } catch(e) {
+        showNotif('❌ Gagal: ' + e.message, true);
+    }
+};
+
+document.getElementById('addCsBtn')?.addEventListener('click', () => {
+    document.getElementById('addCsModal').style.display = 'flex';
+});
+
+document.getElementById('saveCsBtn')?.addEventListener('click', async () => {
+    const email = document.getElementById('csEmail').value;
+    const password = document.getElementById('csPassword').value;
+    const nama = document.getElementById('csName').value;
+    let hp = document.getElementById('csPhone').value;
+    
+    if (!email || !password || !nama) {
+        showNotif('⚠️ Email, Password, dan Nama wajib diisi!', true);
+        return;
+    }
+    
+    if (hp) {
+        hp = hp.replace(/\D/g, '');
+        if (hp.startsWith('0')) hp = hp.substring(1);
+        hp = '+62' + hp;
+    }
+    
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const newUser = userCredential.user;
+        await db.collection('users').doc(newUser.uid).set({
+            nama: nama,
+            email: email,
+            hp: hp || '',
+            role: 'cs',
+            created_at: new Date().toISOString()
+        });
+        showNotif('✅ CS Agent berhasil ditambahkan');
+        closeModal('addCsModal');
+        document.getElementById('csEmail').value = '';
+        document.getElementById('csPassword').value = '';
+        document.getElementById('csName').value = '';
+        document.getElementById('csPhone').value = '';
+        loadUsersList();
+    } catch(e) {
+        showNotif('❌ Gagal: ' + e.message, true);
+    }
+});
+
 // ========== FULL PAGE KANBAN ==========
 function renderFullFollowupKanban() {
     const today = getTodayDate();
@@ -1574,7 +1822,7 @@ function renderFullFollowupKanban() {
         }).join('');
         followupContainer.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); });
     }
-        const pendingContainer = document.getElementById('fullPendingList');
+    const pendingContainer = document.getElementById('fullPendingList');
     if (pendingContainer) {
         pendingContainer.innerHTML = lists.pending.map(item => {
             const isOverdue = item.tanggal && item.tanggal < today;
@@ -1691,29 +1939,23 @@ function openDBDetailModal(id, type) {
     let title = '';
     
     switch(type) {
-        case 'closing':
-            collectionName = 'db_closing';
-            title = 'Detail Database Closing';
-            break;
-        case 'tidak':
-            collectionName = 'db_tidak_tertarik';
-            title = 'Detail Database Tidak Tertarik';
-            break;
-        case 'nomor_salah':
-            collectionName = 'nomor_salah';
-            title = 'Detail Database Nomor Salah';
-            break;
-        case 'commitment':
-            collectionName = 'db_commitment';
-            title = 'Detail Database Commitment';
-            break;
-        default:
-            return;
+        case 'closing': collectionName = 'db_closing'; title = 'Detail Database Closing'; break;
+        case 'tidak': collectionName = 'db_tidak_tertarik'; title = 'Detail Database Tidak Tertarik'; break;
+        case 'nomor_salah': collectionName = 'nomor_salah'; title = 'Detail Database Nomor Salah'; break;
+        case 'commitment': collectionName = 'db_commitment'; title = 'Detail Database Commitment'; break;
+        default: return;
     }
     
-    db.collection(collectionName).doc(id).get().then(doc => {
+    db.collection(collectionName).doc(id).get().then(async doc => {
         if (!doc.exists) return;
         const d = doc.data();
+        
+        let ownerInfo = '';
+        if (currentUserRole === 'owner' && d.user_id !== currentUser.uid) {
+            const userDoc = await db.collection('users').doc(d.user_id).get();
+            const ownerName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
+            ownerInfo = `<div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Pemilik Data</label><div class="value">${escapeHtml(ownerName)}</div></div></div>`;
+        }
         
         let detailHtml = '';
         
@@ -1721,6 +1963,7 @@ function openDBDetailModal(id, type) {
             const pendingItems = d.pending_data || [];
             const completedCount = pendingItems.filter(item => item.checked === true && item.text?.trim() !== '').length;
             detailHtml = `
+                ${ownerInfo}
                 <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Closing</label><div class="value">${new Date(d.closing_date).toLocaleDateString('id-ID')}</div></div></div>
@@ -1731,6 +1974,7 @@ function openDBDetailModal(id, type) {
         } 
         else if (type === 'tidak') {
             detailHtml = `
+                ${ownerInfo}
                 <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal</label><div class="value">${new Date(d.tanggal).toLocaleDateString('id-ID')}</div></div></div>
@@ -1741,6 +1985,7 @@ function openDBDetailModal(id, type) {
         }
         else if (type === 'nomor_salah') {
             detailHtml = `
+                ${ownerInfo}
                 <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Dihapus</label><div class="value">${new Date(d.deleted_at).toLocaleDateString('id-ID')}</div></div></div>
@@ -1749,6 +1994,7 @@ function openDBDetailModal(id, type) {
         }
         else if (type === 'commitment') {
             detailHtml = `
+                ${ownerInfo}
                 <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Komitmen</label><div class="value">${new Date(d.committed_at).toLocaleDateString('id-ID')}</div></div></div>
@@ -1762,17 +2008,10 @@ function openDBDetailModal(id, type) {
         document.getElementById('detailContent').innerHTML = `
             <div class="detail-header"><div class="detail-avatar">📁</div><h3>${title}</h3><div class="detail-status">Arsip</div></div>
             <div class="detail-body">
-                <div class="detail-info">
-                    ${detailHtml}
-                </div>
-                <div class="detail-actions">
-                    <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
-                </div>
+                <div class="detail-info">${detailHtml}</div>
+                <div class="detail-actions"><button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button></div>
             </div>
-            <div class="detail-footer">
-                <button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button>
-                <button class="btn-danger" onclick="deleteDBItem('${type}', '${id}'); closeModal('detailModal');">🗑️ Hapus</button>
-            </div>
+            <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button><button class="btn-danger" onclick="deleteDBItem('${type}', '${id}'); closeModal('detailModal');">🗑️ Hapus</button></div>
         `;
         showModal('detailModal');
     });
@@ -1781,36 +2020,37 @@ function openDBDetailModal(id, type) {
 // ========== DATABASE ARCHIVES ==========
 let selectedClosingIds = new Map(), selectedTidakIds = new Map(), selectedNomorSalahIds = new Map(), selectedCommitmentIds = new Map();
 
+function getBaseQuery(collection, isOwner = false) {
+    if (isOwner) {
+        return db.collection(collection);
+    }
+    return db.collection(collection).where('user_id', '==', currentUser.uid);
+}
+
 function loadDBClosing() {
     if (!currentUser) return;
-    db.collection('db_closing').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+    const isOwner = currentUserRole === 'owner';
+    const query = isOwner ? db.collection('db_closing') : db.collection('db_closing').where('user_id', '==', currentUser.uid);
+    query.onSnapshot(async snap => {
         let items = [];
-        snap.forEach(doc => { 
-            const d = doc.data(); 
+        for (const doc of snap.docs) {
+            const d = doc.data();
+            let ownerName = '';
+            if (isOwner && d.user_id !== currentUser.uid) {
+                const userDoc = await db.collection('users').doc(d.user_id).get();
+                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+            }
             items.push({ 
-                id: doc.id, 
-                nama: d.nama, 
-                hp: d.hp, 
-                closing_date: d.closing_date,
-                tanggal: d.tanggal,
-                followup_data: d.followup_data,
-                pending_data: d.pending_data,
+                id: doc.id, nama: d.nama + ownerName, hp: d.hp, closing_date: d.closing_date,
                 checked: selectedClosingIds.get(doc.id) || false 
-            }); 
-        });
+            });
+        }
         items.sort((a,b) => new Date(b.closing_date) - new Date(a.closing_date));
         const html = items.map(item => `
             <div class="db-item" data-id="${item.id}" data-type="closing" style="cursor: pointer;">
                 <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
-                <div class="db-item-info">
-                    <h4>${escapeHtml(item.nama)}</h4>
-                    <p>${item.hp}</p>
-                    <small>Closing: ${new Date(item.closing_date).toLocaleDateString('id-ID')}</small>
-                </div>
-                <div class="db-item-actions">
-                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
-                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('closing', '${item.id}')">🗑️ Hapus</button>
-                </div>
+                <div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Closing: ${new Date(item.closing_date).toLocaleDateString('id-ID')}</small></div>
+                <div class="db-item-actions"><button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('closing', '${item.id}')">🗑️ Hapus</button></div>
             </div>
         `).join('');
         const container = document.getElementById('dbClosingList');
@@ -1819,9 +2059,7 @@ function loadDBClosing() {
             document.querySelectorAll('#dbClosingList .db-item').forEach(el => {
                 el.addEventListener('click', (e) => {
                     if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-delete')) {
-                        const id = el.dataset.id;
-                        const type = el.dataset.type;
-                        openDBDetailModal(id, type);
+                        openDBDetailModal(el.dataset.id, 'closing');
                     }
                 });
             });
@@ -1832,35 +2070,25 @@ function loadDBClosing() {
 
 function loadDBTidak() {
     if (!currentUser) return;
-    db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+    const isOwner = currentUserRole === 'owner';
+    const query = isOwner ? db.collection('db_tidak_tertarik') : db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid);
+    query.onSnapshot(async snap => {
         let items = [];
-        snap.forEach(doc => { 
-            const d = doc.data(); 
-            items.push({ 
-                id: doc.id, 
-                nama: d.nama, 
-                hp: d.hp, 
-                tanggal: d.tanggal,
-                alasan: d.alasan,
-                status_sebelumnya: d.status_sebelumnya,
-                dihubungi_data: d.dihubungi_data,
-                negosiasi_data: d.negosiasi_data,
-                checked: selectedTidakIds.get(doc.id) || false 
-            }); 
-        });
+        for (const doc of snap.docs) {
+            const d = doc.data();
+            let ownerName = '';
+            if (isOwner && d.user_id !== currentUser.uid) {
+                const userDoc = await db.collection('users').doc(d.user_id).get();
+                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+            }
+            items.push({ id: doc.id, nama: d.nama + ownerName, hp: d.hp, tanggal: d.tanggal, checked: selectedTidakIds.get(doc.id) || false });
+        }
         items.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
         const html = items.map(item => `
             <div class="db-item" data-id="${item.id}" data-type="tidak" style="cursor: pointer;">
                 <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
-                <div class="db-item-info">
-                    <h4>${escapeHtml(item.nama)}</h4>
-                    <p>${item.hp}</p>
-                    <small>Tanggal: ${new Date(item.tanggal).toLocaleDateString('id-ID')}</small>
-                </div>
-                <div class="db-item-actions">
-                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
-                                        <button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('tidak', '${item.id}')">🗑️ Hapus</button>
-                </div>
+                <div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Tanggal: ${new Date(item.tanggal).toLocaleDateString('id-ID')}</small></div>
+                <div class="db-item-actions"><button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('tidak', '${item.id}')">🗑️ Hapus</button></div>
             </div>
         `).join('');
         const container = document.getElementById('dbTidakList');
@@ -1869,9 +2097,7 @@ function loadDBTidak() {
             document.querySelectorAll('#dbTidakList .db-item').forEach(el => {
                 el.addEventListener('click', (e) => {
                     if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-delete')) {
-                        const id = el.dataset.id;
-                        const type = el.dataset.type;
-                        openDBDetailModal(id, type);
+                        openDBDetailModal(el.dataset.id, 'tidak');
                     }
                 });
             });
@@ -1882,32 +2108,25 @@ function loadDBTidak() {
 
 function loadDBNomorSalah() {
     if (!currentUser) return;
-    db.collection('nomor_salah').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+    const isOwner = currentUserRole === 'owner';
+    const query = isOwner ? db.collection('nomor_salah') : db.collection('nomor_salah').where('user_id', '==', currentUser.uid);
+    query.onSnapshot(async snap => {
         let items = [];
-        snap.forEach(doc => { 
-            const d = doc.data(); 
-            items.push({ 
-                id: doc.id, 
-                nama: d.nama, 
-                hp: d.hp, 
-                alasan: d.alasan, 
-                deleted_at: d.deleted_at,
-                checked: selectedNomorSalahIds.get(doc.id) || false 
-            }); 
-        });
+        for (const doc of snap.docs) {
+            const d = doc.data();
+            let ownerName = '';
+            if (isOwner && d.user_id !== currentUser.uid) {
+                const userDoc = await db.collection('users').doc(d.user_id).get();
+                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+            }
+            items.push({ id: doc.id, nama: d.nama + ownerName, hp: d.hp, alasan: d.alasan, deleted_at: d.deleted_at, checked: selectedNomorSalahIds.get(doc.id) || false });
+        }
         items.sort((a,b) => new Date(b.deleted_at) - new Date(a.deleted_at));
         const html = items.map(item => `
             <div class="db-item" data-id="${item.id}" data-type="nomor_salah" style="cursor: pointer;">
                 <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
-                <div class="db-item-info">
-                    <h4>${escapeHtml(item.nama)}</h4>
-                    <p>${item.hp}</p>
-                    <small>Alasan: ${item.alasan}<br>Tanggal: ${new Date(item.deleted_at).toLocaleDateString('id-ID')}</small>
-                </div>
-                <div class="db-item-actions">
-                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
-                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('nomor_salah', '${item.id}')">🗑️ Hapus</button>
-                </div>
+                <div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Alasan: ${item.alasan}<br>Tanggal: ${new Date(item.deleted_at).toLocaleDateString('id-ID')}</small></div>
+                <div class="db-item-actions"><button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('nomor_salah', '${item.id}')">🗑️ Hapus</button></div>
             </div>
         `).join('');
         const container = document.getElementById('dbNomorSalahList');
@@ -1916,9 +2135,7 @@ function loadDBNomorSalah() {
             document.querySelectorAll('#dbNomorSalahList .db-item').forEach(el => {
                 el.addEventListener('click', (e) => {
                     if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-delete')) {
-                        const id = el.dataset.id;
-                        const type = el.dataset.type;
-                        openDBDetailModal(id, type);
+                        openDBDetailModal(el.dataset.id, 'nomor_salah');
                     }
                 });
             });
@@ -1929,35 +2146,25 @@ function loadDBNomorSalah() {
 
 function loadDBCommitment() {
     if (!currentUser) return;
-    db.collection('db_commitment').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+    const isOwner = currentUserRole === 'owner';
+    const query = isOwner ? db.collection('db_commitment') : db.collection('db_commitment').where('user_id', '==', currentUser.uid);
+    query.onSnapshot(async snap => {
         let items = [];
-        snap.forEach(doc => { 
-            const d = doc.data(); 
-            items.push({ 
-                id: doc.id, 
-                nama: d.nama, 
-                hp: d.hp, 
-                committed_at: d.committed_at, 
-                negosiasi_data: d.negosiasi_data, 
-                agent_id: d.agent_id, 
-                aplikasi: d.aplikasi, 
-                followup_date: d.followup_date,
-                checked: selectedCommitmentIds.get(doc.id) || false 
-            }); 
-        });
+        for (const doc of snap.docs) {
+            const d = doc.data();
+            let ownerName = '';
+            if (isOwner && d.user_id !== currentUser.uid) {
+                const userDoc = await db.collection('users').doc(d.user_id).get();
+                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+            }
+            items.push({ id: doc.id, nama: d.nama + ownerName, hp: d.hp, committed_at: d.committed_at, agent_id: d.agent_id, aplikasi: d.aplikasi, followup_date: d.followup_date, checked: selectedCommitmentIds.get(doc.id) || false });
+        }
         items.sort((a,b) => new Date(b.committed_at) - new Date(a.committed_at));
         const html = items.map(item => `
             <div class="db-item" data-id="${item.id}" data-type="commitment" style="cursor: pointer;">
                 <input type="checkbox" class="db-item-checkbox" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
-                <div class="db-item-info">
-                    <h4>${escapeHtml(item.nama)}</h4>
-                    <p>${item.hp}</p>
-                    <small>Komitmen: ${new Date(item.committed_at).toLocaleDateString('id-ID')}<br>Followup: ${item.followup_date || '-'}<br>Agent: ${item.agent_id || '-'}<br>Aplikasi: ${item.aplikasi || item.negosiasi_data?.aplikasi || '-'}</small>
-                </div>
-                <div class="db-item-actions">
-                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
-                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('db_commitment', '${item.id}')">🗑️ Hapus</button>
-                </div>
+                <div class="db-item-info"><h4>${escapeHtml(item.nama)}</h4><p>${item.hp}</p><small>Komitmen: ${new Date(item.committed_at).toLocaleDateString('id-ID')}<br>Followup: ${item.followup_date || '-'}<br>Agent: ${item.agent_id || '-'}<br>Aplikasi: ${item.aplikasi || '-'}</small></div>
+                <div class="db-item-actions"><button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button><button class="db-item-delete" onclick="event.stopPropagation(); deleteDBItem('db_commitment', '${item.id}')">🗑️ Hapus</button></div>
             </div>
         `).join('');
         const container = document.getElementById('dbCommitmentList');
@@ -1966,9 +2173,7 @@ function loadDBCommitment() {
             document.querySelectorAll('#dbCommitmentList .db-item').forEach(el => {
                 el.addEventListener('click', (e) => {
                     if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-delete')) {
-                        const id = el.dataset.id;
-                        const type = el.dataset.type;
-                        openDBDetailModal(id, type);
+                        openDBDetailModal(el.dataset.id, 'commitment');
                     }
                 });
             });
@@ -2057,24 +2262,8 @@ function updateChartCustomer(total, closing, pending, followup) {
     const baru = total - (closing + pending + followup);
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
-            datasets: [{
-                data: [closing, pending, followup, baru],
-                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
-                borderWidth: 0,
-                hoverOffset: 15,
-                cutout: '65%'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } },
-                tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } }
-            }
-        }
+        data: { labels: ['Closing', 'Pending', 'Follow Up', 'Baru'], datasets: [{ data: [closing, pending, followup, baru], backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } }
     });
 }
 
@@ -2086,24 +2275,8 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
     if (dataArr.every(v => v === 0)) dataArr = [1, 0, 0, 0];
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-            labels: ['Baru', 'Dihubungi', 'Negosiasi', 'Tertarik'],
-            datasets: [{
-                data: dataArr,
-                backgroundColor: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'],
-                borderWidth: 0,
-                hoverOffset: 15,
-                cutout: '65%'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } },
-                tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } }
-            }
-        }
+        data: { labels: ['Baru', 'Dihubungi', 'Negosiasi', 'Tertarik'], datasets: [{ data: dataArr, backgroundColor: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || '', value = context.raw || 0, total = context.dataset.data.reduce((a,b)=>a+b,0); return `${label}: ${value} (${total ? ((value/total)*100).toFixed(1) : 0}%)`; } } } }
     });
 }
 
@@ -2111,23 +2284,38 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
 function loadAllData() {
     if (!currentUser) return;
     const today = getTodayDate();
+    const isOwner = currentUserRole === 'owner';
     
-    db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+    let customersQuery = db.collection('customers');
+    let prospekQuery = db.collection('prospek');
+    
+    if (!isOwner) {
+        customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid);
+        prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid);
+    }
+    
+    customersQuery.onSnapshot(async snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
         const lists = { baru: [], followup: [], pending: [], closing: [] };
         customersData = [];
-        snap.forEach(doc => {
+        for (const doc of snap.docs) {
             const d = doc.data();
-            customersData.push({ id: doc.id, ...d });
+            let ownerName = '';
+            if (isOwner && d.user_id !== currentUser.uid) {
+                const userDoc = await db.collection('users').doc(d.user_id).get();
+                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+            }
+            const itemData = { id: doc.id, agent_id: d.agent_id, nama: d.nama + ownerName, hp: d.hp, tanggal: d.tanggal, status: d.status, ownerId: d.user_id };
+            customersData.push({ id: doc.id, ...d, displayName: d.nama + ownerName });
             total++;
             if (d.status === 'closing') closing++;
             else if (d.status === 'pending') pending++;
             else if (d.status === 'followup') followup++;
-            else lists.baru.push({ id: doc.id, agent_id: d.agent_id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, status: d.status });
-            if (d.status === 'followup') lists.followup.push({ id: doc.id, agent_id: d.agent_id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, status: d.status });
-            if (d.status === 'pending') lists.pending.push({ id: doc.id, agent_id: d.agent_id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, status: d.status });
-            if (d.status === 'closing') lists.closing.push({ id: doc.id, agent_id: d.agent_id, nama: d.nama, hp: d.hp, tanggal: d.tanggal, status: d.status });
-        });
+            else lists.baru.push(itemData);
+            if (d.status === 'followup') lists.followup.push(itemData);
+            if (d.status === 'pending') lists.pending.push(itemData);
+            if (d.status === 'closing') lists.closing.push(itemData);
+        }
         for (let status in lists) {
             lists[status].sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
         }
@@ -2159,21 +2347,27 @@ function loadAllData() {
         renderFullFollowupKanban();
     });
     
-    db.collection('prospek').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
+    prospekQuery.onSnapshot(async snap => {
         let baru = 0, dihubungi = 0, negosiasi = 0, tertarik = 0;
         const lists = { prospekBaru: [], prospekDihubungi: [], prospekNegosiasi: [], prospekTertarik: [] };
         prospekData = [];
-        snap.forEach(doc => {
+        for (const doc of snap.docs) {
             const d = doc.data();
-            prospekData.push({ id: doc.id, ...d });
+            let ownerName = '';
+            if (isOwner && d.user_id !== currentUser.uid) {
+                const userDoc = await db.collection('users').doc(d.user_id).get();
+                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+            }
             const st = d.status || 'Baru';
             const deadline = d.deadline || '';
-            if (st === 'Baru') { baru++; lists.prospekBaru.push({ id: doc.id, nama: d.nama, hp: d.hp, status: st, deadline }); }
-            else if (st === 'Dihubungi') { dihubungi++; lists.prospekDihubungi.push({ id: doc.id, nama: d.nama, hp: d.hp, status: st, deadline }); }
-            else if (st === 'Negosiasi') { negosiasi++; lists.prospekNegosiasi.push({ id: doc.id, nama: d.nama, hp: d.hp, status: st, deadline }); }
-            else if (st === 'Tertarik') { tertarik++; lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp, status: st, deadline }); }
-            else { tertarik++; lists.prospekTertarik.push({ id: doc.id, nama: d.nama, hp: d.hp, status: st, deadline }); }
-        });
+            const itemData = { id: doc.id, nama: d.nama + ownerName, hp: d.hp, status: st, deadline: deadline, ownerId: d.user_id };
+            prospekData.push({ id: doc.id, ...d, displayName: d.nama + ownerName });
+            if (st === 'Baru') { baru++; lists.prospekBaru.push(itemData); }
+            else if (st === 'Dihubungi') { dihubungi++; lists.prospekDihubungi.push(itemData); }
+            else if (st === 'Negosiasi') { negosiasi++; lists.prospekNegosiasi.push(itemData); }
+            else if (st === 'Tertarik') { tertarik++; lists.prospekTertarik.push(itemData); }
+            else { tertarik++; lists.prospekTertarik.push(itemData); }
+        }
         for (let col in lists) {
             lists[col].sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
         }
@@ -2201,15 +2395,13 @@ function loadAllData() {
     });
 }
 
+// ========== REMINDER, PESAN, BROADCAST (SEDERHANAKAN) ==========
 async function loadReminders() { 
     try { 
         const snapshot = await db.collection('reminders').where('user_id', '==', currentUser.uid).get(); 
         const reminderList = document.getElementById('reminderList'); 
         if (!reminderList) return; 
-        if (snapshot.empty) { 
-            reminderList.innerHTML = '<p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p>'; 
-            return; 
-        } 
+        if (snapshot.empty) { reminderList.innerHTML = '<p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p>'; return; } 
         const items = []; 
         snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() })); 
         items.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); 
@@ -2217,27 +2409,15 @@ async function loadReminders() {
     } catch(e) { console.error(e); } 
 }
 
-window.deleteReminder = async function(id) { 
-    if (confirm('Hapus pengingat ini?')) { 
-        await db.collection('reminders').doc(id).delete(); 
-        showNotif('Pengingat dihapus'); 
-        loadReminders(); 
-    } 
-};
+window.deleteReminder = async function(id) { if (confirm('Hapus pengingat ini?')) { await db.collection('reminders').doc(id).delete(); showNotif('Pengingat dihapus'); loadReminders(); } };
 
 document.getElementById('addReminderBtn')?.addEventListener('click', () => document.getElementById('reminderModal').style.display = 'flex');
 document.getElementById('saveReminderBtn')?.addEventListener('click', async () => { 
-    const title = document.getElementById('reminderTitle').value; 
-    const description = document.getElementById('reminderDesc').value; 
-    const datetime = document.getElementById('reminderDateTime').value; 
+    const title = document.getElementById('reminderTitle').value; const description = document.getElementById('reminderDesc').value; const datetime = document.getElementById('reminderDateTime').value; 
     if (!title) { showNotif('Judul wajib diisi', true); return; } 
     await db.collection('reminders').add({ title, description: description || '', datetime: datetime || null, user_id: currentUser.uid, created_at: new Date().toISOString() }); 
-    closeModal('reminderModal'); 
-    document.getElementById('reminderTitle').value = ''; 
-    document.getElementById('reminderDesc').value = ''; 
-    document.getElementById('reminderDateTime').value = ''; 
-    showNotif('✅ Pengingat ditambahkan'); 
-    loadReminders(); 
+    closeModal('reminderModal'); document.getElementById('reminderTitle').value = ''; document.getElementById('reminderDesc').value = ''; document.getElementById('reminderDateTime').value = ''; 
+    showNotif('✅ Pengingat ditambahkan'); loadReminders(); 
 });
 
 async function loadUsersForSelect() { 
@@ -2245,10 +2425,7 @@ async function loadUsersForSelect() {
     const select = document.getElementById('pesanTo'); 
     if (!select) return; 
     select.innerHTML = '<option value="">Pilih CS Tujuan</option>'; 
-    snapshot.forEach(doc => { 
-        const data = doc.data(); 
-        if (doc.id !== currentUser.uid) select.innerHTML += `<option value="${doc.id}">${escapeHtml(data.nama || data.email || 'CS Agent')}</option>`; 
-    }); 
+    snapshot.forEach(doc => { const data = doc.data(); if (doc.id !== currentUser.uid) select.innerHTML += `<option value="${doc.id}">${escapeHtml(data.nama || data.email || 'CS Agent')}</option>`; }); 
 }
 
 async function loadPesan() { 
@@ -2257,10 +2434,7 @@ async function loadPesan() {
         const snapshot = await db.collection('messages').where('to_id', '==', currentUser.uid).get(); 
         const pesanList = document.getElementById('pesanList'); 
         if (!pesanList) return; 
-        if (snapshot.empty) { 
-            pesanList.innerHTML = '<p style="text-align:center;padding:40px;">💬 Belum ada pesan</p>'; 
-            return; 
-        } 
+        if (snapshot.empty) { pesanList.innerHTML = '<p style="text-align:center;padding:40px;">💬 Belum ada pesan</p>'; return; } 
         const items = []; 
         for (const doc of snapshot.docs) items.push({ id: doc.id, ...doc.data() }); 
         items.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)); 
@@ -2275,51 +2449,23 @@ async function loadPesan() {
     } catch(e) { console.error(e); } 
 }
 
-window.markAsRead = async function(id) { 
-    await db.collection('messages').doc(id).update({ is_read: true }); 
-    showNotif('Pesan ditandai dibaca'); 
-    loadPesan(); 
-    updateAllBadges(); 
-};
-
-window.deletePesan = async function(id) { 
-    if (confirm('Hapus pesan ini?')) { 
-        await db.collection('messages').doc(id).delete(); 
-        showNotif('Pesan dihapus'); 
-        loadPesan(); 
-        updateAllBadges(); 
-    } 
-};
+window.markAsRead = async function(id) { await db.collection('messages').doc(id).update({ is_read: true }); showNotif('Pesan ditandai dibaca'); loadPesan(); updateAllBadges(); };
+window.deletePesan = async function(id) { if (confirm('Hapus pesan ini?')) { await db.collection('messages').doc(id).delete(); showNotif('Pesan dihapus'); loadPesan(); updateAllBadges(); } };
 
 document.getElementById('addPesanBtn')?.addEventListener('click', async () => { await loadUsersForSelect(); document.getElementById('pesanModal').style.display = 'flex'; });
-document.getElementById('savePesanBtn')?.addEventListener('click', async () => { 
-    const toId = document.getElementById('pesanTo').value; 
-    const message = document.getElementById('pesanMessage').value; 
-    if (!toId || !message) { showNotif('Lengkapi data!', true); return; } 
-    await db.collection('messages').add({ from_id: currentUser.uid, to_id: toId, message, is_read: false, created_at: new Date().toISOString() }); 
-    closeModal('pesanModal'); 
-    document.getElementById('pesanTo').value = ''; 
-    document.getElementById('pesanMessage').value = ''; 
-    showNotif('✅ Pesan terkirim'); 
-    updateAllBadges(); 
-});
+document.getElementById('savePesanBtn')?.addEventListener('click', async () => { const toId = document.getElementById('pesanTo').value; const message = document.getElementById('pesanMessage').value; if (!toId || !message) { showNotif('Lengkapi data!', true); return; } await db.collection('messages').add({ from_id: currentUser.uid, to_id: toId, message, is_read: false, created_at: new Date().toISOString() }); closeModal('pesanModal'); document.getElementById('pesanTo').value = ''; document.getElementById('pesanMessage').value = ''; showNotif('✅ Pesan terkirim'); updateAllBadges(); });
 
 // ========== FITUR SIMPAN TEMPLATE BROADCAST ==========
 let savedTemplates = [];
 
 function loadTemplates() {
     const saved = localStorage.getItem('broadcast_templates');
-    if (saved) {
-        savedTemplates = JSON.parse(saved);
-    }
+    if (saved) savedTemplates = JSON.parse(saved);
     renderTemplateList();
 }
 
 function saveTemplate(name, message) {
-    if (!name || !message) {
-        showNotif('⚠️ Nama template dan pesan harus diisi!', true);
-        return;
-    }
+    if (!name || !message) { showNotif('⚠️ Nama template dan pesan harus diisi!', true); return; }
     savedTemplates.unshift({ name, message, created_at: new Date().toISOString() });
     if (savedTemplates.length > 10) savedTemplates = savedTemplates.slice(0, 10);
     localStorage.setItem('broadcast_templates', JSON.stringify(savedTemplates));
@@ -2337,68 +2483,13 @@ function deleteTemplate(index) {
 function renderTemplateList() {
     const container = document.getElementById('templateList');
     if (!container) return;
-    
-    if (savedTemplates.length === 0) {
-        container.innerHTML = '<p style="color:#9ca3af; text-align:center; padding:20px;">Belum ada template tersimpan</p>';
-        return;
-    }
-    
-    container.innerHTML = savedTemplates.map((template, idx) => `
-        <div class="template-item">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong style="font-size: 13px;">📝 ${escapeHtml(template.name)}</strong>
-                <div>
-                    <button class="template-use-btn" data-idx="${idx}" style="background: #4f46e5; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; margin-right: 5px; cursor: pointer;">Gunakan</button>
-                    <button class="template-delete-btn" data-idx="${idx}" style="background: #ef4444; color: white; border: none; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer;">Hapus</button>
-                </div>
-            </div>
-            <div style="font-size: 11px; color: #6b7280; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(template.message.substring(0, 100))}${template.message.length > 100 ? '...' : ''}</div>
-        </div>
-    `).join('');
-    
-    document.querySelectorAll('.template-use-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const idx = parseInt(btn.dataset.idx);
-            const template = savedTemplates[idx];
-            if (template) {
-                document.getElementById('broadcastMessage').value = template.message;
-                showNotif(`✅ Template "${template.name}" diterapkan`);
-            }
-        });
-    });
-    
-    document.querySelectorAll('.template-delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const idx = parseInt(btn.dataset.idx);
-            if (confirm('Hapus template ini?')) {
-                deleteTemplate(idx);
-            }
-        });
-    });
+    if (savedTemplates.length === 0) { container.innerHTML = '<p style="color:#9ca3af; text-align:center; padding:20px;">Belum ada template tersimpan</p>'; return; }
+    container.innerHTML = savedTemplates.map((template, idx) => `<div class="template-item"><div style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:13px;">📝 ${escapeHtml(template.name)}</strong><div><button class="template-use-btn" data-idx="${idx}" style="background:#4f46e5;color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:11px;margin-right:5px;cursor:pointer">Gunakan</button><button class="template-delete-btn" data-idx="${idx}" style="background:#ef4444;color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">Hapus</button></div></div><div style="font-size:11px;color:#6b7280;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(template.message.substring(0,100))}${template.message.length>100?'...':''}</div></div>`).join('');
+    document.querySelectorAll('.template-use-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const idx = parseInt(btn.dataset.idx); const template = savedTemplates[idx]; if (template) { document.getElementById('broadcastMessage').value = template.message; showNotif(`✅ Template "${template.name}" diterapkan`); } }); });
+    document.querySelectorAll('.template-delete-btn').forEach(btn => { btn.addEventListener('click', (e) => { e.stopPropagation(); const idx = parseInt(btn.dataset.idx); if (confirm('Hapus template ini?')) deleteTemplate(idx); }); });
 }
 
-function initTemplateFeature() {
-    loadTemplates();
-    const saveTemplateBtn = document.getElementById('saveTemplateBtn');
-    if (saveTemplateBtn) {
-        saveTemplateBtn.onclick = () => {
-            const name = document.getElementById('templateName').value;
-            const message = document.getElementById('broadcastMessage').value;
-            if (!name) {
-                showNotif('⚠️ Masukkan nama template!', true);
-                return;
-            }
-            if (!message) {
-                showNotif('⚠️ Pesan tidak boleh kosong!', true);
-                return;
-            }
-            saveTemplate(name, message);
-            document.getElementById('templateName').value = '';
-        };
-    }
-}
+function initTemplateFeature() { loadTemplates(); const saveTemplateBtn = document.getElementById('saveTemplateBtn'); if (saveTemplateBtn) { saveTemplateBtn.onclick = () => { const name = document.getElementById('templateName').value; const message = document.getElementById('broadcastMessage').value; if (!name) { showNotif('⚠️ Masukkan nama template!', true); return; } if (!message) { showNotif('⚠️ Pesan tidak boleh kosong!', true); return; } saveTemplate(name, message); document.getElementById('templateName').value = ''; }; } }
 
 // ========== BROADCAST WHATSAPP FUNCTIONS ==========
 let currentNumbers = [], currentBroadcastIndex = 0, broadcastNumbers = [], broadcastMessageTemplate = '', isBroadcasting = false, broadcastStatus = [];
@@ -2418,7 +2509,6 @@ function initBroadcast() {
     document.getElementById('customNumbers')?.addEventListener('input', () => loadNumbers());
     document.getElementById('refreshNumbersBtn')?.addEventListener('click', () => loadNumbers());
     document.getElementById('sendBroadcastBtn')?.addEventListener('click', sendBroadcast);
-    
     initTemplateFeature();
     loadNumbers();
 }
@@ -2435,7 +2525,8 @@ async function loadNumbers() {
         else if (sourceType === 'customer') { collection = 'customers'; statusValues = Array.from(document.querySelectorAll('#customerFilter input:checked')).map(cb => cb.value); }
         else if (sourceType === 'closing') { collection = 'db_closing'; statusField = null; }
         else if (sourceType === 'dbTidak') { collection = 'db_tidak_tertarik'; statusField = null; }
-        let query = db.collection(collection).where('user_id', '==', currentUser.uid);
+        let query = db.collection(collection);
+        if (currentUserRole !== 'owner') query = query.where('user_id', '==', currentUser.uid);
         if (statusValues && statusValues.length > 0 && statusField) query = query.where(statusField, 'in', statusValues);
         const snapshot = await query.get();
         snapshot.forEach(doc => { const data = doc.data(); numbers.push({ hp: data.hp, nama: data.nama }); });
@@ -2521,8 +2612,14 @@ if (deadlineNotifBtn) {
     deadlineNotifBtn.addEventListener('click', async () => {
         const today = getTodayDate();
         try {
-            const overdueCustomers = await db.collection('customers').where('user_id', '==', currentUser.uid).where('tanggal', '<', today).get();
-            const overdueProspek = await db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today).get();
+            let customerQuery = db.collection('customers').where('tanggal', '<', today);
+            let prospekQuery = db.collection('prospek').where('deadline', '<', today);
+            if (currentUserRole !== 'owner') {
+                customerQuery = customerQuery.where('user_id', '==', currentUser.uid);
+                prospekQuery = prospekQuery.where('user_id', '==', currentUser.uid);
+            }
+            const overdueCustomers = await customerQuery.get();
+            const overdueProspek = await prospekQuery.get();
             if (overdueCustomers.size + overdueProspek.size > 0) {
                 let message = `📅 DEADLINE TERLEWAT (${overdueCustomers.size + overdueProspek.size}):\n`;
                 overdueCustomers.forEach(doc => { message += `\n• ${doc.data().nama} (Customer) - ${doc.data().tanggal}`; });
@@ -2546,28 +2643,17 @@ if (pesanNotifBtn) {
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
 if (dropZone) dropZone.addEventListener('click', () => excelFileInput?.click());
-if (excelFileInput) excelFileInput.addEventListener('change', function(e) { 
-    if (e.target.files[0]) document.getElementById('fileInfo').innerHTML = '📄 ' + e.target.files[0].name; 
-});
+if (excelFileInput) excelFileInput.addEventListener('change', function(e) { if (e.target.files[0]) document.getElementById('fileInfo').innerHTML = '📄 ' + e.target.files[0].name; });
 
-document.querySelectorAll('.radio-option').forEach(opt => opt.addEventListener('click', function() { 
-    importType = this.dataset.import; 
-    document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active')); 
-    this.classList.add('active'); 
-}));
+document.querySelectorAll('.radio-option').forEach(opt => opt.addEventListener('click', function() { importType = this.dataset.import; document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active')); this.classList.add('active'); }));
 
 document.getElementById('importBtn')?.addEventListener('click', async () => {
     const file = excelFileInput?.files[0];
-    if (!file) { 
-        showNotif('Pilih file dulu!', true); 
-        return; 
-    }
-    
+    if (!file) { showNotif('Pilih file dulu!', true); return; }
     const importBtn = document.getElementById('importBtn');
     const originalText = importBtn.textContent;
     importBtn.textContent = '⏳ Memproses...';
     importBtn.disabled = true;
-    
     const reader = new FileReader();
     reader.onload = async function(e) {
         try {
@@ -2576,18 +2662,11 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
             const sheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[sheetName];
             const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            if (!json || json.length === 0) { showNotif('File Excel kosong!', true); importBtn.textContent = originalText; importBtn.disabled = false; return; }
             
-            if (!json || json.length === 0) {
-                showNotif('File Excel kosong!', true);
-                importBtn.textContent = originalText;
-                importBtn.disabled = false;
-                return;
-            }
-            
-            let success = 0;
-            let failed = 0;
+            let success = 0, failed = 0;
             const errors = [];
-            
+            const duplicates = [];
             const firstRow = json[0];
             const columnMap = {};
             
@@ -2597,7 +2676,6 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
                 const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
                 const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app'];
                 const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
-                
                 for (let key in firstRow) {
                     const lowerKey = key.toLowerCase();
                     if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
@@ -2606,32 +2684,23 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
                     if (possibleApk.some(p => p.toLowerCase() === lowerKey)) columnMap.apk = key;
                     if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
                 }
+                if (!columnMap.agentId || !columnMap.nama || !columnMap.hp || !columnMap.apk) {
+                    showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: agent_id, nama, hp, apk, deadline (opsional)', true);
+                    importBtn.textContent = originalText; importBtn.disabled = false; return;
+                }
             } else {
                 const possibleNama = ['nama', 'Nama', 'name', 'Name', 'prospek_name', 'ProspekName'];
                 const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
                 const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
-                
                 for (let key in firstRow) {
                     const lowerKey = key.toLowerCase();
                     if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
                     if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
                     if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
                 }
-            }
-            
-            if (importType === 'customer') {
-                if (!columnMap.agentId || !columnMap.nama || !columnMap.hp || !columnMap.apk) {
-                    showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: agent_id, nama, hp, apk, deadline (opsional)', true);
-                    importBtn.textContent = originalText;
-                    importBtn.disabled = false;
-                    return;
-                }
-            } else {
                 if (!columnMap.nama || !columnMap.hp) {
                     showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: nama, hp, deadline (opsional)', true);
-                    importBtn.textContent = originalText;
-                    importBtn.disabled = false;
-                    return;
+                    importBtn.textContent = originalText; importBtn.disabled = false; return;
                 }
             }
             
@@ -2643,142 +2712,62 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
                     let apk = columnMap.apk ? row[columnMap.apk] : null;
                     let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
                     
-                    if (!nama || !hp) {
-                        failed++;
-                        errors.push(`Baris ke-${json.indexOf(row)+2}: Nama atau HP kosong`);
-                        continue;
-                    }
-                    
-                    if (importType === 'customer') {
-                        if (!agentId || !apk) {
-                            failed++;
-                            errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent atau Aplikasi kosong`);
-                            continue;
-                        }
-                    }
+                    if (!nama || !hp) { failed++; errors.push(`Baris ke-${json.indexOf(row)+2}: Nama atau HP kosong`); continue; }
+                    if (importType === 'customer' && (!agentId || !apk)) { failed++; errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent atau Aplikasi kosong`); continue; }
                     
                     let cleanHp = hp.toString().trim();
                     cleanHp = cleanHp.replace(/[^\d+]/g, '');
                     if (!cleanHp.startsWith('+')) {
                         cleanHp = cleanHp.replace(/^0+/, '');
-                        if (cleanHp.startsWith('62')) {
-                            cleanHp = '+' + cleanHp;
-                        } else if (cleanHp.match(/^\d+$/)) {
-                            cleanHp = '+62' + cleanHp;
-                        } else {
-                            cleanHp = '+' + cleanHp.replace(/^\+/, '');
-                        }
+                        if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
+                        else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
+                        else cleanHp = '+' + cleanHp.replace(/^\+/, '');
                     }
                     
-                    let formattedDeadline = deadline;
-                    if (deadline) {
-                        let dateObj = new Date(deadline);
-                        if (isNaN(dateObj.getTime())) {
-                            if (typeof deadline === 'number') {
-                                const excelEpoch = new Date(1900, 0, 1);
-                                dateObj = new Date(excelEpoch.getTime() + (deadline - 2) * 86400000);
-                            } else {
-                                const parts = deadline.toString().split(/[-/]/);
-                                if (parts.length === 3) {
-                                    dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-                                }
-                            }
-                        }
-                        if (!isNaN(dateObj.getTime())) {
-                            formattedDeadline = dateObj.toISOString().split('T')[0];
-                        } else {
-                            formattedDeadline = getTodayDate();
-                        }
+                    // Cek duplikat
+                    let isDuplicate = false;
+                    if (importType === 'customer') {
+                        const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
+                        if (duplicateAgent) { duplicates.push(`ID Agent ${agentId} sudah terdaftar oleh ${duplicateAgent.owner}`); isDuplicate = true; }
+                        if (duplicateHp) { duplicates.push(`Nomor ${cleanHp} sudah terdaftar oleh ${duplicateHp.owner}`); isDuplicate = true; }
                     } else {
-                        formattedDeadline = getTodayDate();
+                        const duplicateHp = await checkDuplicateProspek(cleanHp);
+                        if (duplicateHp) { duplicates.push(`Nomor ${cleanHp} sudah terdaftar sebagai prospek oleh ${duplicateHp.owner}`); isDuplicate = true; }
                     }
+                    
+                    if (isDuplicate) { failed++; continue; }
+                    
+                    let formattedDeadline = deadline ? new Date(deadline).toISOString().split('T')[0] : getTodayDate();
+                    if (deadline && isNaN(new Date(deadline).getTime())) formattedDeadline = getTodayDate();
                     
                     if (importType === 'customer') {
-                        await db.collection('customers').add({
-                            agent_id: agentId.toString().trim().toUpperCase(),
-                            nama: nama.toString().trim(),
-                            hp: cleanHp,
-                            apk: apk.toString().trim(),
-                            tanggal: formattedDeadline,
-                            status: 'baru',
-                            user_id: currentUser.uid,
-                            created_at: new Date().toISOString(),
-                            followup_data: null,
-                            pending_data: []
-                        });
+                        await db.collection('customers').add({ agent_id: agentId.toString().trim().toUpperCase(), nama: nama.toString().trim(), hp: cleanHp, apk: apk.toString().trim(), tanggal: formattedDeadline, status: 'baru', user_id: currentUser.uid, created_at: new Date().toISOString(), followup_data: null, pending_data: [] });
                     } else {
-                        await db.collection('prospek').add({
-                            nama: nama.toString().trim(),
-                            hp: cleanHp,
-                            status: 'Baru',
-                            deadline: formattedDeadline,
-                            user_id: currentUser.uid,
-                            created_at: new Date().toISOString(),
-                            dihubungi_data: null,
-                            negosiasi_data: null
-                        });
+                        await db.collection('prospek').add({ nama: nama.toString().trim(), hp: cleanHp, status: 'Baru', deadline: formattedDeadline, user_id: currentUser.uid, created_at: new Date().toISOString(), dihubungi_data: null, negosiasi_data: null });
                     }
                     success++;
-                } catch(rowError) {
-                    failed++;
-                    errors.push(`Baris ke-${json.indexOf(row)+2}: ${rowError.message}`);
-                }
+                } catch(rowError) { failed++; errors.push(`Baris ke-${json.indexOf(row)+2}: ${rowError.message}`); }
             }
             
             let resultMsg = `✅ Selesai!\nBerhasil: ${success}\nGagal: ${failed}`;
-            if (errors.length > 0 && errors.length <= 5) {
-                resultMsg += `\n\nDetail error:\n${errors.join('\n')}`;
-            } else if (errors.length > 5) {
-                resultMsg += `\n\n${errors.length} error terjadi. Periksa format data Anda.`;
-            }
+            if (duplicates.length > 0) resultMsg += `\n\n⏭ Data duplikat dilewati:\n${duplicates.slice(0,5).join('\n')}${duplicates.length>5?`\n... dan ${duplicates.length-5} lainnya`:''}`;
+            if (errors.length > 0 && errors.length <= 5) resultMsg += `\n\nDetail error:\n${errors.join('\n')}`;
+            else if (errors.length > 5) resultMsg += `\n\n${errors.length} error terjadi. Periksa format data Anda.`;
             alert(resultMsg);
-            
-            excelFileInput.value = '';
-            document.getElementById('fileInfo').innerHTML = '';
-            updateAllBadges();
-            loadAllData();
-            
-        } catch(error) {
-            console.error('Import error:', error);
-            showNotif('❌ Gagal memproses file: ' + error.message, true);
-        } finally {
-            importBtn.textContent = originalText;
-            importBtn.disabled = false;
-        }
+            excelFileInput.value = ''; document.getElementById('fileInfo').innerHTML = '';
+            updateAllBadges(); loadAllData();
+        } catch(error) { console.error('Import error:', error); showNotif('❌ Gagal memproses file: ' + error.message, true); }
+        finally { importBtn.textContent = originalText; importBtn.disabled = false; }
     };
-    
-    reader.onerror = function() {
-        showNotif('❌ Gagal membaca file', true);
-        importBtn.textContent = originalText;
-        importBtn.disabled = false;
-    };
-    
+    reader.onerror = function() { showNotif('❌ Gagal membaca file', true); importBtn.textContent = originalText; importBtn.disabled = false; };
     reader.readAsArrayBuffer(file);
 });
 
-// ========== DOWNLOAD CONTOH FILE ==========
 document.getElementById('downloadCustomerExample')?.addEventListener('click', () => {
-    const data = [{ 
-        agent_id: 'AG-001', 
-        nama: 'Budi Santoso', 
-        hp: '6281234567890', 
-        apk: 'GNP', 
-        deadline: getTodayDate()
-    }];
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Customer');
-    XLSX.writeFile(wb, 'contoh_customer.xlsx');
+    const data = [{ agent_id: 'AG-001', nama: 'Budi Santoso', hp: '6281234567890', apk: 'GNP', deadline: getTodayDate() }];
+    const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Customer'); XLSX.writeFile(wb, 'contoh_customer.xlsx');
 });
-
 document.getElementById('downloadProspekExample')?.addEventListener('click', () => {
-    const data = [{ 
-        nama: 'Rina Marlina', 
-        hp: '6281234567893', 
-        deadline: getTodayDate()
-    }];
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Prospek');
-    XLSX.writeFile(wb, 'contoh_prospek.xlsx');
+    const data = [{ nama: 'Rina Marlina', hp: '6281234567893', deadline: getTodayDate() }];
+    const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Prospek'); XLSX.writeFile(wb, 'contoh_prospek.xlsx');
 });
