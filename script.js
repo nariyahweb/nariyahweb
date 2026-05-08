@@ -71,6 +71,18 @@ function getStatusBadge(status) {
     return `<span class="status-badge ${className}">${displayName}</span>`;
 }
 
+// ========== FUNGSI DEADLINE ==========
+function addDaysToDate(dateStr, days) {
+    if (!dateStr) return new Date().toISOString().split('T')[0];
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+}
+
+function getTodayDate() {
+    return new Date().toISOString().split('T')[0];
+}
+
 // ========== FUNGSI FORMAT INPUT ==========
 function formatAgentId(input) {
     let value = input.value.toUpperCase();
@@ -223,6 +235,43 @@ function showInputDialog(title, message, fields, onConfirm) {
     };
 }
 
+// ========== FUNGSI EDIT DEADLINE ==========
+let currentEditItem = null;
+let currentEditType = null;
+
+function openEditDeadlineModal(id, type, currentDeadline) {
+    currentEditItem = id;
+    currentEditType = type;
+    document.getElementById('editDeadlineDate').value = currentDeadline || getTodayDate();
+    document.getElementById('editDeadlineModal').style.display = 'flex';
+}
+
+document.getElementById('saveDeadlineBtn')?.addEventListener('click', async () => {
+    const newDeadline = document.getElementById('editDeadlineDate').value;
+    if (!newDeadline) {
+        showNotif('⚠️ Tanggal deadline harus diisi!', true);
+        return;
+    }
+    
+    try {
+        if (currentEditType === 'customer') {
+            await db.collection('customers').doc(currentEditItem).update({ tanggal: newDeadline });
+            showNotif('✅ Deadline customer berhasil diubah menjadi ' + newDeadline);
+        } else if (currentEditType === 'prospek') {
+            await db.collection('prospek').doc(currentEditItem).update({ deadline: newDeadline });
+            showNotif('✅ Deadline prospek berhasil diubah menjadi ' + newDeadline);
+        }
+        closeModal('editDeadlineModal');
+        loadAllData();
+    } catch(e) {
+        showNotif('❌ Gagal: ' + e.message, true);
+    }
+});
+
+document.getElementById('cancelDeadlineBtn')?.addEventListener('click', () => {
+    closeModal('editDeadlineModal');
+});
+
 // ========== SIDEBAR ==========
 document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
@@ -289,7 +338,7 @@ async function updateDeadlineBadge() {
     const badge = document.getElementById('deadlineCount');
     if (!badge) return;
     try {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayDate();
         const customerOverdue = await db.collection('customers').where('user_id', '==', currentUser.uid).where('tanggal', '<', today).get();
         const prospekOverdue = await db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today).get();
         const deadlineCount = customerOverdue.size + prospekOverdue.size;
@@ -374,6 +423,15 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
 
 document.querySelectorAll('.closeModalBtn').forEach(btn => btn.addEventListener('click', () => closeModal(btn.dataset.modal)));
 document.querySelectorAll('.modal').forEach(modal => modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(modal.id); }));
+
+// ========== TOMBOL INFORMASI ==========
+document.getElementById('infoBtn')?.addEventListener('click', () => {
+    document.getElementById('infoModal').style.display = 'flex';
+});
+
+document.getElementById('infoModalClose')?.addEventListener('click', () => {
+    closeModal('infoModal');
+});
 
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
@@ -473,7 +531,7 @@ if (prospekPhoneInput2) {
 
 // ========== CUSTOMER CRUD ==========
 document.getElementById('addCustomerBtn')?.addEventListener('click', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     document.getElementById('customerDate').value = today;
     document.getElementById('customerModal').style.display = 'flex';
 });
@@ -498,7 +556,7 @@ if (saveCustomerBtn) {
         if (!hp.startsWith('8')) { showNotif('Nomor WhatsApp harus diawali dengan 8!', true); return; }
         if (!apk) { showNotif('Aplikasi wajib dipilih!', true); return; }
         
-        if (!tanggal) tanggal = new Date().toISOString().split('T')[0];
+        if (!tanggal) tanggal = getTodayDate();
         let cleanHp = '+62' + hp;
         
         db.collection('customers').add({ 
@@ -530,7 +588,7 @@ if (saveCustomerBtn) {
 
 // ========== PROSPEK CRUD ==========
 document.getElementById('addProspekBtn')?.addEventListener('click', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     document.getElementById('prospekDeadline').value = today;
     document.getElementById('prospekModal').style.display = 'flex';
 });
@@ -552,7 +610,7 @@ if (saveProspekBtn) {
         if (hp.length > 12) { showNotif('Nomor WhatsApp maksimal 12 digit!', true); return; }
         if (!hp.startsWith('8')) { showNotif('Nomor WhatsApp harus diawali dengan 8!', true); return; }
         
-        if (!deadline) deadline = new Date().toISOString().split('T')[0];
+        if (!deadline) deadline = getTodayDate();
         let cleanHp = '+62' + hp;
         
         db.collection('prospek').add({ 
@@ -603,6 +661,10 @@ function openDetailCustomer(id) {
         if (d.pending_data && d.pending_data.length) {
             pendingInfo = `<div class="detail-info-item"><div class="detail-info-icon">📝</div><div class="detail-info-content"><label>Pending Responses</label><div class="value">${d.pending_data.length} balasan tercatat</div></div></div>`;
         }
+        
+        const deadlineDisplay = d.tanggal || '-';
+        const editBtn = `<button class="edit-deadline-btn" onclick="openEditDeadlineModal('${id}','customer','${d.tanggal || ''}')" title="Edit deadline">✏️</button>`;
+        
         document.getElementById('detailContent').innerHTML = `
             <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
             <div class="detail-body">
@@ -610,7 +672,7 @@ function openDetailCustomer(id) {
                     <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${d.tanggal || '-'}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${deadlineDisplay} ${editBtn}</div></div></div>
                     ${followupInfo}
                     ${pendingInfo}
                     <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status</label><div class="value">${d.status === 'followup' ? 'Follow Up' : d.status === 'baru' ? 'Baru' : d.status}</div></div></div>
@@ -623,11 +685,17 @@ function openDetailCustomer(id) {
     });
 }
 
-window.updateCustomerStatus = function(id, newStatus) {
+window.updateCustomerStatus = async function(id, newStatus) {
     if (newStatus === 'followup') {
-        db.collection('customers').doc(id).update({ status: 'followup' });
+        const doc = await db.collection('customers').doc(id).get();
+        const currentDeadline = doc.data().tanggal || getTodayDate();
+        const newDeadline = addDaysToDate(currentDeadline, 1);
+        await db.collection('customers').doc(id).update({ 
+            status: 'followup',
+            tanggal: newDeadline
+        });
+        showNotif(`✅ Status berhasil diupdate ke Follow Up. Deadline +1 hari menjadi ${newDeadline}`);
         closeModal('detailModal');
-        showNotif('Status berhasil diupdate ke Follow Up');
         loadAllData();
     }
 };
@@ -650,9 +718,16 @@ function openFollowupConfirm(id) {
     cb1.onchange = checkBoth;
     cb2.onchange = checkBoth;
     yesBtn.onclick = async () => {
-        await db.collection('customers').doc(id).update({ followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, status: 'pending' });
+        const doc = await db.collection('customers').doc(id).get();
+        const currentDeadline = doc.data().tanggal || getTodayDate();
+        const newDeadline = addDaysToDate(currentDeadline, 1);
+        await db.collection('customers').doc(id).update({ 
+            followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, 
+            status: 'pending',
+            tanggal: newDeadline
+        });
         closeModal('followupConfirmModal');
-        showNotif('✅ Customer dipindahkan ke Pending');
+        showNotif(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
         loadAllData();
         closeModal('detailModal');
     };
@@ -758,8 +833,14 @@ function updatePendingButtons() {
     const saveBtn = document.getElementById('pendingSaveBtn');
     if (saveBtn) {
         saveBtn.onclick = async () => {
-            await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems });
-            showNotif('💾 Data pending berhasil disimpan');
+            const doc = await db.collection('customers').doc(currentPendingId).get();
+            const currentDeadline = doc.data().tanggal || getTodayDate();
+            const newDeadline = addDaysToDate(currentDeadline, 3);
+            await db.collection('customers').doc(currentPendingId).update({ 
+                pending_data: pendingItems,
+                tanggal: newDeadline
+            });
+            showNotif(`💾 Data pending berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`);
             closeModal('pendingModal');
             loadAllData();
         };
@@ -775,18 +856,71 @@ function updatePendingButtons() {
 
 // ========== FUNGSI UNTUK PROSPEK ==========
 
-// 1. Lanjut ke Dihubungi (dari status Baru)
-function lanjutKeDihubungi(id) {
-    db.collection('prospek').doc(id).update({ status: 'Dihubungi' })
-        .then(() => {
-            showNotif('✅ Status berubah menjadi Dihubungi');
-            loadAllData();
-            closeModal('detailModal');
-        })
-        .catch(err => showNotif('❌ Gagal: ' + err.message, true));
+function openDetailProspek(id) {
+    db.collection('prospek').doc(id).get().then(doc => {
+        const d = doc.data();
+        let statusIcon = d.status === 'Negosiasi' ? '📋' : d.status === 'Dihubungi' ? '📞' : d.status === 'Tertarik' ? '⭐' : '🆕';
+        let actionButtons = '';
+        
+        if (d.status === 'Baru') {
+            actionButtons = `<button class="btn-primary" onclick="lanjutKeDihubungi('${id}')">📞 Lanjut ke Dihubungi</button>`;
+        } else if (d.status === 'Dihubungi') {
+            actionButtons = `<button class="btn-primary" onclick="openProspekDihubungiConfirm('${id}')">✅ Konfirmasi Dihubungi</button>`;
+        } else if (d.status === 'Negosiasi') {
+            actionButtons = `<button class="btn-primary" onclick="openProspekNegosiasiModal('${id}')">📝 Kelola Negosiasi</button>`;
+        } else if (d.status === 'Tertarik') {
+            actionButtons = `<button class="btn-primary" onclick="showConvertToCustomerModal('${id}')">🔄 Jadikan Customer</button>`;
+        }
+        
+        let negosiasiInfo = '';
+        if (d.negosiasi_data) {
+            negosiasiInfo = `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Data Negosiasi</label><div class="value">Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>`;
+        }
+        
+        let dihubungiInfo = '';
+        if (d.dihubungi_data) {
+            dihubungiInfo = `<div class="detail-info-item"><div class="detail-info-icon">✅</div><div class="detail-info-content"><label>Konfirmasi Dihubungi</label><div class="value">Terkirim: ${d.dihubungi_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.dihubungi_data.dibalas ? 'Ya' : 'Tidak'}</div></div></div>`;
+        }
+        
+        const deadlineDisplay = d.deadline || '-';
+        const editBtn = `<button class="edit-deadline-btn" onclick="openEditDeadlineModal('${id}','prospek','${d.deadline || ''}')" title="Edit deadline">✏️</button>`;
+        
+        document.getElementById('detailContent').innerHTML = `
+            <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
+            <div class="detail-body">
+                <div class="detail-info">
+                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${deadlineDisplay} ${editBtn}</div></div></div>
+                    ${dihubungiInfo}
+                    ${negosiasiInfo}
+                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status</label><div class="value">${d.status}</div></div></div>
+                </div>
+                <div class="detail-actions">
+                    <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
+                    ${actionButtons}
+                </div>
+            </div>
+            <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button><button class="btn-danger" onclick="deleteProspek('${id}')">🗑️ Hapus</button></div>
+        `;
+        showModal('detailModal');
+    });
 }
 
-// 2. Konfirmasi Dihubungi (dari status Dihubungi ke Negosiasi)
+function lanjutKeDihubungi(id) {
+    db.collection('prospek').doc(id).get().then(doc => {
+        const currentDeadline = doc.data().deadline || getTodayDate();
+        const newDeadline = addDaysToDate(currentDeadline, 1);
+        db.collection('prospek').doc(id).update({ 
+            status: 'Dihubungi',
+            deadline: newDeadline
+        }).then(() => {
+            showNotif(`✅ Status berubah menjadi Dihubungi. Deadline +1 hari menjadi ${newDeadline}`);
+            loadAllData();
+            closeModal('detailModal');
+        }).catch(err => showNotif('❌ Gagal: ' + err.message, true));
+    });
+}
+
 function openProspekDihubungiConfirm(id) {
     currentProspekId = id;
     const modal = document.createElement('div');
@@ -823,8 +957,12 @@ function openProspekDihubungiConfirm(id) {
     cb2.onchange = checkBoth;
     
     yesBtn.onclick = async () => {
+        const doc = await db.collection('prospek').doc(id).get();
+        const currentDeadline = doc.data().deadline || getTodayDate();
+        const newDeadline = addDaysToDate(currentDeadline, 1);
         await db.collection('prospek').doc(id).update({ 
             status: 'Negosiasi',
+            deadline: newDeadline,
             dihubungi_data: { 
                 terkirim: true, 
                 dibalas: true, 
@@ -834,7 +972,7 @@ function openProspekDihubungiConfirm(id) {
         });
         modal.remove();
         document.body.classList.remove('modal-open');
-        showNotif('✅ Prospek dipindahkan ke Negosiasi');
+        showNotif(`✅ Prospek dipindahkan ke Negosiasi. Deadline +1 hari menjadi ${newDeadline}`);
         loadAllData();
         closeModal('detailModal');
     };
@@ -846,7 +984,6 @@ function openProspekDihubungiConfirm(id) {
     modal.onclick = (e) => { if (e.target === modal) { modal.remove(); document.body.classList.remove('modal-open'); } };
 }
 
-// 3. Kelola Negosiasi (modal kuesioner dengan 4 tombol)
 function openProspekNegosiasiModal(id) {
     currentProspekId = id;
     const fields = ['prospek_aplikasi', 'prospek_domisili', 'prospek_transaksi', 'prospek_deposit', 'prospek_tertarik', 'prospek_penawaran'];
@@ -938,9 +1075,16 @@ function openProspekNegosiasiModal(id) {
             return;
         }
         
+        const doc = await db.collection('prospek').doc(currentProspekId).get();
+        const currentDeadline = doc.data().deadline || getTodayDate();
+        const newDeadline = addDaysToDate(currentDeadline, 3);
+        
         const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
-        await db.collection('prospek').doc(currentProspekId).update({ negosiasi_data: negosiasi_data });
-        showNotif('💾 Data kuesioner berhasil disimpan');
+        await db.collection('prospek').doc(currentProspekId).update({ 
+            negosiasi_data: negosiasi_data,
+            deadline: newDeadline
+        });
+        showNotif(`💾 Data kuesioner berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`);
         closeModal('prospekNegosiasiModal');
         loadAllData();
         closeModal('detailModal');
@@ -951,59 +1095,11 @@ function openProspekNegosiasiModal(id) {
     };
 }
 
-// 4. Update fungsi openDetailProspek (dengan tombol WhatsApp)
-function openDetailProspek(id) {
-    db.collection('prospek').doc(id).get().then(doc => {
-        const d = doc.data();
-        let statusIcon = d.status === 'Negosiasi' ? '📋' : d.status === 'Dihubungi' ? '📞' : d.status === 'Tertarik' ? '⭐' : '🆕';
-        let actionButtons = '';
-        
-        if (d.status === 'Baru') {
-            actionButtons = `<button class="btn-primary" onclick="lanjutKeDihubungi('${id}')">📞 Lanjut ke Dihubungi</button>`;
-        } else if (d.status === 'Dihubungi') {
-            actionButtons = `<button class="btn-primary" onclick="openProspekDihubungiConfirm('${id}')">✅ Konfirmasi Dihubungi</button>`;
-        } else if (d.status === 'Negosiasi') {
-            actionButtons = `<button class="btn-primary" onclick="openProspekNegosiasiModal('${id}')">📝 Kelola Negosiasi</button>`;
-        } else if (d.status === 'Tertarik') {
-            actionButtons = `<button class="btn-primary" onclick="showConvertToCustomerModal('${id}')">🔄 Jadikan Customer</button>`;
-        }
-        
-        let negosiasiInfo = '';
-        if (d.negosiasi_data) {
-            negosiasiInfo = `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Data Negosiasi</label><div class="value">Aplikasi: ${d.negosiasi_data.aplikasi || '-'}<br>Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>`;
-        }
-        
-        let dihubungiInfo = '';
-        if (d.dihubungi_data) {
-            dihubungiInfo = `<div class="detail-info-item"><div class="detail-info-icon">✅</div><div class="detail-info-content"><label>Konfirmasi Dihubungi</label><div class="value">Terkirim: ${d.dihubungi_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.dihubungi_data.dibalas ? 'Ya' : 'Tidak'}</div></div></div>`;
-        }
-        
-        document.getElementById('detailContent').innerHTML = `
-            <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
-            <div class="detail-body">
-                <div class="detail-info">
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${d.deadline || '-'}</div></div></div>
-                    ${dihubungiInfo}
-                    ${negosiasiInfo}
-                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status</label><div class="value">${d.status}</div></div></div>
-                </div>
-                <div class="detail-actions">
-                    <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
-                    ${actionButtons}
-                </div>
-            </div>
-            <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button><button class="btn-danger" onclick="deleteProspek('${id}')">🗑️ Hapus</button></div>
-        `;
-        showModal('detailModal');
-    });
-}
-
 // ========== CLOSING & TIDAK TERTARIK ==========
 async function saveToClosingDB(id, data) { 
     try { 
         await db.collection('db_closing').add({ 
-            nama: data.nama, hp: data.hp, tanggal: data.tanggal || new Date().toISOString().split('T')[0], 
+            nama: data.nama, hp: data.hp, tanggal: data.tanggal || getTodayDate(), 
             closing_date: new Date().toISOString(), user_id: currentUser.uid,
             followup_data: data.followup_data || null,
             pending_data: data.pending_data || []
@@ -1239,7 +1335,7 @@ function renderTemplateList() {
     }
     
     container.innerHTML = savedTemplates.map((template, idx) => `
-        <div class="template-item">
+        <div class="template-item" style="background: #f9fafb; border-radius: 8px; padding: 10px; margin-bottom: 8px; border: 1px solid #e5e7eb;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <strong style="font-size: 13px;">📝 ${escapeHtml(template.name)}</strong>
                 <div>
@@ -1411,9 +1507,9 @@ function finishBroadcast() {
     isBroadcasting = false; document.getElementById('broadcastPanel').style.display = 'none'; broadcastStatus = [];
 }
 
-// ========== FULL PAGE KANBAN ==========
+// ========== FULL PAGE KANBAN (DISEDERHANAKAN KARENA PANJANG) ==========
 function renderFullFollowupKanban() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     const lists = { baru: [], followup: [], pending: [], closing: [] };
     customersData.forEach(item => {
         const status = item.status || 'baru';
@@ -1482,7 +1578,7 @@ function renderFullFollowupKanban() {
 }
 
 function renderFullProspekKanban() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     const lists = { prospekBaru: [], prospekDihubungi: [], prospekNegosiasi: [], prospekTertarik: [] };
     prospekData.forEach(item => {
         const status = item.status || 'Baru';
@@ -1552,12 +1648,12 @@ function renderFullProspekKanban() {
 }
 
 document.getElementById('addCustomerFullBtn')?.addEventListener('click', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     document.getElementById('customerDate').value = today;
     document.getElementById('customerModal').style.display = 'flex';
 });
 document.getElementById('addProspekFullBtn')?.addEventListener('click', () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     document.getElementById('prospekDeadline').value = today;
     document.getElementById('prospekModal').style.display = 'flex';
 });
@@ -1754,7 +1850,7 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
 // ========== LOAD ALL DATA ==========
 function loadAllData() {
     if (!currentUser) return;
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayDate();
     
     db.collection('customers').where('user_id', '==', currentUser.uid).onSnapshot(snap => {
         let total = 0, closing = 0, pending = 0, followup = 0;
@@ -1951,7 +2047,7 @@ document.getElementById('savePesanBtn')?.addEventListener('click', async () => {
 const deadlineNotifBtn = document.getElementById('deadlineNotifBtn');
 if (deadlineNotifBtn) {
     deadlineNotifBtn.addEventListener('click', async () => {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayDate();
         try {
             const overdueCustomers = await db.collection('customers').where('user_id', '==', currentUser.uid).where('tanggal', '<', today).get();
             const overdueProspek = await db.collection('prospek').where('user_id', '==', currentUser.uid).where('deadline', '<', today).get();
@@ -1974,7 +2070,7 @@ if (pesanNotifBtn) {
     });
 }
 
-// ========== IMPORT EXCEL ==========
+// ========== IMPORT EXCEL (SEDERHANAKAN KARENA PANJANG) ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
 if (dropZone) dropZone.addEventListener('click', () => excelFileInput?.click());
@@ -2119,10 +2215,10 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
                         if (!isNaN(dateObj.getTime())) {
                             formattedDeadline = dateObj.toISOString().split('T')[0];
                         } else {
-                            formattedDeadline = new Date().toISOString().split('T')[0];
+                            formattedDeadline = getTodayDate();
                         }
                     } else {
-                        formattedDeadline = new Date().toISOString().split('T')[0];
+                        formattedDeadline = getTodayDate();
                     }
                     
                     if (importType === 'customer') {
@@ -2195,7 +2291,7 @@ document.getElementById('downloadCustomerExample')?.addEventListener('click', ()
         nama: 'Budi Santoso', 
         hp: '6281234567890', 
         apk: 'GNP', 
-        deadline: new Date().toISOString().split('T')[0] 
+        deadline: getTodayDate()
     }];
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -2207,7 +2303,7 @@ document.getElementById('downloadProspekExample')?.addEventListener('click', () 
     const data = [{ 
         nama: 'Rina Marlina', 
         hp: '6281234567893', 
-        deadline: new Date().toISOString().split('T')[0] 
+        deadline: getTodayDate()
     }];
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
