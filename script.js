@@ -939,20 +939,30 @@ function openFollowupConfirm(id) {
     const yesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
     
+    // Fungsi untuk update status tombol
     const updateYesBtn = () => {
         const isChecked = cb1.checked && cb2.checked;
         yesBtn.disabled = !isChecked;
+        console.log('Update yesBtn.disabled:', yesBtn.disabled); // Debug
     };
     
     cb1.onchange = updateYesBtn;
     cb2.onchange = updateYesBtn;
     updateYesBtn();
     
-    yesBtn.onclick = () => {
-        if (yesBtn.disabled) {
+    // Hapus semua event listener lama dan pasang yang baru
+    const newYesBtn = yesBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+    
+    newYesBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Tombol YES diklik, disabled:', newYesBtn.disabled);
+        if (newYesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
+        // Proses lanjut ke pending
         (async () => {
             const doc = await db.collection('customers').doc(id).get();
             const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
