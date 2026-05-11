@@ -950,7 +950,7 @@ function openFollowupConfirm(id) {
     cb2.onchange = updateYesBtn;
     updateYesBtn();
     
-    // Hapus semua event listener lama dan pasang yang baru
+    // Hapus event listener lama dengan clone
     const newYesBtn = yesBtn.cloneNode(true);
     yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
     
@@ -962,7 +962,6 @@ function openFollowupConfirm(id) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
-        // Proses lanjut ke pending
         (async () => {
             const doc = await db.collection('customers').doc(id).get();
             const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
@@ -1226,6 +1225,7 @@ function openProspekDihubungiConfirm(id) {
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'flex';
+    modal.style.zIndex = '99999999';
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 400px;">
             <h3>✅ Konfirmasi Dihubungi</h3>
@@ -1238,9 +1238,10 @@ function openProspekDihubungiConfirm(id) {
                     <label><input type="checkbox" id="prospek_dibalas" style="margin-right: 8px;"> Apakah sudah di balas?</label>
                 </div>
             </div>
-            <div class="modal-buttons">
-                <button id="prospekConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Negosiasi</button>
-                <button id="prospekConfirmCancel" class="btn-outline">Batal</button>
+            <div class="modal-buttons" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button id="prospekConfirmYes" class="btn-primary" disabled style="flex: 1;">✅ Lanjut ke Negosiasi</button>
+                <button id="prospekConfirmNo" class="btn-danger" style="flex: 1;">📵 Nomor Salah/Tidak bisa dihubungi</button>
+                <button id="prospekConfirmCancel" class="btn-outline" style="flex: 1;">❌ Batal</button>
             </div>
         </div>
     `;
@@ -1250,13 +1251,29 @@ function openProspekDihubungiConfirm(id) {
     const cb1 = modal.querySelector('#prospek_terkirim');
     const cb2 = modal.querySelector('#prospek_dibalas');
     const yesBtn = modal.querySelector('#prospekConfirmYes');
+    const noBtn = modal.querySelector('#prospekConfirmNo');
     const cancelBtn = modal.querySelector('#prospekConfirmCancel');
     
-    const checkBoth = () => { yesBtn.disabled = !(cb1.checked && cb2.checked); };
+    const checkBoth = () => { 
+        const isChecked = cb1.checked && cb2.checked;
+        yesBtn.disabled = !isChecked;
+        if (!isChecked) {
+            yesBtn.title = 'Harap centang kedua opsi terlebih dahulu';
+        } else {
+            yesBtn.title = '';
+        }
+    };
+    
     cb1.onchange = checkBoth;
     cb2.onchange = checkBoth;
+    checkBoth();
     
+    // Tombol YES - Lanjut ke Negosiasi
     yesBtn.onclick = async () => {
+        if (yesBtn.disabled) {
+            showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
+            return;
+        }
         const doc = await db.collection('prospek').doc(id).get();
         const currentDeadline = doc.data().deadline || getTodayDate();
         const newDeadline = addDaysToDate(currentDeadline, 1);
@@ -1272,16 +1289,50 @@ function openProspekDihubungiConfirm(id) {
         });
         modal.remove();
         document.body.classList.remove('modal-open');
-        showNotif(`✅ Prospek dipindahkan ke Negosiasi. Deadline +1 hari menjadi ${newDeadline}`);
+        showNotifTop(`✅ Prospek dipindahkan ke Negosiasi. Deadline +1 hari menjadi ${newDeadline}`);
         loadAllData();
         closeModal('detailModal');
     };
     
+    // Tombol NO - Nomor Salah / Tidak bisa dihubungi
+    noBtn.onclick = async () => {
+        const doc = await db.collection('prospek').doc(id).get();
+        const data = doc.data();
+        if (data) {
+            showConfirmDialog(
+                'Pindahkan ke Database Nomor Salah?',
+                `Apakah Anda yakin nomor "${escapeHtml(data.hp)}" milik "${escapeHtml(data.nama)}" tidak dapat dihubungi?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
+                async () => {
+                    await db.collection('nomor_salah').add({
+                        nama: data.nama,
+                        hp: data.hp,
+                        alasan: 'Nomor tidak bisa dihubungi / tidak aktif',
+                        deleted_at: new Date().toISOString(),
+                        user_id: data.user_id
+                    });
+                    await db.collection('prospek').doc(id).delete();
+                    showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
+                    modal.remove();
+                    document.body.classList.remove('modal-open');
+                    loadAllData();
+                    closeModal('detailModal');
+                }
+            );
+        }
+    };
+    
+    // Tombol Batal
     cancelBtn.onclick = () => {
         modal.remove();
         document.body.classList.remove('modal-open');
     };
-    modal.onclick = (e) => { if (e.target === modal) { modal.remove(); document.body.classList.remove('modal-open'); } };
+    
+    modal.onclick = (e) => { 
+        if (e.target === modal) { 
+            modal.remove(); 
+            document.body.classList.remove('modal-open'); 
+        } 
+    };
 }
 
 function openProspekNegosiasiModal(id) {
