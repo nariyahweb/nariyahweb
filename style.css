@@ -557,3 +557,18 @@ body.modal-open{overflow:hidden}
 .modal[style*="display: flex"] button {
     pointer-events: auto !important;
 }
+
+/* PERBAIKAN POPUP NOMOR SALAH - Z-INDEX TERTINGGI */
+#followupConfirmModal .btn-danger {
+    z-index: 99999999 !important;
+    position: relative !important;
+}
+
+/* Pastikan confirm dialog untuk nomor salah juga di depan */
+.confirm-dialog-overlay {
+    z-index: 999999999 !important;
+}
+
+.confirm-dialog-content {
+    z-index: 999999999 !important;
+}
