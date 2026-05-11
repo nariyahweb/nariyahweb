@@ -932,37 +932,44 @@ function openFollowupConfirm(id) {
     document.getElementById('followup_terkirim').checked = false;
     document.getElementById('followup_dibalas').checked = false;
     document.getElementById('followupConfirmYes').disabled = true;
-    document.getElementById('followupConfirmModal').style.display = 'flex';
+    
+    const modal = document.getElementById('followupConfirmModal');
+    
+    // Force style modal
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.zIndex = '99999999';
+    modal.style.backdropFilter = 'blur(4px)';
+    
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
     
     const cb1 = document.getElementById('followup_terkirim');
     const cb2 = document.getElementById('followup_dibalas');
     const yesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
     
-    // Fungsi untuk update status tombol
     const updateYesBtn = () => {
         const isChecked = cb1.checked && cb2.checked;
         yesBtn.disabled = !isChecked;
-        console.log('Update yesBtn.disabled:', yesBtn.disabled); // Debug
     };
     
     cb1.onchange = updateYesBtn;
     cb2.onchange = updateYesBtn;
     updateYesBtn();
     
-    // Hapus semua event listener lama dan pasang yang baru
-    const newYesBtn = yesBtn.cloneNode(true);
-    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
-    
-    newYesBtn.onclick = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Tombol YES diklik, disabled:', newYesBtn.disabled);
-        if (newYesBtn.disabled) {
+    yesBtn.onclick = () => {
+        if (yesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
-        // Proses lanjut ke pending
         (async () => {
             const doc = await db.collection('customers').doc(id).get();
             const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
