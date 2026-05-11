@@ -986,21 +986,6 @@ function openFollowupConfirm(id) {
         }
     };
 }
-    
-    async function proceedToPending() {
-        const doc = await db.collection('customers').doc(id).get();
-        const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
-        await db.collection('customers').doc(id).update({ 
-            followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, 
-            status: 'pending',
-            tanggal: newDeadline
-        });
-        closeModal('followupConfirmModal');
-        showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
-        loadAllData();
-        closeModal('detailModal');
-    }
-}
 
 // ========== PENDING MODAL ==========
 function openPendingModal(id) {
