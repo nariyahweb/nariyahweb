@@ -1389,8 +1389,9 @@ function openProspekNegosiasiModal(id) {
         }
     };
     
-    // ========== TOMBOL SIMPAN ==========
+    // ========== TOMBOL SIMPAN (CEK PERUBAHAN DATA) ==========
     document.getElementById('negosiasiSimpanBtn').onclick = async () => {
+        // Ambil data dari form
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
         const transaksi = document.getElementById('prospek_transaksi').value;
@@ -1398,6 +1399,20 @@ function openProspekNegosiasiModal(id) {
         const tertarik = document.getElementById('prospek_tertarik').value;
         const penawaran = document.getElementById('prospek_penawaran').value;
         
+        // Ambil data lama dari database
+        const doc = await db.collection('prospek').doc(currentProspekId).get();
+        const existingData = doc.data().negosiasi_data || {};
+        
+        // 🔥 CEK APAKAH ADA PERUBAHAN
+        const hasChanges = 
+            aplikasi !== (existingData.aplikasi || '') ||
+            domisili !== (existingData.domisili || '') ||
+            transaksi !== (existingData.transaksi || '') ||
+            deposit !== (existingData.deposit || '') ||
+            tertarik !== (existingData.tertarik || '') ||
+            penawaran !== (existingData.penawaran || '');
+        
+        // Cek apakah ada data yang diisi
         const hasAnyData = aplikasi || domisili || transaksi || deposit || tertarik || penawaran;
         
         if (!hasAnyData) {
@@ -1405,6 +1420,12 @@ function openProspekNegosiasiModal(id) {
             return;
         }
         
+        if (!hasChanges) {
+            showNotifTop('⚠️ Tidak ada perubahan data! Silakan ubah data terlebih dahulu sebelum menyimpan.', true);
+            return;
+        }
+        
+        // Simpan data
         const negosiasi_data = { 
             aplikasi: aplikasi || '',
             domisili: domisili || '',
@@ -1416,7 +1437,6 @@ function openProspekNegosiasiModal(id) {
             is_complete: !!(aplikasi && domisili && transaksi && deposit && tertarik && penawaran)
         };
         
-        const doc = await db.collection('prospek').doc(currentProspekId).get();
         const currentDeadline = doc.data().deadline || getTodayDate();
         const newDeadline = addDaysToDate(currentDeadline, 3);
         
