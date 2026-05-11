@@ -345,35 +345,38 @@ body.modal-open{overflow:hidden}
 @media(max-width:768px){.stats-grid{grid-template-columns:1fr}.content-area{padding:12px}.topbar-center{display:none}.toggle-btn{display:block!important}.fullpage-header{flex-direction:column;align-items:stretch}.fullpage-header .add-btn{width:100%}.board-header{flex-direction:column;align-items:flex-start;gap:8px}.board-header .add-btn{width:100%}.kanban-board{grid-template-columns:repeat(4,minmax(100px,1fr))!important;gap:8px}.kanban-board-full{grid-template-columns:repeat(4,minmax(100px,1fr));gap:8px}}
 @media(max-width:640px){.kanban-board{grid-template-columns:repeat(4,minmax(85px,1fr))!important;gap:6px}.kanban-board .card-name{font-size:9px}.kanban-board .card-phone span:first-child{font-size:8px}.kanban-board .whatsapp-icon{font-size:9px}.kanban-board-full{grid-template-columns:repeat(4,minmax(85px,1fr));gap:6px}}
 /* ========== PERBAIKAN Z-INDEX MODAL (TAMBAHAN) ========== */
-/* Pastikan modal negosiasi di depan */
+/* PERBAIKAN MODAL NEGOSIASI - Z-INDEX TERTINGGI */
 #prospekNegosiasiModal {
-    z-index: 999999 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    display: none !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999999 !important;
+    backdrop-filter: blur(4px);
+}
+
+#prospekNegosiasiModal[style*="display: flex"] {
+    display: flex !important;
 }
 
 #prospekNegosiasiModal .modal-content {
-    z-index: 999999 !important;
+    background: #fff !important;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative !important;
+    z-index: 10000000 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-/* Pastikan semua modal yang dibuat secara dinamis (showConfirmDialog) di depan */
-.modal[style*="display: flex"] {
-    z-index: 999999 !important;
-}
-
-/* Pastikan konten modal tetap di depan */
-.modal[style*="display: flex"] .modal-content {
-    z-index: 999999 !important;
-}
-
-/* Untuk confirm dialog custom */
-.confirm-dialog-overlay {
-    z-index: 999999 !important;
-}
-
-.confirm-dialog-content {
-    z-index: 999999 !important;
-}
-
-/* Pastikan body tidak mengganggu */
-body.modal-open {
-    overflow: hidden;
+/* Pastikan tidak ada elemen yang menutupi modal */
+#prospekNegosiasiModal * {
+    pointer-events: auto;
 }
