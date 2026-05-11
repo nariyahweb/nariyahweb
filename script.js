@@ -1421,6 +1421,17 @@ function openProspekNegosiasiModal(id) {
         loadAllData();
         closeModal('detailModal');
     };
+
+        // ========== TOMBOL BATAL ==========
+    const batalBtn = document.getElementById('negosiasiBatalBtn');
+    if (batalBtn) {
+        // Hapus event listener lama jika ada
+        const newBatalBtn = batalBtn.cloneNode(true);
+        batalBtn.parentNode.replaceChild(newBatalBtn, batalBtn);
+        newBatalBtn.onclick = () => {
+            closeModal('prospekNegosiasiModal');
+        };
+    }
     
 }  // <---- INI KURUNG TUTUP UNTUK FUNGSI openProspekNegosiasiModal - PASTIKAN ADA!
 
