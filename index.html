@@ -47,6 +47,7 @@
                 <div class="menu-item" data-page="prospekFull"><span class="icon">📋</span><span>Data Prospek Agen</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
+                <div class="menu-item" data-page="dbAgent"><span class="icon">👥</span><span>Database Agent</span></div>
                 <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
                 <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
                 <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📵</span><span>DB Nomor Salah</span></div>
@@ -196,6 +197,21 @@
                 </div>
 
                 <!-- DATABASE PAGES -->
+                <!-- DATABASE AGENT PAGE -->
+<div id="dbAgentPage" class="page-content" style="display:none">
+    <div class="db-section">
+        <div class="db-header">
+            <h3>👥 Database Agent</h3>
+            <div class="db-actions">
+                <button class="db-select-all" id="selectAllAgent">✅ Pilih Semua</button>
+                <button class="db-delete-selected" id="deleteSelectedAgent">🗑️ Hapus Terpilih</button>
+                <button class="db-import-excel" id="importAgentExcelBtn" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📥 Import Excel</button>
+                <button class="db-export-excel" id="exportAgentExcelBtn" style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📤 Export Excel</button>
+            </div>
+        </div>
+        <div id="dbAgentList" class="db-list"></div>
+    </div>
+</div>
                 <div id="dbClosingPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📁 Database Closing</h3><div class="db-actions"><button class="db-select-all" id="selectAllClosing">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedClosing">🗑️ Hapus Terpilih</button></div></div><div id="dbClosingList" class="db-list"></div></div></div>
                 <div id="dbTidakPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📁 Database Tidak Tertarik</h3><div class="db-actions"><button class="db-select-all" id="selectAllTidak">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedTidak">🗑️ Hapus Terpilih</button></div></div><div id="dbTidakList" class="db-list"></div></div></div>
                 <div id="dbNomorSalahPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📵 Database Nomor Salah</h3><div class="db-actions"><button class="db-select-all" id="selectAllNomorSalah">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedNomorSalah">🗑️ Hapus Terpilih</button></div></div><div id="dbNomorSalahList" class="db-list"></div></div></div>
@@ -257,6 +273,7 @@
 <div class="modal" id="addCsModal"><div class="modal-content"><h3>➕ Tambah CS Agent</h3><div class="modal-subtitle">Buat akun untuk CS Agent baru</div><div class="form-group"><label for="csEmail">Email <span class="required">*</span></label><input type="email" id="csEmail" placeholder="cs@example.com" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPassword">Password <span class="required">*</span></label><input type="password" id="csPassword" placeholder="******" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csName">Nama Lengkap <span class="required">*</span></label><input type="text" id="csName" placeholder="Nama CS" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="csPhone" placeholder="81234567890" style="flex:1"></div></div><div class="modal-buttons"><button id="saveCsBtn" class="btn-primary">Simpan</button><button class="closeModalBtn" data-modal="addCsModal">Batal</button></div></div></div>
 
 <div id="notifBox"></div>
+<input type="file" id="agentExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
 <script src="script.js"></script>
 </body>
 </html>
