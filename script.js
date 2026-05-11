@@ -81,6 +81,20 @@ function getStatusBadge(status) {
     return `<span class="status-badge ${className}">${displayName}</span>`;
 }
 
+// Notifikasi dengan z-index tertinggi (di atas semua popup)
+function showNotifTop(msg, isError = false) {
+    const notif = document.createElement('div');
+    notif.textContent = msg;
+    notif.className = `notif-toast ${isError ? 'notif-error' : 'notif-success'}`;
+    notif.style.zIndex = '999999999';
+    notif.style.position = 'fixed';
+    notif.style.top = '20px';
+    notif.style.right = '20px';
+    notif.style.maxWidth = '350px';
+    document.getElementById('notifBox').appendChild(notif);
+    setTimeout(() => notif.remove(), 5000);
+}
+
 // ========== FUNGSI DEADLINE ==========
 function addDaysToDate(dateStr, days) {
     if (!dateStr) return new Date().toISOString().split('T')[0];
@@ -928,12 +942,9 @@ function openFollowupConfirm(id) {
     const yesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
     
-    // Fungsi untuk mengecek kedua checkbox
     const checkBoth = () => { 
         const isChecked = cb1.checked && cb2.checked;
         yesBtn.disabled = !isChecked;
-        
-        // Tambahkan tooltip
         if (!isChecked) {
             yesBtn.title = 'Harap centang kedua opsi (pesan terkirim & dibalas)';
         } else {
@@ -941,21 +952,38 @@ function openFollowupConfirm(id) {
         }
     };
     
-    // Jalankan pengecekan awal
     checkBoth();
-    
-    // Event ketika checkbox berubah
     cb1.onchange = checkBoth;
     cb2.onchange = checkBoth;
     
-    // Tombol YES (Lanjut ke Pending)
-    yesBtn.onclick = async () => {
-        // Cek lagi apakah sudah dicentang (untuk jaga-jaga)
-        if (!cb1.checked || !cb2.checked) {
-            showNotif('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
+    // 🔥 TAMBAHKAN INI - Notifikasi saat tombol disabled diklik
+    yesBtn.onclick = () => {
+        if (yesBtn.disabled) {
+            showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
-        
+        proceedToPending();
+    };
+    
+    noBtn.onclick = async () => {
+        const doc = await db.collection('customers').doc(id).get();
+        if (doc.exists) {
+            showConfirmDialog(
+                'Pindahkan ke Database Nomor Salah?',
+                `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan ke Followup Agen!`,
+                async () => {
+                    await db.collection('nomor_salah').add({ ...doc.data(), alasan: 'Nomor tidak bisa dihubungi / tidak aktif', deleted_at: new Date().toISOString(), user_id: doc.data().user_id });
+                    await db.collection('customers').doc(id).delete();
+                    showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
+                    closeModal('followupConfirmModal');
+                    closeModal('detailModal');
+                    loadAllData();
+                }
+            );
+        }
+    };
+    
+    async function proceedToPending() {
         const doc = await db.collection('customers').doc(id).get();
         const currentDeadline = doc.data().tanggal || getTodayDate();
         const newDeadline = addDaysToDate(currentDeadline, 1);
@@ -965,10 +993,11 @@ function openFollowupConfirm(id) {
             tanggal: newDeadline
         });
         closeModal('followupConfirmModal');
-        showNotif(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
+        showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
         loadAllData();
         closeModal('detailModal');
-    };
+    }
+}
     
     // Tombol NO (Nomor Salah)
     noBtn.onclick = async () => {
@@ -1064,7 +1093,7 @@ function updatePendingButtons() {
     if (finishBtn) {
         if (allFilledAndChecked) {
             finishBtn.disabled = false;
-            // Hapus event listener lama
+            finishBtn.title = '';
             const newFinishBtn = finishBtn.cloneNode(true);
             finishBtn.parentNode.replaceChild(newFinishBtn, finishBtn);
             newFinishBtn.onclick = async () => {
@@ -1074,12 +1103,18 @@ function updatePendingButtons() {
             };
         } else {
             finishBtn.disabled = true;
-            finishBtn.title = 'Harus mengisi semua balasan (centang semua) terlebih dahulu!';
+            finishBtn.title = 'Harap isi dan centang SEMUA balasan terlebih dahulu!';
             
-            // Perbaikan: cek berdasarkan disabled property
+            // 🔥 TAMBAHKAN INI - Notifikasi saat klik tombol disabled
             finishBtn.onclick = () => {
                 if (finishBtn.disabled) {
-                    showNotif('⚠️ Harap isi dan centang SEMUA balasan terlebih dahulu!', true);
+                    let pesan = '';
+                    if (pendingItems.length === 0) {
+                        pesan = '⚠️ Tambahkan minimal satu balasan terlebih dahulu!';
+                    } else {
+                        pesan = '⚠️ Harap isi dan centang SEMUA balasan sebelum lanjut ke Closing!';
+                    }
+                    showNotifTop(pesan, true);
                 }
             };
         }
@@ -1090,14 +1125,11 @@ function updatePendingButtons() {
         const newSaveBtn = saveBtn.cloneNode(true);
         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
         newSaveBtn.onclick = async () => {
-            // Cek apakah ada minimal satu balasan yang terisi
             const hasAnyData = pendingItems.some(item => item.text && item.text.trim() !== '');
-            
             if (!hasAnyData) {
-                showNotif('⚠️ Minimal isi satu balasan sebelum menyimpan!', true);
+                showNotifTop('⚠️ Minimal isi satu balasan sebelum menyimpan!', true);
                 return;
             }
-            
             const doc = await db.collection('customers').doc(currentPendingId).get();
             const currentDeadline = doc.data().tanggal || getTodayDate();
             const newDeadline = addDaysToDate(currentDeadline, 3);
@@ -1105,7 +1137,7 @@ function updatePendingButtons() {
                 pending_data: pendingItems,
                 tanggal: newDeadline
             });
-            showNotif(`💾 Data pending berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`);
+            showNotifTop(`💾 Data pending berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`);
             closeModal('pendingModal');
             loadAllData();
         };
@@ -1317,7 +1349,7 @@ function openProspekNegosiasiModal(id) {
         const penawaran = document.getElementById('prospek_penawaran').value;
         
         if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
-            showNotif('⚠️ Semua field harus diisi!', true);
+            showNotifTop('⚠️ Semua field harus diisi!', true);
             return;
         }
         
@@ -1339,33 +1371,48 @@ function openProspekNegosiasiModal(id) {
     };
     
     // TOMBOL TIDAK TERTARIK
-    document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
-        const doc = await db.collection('prospek').doc(currentProspekId).get();
-        const data = doc.data();
-        if (data) {
-            showConfirmDialog(
-                'Pindahkan ke Database Tidak Tertarik?',
-                `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
-                async () => {
-                    await db.collection('db_tidak_tertarik').add({
-                        nama: data.nama,
-                        hp: data.hp,
-                        tanggal: new Date().toISOString(),
-                        user_id: data.user_id,
-                        alasan: 'Tidak tertarik setelah negosiasi',
-                        status_sebelumnya: data.status,
-                        negosiasi_data: data.negosiasi_data || null
-                    });
-                    await db.collection('prospek').doc(currentProspekId).delete();
-                    showNotif('📵 Data dipindahkan ke Database Tidak Tertarik');
-                    closeModal('prospekNegosiasiModal');
-                    closeModal('detailModal');
-                    updateAllBadges();
-                    setTimeout(() => { loadAllData(); }, 300);
-                }
-            );
-        }
-    };
+// TOMBOL TERTARIK - sudah ada validasi showNotif
+// TOMBOL TIDAK TERTARIK - tambahkan validasi data lengkap
+document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
+    // 🔥 CEK DATA LENGKAP DULU
+    const aplikasi = document.getElementById('prospek_aplikasi').value;
+    const domisili = document.getElementById('prospek_domisili').value;
+    const transaksi = document.getElementById('prospek_transaksi').value;
+    const deposit = document.getElementById('prospek_deposit').value;
+    const tertarik = document.getElementById('prospek_tertarik').value;
+    const penawaran = document.getElementById('prospek_penawaran').value;
+    
+    if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
+        showNotifTop('⚠️ Data kuesioner harus diisi LENGKAP sebelum pindah ke Tidak Tertarik!', true);
+        return;
+    }
+    
+    const doc = await db.collection('prospek').doc(currentProspekId).get();
+    const data = doc.data();
+    if (data) {
+        showConfirmDialog(
+            'Pindahkan ke Database Tidak Tertarik?',
+            `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
+            async () => {
+                await db.collection('db_tidak_tertarik').add({
+                    nama: data.nama,
+                    hp: data.hp,
+                    tanggal: new Date().toISOString(),
+                    user_id: data.user_id,
+                    alasan: 'Tidak tertarik setelah negosiasi',
+                    status_sebelumnya: data.status,
+                    negosiasi_data: data.negosiasi_data || null
+                });
+                await db.collection('prospek').doc(currentProspekId).delete();
+                showNotifTop('📵 Data dipindahkan ke Database Tidak Tertarik');
+                closeModal('prospekNegosiasiModal');
+                closeModal('detailModal');
+                updateAllBadges();
+                setTimeout(() => { loadAllData(); }, 300);
+            }
+        );
+    }
+};
     
     // TOMBOL SIMPAN
     document.getElementById('negosiasiSimpanBtn').onclick = async () => {
