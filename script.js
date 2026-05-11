@@ -83,14 +83,11 @@ function getStatusBadge(status) {
 
 // Notifikasi dengan z-index tertinggi (di atas semua popup)
 function showNotifTop(msg, isError = false) {
+    console.log('showNotifTop dipanggil:', msg);  // Debug log
     const notif = document.createElement('div');
     notif.textContent = msg;
     notif.className = `notif-toast ${isError ? 'notif-error' : 'notif-success'}`;
-    notif.style.zIndex = '999999999';
-    notif.style.position = 'fixed';
-    notif.style.top = '20px';
-    notif.style.right = '20px';
-    notif.style.maxWidth = '350px';
+    notif.style.cssText = 'z-index: 999999999; position: fixed; top: 20px; right: 20px; max-width: 350px; background: ' + (isError ? '#ef4444' : '#4f46e5') + '; color: white; padding: 10px 16px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);';
     document.getElementById('notifBox').appendChild(notif);
     setTimeout(() => notif.remove(), 5000);
 }
@@ -952,7 +949,8 @@ function openFollowupConfirm(id) {
     cb2.onchange = checkBoth;
     
     // 🔥 NOTIFIKASI SAAT TOMBOL DISABLED DIKLIK
-    yesBtn.onclick = () => {
+        yesBtn.onclick = () => {
+        console.log('Tombol YES diklik, disabled:', yesBtn.disabled);  // Tambahkan ini
         if (yesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
@@ -1077,6 +1075,7 @@ function updatePendingButtons() {
         } else {
             finishBtn.disabled = true;
             finishBtn.onclick = () => {
+                console.log('Tombol finish diklik, disabled:', finishBtn.disabled);  // Tambahkan ini
                 if (finishBtn.disabled) {
                     let pesan = '';
                     if (pendingItems.length === 0) {
