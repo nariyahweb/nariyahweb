@@ -945,27 +945,33 @@ function openFollowupConfirm(id) {
     const checkBoth = () => { 
         const isChecked = cb1.checked && cb2.checked;
         yesBtn.disabled = !isChecked;
-        if (!isChecked) {
-            yesBtn.title = 'Harap centang kedua opsi (pesan terkirim & dibalas)';
-        } else {
-            yesBtn.title = '';
-        }
+        yesBtn.title = isChecked ? '' : 'Harap centang kedua opsi (pesan terkirim & dibalas)';
     };
     
     checkBoth();
     cb1.onchange = checkBoth;
     cb2.onchange = checkBoth;
     
-    // Tombol YES (Lanjut ke Pending)
     yesBtn.onclick = () => {
         if (yesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
-        proceedToPending();
+        (async () => {
+            const doc = await db.collection('customers').doc(id).get();
+            const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
+            await db.collection('customers').doc(id).update({ 
+                followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, 
+                status: 'pending',
+                tanggal: newDeadline
+            });
+            closeModal('followupConfirmModal');
+            showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
+            loadAllData();
+            closeModal('detailModal');
+        })();
     };
     
-    // Tombol NO (Nomor Salah)
     noBtn.onclick = async () => {
         const doc = await db.collection('customers').doc(id).get();
         if (doc.exists) {
@@ -983,6 +989,7 @@ function openFollowupConfirm(id) {
             );
         }
     };
+}
     
     async function proceedToPending() {
         const doc = await db.collection('customers').doc(id).get();
@@ -999,26 +1006,6 @@ function openFollowupConfirm(id) {
         closeModal('detailModal');
     }
 }  // <-- HANYA SATU KURUNG TUTUP INI
-    
-    // Tombol NO (Nomor Salah)
-    noBtn.onclick = async () => {
-        const doc = await db.collection('customers').doc(id).get();
-        if (doc.exists) {
-            showConfirmDialog(
-                'Pindahkan ke Database Nomor Salah?',
-                `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan ke Followup Agen!`,
-                async () => {
-                    await db.collection('nomor_salah').add({ ...doc.data(), alasan: 'Nomor tidak bisa dihubungi / tidak aktif', deleted_at: new Date().toISOString(), user_id: doc.data().user_id });
-                    await db.collection('customers').doc(id).delete();
-                    showNotif('📵 Data dipindahkan ke Database Nomor Salah');
-                    closeModal('followupConfirmModal');
-                    closeModal('detailModal');
-                    loadAllData();
-                }
-            );
-        }
-    };
-}
 
 // ========== PENDING MODAL ==========
 function openPendingModal(id) {
