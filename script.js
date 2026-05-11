@@ -939,25 +939,41 @@ function openFollowupConfirm(id) {
     const yesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
     
-    const checkBoth = () => { 
+    // Fungsi untuk update status tombol
+    const updateYesBtn = () => {
         const isChecked = cb1.checked && cb2.checked;
         yesBtn.disabled = !isChecked;
     };
     
-    checkBoth();
-    cb1.onchange = checkBoth;
-    cb2.onchange = checkBoth;
+    // Event untuk checkbox
+    cb1.onchange = updateYesBtn;
+    cb2.onchange = updateYesBtn;
+    updateYesBtn();
     
-    // 🔥 NOTIFIKASI SAAT TOMBOL DISABLED DIKLIK
-        yesBtn.onclick = () => {
-        console.log('Tombol YES diklik, disabled:', yesBtn.disabled);  // Tambahkan ini
+    // Tombol YES - NOTIFIKASI
+    yesBtn.onclick = () => {
+        console.log('Yes button clicked, disabled:', yesBtn.disabled);
         if (yesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
-        proceedToPending();
+        // Proses lanjut ke pending
+        (async () => {
+            const doc = await db.collection('customers').doc(id).get();
+            const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
+            await db.collection('customers').doc(id).update({ 
+                followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, 
+                status: 'pending',
+                tanggal: newDeadline
+            });
+            closeModal('followupConfirmModal');
+            showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
+            loadAllData();
+            closeModal('detailModal');
+        })();
     };
     
+    // Tombol NO (Nomor Salah) - HANYA SEKALI
     noBtn.onclick = async () => {
         const doc = await db.collection('customers').doc(id).get();
         if (doc.exists) {
@@ -975,6 +991,7 @@ function openFollowupConfirm(id) {
             );
         }
     };
+}
     
     async function proceedToPending() {
         const doc = await db.collection('customers').doc(id).get();
