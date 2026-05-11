@@ -479,3 +479,42 @@ body.modal-open{overflow:hidden}
     pointer-events: auto !important;
     z-index: 9999999 !important;
 }
+
+/* ========== PERBAIKAN MODAL FOLLOWUP ========== */
+#followupConfirmModal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 99999999 !important;
+    backdrop-filter: blur(4px);
+}
+
+#followupConfirmModal .modal-content {
+    background: white !important;
+    border-radius: 24px !important;
+    width: 90% !important;
+    max-width: 400px !important;
+    z-index: 99999999 !important;
+    position: relative !important;
+}
+
+#followupConfirmModal button {
+    z-index: 99999999 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+}
+
+/* Pastikan modal tidak terhalang elemen lain */
+#followupConfirmModal {
+    pointer-events: auto !important;
+}
+
+#followupConfirmModal .modal-content {
+    pointer-events: auto !important;
+}
