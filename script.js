@@ -945,18 +945,13 @@ function openFollowupConfirm(id) {
     const checkBoth = () => { 
         const isChecked = cb1.checked && cb2.checked;
         yesBtn.disabled = !isChecked;
-        if (!isChecked) {
-            yesBtn.title = 'Harap centang kedua opsi (pesan terkirim & dibalas)';
-        } else {
-            yesBtn.title = '';
-        }
     };
     
     checkBoth();
     cb1.onchange = checkBoth;
     cb2.onchange = checkBoth;
     
-    // 🔥 NOTIFIKASI SAAT TOMBOL DISABLED DIKLIK
+    // 🔥 NOTIFIKASI SAAT DIKLIK (bukan tooltip)
     yesBtn.onclick = () => {
         if (yesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
@@ -970,7 +965,7 @@ function openFollowupConfirm(id) {
         if (doc.exists) {
             showConfirmDialog(
                 'Pindahkan ke Database Nomor Salah?',
-                `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan ke Followup Agen!`,
+                `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`,
                 async () => {
                     await db.collection('nomor_salah').add({ ...doc.data(), alasan: 'Nomor tidak bisa dihubungi / tidak aktif', deleted_at: new Date().toISOString(), user_id: doc.data().user_id });
                     await db.collection('customers').doc(id).delete();
@@ -985,8 +980,7 @@ function openFollowupConfirm(id) {
     
     async function proceedToPending() {
         const doc = await db.collection('customers').doc(id).get();
-        const currentDeadline = doc.data().tanggal || getTodayDate();
-        const newDeadline = addDaysToDate(currentDeadline, 1);
+        const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
         await db.collection('customers').doc(id).update({ 
             followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, 
             status: 'pending',
@@ -1073,7 +1067,6 @@ function updatePendingButtons() {
     if (finishBtn) {
         if (allFilledAndChecked) {
             finishBtn.disabled = false;
-            finishBtn.title = '';
             const newFinishBtn = finishBtn.cloneNode(true);
             finishBtn.parentNode.replaceChild(newFinishBtn, finishBtn);
             newFinishBtn.onclick = async () => {
@@ -1083,17 +1076,12 @@ function updatePendingButtons() {
             };
         } else {
             finishBtn.disabled = true;
-            finishBtn.title = 'Harap isi dan centang SEMUA balasan terlebih dahulu!';
-            
-            // 🔥 NOTIFIKASI SAAT TOMBOL DISABLED DIKLIK
+            // 🔥 NOTIFIKASI SAAT DIKLIK
             finishBtn.onclick = () => {
                 if (finishBtn.disabled) {
-                    let pesan = '';
-                    if (pendingItems.length === 0) {
-                        pesan = '⚠️ Tambahkan minimal satu balasan terlebih dahulu!';
-                    } else {
-                        pesan = '⚠️ Harap isi dan centang SEMUA balasan sebelum lanjut ke Closing!';
-                    }
+                    let pesan = pendingItems.length === 0 
+                        ? '⚠️ Tambahkan minimal satu balasan terlebih dahulu!'
+                        : '⚠️ Harap isi dan centang SEMUA balasan sebelum lanjut ke Closing!';
                     showNotifTop(pesan, true);
                 }
             };
@@ -1105,14 +1093,16 @@ function updatePendingButtons() {
         const newSaveBtn = saveBtn.cloneNode(true);
         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
         newSaveBtn.onclick = async () => {
-            const hasAnyData = pendingItems.some(item => item.text && item.text.trim() !== '');
-            if (!hasAnyData) {
-                showNotifTop('⚠️ Minimal isi satu balasan sebelum menyimpan!', true);
+            // 🔥 CEK APAKAH ADA PERUBAHAN DATA
+            const hasChanges = pendingItems.some(item => item.text && item.text.trim() !== '');
+            
+            if (!hasChanges) {
+                showNotifTop('⚠️ Tidak ada perubahan data untuk disimpan!', true);
                 return;
             }
+            
             const doc = await db.collection('customers').doc(currentPendingId).get();
-            const currentDeadline = doc.data().tanggal || getTodayDate();
-            const newDeadline = addDaysToDate(currentDeadline, 3);
+            const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 3);
             await db.collection('customers').doc(currentPendingId).update({ 
                 pending_data: pendingItems,
                 tanggal: newDeadline
@@ -1321,15 +1311,11 @@ function openProspekNegosiasiModal(id) {
     
     // TOMBOL TERTARIK
     document.getElementById('negosiasiTertarikBtn').onclick = async () => {
-        const aplikasi = document.getElementById('prospek_aplikasi').value;
-        const domisili = document.getElementById('prospek_domisili').value;
-        const transaksi = document.getElementById('prospek_transaksi').value;
-        const deposit = document.getElementById('prospek_deposit').value;
-        const tertarik = document.getElementById('prospek_tertarik').value;
-        const penawaran = document.getElementById('prospek_penawaran').value;
+        const fields = ['prospek_aplikasi', 'prospek_domisili', 'prospek_transaksi', 'prospek_deposit', 'prospek_tertarik', 'prospek_penawaran'];
+        const semuaTerisi = fields.every(f => document.getElementById(f).value.trim() !== '');
         
-        if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
-            showNotifTop('⚠️ Semua field harus diisi!', true);  // 🔥 PASTIKAN showNotifTop
+        if (!semuaTerisi) {
+            showNotifTop('⚠️ Semua field harus diisi!', true);
             return;
         }
         
@@ -1337,7 +1323,15 @@ function openProspekNegosiasiModal(id) {
             'Pindahkan ke Status Tertarik?',
             'Apakah data kuesioner sudah lengkap dan prospek tertarik?\n\n⚠️ Setelah ini prospek akan masuk ke status TERTARIK.',
             async () => {
-                const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
+                const negosiasi_data = {
+                    aplikasi: document.getElementById('prospek_aplikasi').value,
+                    domisili: document.getElementById('prospek_domisili').value,
+                    transaksi: document.getElementById('prospek_transaksi').value,
+                    deposit: document.getElementById('prospek_deposit').value,
+                    tertarik: document.getElementById('prospek_tertarik').value,
+                    penawaran: document.getElementById('prospek_penawaran').value,
+                    timestamp: new Date().toISOString()
+                };
                 await db.collection('prospek').doc(currentProspekId).update({ 
                     status: 'Tertarik',
                     negosiasi_data: negosiasi_data
@@ -1352,15 +1346,11 @@ function openProspekNegosiasiModal(id) {
     
     // TOMBOL TIDAK TERTARIK
     document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
-        const aplikasi = document.getElementById('prospek_aplikasi').value;
-        const domisili = document.getElementById('prospek_domisili').value;
-        const transaksi = document.getElementById('prospek_transaksi').value;
-        const deposit = document.getElementById('prospek_deposit').value;
-        const tertarik = document.getElementById('prospek_tertarik').value;
-        const penawaran = document.getElementById('prospek_penawaran').value;
+        const fields = ['prospek_aplikasi', 'prospek_domisili', 'prospek_transaksi', 'prospek_deposit', 'prospek_tertarik', 'prospek_penawaran'];
+        const semuaTerisi = fields.every(f => document.getElementById(f).value.trim() !== '');
         
-        if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
-            showNotifTop('⚠️ Data kuesioner harus diisi LENGKAP sebelum pindah ke Tidak Tertarik!', true);  // 🔥 PASTIKAN showNotifTop
+        if (!semuaTerisi) {
+            showNotifTop('⚠️ Data kuesioner harus diisi LENGKAP sebelum pindah ke Tidak Tertarik!', true);
             return;
         }
         
@@ -1385,20 +1375,37 @@ function openProspekNegosiasiModal(id) {
                     closeModal('prospekNegosiasiModal');
                     closeModal('detailModal');
                     updateAllBadges();
-                    setTimeout(() => { loadAllData(); }, 300);
+                    setTimeout(() => loadAllData(), 300);
                 }
             );
         }
     };
     
-    // TOMBOL SIMPAN
+    // TOMBOL SIMPAN NEGOSIASI
     document.getElementById('negosiasiSimpanBtn').onclick = async () => {
+        // 🔥 CEK APAKAH ADA PERUBAHAN DATA
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
         const transaksi = document.getElementById('prospek_transaksi').value;
         const deposit = document.getElementById('prospek_deposit').value;
         const tertarik = document.getElementById('prospek_tertarik').value;
         const penawaran = document.getElementById('prospek_penawaran').value;
+        
+        const doc = await db.collection('prospek').doc(currentProspekId).get();
+        const existingData = doc.data().negosiasi_data || {};
+        
+        const hasChanges = 
+            aplikasi !== (existingData.aplikasi || '') ||
+            domisili !== (existingData.domisili || '') ||
+            transaksi !== (existingData.transaksi || '') ||
+            deposit !== (existingData.deposit || '') ||
+            tertarik !== (existingData.tertarik || '') ||
+            penawaran !== (existingData.penawaran || '');
+        
+        if (!hasChanges) {
+            showNotifTop('⚠️ Tidak ada perubahan data untuk disimpan!', true);
+            return;
+        }
         
         const negosiasi_data = { 
             aplikasi: aplikasi || '',
@@ -1411,7 +1418,6 @@ function openProspekNegosiasiModal(id) {
             is_complete: !!(aplikasi && domisili && transaksi && deposit && tertarik && penawaran)
         };
         
-        const doc = await db.collection('prospek').doc(currentProspekId).get();
         const currentDeadline = doc.data().deadline || getTodayDate();
         const newDeadline = addDaysToDate(currentDeadline, 3);
         
@@ -1419,7 +1425,7 @@ function openProspekNegosiasiModal(id) {
             negosiasi_data: negosiasi_data,
             deadline: newDeadline
         });
-        showNotif(`💾 Data kuesioner berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`);
+        showNotifTop(`💾 Data kuesioner berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`);
         closeModal('prospekNegosiasiModal');
         loadAllData();
         closeModal('detailModal');
