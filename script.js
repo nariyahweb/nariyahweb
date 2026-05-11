@@ -922,14 +922,40 @@ function openFollowupConfirm(id) {
     document.getElementById('followup_dibalas').checked = false;
     document.getElementById('followupConfirmYes').disabled = true;
     document.getElementById('followupConfirmModal').style.display = 'flex';
+    
     const cb1 = document.getElementById('followup_terkirim');
     const cb2 = document.getElementById('followup_dibalas');
     const yesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
-    const checkBoth = () => { yesBtn.disabled = !(cb1.checked && cb2.checked); };
+    
+    // Fungsi untuk mengecek kedua checkbox
+    const checkBoth = () => { 
+        const isChecked = cb1.checked && cb2.checked;
+        yesBtn.disabled = !isChecked;
+        
+        // Tambahkan tooltip
+        if (!isChecked) {
+            yesBtn.title = 'Harap centang kedua opsi (pesan terkirim & dibalas)';
+        } else {
+            yesBtn.title = '';
+        }
+    };
+    
+    // Jalankan pengecekan awal
+    checkBoth();
+    
+    // Event ketika checkbox berubah
     cb1.onchange = checkBoth;
     cb2.onchange = checkBoth;
+    
+    // Tombol YES (Lanjut ke Pending)
     yesBtn.onclick = async () => {
+        // Cek lagi apakah sudah dicentang (untuk jaga-jaga)
+        if (!cb1.checked || !cb2.checked) {
+            showNotif('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
+            return;
+        }
+        
         const doc = await db.collection('customers').doc(id).get();
         const currentDeadline = doc.data().tanggal || getTodayDate();
         const newDeadline = addDaysToDate(currentDeadline, 1);
@@ -943,6 +969,8 @@ function openFollowupConfirm(id) {
         loadAllData();
         closeModal('detailModal');
     };
+    
+    // Tombol NO (Nomor Salah)
     noBtn.onclick = async () => {
         const doc = await db.collection('customers').doc(id).get();
         if (doc.exists) {
@@ -1034,14 +1062,25 @@ function updatePendingButtons() {
     
     const finishBtn = document.getElementById('pendingFinishBtn');
     if (finishBtn) {
-        finishBtn.disabled = !allFilledAndChecked;
         if (allFilledAndChecked) {
+            finishBtn.disabled = false;
+            // Hapus event listener lama
             const newFinishBtn = finishBtn.cloneNode(true);
             finishBtn.parentNode.replaceChild(newFinishBtn, finishBtn);
             newFinishBtn.onclick = async () => {
                 await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems });
                 await window.confirmClosing(currentPendingId);
                 closeModal('pendingModal');
+            };
+        } else {
+            finishBtn.disabled = true;
+            finishBtn.title = 'Harus mengisi semua balasan (centang semua) terlebih dahulu!';
+            
+            // Perbaikan: cek berdasarkan disabled property
+            finishBtn.onclick = () => {
+                if (finishBtn.disabled) {
+                    showNotif('⚠️ Harap isi dan centang SEMUA balasan terlebih dahulu!', true);
+                }
             };
         }
     }
@@ -1051,6 +1090,14 @@ function updatePendingButtons() {
         const newSaveBtn = saveBtn.cloneNode(true);
         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
         newSaveBtn.onclick = async () => {
+            // Cek apakah ada minimal satu balasan yang terisi
+            const hasAnyData = pendingItems.some(item => item.text && item.text.trim() !== '');
+            
+            if (!hasAnyData) {
+                showNotif('⚠️ Minimal isi satu balasan sebelum menyimpan!', true);
+                return;
+            }
+            
             const doc = await db.collection('customers').doc(currentPendingId).get();
             const currentDeadline = doc.data().tanggal || getTodayDate();
             const newDeadline = addDaysToDate(currentDeadline, 3);
@@ -1278,8 +1325,11 @@ function openProspekNegosiasiModal(id) {
             return;
         }
         
+        const doc = await db.collection('prospek').doc(currentProspekId).get();
+    const data = doc.data();
+    if (data) {
         showConfirmDialog(
-            'Pindahkan ke Status Tertarik?',
+            'Pindahkan ke Database Tidak Tertarik?',
             `Apakah data kuesioner sudah lengkap dan prospek tertarik?\n\n⚠️ Setelah ini prospek akan masuk ke status TERTARIK.`,
             async () => {
                 const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
