@@ -518,3 +518,42 @@ body.modal-open{overflow:hidden}
 #followupConfirmModal .modal-content {
     pointer-events: auto !important;
 }
+
+/* FORCE - Pastikan tombol followup confirm benar-benar bisa diklik */
+#followupConfirmModal {
+    display: none !important;
+}
+
+#followupConfirmModal[style*="display: flex"] {
+    display: flex !important;
+    z-index: 999999999 !important;
+    pointer-events: auto !important;
+}
+
+#followupConfirmModal .modal-content {
+    pointer-events: auto !important;
+    z-index: 999999999 !important;
+}
+
+#followupConfirmYes {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+}
+
+/* Hapus pointer-events: none dari modal */
+.modal {
+    pointer-events: none;
+}
+
+.modal[style*="display: flex"] {
+    pointer-events: auto !important;
+}
+
+.modal[style*="display: flex"] .modal-content {
+    pointer-events: auto !important;
+}
+
+.modal[style*="display: flex"] button {
+    pointer-events: auto !important;
+}
