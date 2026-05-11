@@ -934,19 +934,16 @@ function openFollowupConfirm(id) {
     document.getElementById('followupConfirmYes').disabled = true;
     
     const modal = document.getElementById('followupConfirmModal');
-    
-    // Force style modal
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999999';
     modal.style.position = 'fixed';
     modal.style.top = '0';
     modal.style.left = '0';
     modal.style.width = '100%';
     modal.style.height = '100%';
     modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-    modal.style.display = 'flex';
     modal.style.justifyContent = 'center';
     modal.style.alignItems = 'center';
-    modal.style.zIndex = '99999999';
-    modal.style.backdropFilter = 'blur(4px)';
     
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
@@ -957,16 +954,21 @@ function openFollowupConfirm(id) {
     const noBtn = document.getElementById('followupConfirmNo');
     
     const updateYesBtn = () => {
-        const isChecked = cb1.checked && cb2.checked;
-        yesBtn.disabled = !isChecked;
+        yesBtn.disabled = !(cb1.checked && cb2.checked);
     };
     
     cb1.onchange = updateYesBtn;
     cb2.onchange = updateYesBtn;
     updateYesBtn();
     
-    yesBtn.onclick = () => {
-        if (yesBtn.disabled) {
+    // Hapus event listener lama dengan clone
+    const newYesBtn = yesBtn.cloneNode(true);
+    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+    
+    newYesBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (newYesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
