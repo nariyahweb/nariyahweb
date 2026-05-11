@@ -1076,7 +1076,6 @@ function updatePendingButtons() {
             };
         } else {
             finishBtn.disabled = true;
-            // 🔥 NOTIFIKASI SAAT TOMBOL DISABLED DIKLIK
             finishBtn.onclick = () => {
                 if (finishBtn.disabled) {
                     let pesan = '';
@@ -1096,12 +1095,41 @@ function updatePendingButtons() {
         const newSaveBtn = saveBtn.cloneNode(true);
         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
         newSaveBtn.onclick = async () => {
+            // Ambil data lama dari database
+            const doc = await db.collection('customers').doc(currentPendingId).get();
+            const oldPendingData = doc.data().pending_data || [];
+            
+            // 🔥 CEK APAKAH ADA PERUBAHAN
+            let hasChanges = false;
+            
+            // Cek jika jumlah item berbeda
+            if (pendingItems.length !== oldPendingData.length) {
+                hasChanges = true;
+            } else {
+                // Cek setiap item
+                for (let i = 0; i < pendingItems.length; i++) {
+                    const newItem = pendingItems[i];
+                    const oldItem = oldPendingData[i] || {};
+                    if (newItem.text !== oldItem.text || newItem.checked !== oldItem.checked) {
+                        hasChanges = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Cek apakah ada data yang diisi
             const hasAnyData = pendingItems.some(item => item.text && item.text.trim() !== '');
+            
             if (!hasAnyData) {
                 showNotifTop('⚠️ Minimal isi satu balasan sebelum menyimpan!', true);
                 return;
             }
-            const doc = await db.collection('customers').doc(currentPendingId).get();
+            
+            if (!hasChanges) {
+                showNotifTop('⚠️ Tidak ada perubahan data! Silakan ubah data terlebih dahulu sebelum menyimpan.', true);
+                return;
+            }
+            
             const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 3);
             await db.collection('customers').doc(currentPendingId).update({ 
                 pending_data: pendingItems,
