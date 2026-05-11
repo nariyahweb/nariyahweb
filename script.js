@@ -956,7 +956,7 @@ function openFollowupConfirm(id) {
     cb1.onchange = checkBoth;
     cb2.onchange = checkBoth;
     
-    // 🔥 TAMBAHKAN INI - Notifikasi saat tombol disabled diklik
+    // Tombol YES (Lanjut ke Pending)
     yesBtn.onclick = () => {
         if (yesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
@@ -965,6 +965,7 @@ function openFollowupConfirm(id) {
         proceedToPending();
     };
     
+    // Tombol NO (Nomor Salah) - HANYA SEKALI
     noBtn.onclick = async () => {
         const doc = await db.collection('customers').doc(id).get();
         if (doc.exists) {
@@ -997,7 +998,7 @@ function openFollowupConfirm(id) {
         loadAllData();
         closeModal('detailModal');
     }
-}
+}  // <-- TUTUP FUNGSI openFollowupConfirm
     
     // Tombol NO (Nomor Salah)
     noBtn.onclick = async () => {
@@ -1362,7 +1363,7 @@ function openProspekNegosiasiModal(id) {
                     status: 'Tertarik',
                     negosiasi_data: negosiasi_data
                 });
-                showNotif('✅ Prospek dipindahkan ke Tertarik');
+                showNotifTop('✅ Prospek dipindahkan ke Tertarik');
                 closeModal('prospekNegosiasiModal');
                 loadAllData();
                 closeModal('detailModal');
@@ -1371,48 +1372,45 @@ function openProspekNegosiasiModal(id) {
     };
     
     // TOMBOL TIDAK TERTARIK
-// TOMBOL TERTARIK - sudah ada validasi showNotif
-// TOMBOL TIDAK TERTARIK - tambahkan validasi data lengkap
-document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
-    // 🔥 CEK DATA LENGKAP DULU
-    const aplikasi = document.getElementById('prospek_aplikasi').value;
-    const domisili = document.getElementById('prospek_domisili').value;
-    const transaksi = document.getElementById('prospek_transaksi').value;
-    const deposit = document.getElementById('prospek_deposit').value;
-    const tertarik = document.getElementById('prospek_tertarik').value;
-    const penawaran = document.getElementById('prospek_penawaran').value;
-    
-    if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
-        showNotifTop('⚠️ Data kuesioner harus diisi LENGKAP sebelum pindah ke Tidak Tertarik!', true);
-        return;
-    }
-    
-    const doc = await db.collection('prospek').doc(currentProspekId).get();
-    const data = doc.data();
-    if (data) {
-        showConfirmDialog(
-            'Pindahkan ke Database Tidak Tertarik?',
-            `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
-            async () => {
-                await db.collection('db_tidak_tertarik').add({
-                    nama: data.nama,
-                    hp: data.hp,
-                    tanggal: new Date().toISOString(),
-                    user_id: data.user_id,
-                    alasan: 'Tidak tertarik setelah negosiasi',
-                    status_sebelumnya: data.status,
-                    negosiasi_data: data.negosiasi_data || null
-                });
-                await db.collection('prospek').doc(currentProspekId).delete();
-                showNotifTop('📵 Data dipindahkan ke Database Tidak Tertarik');
-                closeModal('prospekNegosiasiModal');
-                closeModal('detailModal');
-                updateAllBadges();
-                setTimeout(() => { loadAllData(); }, 300);
-            }
-        );
-    }
-};
+    document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
+        const aplikasi = document.getElementById('prospek_aplikasi').value;
+        const domisili = document.getElementById('prospek_domisili').value;
+        const transaksi = document.getElementById('prospek_transaksi').value;
+        const deposit = document.getElementById('prospek_deposit').value;
+        const tertarik = document.getElementById('prospek_tertarik').value;
+        const penawaran = document.getElementById('prospek_penawaran').value;
+        
+        if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
+            showNotifTop('⚠️ Data kuesioner harus diisi LENGKAP sebelum pindah ke Tidak Tertarik!', true);
+            return;
+        }
+        
+        const doc = await db.collection('prospek').doc(currentProspekId).get();
+        const data = doc.data();
+        if (data) {
+            showConfirmDialog(
+                'Pindahkan ke Database Tidak Tertarik?',
+                `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
+                async () => {
+                    await db.collection('db_tidak_tertarik').add({
+                        nama: data.nama,
+                        hp: data.hp,
+                        tanggal: new Date().toISOString(),
+                        user_id: data.user_id,
+                        alasan: 'Tidak tertarik setelah negosiasi',
+                        status_sebelumnya: data.status,
+                        negosiasi_data: data.negosiasi_data || null
+                    });
+                    await db.collection('prospek').doc(currentProspekId).delete();
+                    showNotifTop('📵 Data dipindahkan ke Database Tidak Tertarik');
+                    closeModal('prospekNegosiasiModal');
+                    closeModal('detailModal');
+                    updateAllBadges();
+                    setTimeout(() => { loadAllData(); }, 300);
+                }
+            );
+        }
+    };
     
     // TOMBOL SIMPAN
     document.getElementById('negosiasiSimpanBtn').onclick = async () => {
