@@ -31,6 +31,7 @@ let prospekData = [];
 // Database Agent
 let selectedAgentIds = new Map();
 let agentsData = [];
+let agentsFilteredData = [];
 
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
@@ -1781,8 +1782,9 @@ function setupConvertModal() {
 
 // ========== EVENT LISTENER DATABASE AGENT ==========
 document.getElementById('selectAllAgent')?.addEventListener('click', () => {
-    const allChecked = agentsData.length > 0 && agentsData.every(item => selectedAgentIds.get(item.id));
-    agentsData.forEach(item => {
+    // Gunakan agentsFilteredData untuk select all berdasarkan filter yang aktif
+    const allChecked = agentsFilteredData.length > 0 && agentsFilteredData.every(item => selectedAgentIds.get(item.id));
+    agentsFilteredData.forEach(item => {
         if (allChecked) {
             selectedAgentIds.delete(item.id);
         } else {
@@ -1797,6 +1799,7 @@ document.getElementById('exportAgentExcelBtn')?.addEventListener('click', export
 
 // Setup import
 setupAgentImport();
+setupAgentFilters();
 
 // Tambahkan tombol download contoh
 const downloadExampleBtn = document.createElement('button');
@@ -3095,17 +3098,86 @@ function renderAgentList(items) {
     const container = document.getElementById('dbAgentList');
     if (!container) return;
     
-    if (items.length === 0) {
-        container.innerHTML = '<p style="text-align:center;padding:40px;">📭 Belum ada data agent</p>';
+    // Update total count
+    const totalCountSpan = document.getElementById('agentTotalCount');
+    if (totalCountSpan) totalCountSpan.innerText = items.length;
+    
+    // Terapkan filter
+    const searchTerm = document.getElementById('searchAgentInput')?.value.toLowerCase() || '';
+    const filterApk = document.getElementById('filterApkAgent')?.value || '';
+    const filterDate = document.getElementById('filterDateAgent')?.value || '';
+    const filterHasHp = document.getElementById('filterHasHpAgent')?.checked || false;
+    const filterHasApk = document.getElementById('filterHasApkAgent')?.checked || false;
+    
+    let filtered = [...items];
+    
+    // Filter pencarian
+    if (searchTerm) {
+        filtered = filtered.filter(item => 
+            item.nama.toLowerCase().includes(searchTerm) || 
+            item.agent_id.toLowerCase().includes(searchTerm) || 
+            item.hp.includes(searchTerm)
+        );
+    }
+    
+    // Filter aplikasi
+    if (filterApk) {
+        filtered = filtered.filter(item => item.apk === filterApk);
+    }
+    
+    // Filter tanggal
+    if (filterDate) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (filterDate === 'today') {
+            filtered = filtered.filter(item => {
+                const itemDate = new Date(item.createdAt);
+                return itemDate >= today;
+            });
+        } else if (filterDate === 'week') {
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            filtered = filtered.filter(item => {
+                const itemDate = new Date(item.createdAt);
+                return itemDate >= weekAgo;
+            });
+        } else if (filterDate === 'month') {
+            const monthAgo = new Date(today);
+            monthAgo.setDate(today.getDate() - 30);
+            filtered = filtered.filter(item => {
+                const itemDate = new Date(item.createdAt);
+                return itemDate >= monthAgo;
+            });
+        }
+    }
+    
+    // Filter hanya yang memiliki nomor WA
+    if (filterHasHp) {
+        filtered = filtered.filter(item => item.hp && item.hp.length > 5);
+    }
+    
+    // Filter hanya yang memiliki aplikasi
+    if (filterHasApk) {
+        filtered = filtered.filter(item => item.apk && item.apk !== '-');
+    }
+    
+    agentsFilteredData = filtered;
+    
+    // Update filtered count
+    const filteredCountSpan = document.getElementById('agentFilteredCount');
+    if (filteredCountSpan) filteredCountSpan.innerText = filtered.length;
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Tidak ada data yang sesuai filter</p>';
         return;
     }
     
-    container.innerHTML = items.map(item => `
+    container.innerHTML = filtered.map(item => `
         <div class="db-item-agent" data-id="${item.id}">
             <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
             <div class="db-item-agent-info">
                 <h4>${escapeHtml(item.nama)}</h4>
-                <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)}</p>
+                <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)} | 📱 ${escapeHtml(item.apk !== '-' ? item.apk : '─')}</p>
                 <small>📅 ${new Date(item.createdAt).toLocaleDateString('id-ID')}</small>
             </div>
             <div class="db-item-agent-actions">
@@ -3116,6 +3188,7 @@ function renderAgentList(items) {
         </div>
     `).join('');
     
+    // Event listener untuk checkbox
     document.querySelectorAll('#dbAgentList .db-item-checkbox-agent').forEach(cb => {
         cb.addEventListener('change', (e) => {
             e.stopPropagation();
@@ -3129,6 +3202,7 @@ function renderAgentList(items) {
         });
     });
     
+    // Event listener untuk klik item
     document.querySelectorAll('#dbAgentList .db-item-agent').forEach(el => {
         el.addEventListener('click', (e) => {
             if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-move-followup') && !e.target.classList.contains('db-item-delete')) {
@@ -3143,7 +3217,8 @@ function renderAgentList(items) {
 function updateSelectAllAgentButton() {
     const btn = document.getElementById('selectAllAgent');
     if (!btn) return;
-    const allChecked = agentsData.length > 0 && agentsData.every(item => selectedAgentIds.get(item.id));
+    // Gunakan agentsFilteredData untuk select all berdasarkan filter
+    const allChecked = agentsFilteredData.length > 0 && agentsFilteredData.every(item => selectedAgentIds.get(item.id));
     btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
 }
 
@@ -3196,6 +3271,7 @@ async function deleteAgentItem(id) {
 }
 
 async function deleteSelectedAgent() {
+    // Gunakan agentsFilteredData untuk hapus massal berdasarkan filter
     const selectedIds = Array.from(selectedAgentIds.keys());
     if (selectedIds.length === 0) {
         showNotifTop('Tidak ada data yang dipilih', true);
@@ -3362,6 +3438,36 @@ function downloadAgentExample() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
     XLSX.writeFile(wb, 'contoh_database_agent.xlsx');
+}
+
+function setupAgentFilters() {
+    const searchInput = document.getElementById('searchAgentInput');
+    const filterApk = document.getElementById('filterApkAgent');
+    const filterDate = document.getElementById('filterDateAgent');
+    const filterHasHp = document.getElementById('filterHasHpAgent');
+    const filterHasApk = document.getElementById('filterHasApkAgent');
+    const resetBtn = document.getElementById('resetAgentFilterBtn');
+    
+    const applyFilters = () => {
+        renderAgentList(agentsData);
+    };
+    
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (filterApk) filterApk.addEventListener('change', applyFilters);
+    if (filterDate) filterDate.addEventListener('change', applyFilters);
+    if (filterHasHp) filterHasHp.addEventListener('change', applyFilters);
+    if (filterHasApk) filterHasApk.addEventListener('change', applyFilters);
+    
+    if (resetBtn) {
+        resetBtn.onclick = () => {
+            if (searchInput) searchInput.value = '';
+            if (filterApk) filterApk.value = '';
+            if (filterDate) filterDate.value = '';
+            if (filterHasHp) filterHasHp.checked = false;
+            if (filterHasApk) filterHasApk.checked = false;
+            applyFilters();
+        };
+    }
 }
 
 // ========== IMPORT EXCEL ==========
