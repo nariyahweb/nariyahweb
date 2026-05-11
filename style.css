@@ -422,3 +422,60 @@ body.modal-open{overflow:hidden}
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     pointer-events: auto;
 }
+
+/* Pastikan tombol di dalam modal popup bisa diklik */
+.modal .btn-primary,
+.modal .btn-danger,
+.modal .btn-outline,
+.modal button {
+    position: relative;
+    z-index: 100000 !important;
+    pointer-events: auto !important;
+}
+
+/* Khusus untuk followup confirm modal */
+#followupConfirmModal {
+    z-index: 999999 !important;
+}
+
+#followupConfirmModal .modal-content {
+    z-index: 999999 !important;
+}
+
+#followupConfirmModal button {
+    z-index: 9999999 !important;
+    pointer-events: auto !important;
+}
+
+/* Agar klik pada tombol tidak tertangkap modal di belakangnya */
+.modal {
+    pointer-events: none; /* Modal tidak menerima klik */
+}
+
+.modal .modal-content {
+    pointer-events: auto; /* Tapi konten modal tetap bisa diklik */
+}
+
+.modal .modal-content button {
+    pointer-events: auto !important;
+}
+
+/* Fix untuk modal yang bertumpuk */
+#pendingModal,
+#followupConfirmModal,
+#prospekNegosiasiModal {
+    pointer-events: none; /* Overlay tidak menerima klik */
+}
+
+#pendingModal .modal-content,
+#followupConfirmModal .modal-content,
+#prospekNegosiasiModal .modal-content {
+    pointer-events: auto; /* Konten tetap bisa diklik */
+}
+
+#pendingModal button,
+#followupConfirmModal button,
+#prospekNegosiasiModal button {
+    pointer-events: auto !important;
+    z-index: 9999999 !important;
+}
