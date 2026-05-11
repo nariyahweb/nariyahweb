@@ -965,7 +965,7 @@ function openFollowupConfirm(id) {
         proceedToPending();
     };
     
-    // Tombol NO (Nomor Salah) - HANYA SEKALI
+    // Tombol NO (Nomor Salah)
     noBtn.onclick = async () => {
         const doc = await db.collection('customers').doc(id).get();
         if (doc.exists) {
@@ -998,7 +998,7 @@ function openFollowupConfirm(id) {
         loadAllData();
         closeModal('detailModal');
     }
-}  // <-- TUTUP FUNGSI openFollowupConfirm
+}  // <-- HANYA SATU KURUNG TUTUP INI
     
     // Tombol NO (Nomor Salah)
     noBtn.onclick = async () => {
