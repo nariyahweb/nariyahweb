@@ -40,8 +40,11 @@ function showNotif(msg, isError = false) {
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+    }
     document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
 }
 
 function openWA(hp) {
@@ -188,42 +191,73 @@ async function checkDuplicateProspek(hp, excludeId = null) {
 
 // ========== FUNGSI KONFIRMASI DENGAN POPUP ==========
 function showConfirmDialog(title, message, onConfirm, onCancel) {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'flex';
-    modal.innerHTML = `
-        <div class="modal-content" style="max-width: 400px;">
-            <h3 style="color: #ef4444;">⚠️ ${title}</h3>
-            <div class="modal-subtitle" style="color: #374151; white-space: pre-line;">${message}</div>
+    // Tutup modal negosiasi jika terbuka (opsional)
+    const negosiasiModal = document.getElementById('prospekNegosiasiModal');
+    if (negosiasiModal && negosiasiModal.style.display === 'flex') {
+        negosiasiModal.style.display = 'none';
+    }
+    
+    // Hapus confirm dialog yang sudah ada
+    const existingConfirm = document.querySelector('.confirm-dialog-overlay');
+    if (existingConfirm) existingConfirm.remove();
+    
+    // Buat overlay dengan z-index tinggi
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-dialog-overlay';
+    overlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        z-index: 20000 !important;
+        backdrop-filter: blur(4px);
+    `;
+    
+    overlay.innerHTML = `
+        <div class="confirm-dialog-content">
+            <h3 style="color: #ef4444; font-size: 20px; font-weight: 700; padding: 20px 20px 0; margin-bottom: 4px;">⚠️ ${title}</h3>
+            <div class="modal-subtitle" style="color: #374151; white-space: pre-line; padding: 0 20px 12px;">${message}</div>
             <div style="padding: 0 20px 20px 20px;">
                 <p style="font-size: 12px; color: #ef4444; margin-bottom: 16px;">⚠️ Peringatan: Data yang sudah dipindahkan TIDAK BISA dikembalikan!</p>
                 <div class="modal-buttons">
-                    <button id="confirmYesBtn" class="btn-danger" style="background: #dc2626;">✅ Ya, Lanjutkan</button>
-                    <button id="confirmNoBtn" class="btn-outline">❌ Batal</button>
+                    <button id="confirmYesBtn" style="background: #dc2626; color: #fff; border: none; flex: 1; padding: 12px; border-radius: 14px; cursor: pointer; font-weight: 600;">✅ Ya, Lanjutkan</button>
+                    <button id="confirmNoBtn" style="background: #f3f4f6; color: #374151; border: none; flex: 1; padding: 12px; border-radius: 14px; cursor: pointer; font-weight: 600;">❌ Batal</button>
                 </div>
             </div>
         </div>
     `;
-    document.body.appendChild(modal);
-    document.body.classList.add('modal-open');
     
-    const yesBtn = modal.querySelector('#confirmYesBtn');
-    const noBtn = modal.querySelector('#confirmNoBtn');
+    document.body.appendChild(overlay);
+    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+    
+    const cleanup = () => {
+        overlay.remove();
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+    };
+    
+    const yesBtn = overlay.querySelector('#confirmYesBtn');
+    const noBtn = overlay.querySelector('#confirmNoBtn');
     
     yesBtn.onclick = () => {
-        modal.remove();
-        document.body.classList.remove('modal-open');
+        cleanup();
         if (onConfirm) onConfirm();
     };
+    
     noBtn.onclick = () => {
-        modal.remove();
-        document.body.classList.remove('modal-open');
+        cleanup();
         if (onCancel) onCancel();
     };
-    modal.onclick = (e) => {
-        if (e.target === modal) {
-            modal.remove();
-            document.body.classList.remove('modal-open');
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            cleanup();
             if (onCancel) onCancel();
         }
     };
