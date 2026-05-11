@@ -939,25 +939,20 @@ function openFollowupConfirm(id) {
     const yesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
     
-    // Fungsi untuk update status tombol
     const updateYesBtn = () => {
         const isChecked = cb1.checked && cb2.checked;
         yesBtn.disabled = !isChecked;
     };
     
-    // Event untuk checkbox
     cb1.onchange = updateYesBtn;
     cb2.onchange = updateYesBtn;
     updateYesBtn();
     
-    // Tombol YES - NOTIFIKASI
     yesBtn.onclick = () => {
-        console.log('Yes button clicked, disabled:', yesBtn.disabled);
         if (yesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
-        // Proses lanjut ke pending
         (async () => {
             const doc = await db.collection('customers').doc(id).get();
             const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
@@ -973,7 +968,6 @@ function openFollowupConfirm(id) {
         })();
     };
     
-    // Tombol NO (Nomor Salah) - HANYA SEKALI
     noBtn.onclick = async () => {
         const doc = await db.collection('customers').doc(id).get();
         if (doc.exists) {
@@ -1092,14 +1086,10 @@ function updatePendingButtons() {
         } else {
             finishBtn.disabled = true;
             finishBtn.onclick = () => {
-                console.log('Tombol finish diklik, disabled:', finishBtn.disabled);  // Tambahkan ini
                 if (finishBtn.disabled) {
-                    let pesan = '';
-                    if (pendingItems.length === 0) {
-                        pesan = '⚠️ Tambahkan minimal satu balasan terlebih dahulu!';
-                    } else {
-                        pesan = '⚠️ Harap isi dan centang SEMUA balasan sebelum lanjut ke Closing!';
-                    }
+                    let pesan = pendingItems.length === 0 
+                        ? '⚠️ Tambahkan minimal satu balasan terlebih dahulu!'
+                        : '⚠️ Harap isi dan centang SEMUA balasan sebelum lanjut ke Closing!';
                     showNotifTop(pesan, true);
                 }
             };
@@ -1111,18 +1101,13 @@ function updatePendingButtons() {
         const newSaveBtn = saveBtn.cloneNode(true);
         saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
         newSaveBtn.onclick = async () => {
-            // Ambil data lama dari database
             const doc = await db.collection('customers').doc(currentPendingId).get();
             const oldPendingData = doc.data().pending_data || [];
             
-            // 🔥 CEK APAKAH ADA PERUBAHAN
             let hasChanges = false;
-            
-            // Cek jika jumlah item berbeda
             if (pendingItems.length !== oldPendingData.length) {
                 hasChanges = true;
             } else {
-                // Cek setiap item
                 for (let i = 0; i < pendingItems.length; i++) {
                     const newItem = pendingItems[i];
                     const oldItem = oldPendingData[i] || {};
@@ -1133,7 +1118,6 @@ function updatePendingButtons() {
                 }
             }
             
-            // Cek apakah ada data yang diisi
             const hasAnyData = pendingItems.some(item => item.text && item.text.trim() !== '');
             
             if (!hasAnyData) {
