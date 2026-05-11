@@ -43,8 +43,8 @@ function closeModal(modalId) {
     if (modal) {
         modal.style.display = 'none';
     }
-    document.body.classList.remove('modal-open');
     document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
 }
 
 function openWA(hp) {
@@ -1193,11 +1193,42 @@ function openProspekNegosiasiModal(id) {
         }
     });
     
-     const modal = document.getElementById('prospekNegosiasiModal');
+    const modal = document.getElementById('prospekNegosiasiModal');
+    if (!modal) return;
+    
+    // FORCE INLINE STYLE - z-index tertinggi
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
     modal.style.display = 'flex';
-    modal.style.zIndex = '999999';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.zIndex = '9999999';
+    modal.style.backdropFilter = 'blur(4px)';
+    
+    // Force z-index pada content
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.style.zIndex = '10000000';
+        modalContent.style.position = 'relative';
+        modalContent.style.background = '#fff';
+    }
+    
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
     
+    // Tutup modal jika klik di luar
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            closeModal('prospekNegosiasiModal');
+        }
+    };
+    
+    // ========== EVENT HANDLER ==========
     document.getElementById('negosiasiTertarikBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
@@ -1229,35 +1260,32 @@ function openProspekNegosiasiModal(id) {
     };
     
     document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
-    const doc = await db.collection('prospek').doc(currentProspekId).get();
-    const data = doc.data();
-    if (data) {
-        showConfirmDialog(
-            'Pindahkan ke Database Tidak Tertarik?',
-            `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
-            async () => {
-                await db.collection('db_tidak_tertarik').add({
-                    nama: data.nama,
-                    hp: data.hp,
-                    tanggal: new Date().toISOString(),
-                    user_id: data.user_id,
-                    alasan: 'Tidak tertarik setelah negosiasi',
-                    status_sebelumnya: data.status,
-                    negosiasi_data: data.negosiasi_data || null
-                });
-                await db.collection('prospek').doc(currentProspekId).delete();
-                showNotif('📵 Data dipindahkan ke Database Tidak Tertarik');
-                closeModal('prospekNegosiasiModal');
-                closeModal('detailModal');
-                updateAllBadges();
-                // 🔥 TAMBAHKAN INI - Delay sebelum load ulang
-                setTimeout(() => {
-                    loadAllData();
-                }, 300);
-            }
-        );
-    }
-};
+        const doc = await db.collection('prospek').doc(currentProspekId).get();
+        const data = doc.data();
+        if (data) {
+            showConfirmDialog(
+                'Pindahkan ke Database Tidak Tertarik?',
+                `Apakah Anda yakin ingin memindahkan "${escapeHtml(data.nama)}" ke DATABASE TIDAK TERTARIK?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`,
+                async () => {
+                    await db.collection('db_tidak_tertarik').add({
+                        nama: data.nama,
+                        hp: data.hp,
+                        tanggal: new Date().toISOString(),
+                        user_id: data.user_id,
+                        alasan: 'Tidak tertarik setelah negosiasi',
+                        status_sebelumnya: data.status,
+                        negosiasi_data: data.negosiasi_data || null
+                    });
+                    await db.collection('prospek').doc(currentProspekId).delete();
+                    showNotif('📵 Data dipindahkan ke Database Tidak Tertarik');
+                    closeModal('prospekNegosiasiModal');
+                    closeModal('detailModal');
+                    updateAllBadges();
+                    setTimeout(() => { loadAllData(); }, 300);
+                }
+            );
+        }
+    };
     
     document.getElementById('negosiasiSimpanBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
