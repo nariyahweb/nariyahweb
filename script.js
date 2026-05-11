@@ -956,7 +956,7 @@ function openFollowupConfirm(id) {
     cb1.onchange = checkBoth;
     cb2.onchange = checkBoth;
     
-    // Tombol YES (Lanjut ke Pending)
+    // 🔥 NOTIFIKASI SAAT TOMBOL DISABLED DIKLIK
     yesBtn.onclick = () => {
         if (yesBtn.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
@@ -965,7 +965,6 @@ function openFollowupConfirm(id) {
         proceedToPending();
     };
     
-    // Tombol NO (Nomor Salah)
     noBtn.onclick = async () => {
         const doc = await db.collection('customers').doc(id).get();
         if (doc.exists) {
@@ -998,8 +997,7 @@ function openFollowupConfirm(id) {
         loadAllData();
         closeModal('detailModal');
     }
-    
-}  // <-- TUTUP FUNGSI openFollowupConfirm
+}
 
 // ========== PENDING MODAL ==========
 function openPendingModal(id) {
@@ -1087,7 +1085,7 @@ function updatePendingButtons() {
             finishBtn.disabled = true;
             finishBtn.title = 'Harap isi dan centang SEMUA balasan terlebih dahulu!';
             
-            // 🔥 TAMBAHKAN INI - Notifikasi saat klik tombol disabled
+            // 🔥 NOTIFIKASI SAAT TOMBOL DISABLED DIKLIK
             finishBtn.onclick = () => {
                 if (finishBtn.disabled) {
                     let pesan = '';
@@ -1331,7 +1329,7 @@ function openProspekNegosiasiModal(id) {
         const penawaran = document.getElementById('prospek_penawaran').value;
         
         if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
-            showNotifTop('⚠️ Semua field harus diisi!', true);
+            showNotifTop('⚠️ Semua field harus diisi!', true);  // 🔥 PASTIKAN showNotifTop
             return;
         }
         
@@ -1362,7 +1360,7 @@ function openProspekNegosiasiModal(id) {
         const penawaran = document.getElementById('prospek_penawaran').value;
         
         if (!aplikasi || !domisili || !transaksi || !deposit || !tertarik || !penawaran) {
-            showNotifTop('⚠️ Data kuesioner harus diisi LENGKAP sebelum pindah ke Tidak Tertarik!', true);
+            showNotifTop('⚠️ Data kuesioner harus diisi LENGKAP sebelum pindah ke Tidak Tertarik!', true);  // 🔥 PASTIKAN showNotifTop
             return;
         }
         
