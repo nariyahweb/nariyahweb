@@ -950,28 +950,23 @@ function openFollowupConfirm(id) {
     
     const cb1 = document.getElementById('followup_terkirim');
     const cb2 = document.getElementById('followup_dibalas');
-    const yesBtn = document.getElementById('followupConfirmYes');
+    const oldYesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
     
-    const updateYesBtn = () => {
-        yesBtn.disabled = !(cb1.checked && cb2.checked);
-    };
+    // Clone tombol untuk reset event listener
+    const newYesBtn = oldYesBtn.cloneNode(true);
+    oldYesBtn.parentNode.replaceChild(newYesBtn, oldYesBtn);
     
-    cb1.onchange = updateYesBtn;
-    cb2.onchange = updateYesBtn;
-    updateYesBtn();
-    
-    // Hapus event listener lama dengan clone
-    const newYesBtn = yesBtn.cloneNode(true);
-    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
-    
-    newYesBtn.onclick = (e) => {
+    // Event listener untuk tombol YES
+    newYesBtn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        if (newYesBtn.disabled) {
+        
+        if (this.disabled) {
             showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
             return;
         }
+        
         (async () => {
             const doc = await db.collection('customers').doc(id).get();
             const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
@@ -985,8 +980,18 @@ function openFollowupConfirm(id) {
             loadAllData();
             closeModal('detailModal');
         })();
+    });
+    
+    // Update status disabled berdasarkan checkbox
+    const updateYesBtn = () => {
+        newYesBtn.disabled = !(cb1.checked && cb2.checked);
     };
     
+    cb1.onchange = updateYesBtn;
+    cb2.onchange = updateYesBtn;
+    updateYesBtn();
+    
+    // Tombol NO (Nomor Salah)
     noBtn.onclick = async () => {
         const doc = await db.collection('customers').doc(id).get();
         if (doc.exists) {
