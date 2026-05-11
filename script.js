@@ -384,8 +384,29 @@ let currentEditType = null;
 function openEditDeadlineModal(id, type, currentDeadline) {
     currentEditItem = id;
     currentEditType = type;
+    
+    const modal = document.getElementById('editDeadlineModal');
+    if (!modal) return;
+    
+    // Force inline style untuk z-index tertinggi
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    modal.style.display = 'flex';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.zIndex = '9999999';
+    modal.style.backdropFilter = 'blur(4px)';
+    
+    // Set value deadline
     document.getElementById('editDeadlineDate').value = currentDeadline || getTodayDate();
-    document.getElementById('editDeadlineModal').style.display = 'flex';
+    
+    // Lock body scroll
+    document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open');
 }
 
 document.getElementById('saveDeadlineBtn')?.addEventListener('click', async () => {
