@@ -1311,7 +1311,7 @@ function openProspekNegosiasiModal(id) {
         }
     };
     
-    // ========== EVENT HANDLER ==========
+    // ========== TOMBOL TERTARIK ==========
     document.getElementById('negosiasiTertarikBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
@@ -1325,11 +1325,8 @@ function openProspekNegosiasiModal(id) {
             return;
         }
         
-        const doc = await db.collection('prospek').doc(currentProspekId).get();
-    const data = doc.data();
-    if (data) {
         showConfirmDialog(
-            'Pindahkan ke Database Tidak Tertarik?',
+            'Pindahkan ke Status Tertarik?',
             `Apakah data kuesioner sudah lengkap dan prospek tertarik?\n\n⚠️ Setelah ini prospek akan masuk ke status TERTARIK.`,
             async () => {
                 const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
@@ -1345,6 +1342,7 @@ function openProspekNegosiasiModal(id) {
         );
     };
     
+    // ========== TOMBOL TIDAK TERTARIK ==========
     document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
         const doc = await db.collection('prospek').doc(currentProspekId).get();
         const data = doc.data();
@@ -1373,6 +1371,7 @@ function openProspekNegosiasiModal(id) {
         }
     };
     
+    // ========== TOMBOL SIMPAN ==========
     document.getElementById('negosiasiSimpanBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
@@ -1406,6 +1405,7 @@ function openProspekNegosiasiModal(id) {
         closeModal('detailModal');
     };
     
+    // ========== TOMBOL BATAL ==========
     document.getElementById('negosiasiBatalBtn').onclick = () => {
         closeModal('prospekNegosiasiModal');
     };
