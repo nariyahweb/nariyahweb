@@ -408,22 +408,6 @@ body.modal-open{overflow:hidden}
 
 /* ========== NOTIFIKASI TOPBAR DI ATAS SEMUA ========== */
 #notifBox {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    left: auto;
-    bottom: auto;
-    z-index: 999999999 !important;
-}
-
-.notif-toast {
-    position: relative;
-    z-index: 999999999 !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-/* Notifikasi Topbar - Di atas semua */
-#notifBox {
     position: fixed !important;
     top: 20px !important;
     right: 20px !important;
