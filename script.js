@@ -1279,7 +1279,6 @@ function openProspekNegosiasiModal(id) {
     const modal = document.getElementById('prospekNegosiasiModal');
     if (!modal) return;
     
-    // FORCE INLINE STYLE - z-index tertinggi
     modal.style.position = 'fixed';
     modal.style.top = '0';
     modal.style.left = '0';
@@ -1292,7 +1291,6 @@ function openProspekNegosiasiModal(id) {
     modal.style.zIndex = '9999999';
     modal.style.backdropFilter = 'blur(4px)';
     
-    // Force z-index pada content
     const modalContent = modal.querySelector('.modal-content');
     if (modalContent) {
         modalContent.style.zIndex = '10000000';
@@ -1300,18 +1298,16 @@ function openProspekNegosiasiModal(id) {
         modalContent.style.background = '#fff';
     }
     
-    // Lock body scroll
     document.body.style.overflow = 'hidden';
     document.body.classList.add('modal-open');
     
-    // Tutup modal jika klik di luar
     modal.onclick = (e) => {
         if (e.target === modal) {
             closeModal('prospekNegosiasiModal');
         }
     };
     
-    // ========== TOMBOL TERTARIK ==========
+    // TOMBOL TERTARIK
     document.getElementById('negosiasiTertarikBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
@@ -1327,7 +1323,7 @@ function openProspekNegosiasiModal(id) {
         
         showConfirmDialog(
             'Pindahkan ke Status Tertarik?',
-            `Apakah data kuesioner sudah lengkap dan prospek tertarik?\n\n⚠️ Setelah ini prospek akan masuk ke status TERTARIK.`,
+            'Apakah data kuesioner sudah lengkap dan prospek tertarik?\n\n⚠️ Setelah ini prospek akan masuk ke status TERTARIK.',
             async () => {
                 const negosiasi_data = { aplikasi, domisili, transaksi, deposit, tertarik, penawaran, timestamp: new Date().toISOString() };
                 await db.collection('prospek').doc(currentProspekId).update({ 
@@ -1342,7 +1338,7 @@ function openProspekNegosiasiModal(id) {
         );
     };
     
-    // ========== TOMBOL TIDAK TERTARIK ==========
+    // TOMBOL TIDAK TERTARIK
     document.getElementById('negosiasiTidakTertarikBtn').onclick = async () => {
         const doc = await db.collection('prospek').doc(currentProspekId).get();
         const data = doc.data();
@@ -1371,7 +1367,7 @@ function openProspekNegosiasiModal(id) {
         }
     };
     
-    // ========== TOMBOL SIMPAN ==========
+    // TOMBOL SIMPAN
     document.getElementById('negosiasiSimpanBtn').onclick = async () => {
         const aplikasi = document.getElementById('prospek_aplikasi').value;
         const domisili = document.getElementById('prospek_domisili').value;
@@ -1405,11 +1401,12 @@ function openProspekNegosiasiModal(id) {
         closeModal('detailModal');
     };
     
-    // ========== TOMBOL BATAL ==========
+    // TOMBOL BATAL
     document.getElementById('negosiasiBatalBtn').onclick = () => {
         closeModal('prospekNegosiasiModal');
     };
-}
+    
+}  // <---- INI KURUNG TUTUP UNTUK FUNGSI openProspekNegosiasiModal - PASTIKAN ADA!
 
 // ========== CLOSING & TIDAK TERTARIK ==========
 async function saveToClosingDB(id, data) { 
