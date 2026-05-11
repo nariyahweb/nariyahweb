@@ -28,6 +28,9 @@ let currentProspekId = null;
 
 let customersData = [];
 let prospekData = [];
+// Database Agent
+let selectedAgentIds = new Map();
+let agentsData = [];
 
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
@@ -555,6 +558,7 @@ auth.onAuthStateChanged(async user => {
         loadDBTidak();
         loadDBNomorSalah();
         loadDBCommitment();
+        loadDatabaseAgent();
         loadUsersList();
     } else {
         loginPage.style.display = 'flex';
@@ -575,6 +579,7 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         else if (page === 'dbTidak') { document.getElementById('dbTidakPage').style.display = 'block'; loadDBTidak(); }
         else if (page === 'dbNomorSalah') { document.getElementById('dbNomorSalahPage').style.display = 'block'; loadDBNomorSalah(); }
         else if (page === 'dbCommitment') { document.getElementById('dbCommitmentPage').style.display = 'block'; loadDBCommitment(); }
+        else if (page === 'dbAgent') { document.getElementById('dbAgentPage').style.display = 'block'; loadDatabaseAgent(); }
         else if (page === 'reminder') { document.getElementById('reminderPage').style.display = 'block'; loadReminders(); }
         else if (page === 'pesan') { document.getElementById('pesanPage').style.display = 'block'; loadPesan(); loadUsersForSelect(); }
         else if (page === 'broadcast') { document.getElementById('broadcastPage').style.display = 'block'; initBroadcast(); }
@@ -1773,6 +1778,35 @@ function setupConvertModal() {
     }
     modal.onclick = function(e) { if (e.target === modal) { modal.style.display = 'none'; document.body.classList.remove('modal-open'); } };
 }
+
+// ========== EVENT LISTENER DATABASE AGENT ==========
+document.getElementById('selectAllAgent')?.addEventListener('click', () => {
+    const allChecked = agentsData.length > 0 && agentsData.every(item => selectedAgentIds.get(item.id));
+    agentsData.forEach(item => {
+        if (allChecked) {
+            selectedAgentIds.delete(item.id);
+        } else {
+            selectedAgentIds.set(item.id, true);
+        }
+    });
+    renderAgentList(agentsData);
+});
+
+document.getElementById('deleteSelectedAgent')?.addEventListener('click', deleteSelectedAgent);
+document.getElementById('exportAgentExcelBtn')?.addEventListener('click', exportAgentToExcel);
+
+// Setup import
+setupAgentImport();
+
+// Tambahkan tombol download contoh
+const downloadExampleBtn = document.createElement('button');
+downloadExampleBtn.textContent = '📋 Download Contoh Excel';
+downloadExampleBtn.className = 'db-import-excel';
+downloadExampleBtn.style.marginLeft = '10px';
+downloadExampleBtn.style.background = '#f59e0b';
+downloadExampleBtn.onclick = downloadAgentExample;
+const actionsDiv = document.querySelector('#dbAgentPage .db-actions');
+if (actionsDiv) actionsDiv.appendChild(downloadExampleBtn);
 
 // ========== FUNGSI PENCARIAN DATA ==========
 async function performSearch() {
@@ -3021,6 +3055,313 @@ if (pesanNotifBtn) {
         const pesanMenu = document.querySelector('.menu-item[data-page="pesan"]');
         if (pesanMenu) pesanMenu.click();
     });
+}
+
+// ========== DATABASE AGENT ==========
+async function loadDatabaseAgent() {
+    if (!currentUser) return;
+    
+    const isOwner = currentUserRole === 'owner';
+    let query = db.collection('db_agent');
+    if (!isOwner) {
+        query = query.where('user_id', '==', currentUser.uid);
+    }
+    
+    query.onSnapshot(async snap => {
+        const items = [];
+        for (const doc of snap.docs) {
+            const d = doc.data();
+            let ownerName = '';
+            if (isOwner && d.user_id !== currentUser.uid) {
+                const userDoc = await db.collection('users').doc(d.user_id).get();
+                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+            }
+            items.push({
+                id: doc.id,
+                nama: d.nama + ownerName,
+                hp: d.hp,
+                agent_id: d.agent_id || '-',
+                apk: d.apk || '',
+                createdAt: d.created_at,
+                checked: selectedAgentIds.get(doc.id) || false
+            });
+        }
+        agentsData = items;
+        renderAgentList(items);
+    });
+}
+
+function renderAgentList(items) {
+    const container = document.getElementById('dbAgentList');
+    if (!container) return;
+    
+    if (items.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;">📭 Belum ada data agent</p>';
+        return;
+    }
+    
+    container.innerHTML = items.map(item => `
+        <div class="db-item-agent" data-id="${item.id}">
+            <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
+            <div class="db-item-agent-info">
+                <h4>${escapeHtml(item.nama)}</h4>
+                <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)}</p>
+                <small>📅 ${new Date(item.createdAt).toLocaleDateString('id-ID')}</small>
+            </div>
+            <div class="db-item-agent-actions">
+                <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
+                <button class="db-item-move-followup" onclick="event.stopPropagation(); moveAgentToFollowup('${item.id}')">📞 Pindah ke Followup</button>
+                <button class="db-item-delete" onclick="event.stopPropagation(); deleteAgentItem('${item.id}')">🗑️ Hapus</button>
+            </div>
+        </div>
+    `).join('');
+    
+    document.querySelectorAll('#dbAgentList .db-item-checkbox-agent').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const id = cb.dataset.id;
+            if (cb.checked) {
+                selectedAgentIds.set(id, true);
+            } else {
+                selectedAgentIds.delete(id);
+            }
+            updateSelectAllAgentButton();
+        });
+    });
+    
+    document.querySelectorAll('#dbAgentList .db-item-agent').forEach(el => {
+        el.addEventListener('click', (e) => {
+            if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-move-followup') && !e.target.classList.contains('db-item-delete')) {
+                openAgentDetail(el.dataset.id);
+            }
+        });
+    });
+    
+    updateSelectAllAgentButton();
+}
+
+function updateSelectAllAgentButton() {
+    const btn = document.getElementById('selectAllAgent');
+    if (!btn) return;
+    const allChecked = agentsData.length > 0 && agentsData.every(item => selectedAgentIds.get(item.id));
+    btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+}
+
+async function moveAgentToFollowup(agentId) {
+    const doc = await db.collection('db_agent').doc(agentId).get();
+    if (!doc.exists) return;
+    
+    const data = doc.data();
+    
+    const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(data.agent_id, data.hp);
+    if (duplicateAgent) {
+        showNotifTop(`⚠️ ID Agent "${data.agent_id}" sudah terdaftar!`, true);
+        return;
+    }
+    if (duplicateHp) {
+        showNotifTop(`⚠️ Nomor WhatsApp "${data.hp}" sudah terdaftar!`, true);
+        return;
+    }
+    
+    showConfirmDialog(
+        'Pindahkan ke Followup Agen?',
+        `Apakah Anda yakin ingin memindahkan agent "${escapeHtml(data.nama)}" ke FOLLOWUP AGEN?\n\nData akan dipindahkan dengan status "Baru".`,
+        async () => {
+            await db.collection('customers').add({
+                agent_id: data.agent_id,
+                nama: data.nama,
+                hp: data.hp,
+                apk: data.apk || '',
+                tanggal: getTodayDate(),
+                status: 'baru',
+                user_id: data.user_id,
+                created_at: new Date().toISOString(),
+                followup_data: null,
+                pending_data: []
+            });
+            await db.collection('db_agent').doc(agentId).delete();
+            showNotifTop('✅ Agent berhasil dipindahkan ke Followup Agen!');
+            loadDatabaseAgent();
+            loadAllData();
+        }
+    );
+}
+
+async function deleteAgentItem(id) {
+    if (!confirm('Yakin hapus data agent ini?')) return;
+    await db.collection('db_agent').doc(id).delete();
+    selectedAgentIds.delete(id);
+    showNotifTop('🗑️ Data agent dihapus');
+    loadDatabaseAgent();
+}
+
+async function deleteSelectedAgent() {
+    const selectedIds = Array.from(selectedAgentIds.keys());
+    if (selectedIds.length === 0) {
+        showNotifTop('Tidak ada data yang dipilih', true);
+        return;
+    }
+    if (confirm(`Hapus ${selectedIds.length} data agent yang dipilih?`)) {
+        const batch = db.batch();
+        selectedIds.forEach(id => batch.delete(db.collection('db_agent').doc(id)));
+        await batch.commit();
+        selectedAgentIds.clear();
+        showNotifTop(`${selectedIds.length} data agent berhasil dihapus`);
+        loadDatabaseAgent();
+    }
+}
+
+async function openAgentDetail(id) {
+    const doc = await db.collection('db_agent').doc(id).get();
+    if (!doc.exists) return;
+    const d = doc.data();
+    
+    let ownerInfo = '';
+    if (currentUserRole === 'owner' && d.user_id !== currentUser.uid) {
+        const userDoc = await db.collection('users').doc(d.user_id).get();
+        const ownerName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
+        ownerInfo = `<div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Pemilik Data</label><div class="value">${escapeHtml(ownerName)}</div></div></div>`;
+    }
+    
+    document.getElementById('detailContent').innerHTML = `
+        <div class="detail-header"><div class="detail-avatar">👥</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">Database Agent</div></div>
+        <div class="detail-body">
+            <div class="detail-info">
+                ${ownerInfo}
+                <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${new Date(d.created_at).toLocaleDateString('id-ID')}</div></div></div>
+            </div>
+            <div class="detail-actions">
+                <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
+                <button class="btn-primary" onclick="moveAgentToFollowup('${id}'); closeModal('detailModal');">📞 Pindah ke Followup</button>
+            </div>
+        </div>
+        <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button><button class="btn-danger" onclick="deleteAgentItem('${id}'); closeModal('detailModal');">🗑️ Hapus</button></div>
+    `;
+    showModal('detailModal');
+}
+
+function setupAgentImport() {
+    const importBtn = document.getElementById('importAgentExcelBtn');
+    const fileInput = document.getElementById('agentExcelFile');
+    if (!importBtn || !fileInput) return;
+    
+    importBtn.onclick = () => fileInput.click();
+    
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        importBtn.textContent = '⏳ Memproses...';
+        importBtn.disabled = true;
+        
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                
+                if (!json || json.length === 0) {
+                    showNotifTop('File Excel kosong!', true);
+                    return;
+                }
+                
+                let success = 0, failed = 0;
+                const duplicates = [];
+                
+                for (const row of json) {
+                    try {
+                        let agentId = row.agent_id || row.Agent_ID || row.id || row.ID || '';
+                        let nama = row.nama || row.Nama || row.name || row.Name || '';
+                        let hp = row.hp || row.HP || row.phone || row.Phone || '';
+                        let apk = row.apk || row.APK || row.aplikasi || row.Aplikasi || '';
+                        
+                        if (!nama || !hp) {
+                            failed++;
+                            continue;
+                        }
+                        
+                        let cleanHp = hp.toString().trim();
+                        cleanHp = cleanHp.replace(/[^\d+]/g, '');
+                        if (!cleanHp.startsWith('+')) {
+                            cleanHp = cleanHp.replace(/^0+/, '');
+                            if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
+                            else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
+                            else cleanHp = '+' + cleanHp.replace(/^\+/, '');
+                        }
+                        
+                        if (!agentId) agentId = `AG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+                        
+                        const existing = await db.collection('db_agent').where('hp', '==', cleanHp).get();
+                        if (!existing.empty) {
+                            duplicates.push(`Nomor ${cleanHp} sudah terdaftar`);
+                            failed++;
+                            continue;
+                        }
+                        
+                        await db.collection('db_agent').add({
+                            agent_id: agentId.toString().toUpperCase(),
+                            nama: nama.toString().trim(),
+                            hp: cleanHp,
+                            apk: apk.toString().trim() || '',
+                            user_id: currentUser.uid,
+                            created_at: new Date().toISOString()
+                        });
+                        success++;
+                    } catch(err) {
+                        failed++;
+                    }
+                }
+                
+                showNotifTop(`✅ Import selesai! Berhasil: ${success}, Gagal: ${failed}${duplicates.length > 0 ? `\nDuplikat: ${duplicates.length}` : ''}`);
+                loadDatabaseAgent();
+                fileInput.value = '';
+            } catch(err) {
+                showNotifTop('❌ Gagal import: ' + err.message, true);
+            } finally {
+                importBtn.textContent = '📥 Import Excel';
+                importBtn.disabled = false;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+}
+
+async function exportAgentToExcel() {
+    if (agentsData.length === 0) {
+        showNotifTop('Tidak ada data untuk diexport', true);
+        return;
+    }
+    
+    const exportData = agentsData.map(item => ({
+        'ID Agent': item.agent_id,
+        'Nama': item.nama.replace(/ \(.*\)/, ''),
+        'Nomor WhatsApp': item.hp,
+        'Tanggal Input': new Date(item.createdAt).toLocaleDateString('id-ID')
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
+    XLSX.writeFile(wb, `database_agent_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showNotifTop('✅ Export data berhasil!');
+}
+
+function downloadAgentExample() {
+    const data = [{
+        agent_id: 'AG-001',
+        nama: 'Budi Santoso',
+        hp: '6281234567890',
+        apk: 'GNP'
+    }];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
+    XLSX.writeFile(wb, 'contoh_database_agent.xlsx');
 }
 
 // ========== IMPORT EXCEL ==========
