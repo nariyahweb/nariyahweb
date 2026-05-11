@@ -390,3 +390,47 @@ body.modal-open {
     width: 100%;
     height: 100%;
 }
+
+/* ========== PERBAIKAN POPUP KONFIRMASI ========== */
+
+/* Popup konfirmasi custom (showConfirmDialog) */
+.modal:has(.btn-danger),  /* Untuk popup konfirmasi dengan tombol merah */
+.modal:has(.confirm-dialog) {
+    z-index: 9999999 !important;
+}
+
+/* Atau cara yang lebih aman - target semua modal yang dibuat secara dinamis */
+.modal[style*="display: flex"] {
+    z-index: 9999999 !important;
+}
+
+/* Pastikan konten popup konfirmasi juga tinggi */
+.modal .modal-content {
+    z-index: 10000000 !important;
+    position: relative;
+}
+
+/* Khusus untuk popup konfirmasi (yang dibuat oleh showConfirmDialog) */
+.confirm-dialog-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 9999999 !important;
+    backdrop-filter: blur(4px);
+}
+
+.confirm-dialog-content {
+    background: white !important;
+    border-radius: 24px !important;
+    max-width: 400px !important;
+    width: 90% !important;
+    z-index: 10000000 !important;
+    position: relative !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
