@@ -274,7 +274,7 @@
                 <div id="dbCommitmentPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions"><button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button></div></div><div id="dbCommitmentList" class="db-list"></div></div></div>
 
                 <!-- PRODUK PAGE -->
-                <div id="produkPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🏷️ Manajemen Produk</h3><div class="db-actions"><button class="add-btn" id="addProdukBtn">+ Tambah Produk</button>
+                <div id="produkPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🏷️ Manajemen Produk</h3><div class="db-actions"><button class="add-btn" id="addProdukBtn">+ Tambah Produk</button><button class="add-btn" id="manageTarifAdminBtn" style="background: #8b5cf6;">🏷️ Kelola Admin per CID</button>
                 <button class="db-import-excel" id="importProdukExcelBtn" style="background: #10b981; color: white;">📥 Import Excel</button>
                 <button class="db-export-excel" id="exportProdukExcelBtn" style="background: #3b82f6; color: white;">📤 Export Excel</button></div></div><div id="produkList" class="db-list"></div></div></div>
                 
@@ -454,6 +454,58 @@
         </div>
     </div>
 </div>
+
+<!-- MODAL KELOLA TARIF ADMIN PER CID -->
+<div class="modal" id="tarifAdminModal">
+    <div class="modal-content" style="max-width: 800px; max-height: 85vh; overflow-y: auto;">
+        <h3>🏷️ Kelola Admin per CID</h3>
+        <div class="modal-subtitle">Atur potongan admin untuk setiap CID</div>
+        
+        <!-- Form Tambah/Edit -->
+        <div style="padding: 0 20px; background: #f9fafb; margin: 0 20px 20px 20px; border-radius: 12px; padding: 16px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">CID <span class="required">*</span></label>
+                    <input type="text" id="tarifCid" placeholder="Contoh: 5213247" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Pospaid</label>
+                    <input type="number" id="tarifPospaid" placeholder="Admin PLN Pospaid" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Prepaid</label>
+                    <input type="number" id="tarifPrepaid" placeholder="Admin PLN Prepaid" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Nontaglis</label>
+                    <input type="number" id="tarifNontaglis" placeholder="Admin PLN Nontaglis" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
+                </div>
+                <div>
+                    <button id="saveTarifAdminBtn" class="btn-primary" style="padding: 10px 20px;">💾 Simpan</button>
+                    <button id="clearTarifFormBtn" class="btn-outline" style="padding: 10px 20px;">✖ Bersihkan</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tombol Import/Export -->
+        <div style="padding: 0 20px; margin-bottom: 16px; display: flex; gap: 10px;">
+            <button id="importTarifExcelBtn" class="db-import-excel" style="background: #10b981;">📥 Import Excel</button>
+            <button id="exportTarifExcelBtn" class="db-export-excel" style="background: #3b82f6;">📤 Export Excel</button>
+            <button id="downloadTarifExampleBtn" style="background: #f59e0b; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📋 Download Contoh</button>
+        </div>
+        
+        <!-- Daftar Tarif Admin -->
+        <div style="padding: 0 20px 20px 20px;">
+            <div id="tarifAdminList" class="db-list" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+        
+        <div class="modal-buttons">
+            <button id="closeTarifAdminModal" class="btn-outline">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="tarifExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
 
 <input type="file" id="produkExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
     
