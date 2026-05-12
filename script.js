@@ -46,16 +46,6 @@ function showNotif(msg, isError = false) {
     setTimeout(() => notif.remove(), 5000);
 }
 
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-        modal.onclick = null; // Reset event handler
-    }
-    document.body.style.overflow = '';
-    document.body.classList.remove('modal-open');
-}
-
 function openWA(hp) {
     if (!hp) return;
     let nomor = hp.toString().replace('+', '').replace(/^0/, '62');
@@ -1208,7 +1198,30 @@ if (saveProspekBtn) {
 }
 
 // ========== DETAIL MODAL ==========
-function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }modal.onclick = (e) => { if (e.target === modal) { closeModal(modalId); } }; } }
+function showModal(modalId) { 
+    const modal = document.getElementById(modalId); 
+    if (modal) { 
+        modal.style.display = 'flex'; 
+        document.body.classList.add('modal-open'); 
+        
+        // Klik di luar modal untuk menutup
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                closeModal(modalId);
+            }
+        };
+    } 
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        modal.onclick = null;
+    }
+    document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
+}
 
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(async doc => {
