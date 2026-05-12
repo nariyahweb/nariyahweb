@@ -425,36 +425,39 @@
     </div>
 </div>
 
-<!-- MODAL TAMBAH/EDIT PRODUK -->
-<div class="modal" id="productModal">
+<!-- MODAL TAMBAH/EDIT PRODUK MASTER -->
+<div class="modal" id="produkMasterModal">
     <div class="modal-content" style="max-width: 450px;">
-        <h3 id="productModalTitle">📦 Tambah Produk</h3>
-        <div class="modal-subtitle">Isi data produk</div>
+        <h3 id="produkMasterTitle">🏷️ Tambah Produk</h3>
+        <div class="modal-subtitle">Isi data produk master</div>
         <div style="padding: 0 20px;">
             <div class="form-group">
                 <label>Nama Produk <span class="required">*</span></label>
-                <select id="productSelect" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-                    <option value="">Pilih Produk</option>
-                </select>
+                <input type="text" id="produkMasterNama" placeholder="Nama produk">
             </div>
             <div class="form-group">
-                <label>Harga Jual <span class="required">*</span></label>
-                <input type="number" id="productPrice" placeholder="Harga jual produk" step="1000">
+                <label>Harga HPP (Modal) <span class="required">*</span></label>
+                <input type="number" id="produkMasterHpp" placeholder="Harga modal/HPP" step="1000">
             </div>
             <div class="form-group">
-                <label>Quantity</label>
-                <input type="number" id="productQty" placeholder="Jumlah" value="1" step="1">
+                <label>Harga Jual Referensi</label>
+                <input type="number" id="produkMasterHargaJual" placeholder="Harga jual referensi" step="1000">
+            </div>
+            <div class="form-group">
+                <label>Keterangan</label>
+                <textarea id="produkMasterKeterangan" rows="2" placeholder="Deskripsi produk" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea>
             </div>
         </div>
         <div class="modal-buttons">
-            <button id="saveProductBtn" class="btn-primary">💾 Simpan Produk</button>
-            <button id="cancelProductBtn" class="btn-outline">Batal</button>
+            <button id="saveProdukMasterBtn" class="btn-primary">💾 Simpan</button>
+            <button id="cancelProdukMasterBtn" class="btn-outline">Batal</button>
         </div>
     </div>
 </div>
+
+<input type="file" id="produkExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
     
 <div id="notifBox"></div>
-<input type="file" id="produkExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
 <input type="file" id="agentExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
 <script src="script.js"></script>
 </body>
