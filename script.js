@@ -593,6 +593,25 @@ if (produkMasterModal) {
     ];
     
     allModalIds.forEach(id => setupModalClickOutside(id));
+        // ========== SETUP CLICK OUTSIDE UNTUK SEMUA MODAL ==========
+    // Panggil fungsi untuk setiap modal yang ingin ditutup dengan klik di luar
+    setupModalClickOutside('detailModal');
+    setupModalClickOutside('customerModal');
+    setupModalClickOutside('prospekModal');
+    setupModalClickOutside('prospekNegosiasiModal');
+    setupModalClickOutside('profileModal');
+    setupModalClickOutside('previewPhotoModal');
+    setupModalClickOutside('reminderModal');
+    setupModalClickOutside('pesanModal');
+    setupModalClickOutside('convertModal');
+    setupModalClickOutside('followupConfirmModal');
+    setupModalClickOutside('pendingModal');
+    setupModalClickOutside('addCsModal');
+    setupModalClickOutside('editDeadlineModal');
+    setupModalClickOutside('infoModal');
+    setupModalClickOutside('agentDetailModal');
+    setupModalClickOutside('productModal');
+    setupModalClickOutside('produkMasterModal');
 });
 
 // ========== EVENT LISTENER PRODUK ==========
