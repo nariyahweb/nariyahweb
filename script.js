@@ -3639,14 +3639,23 @@ function setupAgentImport() {
                         }
                         
                         await db.collection('db_agent').add({
-                            agent_id: agentId.toString().toUpperCase(),
-                            nama: nama.toString().trim(),
-                            hp: cleanHp,
-                            apk: apk.toString().trim() || '',
-                            agent_type: agentType || '',
-                            user_id: currentUser.uid,
-                            created_at: new Date().toISOString()
-                        });
+    agent_id: agentId.toString().toUpperCase(),
+    nama: nama.toString().trim(),
+    hp: cleanHp,
+    apk: apk.toString().trim() || '',
+    agent_type: agentType || '',
+    pemilik: pemilik || '',
+    alamat: alamat || '',
+    email: email || '',
+    tlp: tlp || '',
+    no_rekening: no_rekening || '',
+    atas_nama: atas_nama || '',
+    jenis_bank: jenis_bank || '',
+    no_ktp: no_ktp || '',
+    cid: cid || '',
+    user_id: currentUser.uid,
+    created_at: new Date().toISOString()
+});
                         success++;
                     } catch(err) {
                         failed++;
