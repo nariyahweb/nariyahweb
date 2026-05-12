@@ -47,11 +47,11 @@
                 <div class="menu-item" data-page="prospekFull"><span class="icon">📋</span><span>Data Prospek Agen</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
-                <div class="menu-item" data-page="dbAgent"><span class="icon">👥</span><span>Database Agent</span></div>
+                <div class="menu-item" data-page="dbAgent"><span class="icon">📁</span><span>Database Agent</span></div>
                 <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
                 <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
-                <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📵</span><span>DB Nomor Salah</span></div>
-                <div class="menu-item" data-page="dbCommitment"><span class="icon">🤝</span><span>DB Commitment</span></div>
+                <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📁</span><span>DB Nomor Salah</span></div>
+                <div class="menu-item" data-page="dbCommitment"><span class="icon">📁</span><span>DB Commitment</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">IMPORT DATA</div>
                 <div class="menu-item" data-page="import"><span class="icon">📜</span><span>Import Data</span></div>
@@ -67,6 +67,7 @@
                 <!-- Menu untuk Owner (akan ditampilkan jika role=owner) -->
                 <div id="ownerMenu" style="display:none;">
                     <div class="menu-label">MANAJEMEN</div>
+                    <div class="menu-item" data-page="produk"><span class="icon">🏷️</span><span>Produk</span></div>
                     <div class="menu-item" data-page="manageUsers"><span class="icon">👥</span><span>Kelola CS Agent</span></div>
                     <div class="menu-divider"></div>
                 </div>
@@ -272,6 +273,11 @@
                 <div id="dbNomorSalahPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📵 Database Nomor Salah</h3><div class="db-actions"><button class="db-select-all" id="selectAllNomorSalah">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedNomorSalah">🗑️ Hapus Terpilih</button></div></div><div id="dbNomorSalahList" class="db-list"></div></div></div>
                 <div id="dbCommitmentPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions"><button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button></div></div><div id="dbCommitmentList" class="db-list"></div></div></div>
 
+                <!-- PRODUK PAGE -->
+                <div id="produkPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🏷️ Manajemen Produk</h3><div class="db-actions"><button class="add-btn" id="addProdukBtn">+ Tambah Produk</button>
+                <button class="db-import-excel" id="importProdukExcelBtn" style="background: #10b981; color: white;">📥 Import Excel</button>
+                <button class="db-export-excel" id="exportProdukExcelBtn" style="background: #3b82f6; color: white;">📤 Export Excel</button></div></div><div id="produkList" class="db-list"></div></div></div>
+                
                 <!-- REMINDER PAGE -->
                 <div id="reminderPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>⏰ Pengingat (Reminder)</h3><button class="add-btn" id="addReminderBtn">+ Tambah Pengingat</button></div><div id="reminderList" class="db-list"><p style="text-align:center;padding:40px;">⏰ Belum ada pengingat</p></div></div></div>
 
@@ -327,7 +333,128 @@
 
 <div class="modal" id="addCsModal"><div class="modal-content"><h3>➕ Tambah CS Agent</h3><div class="modal-subtitle">Buat akun untuk CS Agent baru</div><div class="form-group"><label for="csEmail">Email <span class="required">*</span></label><input type="email" id="csEmail" placeholder="cs@example.com" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPassword">Password <span class="required">*</span></label><input type="password" id="csPassword" placeholder="******" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csName">Nama Lengkap <span class="required">*</span></label><input type="text" id="csName" placeholder="Nama CS" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="csPhone" placeholder="81234567890" style="flex:1"></div></div><div class="modal-buttons"><button id="saveCsBtn" class="btn-primary">Simpan</button><button class="closeModalBtn" data-modal="addCsModal">Batal</button></div></div></div>
 
+<!-- MODAL DETAIL AGENT LENGKAP -->
+<div class="modal" id="agentDetailModal">
+    <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
+        <h3>📋 Detail Agent</h3>
+        <div class="modal-subtitle">Informasi lengkap agent</div>
+        <div style="padding: 0 20px;">
+            <div class="form-group">
+                <label>ID Agent</label>
+                <input type="text" id="agentDetailId" readonly style="background: #f3f4f6;">
+            </div>
+            <div class="form-group">
+                <label>Nama Agent <span class="required">*</span></label>
+                <input type="text" id="agentDetailNama" placeholder="Nama lengkap agent">
+            </div>
+            <div class="form-group">
+                <label>Type/Class (Under) <span class="required">*</span></label>
+                <select id="agentDetailType">
+                    <option value="">Pilih Type</option>
+                    <option value="CollectingAgent (CA)">CollectingAgent (CA)</option>
+                    <option value="SUB CA">SUB CA</option>
+                    <option value="Koordinator Wilayah (KORWIL)">Koordinator Wilayah (KORWIL)</option>
+                    <option value="SUB KORWIL">SUB KORWIL</option>
+                    <option value="AGENT">AGENT</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Pemilik</label>
+                <input type="text" id="agentDetailPemilik" placeholder="Nama pemilik/atasan">
+            </div>
+            <div class="form-group">
+                <label>Alamat</label>
+                <textarea id="agentDetailAlamat" rows="2" placeholder="Alamat lengkap" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="agentDetailEmail" placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+                <label>Telepon</label>
+                <input type="tel" id="agentDetailTlp" placeholder="Nomor telepon">
+            </div>
+            <div class="form-group">
+                <label>Nomor Rekening</label>
+                <input type="text" id="agentDetailNoRekening" placeholder="Nomor rekening bank">
+            </div>
+            <div class="form-group">
+                <label>Atas Nama Rekening</label>
+                <input type="text" id="agentDetailAtasNama" placeholder="Nama pemilik rekening">
+            </div>
+            <div class="form-group">
+                <label>Jenis Bank</label>
+                <select id="agentDetailBank">
+                    <option value="">Pilih Bank</option>
+                    <option value="BCA">BCA</option>
+                    <option value="Mandiri">Mandiri</option>
+                    <option value="BRI">BRI</option>
+                    <option value="BNI">BNI</option>
+                    <option value="CIMB Niaga">CIMB Niaga</option>
+                    <option value="Danamon">Danamon</option>
+                    <option value="Permata">Permata</option>
+                    <option value="Maybank">Maybank</option>
+                    <option value="OCBC NISP">OCBC NISP</option>
+                    <option value="Bank Lain">Bank Lain</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>No KTP</label>
+                <input type="text" id="agentDetailNoKtp" placeholder="Nomor KTP">
+            </div>
+            <div class="form-group">
+                <label>CID (Customer ID)</label>
+                <input type="text" id="agentDetailCid" placeholder="Customer ID">
+            </div>
+            
+            <!-- ========== PRODUK SECTION ========== -->
+            <div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h4 style="margin: 0;">📦 Produk Agent</h4>
+                    <button type="button" id="addAgentProductBtn" class="add-btn" style="background: #10b981;">+ Tambah Produk</button>
+                </div>
+                <div id="agentProductsContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px;">
+                    <p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk. Klik "+ Tambah Produk"</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="saveAgentDetailBtn" class="btn-primary">💾 Simpan Data</button>
+            <button id="closeAgentDetailBtn" class="btn-outline">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TAMBAH/EDIT PRODUK -->
+<div class="modal" id="productModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3 id="productModalTitle">📦 Tambah Produk</h3>
+        <div class="modal-subtitle">Isi data produk</div>
+        <div style="padding: 0 20px;">
+            <div class="form-group">
+                <label>Nama Produk <span class="required">*</span></label>
+                <select id="productSelect" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+                    <option value="">Pilih Produk</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Harga Jual <span class="required">*</span></label>
+                <input type="number" id="productPrice" placeholder="Harga jual produk" step="1000">
+            </div>
+            <div class="form-group">
+                <label>Quantity</label>
+                <input type="number" id="productQty" placeholder="Jumlah" value="1" step="1">
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="saveProductBtn" class="btn-primary">💾 Simpan Produk</button>
+            <button id="cancelProductBtn" class="btn-outline">Batal</button>
+        </div>
+    </div>
+</div>
+    
 <div id="notifBox"></div>
+<input type="file" id="produkExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
 <input type="file" id="agentExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
 <script src="script.js"></script>
 </body>
