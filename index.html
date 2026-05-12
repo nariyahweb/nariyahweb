@@ -408,15 +408,15 @@
             </div>
             
             <!-- ========== PRODUK SECTION ========== -->
-            <div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h4 style="margin: 0;">📦 Produk Agent</h4>
-                    <button type="button" id="addAgentProductBtn" class="add-btn" style="background: #10b981;">+ Tambah Produk</button>
-                </div>
-                <div id="agentProductsContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px;">
-                    <p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk. Klik "+ Tambah Produk"</p>
-                </div>
-            </div>
+<div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h4 style="margin: 0;">📦 Daftar Produk</h4>
+        <button type="button" id="refreshProdukBtn" class="add-btn" style="background: #10b981;">🔄 Refresh Produk</button>
+    </div>
+    <div id="agentProductsContainer" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px;">
+        <p style="text-align:center; color:#9ca3af; padding:20px;">Loading produk...</p>
+    </div>
+</div>
         </div>
         <div class="modal-buttons">
             <button id="saveAgentDetailBtn" class="btn-primary">💾 Simpan Data</button>
