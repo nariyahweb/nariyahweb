@@ -436,6 +436,36 @@
                 <input type="text" id="produkMasterNama" placeholder="Nama produk">
             </div>
             <div class="form-group">
+    <label>Jenis Produk <span class="required">*</span></label>
+    <select id="produkMasterJenis" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+        <option value="tanpa_admin">📦 Tanpa Admin (HPP + Harga Jual)</option>
+        <option value="beradmin">🏷️ Beradmin (Admin/Potongan)</option>
+    </select>
+</div>
+
+<!-- Field untuk produk TANPA admin (muncul jika jenis = tanpa_admin) -->
+<div id="tanpaAdminFields" style="display: none;">
+    <div class="form-group">
+        <label>Harga Jual Referensi</label>
+        <input type="number" id="produkMasterHargaJual" placeholder="Harga jual referensi" step="1000">
+    </div>
+</div>
+
+<!-- Field untuk produk BERADMIN (muncul jika jenis = beradmin) -->
+<div id="beradminFields" style="display: none;">
+    <div class="form-group">
+        <label>Admin Default <span class="required">*</span></label>
+        <input type="number" id="produkMasterAdminDefault" placeholder="Admin default (potongan)" step="100">
+    </div>
+    <div class="form-group">
+        <label>Apakah admin berdasarkan CID?</label>
+        <select id="produkMasterCidBased" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+            <option value="no">❌ Tidak (admin tetap)</option>
+            <option value="yes">✅ Ya (admin berbeda per CID)</option>
+        </select>
+    </div>
+</div>
+            <div class="form-group">
                 <label>Harga HPP (Modal) <span class="required">*</span></label>
                 <input type="number" id="produkMasterHpp" placeholder="Harga modal/HPP" step="1000">
             </div>
