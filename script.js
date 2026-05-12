@@ -4115,6 +4115,124 @@ document.getElementById('productSelect')?.addEventListener('change', function() 
     }
 });
 
+// ========== IMPORT/EXPORT PRODUK ==========
+function setupProdukImport() {
+    const importBtn = document.getElementById('importProdukExcelBtn');
+    const fileInput = document.getElementById('produkExcelFile');
+    if (!importBtn || !fileInput) return;
+    
+    importBtn.onclick = () => fileInput.click();
+    
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        importBtn.textContent = '⏳ Memproses...';
+        importBtn.disabled = true;
+        
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                
+                if (!json || json.length === 0) {
+                    showNotifTop('File Excel kosong!', true);
+                    return;
+                }
+                
+                let success = 0, failed = 0;
+                
+                for (const row of json) {
+                    try {
+                        let nama = row.nama || row.Nama || row.name || row.Name || '';
+                        let hpp = row.hpp || row.HPP || row.harga_modal || row.HargaModal || '';
+                        let hargaJual = row.harga_jual || row.HargaJual || row.harga || row.Harga || '';
+                        let keterangan = row.keterangan || row.Keterangan || '';
+                        
+                        if (!nama || !hpp) {
+                            failed++;
+                            continue;
+                        }
+                        
+                        await db.collection('produk').add({
+                            nama: nama.toString().trim(),
+                            hpp: parseInt(hpp) || 0,
+                            harga_jual: parseInt(hargaJual) || 0,
+                            keterangan: keterangan || '',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        });
+                        success++;
+                    } catch(err) {
+                        failed++;
+                    }
+                }
+                
+                showNotifTop(`✅ Import produk selesai! Berhasil: ${success}, Gagal: ${failed}`);
+                await loadProduk();
+                fileInput.value = '';
+            } catch(err) {
+                showNotifTop('❌ Gagal import: ' + err.message, true);
+            } finally {
+                importBtn.textContent = '📥 Import Excel';
+                importBtn.disabled = false;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+}
+
+async function exportProdukToExcel() {
+    if (produkData.length === 0) {
+        showNotifTop('Tidak ada data produk untuk diexport', true);
+        return;
+    }
+    
+    const exportData = produkData.map(item => ({
+        'Nama Produk': item.nama,
+        'HPP (Modal)': item.hpp,
+        'Harga Jual': item.harga_jual,
+        'Keterangan': item.keterangan || '',
+        'Tanggal Dibuat': new Date(item.created_at).toLocaleDateString('id-ID')
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Produk');
+    XLSX.writeFile(wb, `produk_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showNotifTop('✅ Export produk berhasil!');
+}
+
+function downloadProdukExample() {
+    const data = [{
+        nama: 'Contoh Produk A',
+        hpp: 50000,
+        harga_jual: 75000,
+        keterangan: 'Produk unggulan'
+    }];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Produk');
+    XLSX.writeFile(wb, 'contoh_produk.xlsx');
+}
+
+// Event listener untuk produk
+document.getElementById('exportProdukExcelBtn')?.addEventListener('click', exportProdukToExcel);
+setupProdukImport();
+
+// Tombol download contoh produk (tambahkan di halaman produk)
+const downloadProdukExampleBtn = document.createElement('button');
+downloadProdukExampleBtn.textContent = '📋 Download Contoh Excel';
+downloadProdukExampleBtn.className = 'db-import-excel';
+downloadProdukExampleBtn.style.marginLeft = '10px';
+downloadProdukExampleBtn.style.background = '#f59e0b';
+downloadProdukExampleBtn.onclick = downloadProdukExample;
+const produkActionsDiv = document.querySelector('#produkPage .db-actions');
+if (produkActionsDiv) produkActionsDiv.appendChild(downloadProdukExampleBtn);
+
 // ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
 const excelFileInput = document.getElementById('excelFile');
