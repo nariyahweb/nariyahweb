@@ -570,6 +570,29 @@ if (produkMasterModal) {
     if (actionsDiv) {
         actionsDiv.appendChild(downloadExampleBtn);
     }
+        // ========== SETUP CLICK OUTSIDE UNTUK SEMUA MODAL ==========
+    function setupModalClickOutside(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        
+        modal.removeEventListener('click', modal._clickHandler);
+        modal._clickHandler = function(e) {
+            if (e.target === modal) {
+                closeModal(modalId);
+            }
+        };
+        modal.addEventListener('click', modal._clickHandler);
+    }
+    
+    const allModalIds = [
+        'detailModal', 'customerModal', 'prospekModal', 'prospekNegosiasiModal',
+        'profileModal', 'previewPhotoModal', 'reminderModal', 'pesanModal',
+        'convertModal', 'followupConfirmModal', 'pendingModal', 'addCsModal',
+        'editDeadlineModal', 'infoModal', 'agentDetailModal', 'productModal',
+        'produkMasterModal'
+    ];
+    
+    allModalIds.forEach(id => setupModalClickOutside(id));
 });
 
 // ========== EVENT LISTENER PRODUK ==========
@@ -1203,21 +1226,32 @@ function showModal(modalId) {
     if (modal) { 
         modal.style.display = 'flex'; 
         document.body.classList.add('modal-open'); 
-        
-        // Klik di luar modal untuk menutup
-        modal.onclick = (e) => {
-            if (e.target === modal) {
-                closeModal(modalId);
-            }
-        };
+        document.body.style.overflow = 'hidden';
     } 
+}
+
+// Fungsi untuk setup click outside pada modal tertentu
+function setupModalClickOutside(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    // Hapus event listener lama jika ada
+    modal.removeEventListener('click', modal._clickOutsideHandler);
+    
+    // Buat event listener baru
+    modal._clickOutsideHandler = function(e) {
+        if (e.target === modal) {
+            closeModal(modalId);
+        }
+    };
+    
+    modal.addEventListener('click', modal._clickOutsideHandler);
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
-        modal.onclick = null;
     }
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
@@ -1723,12 +1757,14 @@ function openProspekDihubungiConfirm(id) {
         document.body.classList.remove('modal-open');
     };
     
-    modal.onclick = (e) => { 
-        if (e.target === modal) { 
-            modal.remove(); 
-            document.body.classList.remove('modal-open'); 
-        } 
-    };
+   // Di dalam fungsi openProspekDihubungiConfirm, setelah modal dibuat
+modal.onclick = (e) => { 
+    if (e.target === modal) { 
+        modal.remove(); 
+        document.body.classList.remove('modal-open'); 
+        document.body.style.overflow = '';
+    } 
+};
 }
 
 function openProspekNegosiasiModal(id) {
