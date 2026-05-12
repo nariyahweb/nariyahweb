@@ -733,6 +733,84 @@ async function updateAllBadges() {
     await updatePesanBadge();
 }
 
+// ========== FUNGSI UNTUK PRODUK AGENT ==========
+function openAddProductModal() {
+    if (!currentAgentIdForProduct) {
+        showNotifTop('⚠️ Pilih agent terlebih dahulu!', true);
+        return;
+    }
+    
+    // Reset form
+    document.getElementById('productModalTitle').innerText = '📦 Tambah Produk';
+    document.getElementById('productSelect').value = '';
+    document.getElementById('productPrice').value = '';
+    document.getElementById('productQty').value = '1';
+    
+    // Buka modal
+    document.getElementById('productModal').style.display = 'flex';
+}
+
+function removeAgentProduct(index) {
+    if (!currentAgentProducts) return;
+    currentAgentProducts.splice(index, 1);
+    renderAgentProducts();
+}
+
+async function saveAgentProduct() {
+    const produkId = document.getElementById('productSelect').value;
+    const price = parseInt(document.getElementById('productPrice').value);
+    const qty = parseInt(document.getElementById('productQty').value) || 1;
+    
+    if (!produkId || !price) {
+        showNotifTop('⚠️ Pilih produk dan isi harga!', true);
+        return;
+    }
+    
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) return;
+    
+    if (!currentAgentProducts) currentAgentProducts = [];
+    
+    currentAgentProducts.push({
+        produk_id: produkId,
+        nama_produk: produk.nama,
+        harga: price,
+        qty: qty,
+        added_at: new Date().toISOString()
+    });
+    
+    renderAgentProducts();
+    closeModal('productModal');
+}
+
+function renderAgentProducts() {
+    const container = document.getElementById('agentProductsContainer');
+    if (!container) return;
+    
+    if (!currentAgentProducts || currentAgentProducts.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk. Klik "+ Tambah Produk"</p>';
+        return;
+    }
+    
+    container.innerHTML = currentAgentProducts.map((product, idx) => {
+        const produkMaster = produkData.find(p => p.id === product.produk_id);
+        const namaProduk = produkMaster ? produkMaster.nama : (product.nama_produk || 'Produk');
+        const formatRupiah = (angka) => {
+            if (!angka) return 'Rp 0';
+            return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        };
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                <div style="flex: 1;">
+                    <strong>📦 ${escapeHtml(namaProduk)}</strong><br>
+                    💰 Harga: ${formatRupiah(product.harga)} | 📦 Qty: ${product.qty || 1}
+                </div>
+                <button class="btn-danger" onclick="removeAgentProduct(${idx})" style="padding: 4px 10px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
+            </div>
+        `;
+    }).join('');
+}
+
 // ========== AUTH STATE ==========
 auth.onAuthStateChanged(async user => {
     const loginPage = document.getElementById('loginPage');
@@ -3752,6 +3830,91 @@ function setupAgentFilters() {
         };
     }
 }
+
+// ========== FUNGSI PRODUK AGENT ==========
+window.openAddProductModal = function() {
+    if (!currentAgentIdForProduct) {
+        showNotifTop('⚠️ Pilih agent terlebih dahulu!', true);
+        return;
+    }
+    
+    document.getElementById('productModalTitle').innerText = '📦 Tambah Produk';
+    document.getElementById('productSelect').value = '';
+    document.getElementById('productPrice').value = '';
+    document.getElementById('productQty').value = '1';
+    document.getElementById('productModal').style.display = 'flex';
+};
+
+window.removeAgentProduct = function(index) {
+    if (!currentAgentProducts) return;
+    currentAgentProducts.splice(index, 1);
+    renderAgentProducts();
+};
+
+window.saveAgentProduct = async function() {
+    const produkId = document.getElementById('productSelect').value;
+    const price = parseInt(document.getElementById('productPrice').value);
+    const qty = parseInt(document.getElementById('productQty').value) || 1;
+    
+    if (!produkId || !price) {
+        showNotifTop('⚠️ Pilih produk dan isi harga!', true);
+        return;
+    }
+    
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) return;
+    
+    if (!currentAgentProducts) currentAgentProducts = [];
+    
+    currentAgentProducts.push({
+        produk_id: produkId,
+        nama_produk: produk.nama,
+        harga: price,
+        qty: qty,
+        added_at: new Date().toISOString()
+    });
+    
+    renderAgentProducts();
+    closeModal('productModal');
+};
+
+function renderAgentProducts() {
+    const container = document.getElementById('agentProductsContainer');
+    if (!container) return;
+    
+    if (!currentAgentProducts || currentAgentProducts.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk. Klik "+ Tambah Produk"</p>';
+        return;
+    }
+    
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    container.innerHTML = currentAgentProducts.map((product, idx) => {
+        const produkMaster = produkData.find(p => p.id === product.produk_id);
+        const namaProduk = produkMaster ? produkMaster.nama : (product.nama_produk || 'Produk');
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                <div style="flex: 1;">
+                    <strong>📦 ${escapeHtml(namaProduk)}</strong><br>
+                    💰 Harga: ${formatRupiah(product.harga)} | 📦 Qty: ${product.qty || 1}
+                </div>
+                <button class="btn-danger" onclick="removeAgentProduct(${idx})" style="padding: 4px 10px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
+            </div>
+        `;
+    }).join('');
+}
+
+// Event listener untuk auto-fill harga
+document.getElementById('productSelect')?.addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const harga = selectedOption.getAttribute('data-harga');
+    if (harga && harga !== '0' && document.getElementById('productPrice').value === '') {
+        document.getElementById('productPrice').value = harga;
+    }
+});
 
 // ========== IMPORT EXCEL ==========
 const dropZone = document.getElementById('dropZone');
