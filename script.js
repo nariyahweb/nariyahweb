@@ -840,6 +840,7 @@ if (saveCustomerBtn) {
         let nama = document.getElementById('customerName').value;
         let hp = document.getElementById('customerPhone').value;
         const apk = document.getElementById('customerApk').value;
+        const agentType = document.getElementById('customerType').value;
         let tanggal = document.getElementById('customerDate').value;
         
         if (!agentId) { showNotif('ID Agent wajib diisi!', true); return; }
@@ -849,6 +850,7 @@ if (saveCustomerBtn) {
         if (hp.length > 12) { showNotif('Nomor WhatsApp maksimal 12 digit!', true); return; }
         if (!hp.startsWith('8')) { showNotif('Nomor WhatsApp harus diawali dengan 8!', true); return; }
         if (!apk) { showNotif('Aplikasi wajib dipilih!', true); return; }
+        if (!agentType) { showNotif('Type/Class wajib dipilih!', true); return; }
         
         // Cek duplikat
         const cleanHpForCheck = '+62' + hp;
@@ -870,7 +872,8 @@ if (saveCustomerBtn) {
             agent_id: agentId, 
             nama: nama, 
             hp: cleanHp, 
-            apk: apk, 
+            apk: apk,
+            agent_type: agentType,
             tanggal: tanggal, 
             status: 'baru', 
             user_id: currentUser.uid, 
@@ -909,6 +912,7 @@ if (saveProspekBtn) {
         let nama = document.getElementById('prospekName').value;
         let hp = document.getElementById('prospekPhone').value;
         const status = document.getElementById('prospekStatusSelect').value;
+        const agentType = document.getElementById('prospekType').value;
         let deadline = document.getElementById('prospekDeadline').value;
         
         if (!nama) { showNotif('Nama wajib diisi!', true); return; }
@@ -916,6 +920,7 @@ if (saveProspekBtn) {
         if (hp.length < 9) { showNotif('Nomor WhatsApp minimal 9 digit!', true); return; }
         if (hp.length > 12) { showNotif('Nomor WhatsApp maksimal 12 digit!', true); return; }
         if (!hp.startsWith('8')) { showNotif('Nomor WhatsApp harus diawali dengan 8!', true); return; }
+        if (!agentType) { showNotif('Type/Class wajib dipilih!', true); return; }
         
         // Cek duplikat
         const cleanHpForCheck = '+62' + hp;
@@ -932,7 +937,8 @@ if (saveProspekBtn) {
         db.collection('prospek').add({ 
             nama: nama, 
             hp: cleanHp, 
-            status: status || 'Baru', 
+            status: status || 'Baru',
+            agent_type: agentType,
             deadline: deadline, 
             user_id: currentUser.uid, 
             created_at: new Date().toISOString(), 
@@ -997,6 +1003,7 @@ function openDetailCustomer(id) {
                 <div class="detail-info">
                     ${ownerInfo}
                     <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
+                    <div class="detail-info-item"><div class="detail-info-icon">🏷️</div><div class="detail-info-content"><label>Type/Class</label><div class="value">${escapeHtml(d.agent_type || '-')}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${deadlineDisplay} ${editBtn}</div></div></div>
@@ -2411,6 +2418,7 @@ function openDBDetailModal(id, type) {
                 <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Komitmen</label><div class="value">${new Date(d.committed_at).toLocaleDateString('id-ID')}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Followup</label><div class="value">${d.followup_date || '-'}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${d.agent_id || '-'}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">🏷️</div><div class="detail-info-content"><label>Type/Class</label><div class="value">${escapeHtml(d.agent_type || '-')}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${d.aplikasi || d.negosiasi_data?.aplikasi || '-'}</div></div></div>
                 ${d.negosiasi_data ? `<div class="detail-info-item"><div class="detail-info-icon">📋</div><div class="detail-info-content"><label>Data Negosiasi</label><div class="value">Domisili: ${d.negosiasi_data.domisili || '-'}<br>Transaksi: ${d.negosiasi_data.transaksi || '-'}<br>Deposit: ${d.negosiasi_data.deposit || '-'}<br>Tertarik: ${d.negosiasi_data.tertarik || '-'}<br>Penawaran: ${d.negosiasi_data.penawaran || '-'}</div></div></div>` : ''}
             `;
@@ -3173,6 +3181,7 @@ async function loadDatabaseAgent() {
                 nama: d.nama + ownerName,
                 hp: d.hp,
                 agent_id: d.agent_id || '-',
+                agent_type: d.agent_type || '-',
                 apk: d.apk || '',
                 createdAt: d.created_at,
                 checked: selectedAgentIds.get(doc.id) || false
@@ -3199,6 +3208,10 @@ function renderAgentList(items) {
     const filterHasApk = document.getElementById('filterHasApkAgent')?.checked || false;
     
     let filtered = [...items];
+
+    const filterType = document.getElementById('filterTypeAgent')?.value || '';
+    
+    let filtered = [...items];
     
     // Filter pencarian
     if (searchTerm) {
@@ -3207,6 +3220,11 @@ function renderAgentList(items) {
             item.agent_id.toLowerCase().includes(searchTerm) || 
             item.hp.includes(searchTerm)
         );
+    }
+
+    // Filter TYPE/CLASS
+    if (filterType) {
+        filtered = filtered.filter(item => item.agent_type === filterType);
     }
     
     // Filter aplikasi
@@ -3336,6 +3354,7 @@ async function moveAgentToFollowup(agentId) {
                 nama: data.nama,
                 hp: data.hp,
                 apk: data.apk || '',
+                agent_type: data.agent_type || '',
                 tanggal: getTodayDate(),
                 status: 'baru',
                 user_id: data.user_id,
@@ -3394,6 +3413,7 @@ async function openAgentDetail(id) {
             <div class="detail-info">
                 ${ownerInfo}
                 <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
+                <div class="detail-info-item"><div class="detail-info-icon">🏷️</div><div class="detail-info-content"><label>Type/Class</label><div class="value">${escapeHtml(d.agent_type || '-')}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${new Date(d.created_at).toLocaleDateString('id-ID')}</div></div></div>
@@ -3444,6 +3464,7 @@ function setupAgentImport() {
                         let nama = row.nama || row.Nama || row.name || row.Name || '';
                         let hp = row.hp || row.HP || row.phone || row.Phone || '';
                         let apk = row.apk || row.APK || row.aplikasi || row.Aplikasi || '';
+                        let agentType = row.agent_type || row.Agent_Type || row.type || row.Type || row.class || row.Class || '';
                         
                         if (!nama || !hp) {
                             failed++;
@@ -3473,6 +3494,7 @@ function setupAgentImport() {
                             nama: nama.toString().trim(),
                             hp: cleanHp,
                             apk: apk.toString().trim() || '',
+                            agent_type: agentType || '',
                             user_id: currentUser.uid,
                             created_at: new Date().toISOString()
                         });
@@ -3505,6 +3527,7 @@ async function exportAgentToExcel() {
     const exportData = agentsData.map(item => ({
         'ID Agent': item.agent_id,
         'Nama': item.nama.replace(/ \(.*\)/, ''),
+        'Type/Class': item.agent_type,
         'Nomor WhatsApp': item.hp,
         'Tanggal Input': new Date(item.createdAt).toLocaleDateString('id-ID')
     }));
@@ -3521,7 +3544,8 @@ function downloadAgentExample() {
         agent_id: 'AG-001',
         nama: 'Budi Santoso',
         hp: '6281234567890',
-        apk: 'GNP'
+        apk: 'GNP',
+        agent_type: 'CollectingAgent (CA)'
     }];
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -3531,6 +3555,7 @@ function downloadAgentExample() {
 
 function setupAgentFilters() {
     const searchInput = document.getElementById('searchAgentInput');
+    const filterType = document.getElementById('filterTypeAgent');
     const filterApk = document.getElementById('filterApkAgent');
     const filterDate = document.getElementById('filterDateAgent');
     const filterHasHp = document.getElementById('filterHasHpAgent');
@@ -3542,6 +3567,7 @@ function setupAgentFilters() {
     };
     
     if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (filterType) filterType.addEventListener('change', applyFilters);
     if (filterApk) filterApk.addEventListener('change', applyFilters);
     if (filterDate) filterDate.addEventListener('change', applyFilters);
     if (filterHasHp) filterHasHp.addEventListener('change', applyFilters);
@@ -3550,6 +3576,7 @@ function setupAgentFilters() {
     if (resetBtn) {
         resetBtn.onclick = () => {
             if (searchInput) searchInput.value = '';
+            if (filterType) filterType.value = '';
             if (filterApk) filterApk.value = '';
             if (filterDate) filterDate.value = '';
             if (filterHasHp) filterHasHp.checked = false;
