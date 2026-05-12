@@ -3646,6 +3646,205 @@ async function openAgentDetail(id) {
     showModal('detailModal');
 }
 
+// ========== FUNGSI AGENT DETAIL LENGKAP ==========
+async function saveAgentDetail() {
+    if (!currentAgentIdForProduct) {
+        showNotifTop('⚠️ Data agent tidak ditemukan!', true);
+        return;
+    }
+    
+    // Ambil nilai dari form
+    const agentId = document.getElementById('agentDetailId').value;
+    const nama = document.getElementById('agentDetailNama').value;
+    const agentType = document.getElementById('agentDetailType').value;
+    const pemilik = document.getElementById('agentDetailPemilik').value;
+    const alamat = document.getElementById('agentDetailAlamat').value;
+    const email = document.getElementById('agentDetailEmail').value;
+    const tlp = document.getElementById('agentDetailTlp').value;
+    const noRekening = document.getElementById('agentDetailNoRekening').value;
+    const atasNama = document.getElementById('agentDetailAtasNama').value;
+    const jenisBank = document.getElementById('agentDetailBank').value;
+    const noKtp = document.getElementById('agentDetailNoKtp').value;
+    const cid = document.getElementById('agentDetailCid').value;
+    
+    // Validasi minimal
+    if (!nama) {
+        showNotifTop('⚠️ Nama agent wajib diisi!', true);
+        return;
+    }
+    
+    if (!agentType) {
+        showNotifTop('⚠️ Type/Class wajib dipilih!', true);
+        return;
+    }
+    
+    try {
+        // Update data agent
+        await db.collection('db_agent').doc(currentAgentIdForProduct).update({
+            agent_id: agentId,
+            nama: nama,
+            agent_type: agentType,
+            pemilik: pemilik,
+            alamat: alamat,
+            email: email,
+            tlp: tlp,
+            no_rekening: noRekening,
+            atas_nama: atasNama,
+            jenis_bank: jenisBank,
+            no_ktp: noKtp,
+            cid: cid,
+            produk: currentAgentProducts || [],
+            updated_at: new Date().toISOString()
+        });
+        
+        showNotifTop('✅ Data agent berhasil disimpan!');
+        closeModal('agentDetailModal');
+        loadDatabaseAgent(); // Refresh daftar agent
+    } catch (error) {
+        showNotifTop('❌ Gagal menyimpan: ' + error.message, true);
+        console.error(error);
+    }
+}
+
+// Fungsi untuk membuka modal detail agent dengan data lengkap
+async function openAgentDetail(id) {
+    try {
+        const doc = await db.collection('db_agent').doc(id).get();
+        if (!doc.exists) {
+            showNotifTop('❌ Data agent tidak ditemukan!', true);
+            return;
+        }
+        
+        const d = doc.data();
+        currentAgentIdForProduct = id;
+        currentAgentProducts = d.produk || [];
+        
+        // Isi form dengan data yang ada
+        document.getElementById('agentDetailId').value = d.agent_id || '';
+        document.getElementById('agentDetailNama').value = d.nama || '';
+        document.getElementById('agentDetailType').value = d.agent_type || '';
+        document.getElementById('agentDetailPemilik').value = d.pemilik || '';
+        document.getElementById('agentDetailAlamat').value = d.alamat || '';
+        document.getElementById('agentDetailEmail').value = d.email || '';
+        document.getElementById('agentDetailTlp').value = d.tlp || '';
+        document.getElementById('agentDetailNoRekening').value = d.no_rekening || '';
+        document.getElementById('agentDetailAtasNama').value = d.atas_nama || '';
+        document.getElementById('agentDetailBank').value = d.jenis_bank || '';
+        document.getElementById('agentDetailNoKtp').value = d.no_ktp || '';
+        document.getElementById('agentDetailCid').value = d.cid || '';
+        
+        // Render produk
+        renderAgentProducts();
+        
+        // Update dropdown produk
+        updateProductSelect();
+        
+        // Tampilkan modal
+        document.getElementById('agentDetailModal').style.display = 'flex';
+        document.body.classList.add('modal-open');
+    } catch (error) {
+        showNotifTop('❌ Gagal membuka detail: ' + error.message, true);
+        console.error(error);
+    }
+}
+
+// Fungsi untuk update dropdown produk
+function updateProductSelect() {
+    const select = document.getElementById('productSelect');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">Pilih Produk</option>';
+    
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    produkData.forEach(produk => {
+        select.innerHTML += `<option value="${produk.id}" data-harga="${produk.harga_jual || 0}">${escapeHtml(produk.nama)} - ${formatRupiah(produk.harga_jual)}</option>`;
+    });
+}
+
+// Render daftar produk agent
+function renderAgentProducts() {
+    const container = document.getElementById('agentProductsContainer');
+    if (!container) return;
+    
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    if (!currentAgentProducts || currentAgentProducts.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk. Klik "+ Tambah Produk"</p>';
+        return;
+    }
+    
+    container.innerHTML = currentAgentProducts.map((product, idx) => {
+        const produkMaster = produkData.find(p => p.id === product.produk_id);
+        const namaProduk = produkMaster ? produkMaster.nama : (product.nama_produk || 'Produk');
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e5e7eb;">
+                <div style="flex: 1;">
+                    <strong>📦 ${escapeHtml(namaProduk)}</strong><br>
+                    💰 Harga: ${formatRupiah(product.harga)} | 📦 Qty: ${product.qty || 1}
+                </div>
+                <button class="btn-danger" onclick="removeAgentProduct(${idx})" style="padding: 4px 10px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
+            </div>
+        `;
+    }).join('');
+}
+
+// Global functions untuk produk agent
+window.openAddProductModal = function() {
+    if (!currentAgentIdForProduct) {
+        showNotifTop('⚠️ Pilih agent terlebih dahulu!', true);
+        return;
+    }
+    
+    document.getElementById('productModalTitle').innerText = '📦 Tambah Produk';
+    document.getElementById('productSelect').value = '';
+    document.getElementById('productPrice').value = '';
+    document.getElementById('productQty').value = '1';
+    document.getElementById('productModal').style.display = 'flex';
+};
+
+window.removeAgentProduct = function(index) {
+    if (!currentAgentProducts) return;
+    currentAgentProducts.splice(index, 1);
+    renderAgentProducts();
+};
+
+window.saveAgentProduct = async function() {
+    const produkId = document.getElementById('productSelect').value;
+    const price = parseInt(document.getElementById('productPrice').value);
+    const qty = parseInt(document.getElementById('productQty').value) || 1;
+    
+    if (!produkId || !price) {
+        showNotifTop('⚠️ Pilih produk dan isi harga!', true);
+        return;
+    }
+    
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) {
+        showNotifTop('⚠️ Produk tidak ditemukan!', true);
+        return;
+    }
+    
+    if (!currentAgentProducts) currentAgentProducts = [];
+    
+    currentAgentProducts.push({
+        produk_id: produkId,
+        nama_produk: produk.nama,
+        harga: price,
+        qty: qty,
+        added_at: new Date().toISOString()
+    });
+    
+    renderAgentProducts();
+    closeModal('productModal');
+};
+
 function setupAgentImport() {
     const importBtn = document.getElementById('importAgentExcelBtn');
     const fileInput = document.getElementById('agentExcelFile');
