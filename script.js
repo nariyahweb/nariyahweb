@@ -3200,17 +3200,15 @@ function renderAgentList(items) {
     const totalCountSpan = document.getElementById('agentTotalCount');
     if (totalCountSpan) totalCountSpan.innerText = items.length;
     
-    // Terapkan filter
+    // Ambil nilai filter
     const searchTerm = document.getElementById('searchAgentInput')?.value.toLowerCase() || '';
+    const filterType = document.getElementById('filterTypeAgent')?.value || '';
     const filterApk = document.getElementById('filterApkAgent')?.value || '';
     const filterDate = document.getElementById('filterDateAgent')?.value || '';
     const filterHasHp = document.getElementById('filterHasHpAgent')?.checked || false;
     const filterHasApk = document.getElementById('filterHasApkAgent')?.checked || false;
     
-    let filtered = [...items];
-
-    const filterType = document.getElementById('filterTypeAgent')?.value || '';
-    
+    // 🔥 HANYA SATU DEKLARASI filtered (jangan deklarasi ulang)
     let filtered = [...items];
     
     // Filter pencarian
@@ -3221,8 +3219,8 @@ function renderAgentList(items) {
             item.hp.includes(searchTerm)
         );
     }
-
-    // Filter TYPE/CLASS
+    
+    // Filter Type/Class
     if (filterType) {
         filtered = filtered.filter(item => item.agent_type === filterType);
     }
@@ -3284,7 +3282,7 @@ function renderAgentList(items) {
             <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
             <div class="db-item-agent-info">
                 <h4>${escapeHtml(item.nama)}</h4>
-                <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)} | 📱 ${escapeHtml(item.apk !== '-' ? item.apk : '─')}</p>
+                <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)} | 🏷️ ${escapeHtml(item.agent_type !== '-' ? item.agent_type : '─')} | 📱 ${escapeHtml(item.apk !== '-' ? item.apk : '─')}</p>
                 <small>📅 ${new Date(item.createdAt).toLocaleDateString('id-ID')}</small>
             </div>
             <div class="db-item-agent-actions">
