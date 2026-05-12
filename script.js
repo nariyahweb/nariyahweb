@@ -32,6 +32,10 @@ let prospekData = [];
 let selectedAgentIds = new Map();
 let agentsData = [];
 let agentsFilteredData = [];
+let produkData = [];
+let currentEditProdukId = null;
+let currentAgentIdForProduct = null;
+let currentAgentProducts = [];
 
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
@@ -549,9 +553,144 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// ========== EVENT LISTENER PRODUK ==========
+document.getElementById('addProdukBtn')?.addEventListener('click', () => {
+    currentEditProdukId = null;
+    document.getElementById('produkMasterNama').value = '';
+    document.getElementById('produkMasterHpp').value = '';
+    document.getElementById('produkMasterHargaJual').value = '';
+    document.getElementById('produkMasterKeterangan').value = '';
+    document.getElementById('produkMasterTitle').innerText = '🏷️ Tambah Produk';
+    document.getElementById('produkMasterModal').style.display = 'flex';
+});
+
+document.getElementById('saveProdukMasterBtn')?.addEventListener('click', async () => {
+    const nama = document.getElementById('produkMasterNama').value;
+    const hpp = document.getElementById('produkMasterHpp').value;
+    const hargaJual = document.getElementById('produkMasterHargaJual').value;
+    const keterangan = document.getElementById('produkMasterKeterangan').value;
+    await saveProduk(nama, hpp, hargaJual, keterangan, currentEditProdukId);
+    closeModal('produkMasterModal');
+});
+
+document.getElementById('cancelProdukMasterBtn')?.addEventListener('click', () => {
+    closeModal('produkMasterModal');
+});
+
+// Agent Detail event listeners
+document.getElementById('addAgentProductBtn')?.addEventListener('click', openAddProductModal);
+document.getElementById('saveAgentDetailBtn')?.addEventListener('click', saveAgentDetail);
+document.getElementById('closeAgentDetailBtn')?.addEventListener('click', () => closeModal('agentDetailModal'));
+document.getElementById('saveProductBtn')?.addEventListener('click', saveAgentProduct);
+document.getElementById('cancelProductBtn')?.addEventListener('click', () => closeModal('productModal'));
+
+// Load produk saat harga jual dipilih
+document.getElementById('productSelect')?.addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    const harga = selectedOption.getAttribute('data-harga');
+    if (harga && document.getElementById('productPrice').value === '') {
+        document.getElementById('productPrice').value = harga;
+    }
+});
+
 // ========== FUNGSI-FUNGSI TETAP DI LUAR (TIDAK DIPINDAHKAN) ==========
 // updateDeadlineBadge, updatePesanBadge, updateAllBadges, dll...
 // (fungsi-fungsi ini tetap di sini, karena dipanggil dari auth.onAuthStateChanged)
+
+// ========== MANAJEMEN PRODUK MASTER ==========
+async function loadProduk() {
+    if (!currentUser) return;
+    const snapshot = await db.collection('produk').get();
+    produkData = [];
+    snapshot.forEach(doc => {
+        produkData.push({ id: doc.id, ...doc.data() });
+    });
+    renderProdukList();
+    updateProductSelect(); // Update dropdown di agent detail
+}
+
+function renderProdukList() {
+    const container = document.getElementById('produkList');
+    if (!container) return;
+    
+    if (produkData.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;">🏷️ Belum ada produk</p>';
+        return;
+    }
+    
+    container.innerHTML = produkData.map(item => `
+        <div class="db-item" data-id="${item.id}">
+            <div class="db-item-info">
+                <h4>📦 ${escapeHtml(item.nama)}</h4>
+                <p>💰 HPP: ${formatRupiah(item.hpp)} | 💵 Harga Jual: ${formatRupiah(item.harga_jual)}</p>
+                <small>${escapeHtml(item.keterangan || '')}</small>
+            </div>
+            <div class="db-item-actions">
+                <button class="db-item-edit" onclick="editProduk('${item.id}')">✏️ Edit</button>
+                <button class="db-item-delete" onclick="deleteProduk('${item.id}')">🗑️ Hapus</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function formatRupiah(angka) {
+    if (!angka) return 'Rp 0';
+    return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+async function saveProduk(nama, hpp, hargaJual, keterangan, id = null) {
+    if (!nama || !hpp) {
+        showNotifTop('⚠️ Nama produk dan HPP wajib diisi!', true);
+        return false;
+    }
+    
+    const data = {
+        nama: nama,
+        hpp: parseInt(hpp),
+        harga_jual: parseInt(hargaJual) || 0,
+        keterangan: keterangan || '',
+        updated_at: new Date().toISOString()
+    };
+    
+    if (id) {
+        await db.collection('produk').doc(id).update(data);
+        showNotifTop('✅ Produk berhasil diupdate');
+    } else {
+        data.created_at = new Date().toISOString();
+        await db.collection('produk').add(data);
+        showNotifTop('✅ Produk berhasil ditambahkan');
+    }
+    await loadProduk();
+    return true;
+}
+
+async function deleteProduk(id) {
+    if (!confirm('Yakin hapus produk ini?')) return;
+    await db.collection('produk').doc(id).delete();
+    showNotifTop('🗑️ Produk dihapus');
+    await loadProduk();
+}
+
+function editProduk(id) {
+    const produk = produkData.find(p => p.id === id);
+    if (!produk) return;
+    currentEditProdukId = id;
+    document.getElementById('produkMasterNama').value = produk.nama || '';
+    document.getElementById('produkMasterHpp').value = produk.hpp || '';
+    document.getElementById('produkMasterHargaJual').value = produk.harga_jual || '';
+    document.getElementById('produkMasterKeterangan').value = produk.keterangan || '';
+    document.getElementById('produkMasterTitle').innerText = '✏️ Edit Produk';
+    document.getElementById('produkMasterModal').style.display = 'flex';
+}
+
+function updateProductSelect() {
+    const select = document.getElementById('productSelect');
+    if (!select) return;
+    select.innerHTML = '<option value="">Pilih Produk</option>';
+    produkData.forEach(produk => {
+        select.innerHTML += `<option value="${produk.id}" data-harga="${produk.harga_jual || 0}">${escapeHtml(produk.nama)} (${formatRupiah(produk.harga_jual)})</option>`;
+    });
+}
 
 async function updateDeadlineBadge() {
     if (!currentUser) return;
@@ -638,6 +777,7 @@ auth.onAuthStateChanged(async user => {
         loadDBNomorSalah();
         loadDBCommitment();
         loadDatabaseAgent();
+        loadProduk();
         loadUsersList();
     } else {
         loginPage.style.display = 'flex';
@@ -651,9 +791,8 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
         
-        // 🔥 TAMBAHKAN 'dbAgentPage' KE DALAM ARRAY
-        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'dbAgentPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage'];
-        
+        // ARRAY PAGE
+        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'dbAgentPage', 'produkPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage'];
         // Sembunyikan semua halaman
         pages.forEach(p => { 
             const el = document.getElementById(p); 
@@ -680,6 +819,9 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         } else if (page === 'dbAgent') {
             document.getElementById('dbAgentPage').style.display = 'block'; 
             loadDatabaseAgent();
+        } else if (page === 'produk') { 
+            document.getElementById('produkPage').style.display = 'block'; 
+            loadProduk();
         } else if (page === 'reminder') {
             document.getElementById('reminderPage').style.display = 'block'; 
             loadReminders();
@@ -3463,6 +3605,15 @@ function setupAgentImport() {
                         let hp = row.hp || row.HP || row.phone || row.Phone || '';
                         let apk = row.apk || row.APK || row.aplikasi || row.Aplikasi || '';
                         let agentType = row.agent_type || row.Agent_Type || row.type || row.Type || row.class || row.Class || '';
+                        let pemilik = row.pemilik || row.Pemilik || '';
+                        let alamat = row.alamat || row.Alamat || '';
+                        let email = row.email || row.Email || '';
+                        let tlp = row.tlp || row.Tlp || row.Telepon || '';
+                        let no_rekening = row.no_rekening || row.NoRekening || '';
+                        let atas_nama = row.atas_nama || row.AtasNama || '';
+                        let jenis_bank = row.jenis_bank || row.JenisBank || '';
+                        let no_ktp = row.no_ktp || row.NoKtp || '';
+                        let cid = row.cid || row.Cid || row.CID || '';
                         
                         if (!nama || !hp) {
                             failed++;
@@ -3541,9 +3692,18 @@ function downloadAgentExample() {
     const data = [{
         agent_id: 'AG-001',
         nama: 'Budi Santoso',
-        hp: '6281234567890',
+        agent_type: 'CollectingAgent (CA)',
+        pemilik: 'PT. Contoh',
+        alamat: 'Jl. Raya No. 123, Jakarta',
+        email: 'budi@example.com',
+        tlp: '0211234567',
+        no_rekening: '1234567890',
+        atas_nama: 'Budi Santoso',
+        jenis_bank: 'BCA',
+        no_ktp: '3172010101950001',
+        cid: 'CID001234',
         apk: 'GNP',
-        agent_type: 'CollectingAgent (CA)'
+        hp: '6281234567890'
     }];
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
