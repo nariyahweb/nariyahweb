@@ -650,25 +650,67 @@ auth.onAuthStateChanged(async user => {
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
         const page = item.dataset.page;
-        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage'];
-        pages.forEach(p => { const el = document.getElementById(p); if (el) el.style.display = 'none'; });
-        if (page === 'dashboard') document.getElementById('dashboardPage').style.display = 'block';
-        else if (page === 'import') document.getElementById('importPage').style.display = 'block';
-        else if (page === 'dbClosing') { document.getElementById('dbClosingPage').style.display = 'block'; loadDBClosing(); }
-        else if (page === 'dbTidak') { document.getElementById('dbTidakPage').style.display = 'block'; loadDBTidak(); }
-        else if (page === 'dbNomorSalah') { document.getElementById('dbNomorSalahPage').style.display = 'block'; loadDBNomorSalah(); }
-        else if (page === 'dbCommitment') { document.getElementById('dbCommitmentPage').style.display = 'block'; loadDBCommitment(); }
-        else if (page === 'dbAgent') { document.getElementById('dbAgentPage').style.display = 'block'; loadDatabaseAgent(); }
-        else if (page === 'reminder') { document.getElementById('reminderPage').style.display = 'block'; loadReminders(); }
-        else if (page === 'pesan') { document.getElementById('pesanPage').style.display = 'block'; loadPesan(); loadUsersForSelect(); }
-        else if (page === 'broadcast') { document.getElementById('broadcastPage').style.display = 'block'; initBroadcast(); }
-        else if (page === 'followupFull') { document.getElementById('followupFullPage').style.display = 'block'; renderFullFollowupKanban(); }
-        else if (page === 'prospekFull') { document.getElementById('prospekFullPage').style.display = 'block'; renderFullProspekKanban(); }
-        else if (page === 'search') { document.getElementById('searchPage').style.display = 'block'; }
-        else if (page === 'manageUsers' && currentUserRole === 'owner') { document.getElementById('manageUsersPage').style.display = 'block'; loadUsersList(); }
+        
+        // 🔥 TAMBAHKAN 'dbAgentPage' KE DALAM ARRAY
+        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'dbAgentPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage'];
+        
+        // Sembunyikan semua halaman
+        pages.forEach(p => { 
+            const el = document.getElementById(p); 
+            if (el) el.style.display = 'none'; 
+        });
+        
+        // Tampilkan halaman yang dipilih
+        if (page === 'dashboard') {
+            document.getElementById('dashboardPage').style.display = 'block';
+        } else if (page === 'import') {
+            document.getElementById('importPage').style.display = 'block';
+        } else if (page === 'dbClosing') {
+            document.getElementById('dbClosingPage').style.display = 'block'; 
+            loadDBClosing();
+        } else if (page === 'dbTidak') {
+            document.getElementById('dbTidakPage').style.display = 'block'; 
+            loadDBTidak();
+        } else if (page === 'dbNomorSalah') {
+            document.getElementById('dbNomorSalahPage').style.display = 'block'; 
+            loadDBNomorSalah();
+        } else if (page === 'dbCommitment') {
+            document.getElementById('dbCommitmentPage').style.display = 'block'; 
+            loadDBCommitment();
+        } else if (page === 'dbAgent') {
+            document.getElementById('dbAgentPage').style.display = 'block'; 
+            loadDatabaseAgent();
+        } else if (page === 'reminder') {
+            document.getElementById('reminderPage').style.display = 'block'; 
+            loadReminders();
+        } else if (page === 'pesan') {
+            document.getElementById('pesanPage').style.display = 'block'; 
+            loadPesan(); 
+            loadUsersForSelect();
+        } else if (page === 'broadcast') {
+            document.getElementById('broadcastPage').style.display = 'block'; 
+            initBroadcast();
+        } else if (page === 'followupFull') {
+            document.getElementById('followupFullPage').style.display = 'block'; 
+            renderFullFollowupKanban();
+        } else if (page === 'prospekFull') {
+            document.getElementById('prospekFullPage').style.display = 'block'; 
+            renderFullProspekKanban();
+        } else if (page === 'search') {
+            document.getElementById('searchPage').style.display = 'block';
+        } else if (page === 'manageUsers' && currentUserRole === 'owner') {
+            document.getElementById('manageUsersPage').style.display = 'block'; 
+            loadUsersList();
+        }
+        
+        // Aktifkan menu yang diklik
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
-        if (window.innerWidth <= 768) document.getElementById('sidebar')?.classList.remove('active');
+        
+        // Tutup sidebar di mobile
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar')?.classList.remove('active');
+        }
         updateSidebarBodyClass();
     });
 });
