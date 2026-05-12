@@ -456,6 +456,14 @@ document.addEventListener('DOMContentLoaded', function() {
             sidebar.classList.remove('active'); updateState();
         }
     });
+    // Tombol refresh produk
+document.getElementById('refreshProdukBtn')?.addEventListener('click', () => {
+    loadProduk();
+    if (currentAgentIdForProduct) {
+        renderAgentProducts();
+    }
+    showNotifTop('🔄 Daftar produk direfresh');
+});
     window.addEventListener('resize', function() {
         if (sidebar) sidebar.classList.remove('active');
         updateState();
@@ -744,15 +752,6 @@ function editProduk(id) {
     document.getElementById('produkMasterModal').style.display = 'flex';
 }
 
-function updateProductSelect() {
-    const select = document.getElementById('productSelect');
-    if (!select) return;
-    select.innerHTML = '<option value="">Pilih Produk</option>';
-    produkData.forEach(produk => {
-        select.innerHTML += `<option value="${produk.id}" data-harga="${produk.harga_jual || 0}">${escapeHtml(produk.nama)} (${formatRupiah(produk.harga_jual)})</option>`;
-    });
-}
-
 async function updateDeadlineBadge() {
     if (!currentUser) return;
     const badge = document.getElementById('deadlineCount');
@@ -842,34 +841,6 @@ async function saveAgentProduct() {
     
     renderAgentProducts();
     closeModal('productModal');
-}
-
-function renderAgentProducts() {
-    const container = document.getElementById('agentProductsContainer');
-    if (!container) return;
-    
-    if (!currentAgentProducts || currentAgentProducts.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk. Klik "+ Tambah Produk"</p>';
-        return;
-    }
-    
-    container.innerHTML = currentAgentProducts.map((product, idx) => {
-        const produkMaster = produkData.find(p => p.id === product.produk_id);
-        const namaProduk = produkMaster ? produkMaster.nama : (product.nama_produk || 'Produk');
-        const formatRupiah = (angka) => {
-            if (!angka) return 'Rp 0';
-            return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        };
-        return `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e5e7eb;">
-                <div style="flex: 1;">
-                    <strong>📦 ${escapeHtml(namaProduk)}</strong><br>
-                    💰 Harga: ${formatRupiah(product.harga)} | 📦 Qty: ${product.qty || 1}
-                </div>
-                <button class="btn-danger" onclick="removeAgentProduct(${idx})" style="padding: 4px 10px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
-            </div>
-        `;
-    }).join('');
 }
 
 // ========== AUTH STATE ==========
@@ -3873,24 +3844,179 @@ function renderAgentProducts() {
         return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
     
-    if (!currentAgentProducts || currentAgentProducts.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk. Klik "+ Tambah Produk"</p>';
+    // Jika belum ada produkData, loading
+    if (!produkData || produkData.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk master. Silakan tambah produk di menu Produk.</p>';
         return;
     }
     
-    container.innerHTML = currentAgentProducts.map((product, idx) => {
-        const produkMaster = produkData.find(p => p.id === product.produk_id);
-        const namaProduk = produkMaster ? produkMaster.nama : (product.nama_produk || 'Produk');
-        return `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e5e7eb;">
-                <div style="flex: 1;">
-                    <strong>📦 ${escapeHtml(namaProduk)}</strong><br>
-                    💰 Harga: ${formatRupiah(product.harga)} | 📦 Qty: ${product.qty || 1}
-                </div>
-                <button class="btn-danger" onclick="removeAgentProduct(${idx})" style="padding: 4px 10px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
-            </div>
+    // Buat mapping untuk produk yang sudah ada di agent
+    const existingProductMap = new Map();
+    if (currentAgentProducts) {
+        currentAgentProducts.forEach(p => {
+            existingProductMap.set(p.produk_id, p);
+        });
+    }
+    
+    // Render semua produk dari master dalam bentuk tabel
+    let html = '<table style="width:100%; border-collapse: collapse;">';
+    html += `
+        <thead>
+            <tr>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Produk</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Harga Jual</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Qty</th>
+                <th style="text-align:center; padding:8px; border-bottom:1px solid #e5e7eb;">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    produkData.forEach(produk => {
+        const existing = existingProductMap.get(produk.id);
+        const hargaJual = existing ? existing.harga : produk.harga_jual;
+        const qty = existing ? existing.qty : 1;
+        
+        html += `
+            <tr data-produk-id="${produk.id}" style="border-bottom:1px solid #e5e7eb;">
+                <td style="padding:8px;">
+                    <strong>${escapeHtml(produk.nama)}</strong><br>
+                    <small style="color:#9ca3af;">HPP: ${formatRupiah(produk.hpp)} | Ref: ${formatRupiah(produk.harga_jual)}</small>
+                </td>
+                <td style="padding:8px;">
+                    <input type="number" class="produk-harga" data-id="${produk.id}" value="${hargaJual}" placeholder="Harga Jual" step="1000" style="width:120px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
+                </td>
+                <td style="padding:8px;">
+                    <input type="number" class="produk-qty" data-id="${produk.id}" value="${qty}" placeholder="Qty" min="1" step="1" style="width:80px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
+                </td>
+                <td style="padding:8px; text-align:center;">
+                    <button type="button" class="remove-produk-btn" data-id="${produk.id}" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; ${!existing ? 'display:none;' : ''}">🗑️ Hapus</button>
+                    <button type="button" class="add-produk-btn" data-id="${produk.id}" style="background:#10b981; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; ${existing ? 'display:none;' : ''}">➕ Tambah</button>
+                </td>
+            </tr>
         `;
-    }).join('');
+    });
+    
+    html += '</tbody></tr>';
+    container.innerHTML = html;
+    
+    // Event listener untuk input harga
+    document.querySelectorAll('.produk-harga').forEach(input => {
+        input.removeEventListener('change', handleHargaChange);
+        input.addEventListener('change', handleHargaChange);
+    });
+    
+    document.querySelectorAll('.produk-qty').forEach(input => {
+        input.removeEventListener('change', handleQtyChange);
+        input.addEventListener('change', handleQtyChange);
+    });
+    
+    // Event listener untuk tombol Tambah
+    document.querySelectorAll('.add-produk-btn').forEach(btn => {
+        btn.removeEventListener('click', handleTambahClick);
+        btn.addEventListener('click', handleTambahClick);
+    });
+    
+    // Event listener untuk tombol Hapus
+    document.querySelectorAll('.remove-produk-btn').forEach(btn => {
+        btn.removeEventListener('click', handleHapusClick);
+        btn.addEventListener('click', handleHapusClick);
+    });
+}
+
+// Handler functions
+function handleHargaChange(e) {
+    const produkId = e.target.dataset.id;
+    const harga = parseInt(e.target.value);
+    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
+    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+    
+    if (harga && harga > 0) {
+        addOrUpdateProduct(produkId, harga, qty);
+    }
+}
+
+function handleQtyChange(e) {
+    const produkId = e.target.dataset.id;
+    const qty = parseInt(e.target.value);
+    const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
+    const harga = hargaInput ? parseInt(hargaInput.value) : 0;
+    
+    if (harga > 0 && qty > 0) {
+        addOrUpdateProduct(produkId, harga, qty);
+    }
+}
+
+function handleTambahClick(e) {
+    const produkId = e.target.dataset.id;
+    const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
+    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
+    const harga = hargaInput ? parseInt(hargaInput.value) : 0;
+    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+    
+    if (!harga || harga <= 0) {
+        showNotifTop('⚠️ Isi harga jual terlebih dahulu!', true);
+        return;
+    }
+    
+    addOrUpdateProduct(produkId, harga, qty);
+    e.target.style.display = 'none';
+    const removeBtn = e.target.parentElement.querySelector('.remove-produk-btn');
+    if (removeBtn) removeBtn.style.display = 'inline-block';
+}
+
+function handleHapusClick(e) {
+    const produkId = e.target.dataset.id;
+    removeProductFromAgent(produkId);
+    e.target.style.display = 'none';
+    const addBtn = e.target.parentElement.querySelector('.add-produk-btn');
+    if (addBtn) addBtn.style.display = 'inline-block';
+}
+
+// Fungsi untuk menambah/update produk
+function addOrUpdateProduct(produkId, harga, qty) {
+    if (!currentAgentProducts) currentAgentProducts = [];
+    
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) return;
+    
+    const existingIndex = currentAgentProducts.findIndex(p => p.produk_id === produkId);
+    const productData = {
+        produk_id: produkId,
+        nama_produk: produk.nama,
+        harga: harga,
+        qty: qty || 1,
+        updated_at: new Date().toISOString()
+    };
+    
+    if (existingIndex >= 0) {
+        currentAgentProducts[existingIndex] = productData;
+    } else {
+        productData.added_at = new Date().toISOString();
+        currentAgentProducts.push(productData);
+    }
+    
+    // Highlight row sebentar
+    const row = document.querySelector(`tr[data-produk-id="${produkId}"]`);
+    if (row) {
+        row.style.backgroundColor = '#d1fae5';
+        setTimeout(() => {
+            row.style.backgroundColor = '';
+        }, 500);
+    }
+}
+
+// Fungsi untuk menghapus produk dari agent
+function removeProductFromAgent(produkId) {
+    if (!currentAgentProducts) return;
+    currentAgentProducts = currentAgentProducts.filter(p => p.produk_id !== produkId);
+    
+    // Reset input harga ke nilai referensi dari master
+    const produk = produkData.find(p => p.id === produkId);
+    if (produk) {
+        const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
+        if (hargaInput) hargaInput.value = produk.harga_jual || 0;
+    }
 }
 
 // Global functions untuk produk agent
@@ -4174,35 +4300,6 @@ window.saveAgentProduct = async function() {
     renderAgentProducts();
     closeModal('productModal');
 };
-
-function renderAgentProducts() {
-    const container = document.getElementById('agentProductsContainer');
-    if (!container) return;
-    
-    if (!currentAgentProducts || currentAgentProducts.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk. Klik "+ Tambah Produk"</p>';
-        return;
-    }
-    
-    const formatRupiah = (angka) => {
-        if (!angka) return 'Rp 0';
-        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    };
-    
-    container.innerHTML = currentAgentProducts.map((product, idx) => {
-        const produkMaster = produkData.find(p => p.id === product.produk_id);
-        const namaProduk = produkMaster ? produkMaster.nama : (product.nama_produk || 'Produk');
-        return `
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #e5e7eb;">
-                <div style="flex: 1;">
-                    <strong>📦 ${escapeHtml(namaProduk)}</strong><br>
-                    💰 Harga: ${formatRupiah(product.harga)} | 📦 Qty: ${product.qty || 1}
-                </div>
-                <button class="btn-danger" onclick="removeAgentProduct(${idx})" style="padding: 4px 10px; font-size: 11px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
-            </div>
-        `;
-    }).join('');
-}
 
 // Event listener untuk auto-fill harga
 document.getElementById('productSelect')?.addEventListener('change', function() {
