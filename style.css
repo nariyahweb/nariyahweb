@@ -603,3 +603,47 @@ body.modal-open{overflow:hidden}
 #editDeadlineModal .modal-content button {
     z-index: 9999999 !important;
 }
+
+/* ========== PERBAIKAN MODAL CLICK OUTSIDE ========== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex !important;
+}
+
+.modal .modal-content {
+    background: white;
+    border-radius: 24px;
+    max-width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    z-index: 100000;
+    pointer-events: auto;
+}
+
+/* Overlay menangkap klik */
+.modal {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.modal .modal-content {
+    cursor: default;
+}
+
+/* Pastikan tidak ada elemen yang menghalangi modal */
+.modal * {
+    pointer-events: auto;
+}
