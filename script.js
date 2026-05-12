@@ -435,8 +435,9 @@ document.getElementById('cancelDeadlineBtn')?.addEventListener('click', () => {
     closeModal('editDeadlineModal');
 });
 
-// ========== SIDEBAR ==========
+// ========== SEMUA EVENT LISTENER DI DALAM DOMContentLoaded ==========
 document.addEventListener('DOMContentLoaded', function() {
+    // ========== SIDEBAR ==========
     const sidebar = document.getElementById('sidebar');
     const hoverZone = document.getElementById('hoverZone');
     const toggleBtn = document.getElementById('toggleSidebarBtn');
@@ -466,35 +467,91 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     updateState();
     setupConvertModal();
+
+    // ========== TOGGLE PASSWORD ==========
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const loginPassword = document.getElementById('loginPassword');
+    if (togglePasswordBtn && loginPassword) {
+        togglePasswordBtn.addEventListener('click', function() {
+            if (loginPassword.type === 'password') { 
+                loginPassword.type = 'text'; 
+                this.textContent = '🙈'; 
+            } else { 
+                loginPassword.type = 'password'; 
+                this.textContent = '👁️'; 
+            }
+        });
+    }
+
+    // ========== LOGIN BUTTON ==========
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            if (!email || !password) { errorDiv.textContent = 'Email dan password harus diisi!'; return; }
+            errorDiv.textContent = '';
+            this.textContent = 'Loading...';
+            this.disabled = true;
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => { this.textContent = 'Masuk'; this.disabled = false; })
+                .catch(err => { errorDiv.textContent = 'Login gagal: ' + err.message; this.textContent = 'Masuk'; this.disabled = false; });
+        });
+    }
+
+    // ========== LOGOUT BUTTON ==========
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => auth.signOut());
+    }
+
+    // ========== EVENT LISTENER DATABASE AGENT ==========
+    const selectAllAgentBtn = document.getElementById('selectAllAgent');
+    if (selectAllAgentBtn) {
+        selectAllAgentBtn.addEventListener('click', () => {
+            const allChecked = agentsFilteredData.length > 0 && agentsFilteredData.every(item => selectedAgentIds.get(item.id));
+            agentsFilteredData.forEach(item => {
+                if (allChecked) {
+                    selectedAgentIds.delete(item.id);
+                } else {
+                    selectedAgentIds.set(item.id, true);
+                }
+            });
+            renderAgentList(agentsData);
+        });
+    }
+
+    const deleteSelectedAgentBtn = document.getElementById('deleteSelectedAgent');
+    if (deleteSelectedAgentBtn) {
+        deleteSelectedAgentBtn.addEventListener('click', deleteSelectedAgent);
+    }
+
+    const exportAgentExcelBtn = document.getElementById('exportAgentExcelBtn');
+    if (exportAgentExcelBtn) {
+        exportAgentExcelBtn.addEventListener('click', exportAgentToExcel);
+    }
+
+    // Setup import
+    setupAgentImport();
+    setupAgentFilters();
+
+    // Tambahkan tombol download contoh
+    const downloadExampleBtn = document.createElement('button');
+    downloadExampleBtn.textContent = '📋 Download Contoh Excel';
+    downloadExampleBtn.className = 'db-import-excel';
+    downloadExampleBtn.style.marginLeft = '10px';
+    downloadExampleBtn.style.background = '#f59e0b';
+    downloadExampleBtn.onclick = downloadAgentExample;
+    const actionsDiv = document.querySelector('#dbAgentPage .db-actions');
+    if (actionsDiv) {
+        actionsDiv.appendChild(downloadExampleBtn);
+    }
 });
 
-const togglePasswordBtn = document.getElementById('togglePasswordBtn');
-const loginPassword = document.getElementById('loginPassword');
-if (togglePasswordBtn && loginPassword) {
-    togglePasswordBtn.addEventListener('click', function() {
-        if (loginPassword.type === 'password') { loginPassword.type = 'text'; this.textContent = '🙈'; }
-        else { loginPassword.type = 'password'; this.textContent = '👁️'; }
-    });
-}
-
-const loginBtn = document.getElementById('loginBtn');
-if (loginBtn) {
-    loginBtn.addEventListener('click', function() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        const errorDiv = document.getElementById('loginError');
-        if (!email || !password) { errorDiv.textContent = 'Email dan password harus diisi!'; return; }
-        errorDiv.textContent = '';
-        this.textContent = 'Loading...';
-        this.disabled = true;
-        auth.signInWithEmailAndPassword(email, password)
-            .then(() => { this.textContent = 'Masuk'; this.disabled = false; })
-            .catch(err => { errorDiv.textContent = 'Login gagal: ' + err.message; this.textContent = 'Masuk'; this.disabled = false; });
-    });
-}
-
-const logoutBtn = document.getElementById('logoutBtn');
-if (logoutBtn) logoutBtn.addEventListener('click', () => auth.signOut());
+// ========== FUNGSI-FUNGSI TETAP DI LUAR (TIDAK DIPINDAHKAN) ==========
+// updateDeadlineBadge, updatePesanBadge, updateAllBadges, dll...
+// (fungsi-fungsi ini tetap di sini, karena dipanggil dari auth.onAuthStateChanged)
 
 async function updateDeadlineBadge() {
     if (!currentUser) return;
@@ -1800,37 +1857,6 @@ function setupConvertModal() {
     }
     modal.onclick = function(e) { if (e.target === modal) { modal.style.display = 'none'; document.body.classList.remove('modal-open'); } };
 }
-
-// ========== EVENT LISTENER DATABASE AGENT ==========
-document.getElementById('selectAllAgent')?.addEventListener('click', () => {
-    // Gunakan agentsFilteredData untuk select all berdasarkan filter yang aktif
-    const allChecked = agentsFilteredData.length > 0 && agentsFilteredData.every(item => selectedAgentIds.get(item.id));
-    agentsFilteredData.forEach(item => {
-        if (allChecked) {
-            selectedAgentIds.delete(item.id);
-        } else {
-            selectedAgentIds.set(item.id, true);
-        }
-    });
-    renderAgentList(agentsData);
-});
-
-document.getElementById('deleteSelectedAgent')?.addEventListener('click', deleteSelectedAgent);
-document.getElementById('exportAgentExcelBtn')?.addEventListener('click', exportAgentToExcel);
-
-// Setup import
-setupAgentImport();
-setupAgentFilters();
-
-// Tambahkan tombol download contoh
-const downloadExampleBtn = document.createElement('button');
-downloadExampleBtn.textContent = '📋 Download Contoh Excel';
-downloadExampleBtn.className = 'db-import-excel';
-downloadExampleBtn.style.marginLeft = '10px';
-downloadExampleBtn.style.background = '#f59e0b';
-downloadExampleBtn.onclick = downloadAgentExample;
-const actionsDiv = document.querySelector('#dbAgentPage .db-actions');
-if (actionsDiv) actionsDiv.appendChild(downloadExampleBtn);
 
 // ========== FUNGSI PENCARIAN DATA ==========
 async function performSearch() {
