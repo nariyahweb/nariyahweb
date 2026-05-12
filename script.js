@@ -50,6 +50,7 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
+        modal.onclick = null; // Reset event handler
     }
     document.body.style.overflow = '';
     document.body.classList.remove('modal-open');
@@ -471,6 +472,34 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     updateState();
     setupConvertModal();
+
+    // Tutup modal dengan klik di luar
+const agentDetailModal = document.getElementById('agentDetailModal');
+if (agentDetailModal) {
+    agentDetailModal.onclick = (e) => {
+        if (e.target === agentDetailModal) {
+            closeModal('agentDetailModal');
+        }
+    };
+}
+
+const productModal = document.getElementById('productModal');
+if (productModal) {
+    productModal.onclick = (e) => {
+        if (e.target === productModal) {
+            closeModal('productModal');
+        }
+    };
+}
+
+const produkMasterModal = document.getElementById('produkMasterModal');
+if (produkMasterModal) {
+    produkMasterModal.onclick = (e) => {
+        if (e.target === produkMasterModal) {
+            closeModal('produkMasterModal');
+        }
+    };
+}
 
     // ========== TOGGLE PASSWORD ==========
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
@@ -1179,7 +1208,7 @@ if (saveProspekBtn) {
 }
 
 // ========== DETAIL MODAL ==========
-function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }
+function showModal(modalId) { const modal = document.getElementById(modalId); if (modal) { modal.style.display = 'flex'; document.body.classList.add('modal-open'); } }modal.onclick = (e) => { if (e.target === modal) { closeModal(modalId); } }; } }
 
 function openDetailCustomer(id) {
     db.collection('customers').doc(id).get().then(async doc => {
@@ -1541,6 +1570,7 @@ function openDetailProspek(id) {
             <div class="detail-body">
                 <div class="detail-info">
                     ${ownerInfo}
+                    <div class="detail-info-item"><div class="detail-info-icon">🏷️</div><div class="detail-info-content"><label>Type/Class</label><div class="value">${escapeHtml(d.agent_type || '-')}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
                     <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${deadlineDisplay} ${editBtn}</div></div></div>
                     ${dihubungiInfo}
