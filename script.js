@@ -961,10 +961,6 @@ function renderProdukList() {
     `}).join('');
 }
 
-// Di dalam renderAgentList, setelah filtered diisi
-console.log('Sample item pertama:', filtered[0]);
-console.log('Field yang tersedia:', Object.keys(filtered[0] || {}));
-
 window.deleteProduk = async function(id) {
     if (!confirm('Yakin hapus produk ini?')) return;
     try {
@@ -4129,6 +4125,10 @@ if (filterHasApk) {
         </div>
     `;
 }).join('');
+
+    // Di dalam renderAgentList, setelah filtered diisi
+console.log('Sample item pertama:', filtered[0]);
+console.log('Field yang tersedia:', Object.keys(filtered[0] || {}));
     
     // Event listener untuk checkbox (di dalam renderAgentList, setelah innerHTML)
 document.querySelectorAll('#dbAgentList .db-item-checkbox-agent').forEach(cb => {
