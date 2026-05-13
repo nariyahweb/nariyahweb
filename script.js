@@ -610,6 +610,27 @@ document.addEventListener('DOMContentLoaded', function() {
             sidebar.classList.remove('active'); updateState();
         }
     });
+    // Di dalam DOMContentLoaded atau di luar, pastikan kode ini ada
+const selectAllAgentBtn = document.getElementById('selectAllAgent');
+if (selectAllAgentBtn) {
+    selectAllAgentBtn.addEventListener('click', () => {
+        if (!agentsFilteredData.length) {
+            showNotifTop('Tidak ada data untuk dipilih', true);
+            return;
+        }
+        const allChecked = agentsFilteredData.every(item => selectedAgentIds.get(item.id));
+        agentsFilteredData.forEach(item => {
+            if (allChecked) {
+                selectedAgentIds.delete(item.id);
+            } else {
+                selectedAgentIds.set(item.id, true);
+            }
+        });
+        renderAgentList(agentsData);
+        // Update tombol
+        selectAllAgentBtn.textContent = allChecked ? '✅ Pilih Semua' : '⬜ Batal Semua';
+    });
+}
     // Tombol refresh produk
 document.getElementById('refreshProdukBtn')?.addEventListener('click', () => {
     loadProduk();
@@ -884,10 +905,7 @@ function renderProdukList() {
     const container = document.getElementById('produkList');
     if (!container) return;
     
-    // Ambil keyword pencarian
     const searchKeyword = document.getElementById('searchProdukInput')?.value.toLowerCase() || '';
-    
-    // Filter produk
     let filteredProduk = produkData;
     if (searchKeyword) {
         filteredProduk = produkData.filter(p => 
@@ -927,6 +945,17 @@ function renderProdukList() {
         </div>
     `}).join('');
 }
+
+window.deleteProduk = async function(id) {
+    if (!confirm('Yakin hapus produk ini?')) return;
+    try {
+        await db.collection('produk').doc(id).delete();
+        showNotifTop('🗑️ Produk dihapus');
+        await loadProduk();
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
+    }
+};
 
 // Event listener untuk pencarian
 document.getElementById('searchProdukInput')?.addEventListener('input', () => {
@@ -4234,6 +4263,7 @@ function updateProductSelect() {
 }
 
 // Render daftar produk agent
+// ========== RENDER PRODUK DI POPUP AGENT (VERSI FINAL) ==========
 function renderAgentProducts() {
     const container = document.getElementById('agentProductsContainer');
     if (!container) return;
@@ -4243,32 +4273,24 @@ function renderAgentProducts() {
         return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
     
-    // Ambil keyword pencarian
+    // Pencarian
     const searchKeyword = document.getElementById('searchProdukAgent')?.value.toLowerCase() || '';
-    
-    // Filter produk berdasarkan keyword
-    let filteredProduk = [...produkData];
-    if (searchKeyword) {
-        filteredProduk = produkData.filter(p => 
-            p.nama.toLowerCase().includes(searchKeyword)
-        );
-    }
+    let filteredProduk = produkData.filter(p => 
+        p.nama.toLowerCase().includes(searchKeyword)
+    );
     
     if (filteredProduk.length === 0) {
         container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">🔍 Tidak ada produk yang ditemukan</p>';
         return;
     }
     
-    // Ambil CID untuk produk beradmin berbasis CID
     const cid = document.getElementById('agentDetailCid')?.value || '';
     const tarif = tarifAdminData.find(t => t.cid === cid);
     
-    // Mapping data yang sudah ada di agent
-    const existingProductMap = new Map();
+    // Load existing data
+    const existingMap = new Map();
     if (currentAgentProducts) {
-        currentAgentProducts.forEach(p => {
-            existingProductMap.set(p.produk_id, p);
-        });
+        currentAgentProducts.forEach(p => existingMap.set(p.produk_id, p));
     }
     
     let html = '<div style="margin-bottom: 12px;"><input type="text" id="searchProdukAgent" placeholder="🔍 Cari produk..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;"></div>';
@@ -4279,9 +4301,9 @@ function renderAgentProducts() {
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Produk</th>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Admin</th>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">HPP</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Agent</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Upline</th>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Profit</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Upline</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Agent</th>
             </tr>
         </thead>
         <tbody>
@@ -4289,38 +4311,27 @@ function renderAgentProducts() {
     
     for (const produk of filteredProduk) {
         const isAdminBased = produk.jenis_produk === 'beradmin';
-        const existing = existingProductMap.get(produk.id);
+        const existing = existingMap.get(produk.id);
         
         let adminValue = 0;
-        let feeAgent = 0;
-        let feeUpline = 0;
         let profit = 0;
+        let feeUpline = 0;
+        let feeAgent = 0;
         
         if (isAdminBased) {
-            // Produk beradmin - ambil admin dari berbagai sumber
+            // Hitung admin
             if (produk.cid_based && cid) {
                 if (produk.id === 'pln_pospaid') adminValue = tarif?.admin_pospaid || 0;
                 else if (produk.id === 'pln_prepaid') adminValue = tarif?.admin_prepaid || 0;
                 else if (produk.id === 'pln_nontaglis') adminValue = tarif?.admin_nontaglis || 0;
-                else {
-                    adminValue = existing?.admin || 0;
-                }
+                else adminValue = existing?.admin || 0;
             } else {
-                adminValue = existing ? (existing.admin || produk.admin_default) : (produk.admin_default || 0);
+                adminValue = existing?.admin || produk.admin_default || 0;
             }
             
-            // Fee Agent = admin (potongan untuk agent)
-            feeAgent = adminValue;
-            // Fee Upline = dari data existing atau 0
+            profit = existing?.profit || 0;
             feeUpline = existing?.fee_upline || 0;
-            // Profit = admin - feeUpline
-            profit = adminValue - feeUpline;
-        } else {
-            // Produk tanpa admin
-            adminValue = 0;
-            feeAgent = 0;
-            feeUpline = 0;
-            profit = 0;
+            feeAgent = adminValue - profit - feeUpline;
         }
         
         html += `
@@ -4330,27 +4341,28 @@ function renderAgentProducts() {
                     <small style="color:#9ca3af;">${isAdminBased ? '🏷️ Berdasarkan Admin' : '💰 Tanpa Admin'}</small>
                 </td>
                 <td style="padding:8px;">
-                    ${isAdminBased ? 
-                        `<span class="admin-value">${formatRupiah(adminValue)}</span>` : 
-                        `<span class="admin-value">-</span>`
-                    }
+                    ${isAdminBased ? `<span class="admin-value">${formatRupiah(adminValue)}</span>` : '-'}
                 </td>
                 <td style="padding:8px;">
                     <span class="hpp-value">${formatRupiah(produk.hpp)}</span>
                 </td>
                 <td style="padding:8px;">
-                    <span class="fee-agent">${formatRupiah(feeAgent)}</span>
-                </td>
-                <td style="padding:8px;">
                     ${isAdminBased ? 
-                        `<input type="number" class="fee-upline" data-id="${produk.id}" value="${feeUpline}" placeholder="Fee Upline" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">` : 
-                        `<span>-</span>`
+                        `<input type="number" class="profit-input" data-id="${produk.id}" value="${profit}" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">` : 
+                        '-'
                     }
                 </td>
                 <td style="padding:8px;">
-                    <span class="profit-value" style="font-weight: bold; color: ${profit >= 0 ? '#10b981' : '#ef4444'};">
-                        ${formatRupiah(profit)}
-                    </span>
+                    ${isAdminBased ? 
+                        `<input type="number" class="fee-upline-input" data-id="${produk.id}" value="${feeUpline}" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">` : 
+                        '-'
+                    }
+                </td>
+                <td style="padding:8px;">
+                    ${isAdminBased ? 
+                        `<span class="fee-agent-value" data-id="${produk.id}">${formatRupiah(feeAgent)}</span>` : 
+                        '-'
+                    }
                 </td>
             </tr>
         `;
@@ -4359,84 +4371,85 @@ function renderAgentProducts() {
     html += '</tbody></table>';
     container.innerHTML = html;
     
-    // Event listener untuk pencarian produk
+    // Event listener untuk pencarian
     const searchInput = document.getElementById('searchProdukAgent');
     if (searchInput) {
         searchInput.removeEventListener('input', renderAgentProducts);
         searchInput.addEventListener('input', () => renderAgentProducts());
     }
     
-    // Event listener untuk perubahan fee upline
-    document.querySelectorAll('.fee-upline').forEach(input => {
+    // Event listener untuk profit dan fee upline
+    document.querySelectorAll('.profit-input').forEach(input => {
+        input.removeEventListener('change', handleProfitChange);
+        input.addEventListener('change', handleProfitChange);
+    });
+    document.querySelectorAll('.fee-upline-input').forEach(input => {
         input.removeEventListener('change', handleFeeUplineChange);
         input.addEventListener('change', handleFeeUplineChange);
     });
 }
 
-// Handler untuk perubahan fee upline
-function handleFeeUplineChange(e) {
+function handleProfitChange(e) {
     const produkId = e.target.dataset.id;
-    const feeUpline = parseInt(e.target.value) || 0;
-    const adminInput = document.querySelector(`tr[data-produk-id="${produkId}"] .admin-value`);
-    
-    let admin = 0;
-    if (adminInput) {
-        admin = parseInt(adminInput.textContent.replace(/[^0-9]/g, '')) || 0;
-    }
-    
+    const profit = parseInt(e.target.value) || 0;
+    updateAgentProductField(produkId, 'profit', profit);
+}
+
+function handleFeeAgentChange(e) {
+    const produkId = e.target.dataset.id;
+    const feeAgent = parseInt(e.target.value) || 0;
     // Update data agent
-    addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline);
+    addOrUpdateProductWithFee(produkId, 'fee_agent', feeAgent);
     updateProfitForProduct(produkId);
 }
 
-function updateProfitForProduct(produkId) {
-    const produk = produkData.find(p => p.id === produkId);
-    if (!produk) return;
-    
-    const isAdminBased = produk.jenis_produk === 'beradmin';
-    if (!isAdminBased) return;
-    
-    const adminSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .admin-value`);
-    const feeUplineInput = document.querySelector(`.fee-upline[data-id="${produkId}"]`);
-    const profitSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .profit-value`);
-    
-    const admin = adminSpan ? parseInt(adminSpan.textContent.replace(/[^0-9]/g, '')) || 0 : 0;
-    const feeUpline = feeUplineInput ? parseInt(feeUplineInput.value) || 0 : 0;
-    const profit = admin - feeUpline;
-    
-    const formatRupiah = (angka) => {
-        if (!angka) return 'Rp 0';
-        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    };
-    
-    if (profitSpan) {
-        profitSpan.innerHTML = formatRupiah(profit);
-        profitSpan.style.color = profit >= 0 ? '#10b981' : '#ef4444';
-    }
+function handleFeeUplineChange(e) {
+    const produkId = e.target.dataset.id;
+    const feeUpline = parseInt(e.target.value) || 0;
+    updateAgentProductField(produkId, 'fee_upline', feeUpline);
 }
 
-function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
+function updateAgentProductField(produkId, field, value) {
     if (!currentAgentProducts) currentAgentProducts = [];
-    
+    const index = currentAgentProducts.findIndex(p => p.produk_id === produkId);
     const produk = produkData.find(p => p.id === produkId);
     if (!produk) return;
     
-    const existingIndex = currentAgentProducts.findIndex(p => p.produk_id === produkId);
+    // Dapatkan admin dari tampilan
+    const adminSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .admin-value`);
+    let admin = 0;
+    if (adminSpan) {
+        admin = parseInt(adminSpan.textContent.replace(/[^0-9]/g, '')) || 0;
+    }
+    
+    let profit = field === 'profit' ? value : (currentAgentProducts[index]?.profit || 0);
+    let feeUpline = field === 'fee_upline' ? value : (currentAgentProducts[index]?.fee_upline || 0);
+    const feeAgent = admin - profit - feeUpline;
     
     const productData = {
         produk_id: produkId,
         nama_produk: produk.nama,
         admin: admin,
+        profit: profit,
         fee_upline: feeUpline,
+        fee_agent: feeAgent,
         updated_at: new Date().toISOString()
     };
     
-    if (existingIndex >= 0) {
-        currentAgentProducts[existingIndex] = productData;
+    if (index >= 0) {
+        currentAgentProducts[index] = productData;
     } else {
         productData.added_at = new Date().toISOString();
         currentAgentProducts.push(productData);
     }
+    
+    // Update tampilan fee agent
+    const feeAgentSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .fee-agent-value`);
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    if (feeAgentSpan) feeAgentSpan.innerHTML = formatRupiah(feeAgent);
 }
 
 // ========== HANDLER UNTUK PRODUK DI AGENT DETAIL ==========
@@ -4850,24 +4863,34 @@ async function exportAgentToExcel() {
 }
 
 function downloadAgentExample() {
-    const data = [{
+    // Data dasar agent
+    const baseData = {
         agent_id: 'AG-001',
         nama: 'Budi Santoso',
         agent_type: 'CollectingAgent (CA)',
         pemilik: 'PT. Contoh',
         alamat: 'Jl. Raya No. 123, Jakarta',
         email: 'budi@example.com',
-        tlp: '0211234567',
+        hp: '6281234567890',
         upline: 'KORWIL Jakarta',
         no_rekening: '1234567890',
         atas_nama: 'Budi Santoso',
         jenis_bank: 'BCA',
         no_ktp: '3172010101950001',
-        cid: 'CID001234',
-        apk: 'GNP',
-        hp: '6281234567890'
-    }];
-    const ws = XLSX.utils.json_to_sheet(data);
+        cid: '5213247',
+        apk: 'GNP'
+    };
+    
+    // Tambahkan kolom untuk setiap produk
+    const produkMap = {};
+    produkData.forEach(produk => {
+        produkMap[`profit_${produk.id}`] = 0;
+        produkMap[`fee_upline_${produk.id}`] = 0;
+        produkMap[`fee_agent_${produk.id}`] = 0;
+    });
+    
+    const exampleData = [{ ...baseData, ...produkMap }];
+    const ws = XLSX.utils.json_to_sheet(exampleData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
     XLSX.writeFile(wb, 'contoh_database_agent.xlsx');
@@ -5054,12 +5077,23 @@ async function exportProdukToExcel() {
 }
 
 function downloadProdukExample() {
-    const data = [{
-        nama: 'Contoh Produk A',
-        hpp: 50000,
-        harga_jual: 75000,
-        keterangan: 'Produk unggulan'
-    }];
+    const data = [
+        {
+            nama: 'Contoh Produk Beradmin',
+            admin: 5000,
+            hpp: 100000,
+            harga_jual: '',
+            jenis: 'beradmin',
+            cid_based: 'yes'
+        },
+        {
+            nama: 'Contoh Produk Tanpa Admin',
+            admin: '',
+            hpp: 50000,
+            harga_jual: 75000,
+            jenis: 'tanpa_admin'
+        }
+    ];
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Produk');
