@@ -274,8 +274,24 @@
                 <div id="dbCommitmentPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions"><button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button></div></div><div id="dbCommitmentList" class="db-list"></div></div></div>
 
                 <!-- PRODUK PAGE -->
-                <div id="produkPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🏷️ Manajemen Produk</h3><div class="db-actions"><button class="add-btn" id="addProdukBtn">+ Tambah Produk</button><button class="add-btn" id="manageTarifAdminBtn" style="background: #8b5cf6;">🏷️ Kelola Admin per CID</button>
-                <div style="margin-bottom: 16px;"><input type="text" id="searchProdukInput" placeholder="🔍 Cari produk (nama, jenis)..." style="width:100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px;"></div><div id="produkList" class="db-list"></div></div></div>    
+<div id="produkPage" class="page-content" style="display:none">
+    <div class="db-section">
+        <div class="db-header">
+            <h3>🏷️ Manajemen Produk</h3>
+            <div class="db-actions">
+                <button class="add-btn" id="addProdukBtn">+ Tambah Produk</button>
+                <button class="add-btn" id="manageTarifAdminBtn" style="background: #8b5cf6;">🏷️ Kelola Admin per CID</button>
+                <button class="db-import-excel" id="importProdukExcelBtn" style="background: #10b981; color: white;">📥 Import Excel</button>
+                <button class="db-export-excel" id="exportProdukExcelBtn" style="background: #3b82f6; color: white;">📤 Export Excel</button>
+            </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <input type="text" id="searchProdukInput" placeholder="🔍 Cari produk (nama, jenis)..." 
+                   style="width:100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px;">
+        </div>
+        <div id="produkList" class="db-list"></div>
+    </div>
+</div>
                 <button class="db-import-excel" id="importProdukExcelBtn" style="background: #10b981; color: white;">📥 Import Excel</button>
                 <button class="db-export-excel" id="exportProdukExcelBtn" style="background: #3b82f6; color: white;">📤 Export Excel</button></div></div><div id="produkList" class="db-list"></div></div></div>
                 
