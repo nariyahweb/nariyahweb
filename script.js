@@ -25,7 +25,8 @@ let currentConvertProspekId = null;
 let currentPendingId = null;
 let pendingItems = [];
 let currentProspekId = null;
-
+let tarifAdminData = [];
+let currentEditTarifId = null;
 let customersData = [];
 let prospekData = [];
 // Database Agent
@@ -654,6 +655,20 @@ document.getElementById('saveProdukMasterBtn')?.addEventListener('click', async 
     closeModal('produkMasterModal');
 });
 
+document.getElementById('cancelProdukMasterBtn')?.addEventListener('click', () => {
+    closeModal('produkMasterModal');
+    currentEditProdukId = null;
+    // Reset form
+    document.getElementById('produkMasterNama').value = '';
+    document.getElementById('produkMasterHpp').value = '';
+    document.getElementById('produkMasterKeterangan').value = '';
+    document.getElementById('produkMasterJenis').value = 'tanpa_admin';
+    document.getElementById('produkMasterHargaJual').value = '';
+    document.getElementById('produkMasterAdminDefault').value = '';
+    document.getElementById('produkMasterCidBased').value = 'no';
+    toggleProdukJenisFields('tanpa_admin');
+});
+
 // Agent Detail event listeners
 document.getElementById('addAgentProductBtn')?.addEventListener('click', openAddProductModal);
 document.getElementById('saveAgentDetailBtn')?.addEventListener('click', saveAgentDetail);
@@ -668,6 +683,15 @@ document.getElementById('productSelect')?.addEventListener('change', function() 
     if (harga && document.getElementById('productPrice').value === '') {
         document.getElementById('productPrice').value = harga;
     }
+});
+
+document.getElementById('manageTarifAdminBtn')?.addEventListener('click', () => {
+    loadTarifAdmin();
+    document.getElementById('tarifAdminModal').style.display = 'flex';
+});
+
+document.getElementById('closeTarifAdminModal')?.addEventListener('click', () => {
+    closeModal('tarifAdminModal');
 });
 
 // ========== FUNGSI-FUNGSI TETAP DI LUAR (TIDAK DIPINDAHKAN) ==========
@@ -791,6 +815,133 @@ function toggleProdukJenisFields(jenis) {
         beradminFields.style.display = 'block';
     }
 }
+
+// ========== MANAJEMEN TARIF ADMIN PER CID ==========
+async function loadTarifAdmin() {
+    if (!currentUser) return;
+    
+    const isOwner = currentUserRole === 'owner';
+    let query = db.collection('tarif_admin');
+    if (!isOwner) {
+        query = query.where('user_id', '==', currentUser.uid);
+    }
+    
+    const snapshot = await query.get();
+    tarifAdminData = [];
+    snapshot.forEach(doc => {
+        tarifAdminData.push({ id: doc.id, ...doc.data() });
+    });
+    renderTarifAdminList();
+}
+
+function renderTarifAdminList() {
+    const container = document.getElementById('tarifAdminList');
+    if (!container) return;
+    
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    if (tarifAdminData.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;">🏷️ Belum ada data admin per CID</p>';
+        return;
+    }
+    
+    container.innerHTML = tarifAdminData.map(item => `
+        <div class="db-item" data-id="${item.id}">
+            <div class="db-item-info">
+                <h4>🆔 CID: ${escapeHtml(item.cid)}</h4>
+                <p>
+                    ⚡ PLN Pospaid: ${formatRupiah(item.admin_pospaid || 0)}<br>
+                    ⚡ PLN Prepaid: ${formatRupiah(item.admin_prepaid || 0)}<br>
+                    ⚡ PLN Nontaglis: ${formatRupiah(item.admin_nontaglis || 0)}
+                </p>
+                <small>Terakhir update: ${item.updated_at ? new Date(item.updated_at).toLocaleString('id-ID') : '-'}</small>
+            </div>
+            <div class="db-item-actions">
+                <button class="db-item-edit" onclick="editTarifAdmin('${item.id}')">✏️ Edit</button>
+                <button class="db-item-delete" onclick="deleteTarifAdmin('${item.id}')">🗑️ Hapus</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function saveTarifAdmin(cid, pospaid, prepaid, nontaglis, id = null) {
+    if (!cid) {
+        showNotifTop('⚠️ CID wajib diisi!', true);
+        return false;
+    }
+    
+    const data = {
+        cid: cid,
+        admin_pospaid: parseInt(pospaid) || 0,
+        admin_prepaid: parseInt(prepaid) || 0,
+        admin_nontaglis: parseInt(nontaglis) || 0,
+        user_id: currentUser.uid,
+        updated_at: new Date().toISOString()
+    };
+    
+    try {
+        if (id) {
+            await db.collection('tarif_admin').doc(id).update(data);
+            showNotifTop('✅ Data admin per CID berhasil diupdate');
+        } else {
+            const existing = tarifAdminData.find(t => t.cid === cid);
+            if (existing) {
+                showNotifTop(`⚠️ CID ${cid} sudah ada! Silakan edit data yang sudah ada.`, true);
+                return false;
+            }
+            data.created_at = new Date().toISOString();
+            await db.collection('tarif_admin').add(data);
+            showNotifTop('✅ Data admin per CID berhasil ditambahkan');
+        }
+        await loadTarifAdmin();
+        return true;
+    } catch(e) {
+        showNotifTop('❌ Gagal: ' + e.message, true);
+        return false;
+    }
+}
+
+async function deleteTarifAdmin(id) {
+    if (!confirm('Yakin hapus data admin per CID ini?')) return;
+    await db.collection('tarif_admin').doc(id).delete();
+    showNotifTop('🗑️ Data dihapus');
+    await loadTarifAdmin();
+}
+
+function editTarifAdmin(id) {
+    const item = tarifAdminData.find(t => t.id === id);
+    if (!item) return;
+    
+    currentEditTarifId = id;
+    document.getElementById('tarifCid').value = item.cid || '';
+    document.getElementById('tarifPospaid').value = item.admin_pospaid || '';
+    document.getElementById('tarifPrepaid').value = item.admin_prepaid || '';
+    document.getElementById('tarifNontaglis').value = item.admin_nontaglis || '';
+    showNotifTop('✏️ Edit data, lalu klik Simpan');
+}
+
+function clearTarifForm() {
+    currentEditTarifId = null;
+    document.getElementById('tarifCid').value = '';
+    document.getElementById('tarifPospaid').value = '';
+    document.getElementById('tarifPrepaid').value = '';
+    document.getElementById('tarifNontaglis').value = '';
+}
+
+// Event listener untuk tombol di modal tarif admin
+document.getElementById('saveTarifAdminBtn')?.addEventListener('click', async () => {
+    const cid = document.getElementById('tarifCid').value;
+    const pospaid = document.getElementById('tarifPospaid').value;
+    const prepaid = document.getElementById('tarifPrepaid').value;
+    const nontaglis = document.getElementById('tarifNontaglis').value;
+    await saveTarifAdmin(cid, pospaid, prepaid, nontaglis, currentEditTarifId);
+    clearTarifForm();
+});
+
+document.getElementById('clearTarifFormBtn')?.addEventListener('click', clearTarifForm);
 
 // Event listener untuk perubahan jenis produk
 document.getElementById('produkMasterJenis')?.addEventListener('change', function() {
@@ -3727,39 +3878,6 @@ async function deleteSelectedAgent() {
     }
 }
 
-async function openAgentDetail(id) {
-    const doc = await db.collection('db_agent').doc(id).get();
-    if (!doc.exists) return;
-    const d = doc.data();
-    
-    let ownerInfo = '';
-    if (currentUserRole === 'owner' && d.user_id !== currentUser.uid) {
-        const userDoc = await db.collection('users').doc(d.user_id).get();
-        const ownerName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
-        ownerInfo = `<div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Pemilik Data</label><div class="value">${escapeHtml(ownerName)}</div></div></div>`;
-    }
-    
-    document.getElementById('detailContent').innerHTML = `
-        <div class="detail-header"><div class="detail-avatar">👥</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">Database Agent</div></div>
-        <div class="detail-body">
-            <div class="detail-info">
-                ${ownerInfo}
-                <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
-                <div class="detail-info-item"><div class="detail-info-icon">🏷️</div><div class="detail-info-content"><label>Type/Class</label><div class="value">${escapeHtml(d.agent_type || '-')}</div></div></div>
-                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
-                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Input</label><div class="value">${new Date(d.created_at).toLocaleDateString('id-ID')}</div></div></div>
-            </div>
-            <div class="detail-actions">
-                <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
-                <button class="btn-primary" onclick="moveAgentToFollowup('${id}'); closeModal('detailModal');">📞 Pindah ke Followup</button>
-            </div>
-        </div>
-        <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button><button class="btn-danger" onclick="deleteAgentItem('${id}'); closeModal('detailModal');">🗑️ Hapus</button></div>
-    `;
-    showModal('detailModal');
-}
-
 // ========== FUNGSI AGENT DETAIL LENGKAP ==========
 async function saveAgentDetail() {
     if (!currentAgentIdForProduct) {
@@ -3775,6 +3893,7 @@ async function saveAgentDetail() {
     const alamat = document.getElementById('agentDetailAlamat').value;
     const email = document.getElementById('agentDetailEmail').value;
     const tlp = document.getElementById('agentDetailTlp').value;
+    const upline = document.getElementById('agentDetailUpline').value;
     const noRekening = document.getElementById('agentDetailNoRekening').value;
     const atasNama = document.getElementById('agentDetailAtasNama').value;
     const jenisBank = document.getElementById('agentDetailBank').value;
@@ -3802,6 +3921,7 @@ async function saveAgentDetail() {
             alamat: alamat,
             email: email,
             tlp: tlp,
+            upline: upline,
             no_rekening: noRekening,
             atas_nama: atasNama,
             jenis_bank: jenisBank,
@@ -3846,12 +3966,17 @@ async function openAgentDetail(id) {
         document.getElementById('agentDetailBank').value = d.jenis_bank || '';
         document.getElementById('agentDetailNoKtp').value = d.no_ktp || '';
         document.getElementById('agentDetailCid').value = d.cid || '';
+        document.getElementById('agentDetailUpline').value = d.upline || '';
+        
+        // Load tarif admin berdasarkan CID
+        if (d.cid) {
+            await loadTarifAdminByCid(d.cid);
+        } else {
+            tarifAdminData = [];
+        }
         
         // Render produk
         renderAgentProducts();
-        
-        // Update dropdown produk
-        updateProductSelect();
         
         // Tampilkan modal
         document.getElementById('agentDetailModal').style.display = 'flex';
@@ -3860,6 +3985,22 @@ async function openAgentDetail(id) {
         showNotifTop('❌ Gagal membuka detail: ' + error.message, true);
         console.error(error);
     }
+}
+
+async function loadTarifAdminByCid(cid) {
+    if (!cid) {
+        tarifAdminData = [];
+        return;
+    }
+    
+    const snapshot = await db.collection('tarif_admin')
+        .where('cid', '==', cid)
+        .get();
+    
+    tarifAdminData = [];
+    snapshot.forEach(doc => {
+        tarifAdminData.push({ id: doc.id, ...doc.data() });
+    });
 }
 
 // Fungsi untuk update dropdown produk
@@ -4310,6 +4451,7 @@ function setupAgentImport() {
                         let alamat = row.alamat || row.Alamat || '';
                         let email = row.email || row.Email || '';
                         let tlp = row.tlp || row.Tlp || row.Telepon || '';
+                        let upline = row.upline || row.Upline || row.atasan || row.Atasan || '';
                         let no_rekening = row.no_rekening || row.NoRekening || '';
                         let atas_nama = row.atas_nama || row.AtasNama || '';
                         let jenis_bank = row.jenis_bank || row.JenisBank || '';
@@ -4407,6 +4549,7 @@ function downloadAgentExample() {
         alamat: 'Jl. Raya No. 123, Jakarta',
         email: 'budi@example.com',
         tlp: '0211234567',
+        upline: 'KORWIL Jakarta',
         no_rekening: '1234567890',
         atas_nama: 'Budi Santoso',
         jenis_bank: 'BCA',
