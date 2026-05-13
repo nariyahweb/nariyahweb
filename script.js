@@ -54,8 +54,11 @@ function openWA(hp) {
 }
 
 function escapeHtml(text) {
-    if (!text) return '';
-    return text.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    // Jika text adalah null, undefined, atau bukan string, konversi ke string kosong
+    if (text === null || text === undefined) return '';
+    // Konversi number/boolean ke string
+    const str = String(text);
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
 }
 
 function isMobile() { return window.innerWidth <= 768; }
@@ -4011,12 +4014,7 @@ async function loadDatabaseAgent() {
 
 function renderAgentList(items) {
     const container = document.getElementById('dbAgentList');
-    if (!container) {
-        console.error('Container dbAgentList tidak ditemukan!');
-        return;
-    }
-    
-    console.log('renderAgentList dipanggil, items:', items.length);
+    if (!container) return;
     
     // Update total count
     const totalCountSpan = document.getElementById('agentTotalCount');
@@ -4036,23 +4034,23 @@ function renderAgentList(items) {
     // Filter pencarian
     if (searchTerm) {
         filtered = filtered.filter(item => 
-            (item.nama && item.nama.toLowerCase().includes(searchTerm)) || 
-            (item.agent_id && item.agent_id.toLowerCase().includes(searchTerm)) || 
-            (item.hp && item.hp.includes(searchTerm))
+            (item.nama && String(item.nama).toLowerCase().includes(searchTerm)) || 
+            (item.agent_id && String(item.agent_id).toLowerCase().includes(searchTerm)) || 
+            (item.hp && String(item.hp).includes(searchTerm))
         );
     }
     
     // Filter Upline
     if (filterUpline) {
         filtered = filtered.filter(item => 
-            item.upline && item.upline.toLowerCase().includes(filterUpline)
+            item.upline && String(item.upline).toLowerCase().includes(filterUpline)
         );
     }
     
     // Filter CID
     if (filterCid) {
         filtered = filtered.filter(item => 
-            item.cid && item.cid.toLowerCase().includes(filterCid)
+            item.cid && String(item.cid).toLowerCase().includes(filterCid)
         );
     }
     
@@ -4091,7 +4089,7 @@ function renderAgentList(items) {
     
     // Filter nomor WA
     if (filterHasHp) {
-        filtered = filtered.filter(item => item.hp && item.hp.length > 5);
+        filtered = filtered.filter(item => item.hp && String(item.hp).length > 5);
     }
     
     // Filter aplikasi
@@ -4105,15 +4103,12 @@ function renderAgentList(items) {
     const filteredCountSpan = document.getElementById('agentFilteredCount');
     if (filteredCountSpan) filteredCountSpan.innerText = filtered.length;
     
-    console.log('Data setelah filter:', filtered.length);
-    
-    // CEK APAKAH DATA KOSONG
     if (filtered.length === 0) {
         container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Tidak ada data yang sesuai filter</p>';
         return;
     }
     
-    // RENDER HTML
+    // RENDER HTML - AMAN DENGAN String()
     let html = '';
     for (const item of filtered) {
         const isChecked = selectedAgentIds.get(item.id) === true;
@@ -4121,13 +4116,13 @@ function renderAgentList(items) {
             <div class="db-item-agent" data-id="${item.id}">
                 <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${isChecked ? 'checked' : ''}>
                 <div class="db-item-agent-info">
-                    <h4>${escapeHtml(item.nama || '-')}</h4>
-                    <p>📱 ${escapeHtml(item.hp || '-')} | 🆔 ${escapeHtml(item.agent_id || '-')} | 🏷️ ${escapeHtml(item.agent_type || '-')}</p>
-                    <p>👤 Upline: ${escapeHtml(item.upline || '-')} | 🆔 CID: ${escapeHtml(item.cid || '-')} | 🏦 Bank: ${escapeHtml(item.jenis_bank || '-')}</p>
+                    <h4>${escapeHtml(String(item.nama || '-'))}</h4>
+                    <p>📱 ${escapeHtml(String(item.hp || '-'))} | 🆔 ${escapeHtml(String(item.agent_id || '-'))} | 🏷️ ${escapeHtml(String(item.agent_type || '-'))}</p>
+                    <p>👤 Upline: ${escapeHtml(String(item.upline || '-'))} | 🆔 CID: ${escapeHtml(String(item.cid || '-'))} | 🏦 Bank: ${escapeHtml(String(item.jenis_bank || '-'))}</p>
                     <small>📅 ${item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID') : '-'}</small>
                 </div>
                 <div class="db-item-agent-actions">
-                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')">💬 WA</button>
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(String(item.hp || ''))}')">💬 WA</button>
                     <button class="db-item-move-followup" onclick="event.stopPropagation(); moveAgentToFollowup('${item.id}')">📞 Pindah ke Followup</button>
                     <button class="db-item-delete" onclick="event.stopPropagation(); deleteAgentItem('${item.id}')">🗑️ Hapus</button>
                 </div>
@@ -4136,7 +4131,6 @@ function renderAgentList(items) {
     }
     
     container.innerHTML = html;
-    console.log('HTML selesai dirender, total:', filtered.length);
     
     // Event listener untuk checkbox
     document.querySelectorAll('#dbAgentList .db-item-checkbox-agent').forEach(cb => {
