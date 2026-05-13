@@ -4360,7 +4360,7 @@ function updateProductSelect() {
 }
 
 // Render daftar produk agent
-// ========== RENDER PRODUK DI POPUP AGENT (VERSI FINAL) ==========
+// ========== RENDER PRODUK DI POPUP AGENT (VERSI PERBAIKAN) ==========
 function renderAgentProducts() {
     const container = document.getElementById('agentProductsContainer');
     if (!container) return;
@@ -4370,8 +4370,23 @@ function renderAgentProducts() {
         return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
     
-    // Pencarian
-    const searchKeyword = document.getElementById('searchProdukAgent')?.value.toLowerCase() || '';
+    // Cek apakah elemen search sudah ada, jika belum buat
+    let searchInput = document.getElementById('searchProdukAgent');
+    if (!searchInput) {
+        // Buat wrapper untuk search input agar tidak hilang setiap render
+        const searchWrapper = document.createElement('div');
+        searchWrapper.style.marginBottom = '12px';
+        searchWrapper.innerHTML = '<input type="text" id="searchProdukAgent" placeholder="🔍 Cari produk..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">';
+        container.parentNode.insertBefore(searchWrapper, container);
+        searchInput = document.getElementById('searchProdukAgent');
+        
+        // Tambahkan event listener sekali saja
+        searchInput.addEventListener('input', function() {
+            renderAgentProducts(); // panggil ulang dengan filter
+        });
+    }
+    
+    const searchKeyword = searchInput.value.toLowerCase();
     let filteredProduk = produkData.filter(p => 
         p.nama.toLowerCase().includes(searchKeyword)
     );
@@ -4382,7 +4397,7 @@ function renderAgentProducts() {
     }
     
     const cid = document.getElementById('agentDetailCid')?.value || '';
-    const tarif = tarifAdminData.find(t => t.cid === cid);
+    const tarif = currentTarifData.find(t => t.cid === cid);
     
     // Load existing data
     const existingMap = new Map();
@@ -4390,8 +4405,7 @@ function renderAgentProducts() {
         currentAgentProducts.forEach(p => existingMap.set(p.produk_id, p));
     }
     
-    let html = '<div style="margin-bottom: 12px;"><input type="text" id="searchProdukAgent" placeholder="🔍 Cari produk..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;"></div>';
-    html += '<table style="width:100%; border-collapse: collapse;">';
+    let html = '<table style="width:100%; border-collapse: collapse;">';
     html += `
         <thead>
             <tr>
@@ -4467,13 +4481,6 @@ function renderAgentProducts() {
     
     html += '</tbody></table>';
     container.innerHTML = html;
-    
-    // Event listener untuk pencarian
-    const searchInput = document.getElementById('searchProdukAgent');
-    if (searchInput) {
-        searchInput.removeEventListener('input', renderAgentProducts);
-        searchInput.addEventListener('input', () => renderAgentProducts());
-    }
     
     // Event listener untuk profit dan fee upline
     document.querySelectorAll('.profit-input').forEach(input => {
