@@ -714,11 +714,14 @@ if (downloadTarifExampleBtn) {
     // ========== EVENT LISTENER DATABASE AGENT ==========
     // Event listener untuk tombol Select All Agent
 document.getElementById('selectAllAgent')?.addEventListener('click', () => {
+    console.log('Jumlah data terfilter:', agentsFilteredData.length);
     if (!agentsFilteredData.length) {
         showNotifTop('Tidak ada data untuk dipilih', true);
         return;
     }
+    // Cek apakah semua sudah tercentang
     const allChecked = agentsFilteredData.every(item => selectedAgentIds.get(item.id));
+    // Loop dan toggle status
     agentsFilteredData.forEach(item => {
         if (allChecked) {
             selectedAgentIds.delete(item.id);
@@ -726,8 +729,10 @@ document.getElementById('selectAllAgent')?.addEventListener('click', () => {
             selectedAgentIds.set(item.id, true);
         }
     });
-    renderAgentList(agentsData); // refresh tampilan
-    updateSelectAllAgentButton(); // update teks tombol
+    // Render ulang daftar agar checkbox berubah
+    renderAgentList(agentsData);
+    // Update teks tombol
+    updateSelectAllAgentButton();
 });
 
     const deleteSelectedAgentBtn = document.getElementById('deleteSelectedAgent');
