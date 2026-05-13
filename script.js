@@ -4011,89 +4011,93 @@ async function loadDatabaseAgent() {
 
 function renderAgentList(items) {
     const container = document.getElementById('dbAgentList');
-    if (!container) return;
+    if (!container) {
+        console.error('Container dbAgentList tidak ditemukan!');
+        return;
+    }
+    
+    console.log('renderAgentList dipanggil, items:', items.length);
     
     // Update total count
     const totalCountSpan = document.getElementById('agentTotalCount');
     if (totalCountSpan) totalCountSpan.innerText = items.length;
     
     // Ambil nilai filter
-const searchTerm = document.getElementById('searchAgentInput')?.value.toLowerCase() || '';
-const filterUpline = document.getElementById('filterUplineAgent')?.value.toLowerCase() || '';
-const filterCid = document.getElementById('filterCidAgent')?.value.toLowerCase() || '';
-const filterBank = document.getElementById('filterBankAgent')?.value || '';
-const filterDate = document.getElementById('filterDateAgent')?.value || '';
-const filterHasHp = document.getElementById('filterHasHpAgent')?.checked || false;
-const filterHasApk = document.getElementById('filterHasApkAgent')?.checked || false;
+    const searchTerm = document.getElementById('searchAgentInput')?.value.toLowerCase() || '';
+    const filterUpline = document.getElementById('filterUplineAgent')?.value.toLowerCase() || '';
+    const filterCid = document.getElementById('filterCidAgent')?.value.toLowerCase() || '';
+    const filterBank = document.getElementById('filterBankAgent')?.value || '';
+    const filterDate = document.getElementById('filterDateAgent')?.value || '';
+    const filterHasHp = document.getElementById('filterHasHpAgent')?.checked || false;
+    const filterHasApk = document.getElementById('filterHasApkAgent')?.checked || false;
     
-    // 🔥 HANYA SATU DEKLARASI filtered (jangan deklarasi ulang)
     let filtered = [...items];
     
     // Filter pencarian
-if (searchTerm) {
-    filtered = filtered.filter(item => 
-        item.nama.toLowerCase().includes(searchTerm) || 
-        item.agent_id.toLowerCase().includes(searchTerm) || 
-        item.hp.includes(searchTerm)
-    );
-}
-
-// 🔥 FILTER UPLINE
-if (filterUpline) {
-    filtered = filtered.filter(item => 
-        item.upline && item.upline.toLowerCase().includes(filterUpline)
-    );
-}
-
-// 🔥 FILTER CID
-if (filterCid) {
-    filtered = filtered.filter(item => 
-        item.cid && item.cid.toLowerCase().includes(filterCid)
-    );
-}
-
-// 🔥 FILTER JENIS BANK
-if (filterBank) {
-    filtered = filtered.filter(item => 
-        item.jenis_bank === filterBank
-    );
-}
-
-// Filter tanggal
-if (filterDate) {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (filterDate === 'today') {
-        filtered = filtered.filter(item => {
-            const itemDate = new Date(item.createdAt);
-            return itemDate >= today;
-        });
-    } else if (filterDate === 'week') {
-        const weekAgo = new Date(today);
-        weekAgo.setDate(today.getDate() - 7);
-        filtered = filtered.filter(item => {
-            const itemDate = new Date(item.createdAt);
-            return itemDate >= weekAgo;
-        });
-    } else if (filterDate === 'month') {
-        const monthAgo = new Date(today);
-        monthAgo.setDate(today.getDate() - 30);
-        filtered = filtered.filter(item => {
-            const itemDate = new Date(item.createdAt);
-            return itemDate >= monthAgo;
-        });
+    if (searchTerm) {
+        filtered = filtered.filter(item => 
+            (item.nama && item.nama.toLowerCase().includes(searchTerm)) || 
+            (item.agent_id && item.agent_id.toLowerCase().includes(searchTerm)) || 
+            (item.hp && item.hp.includes(searchTerm))
+        );
     }
-}
-
-// Filter hanya yang memiliki nomor WA
-if (filterHasHp) {
-    filtered = filtered.filter(item => item.hp && item.hp.length > 5);
-}
-
-// Filter hanya yang memiliki aplikasi
-if (filterHasApk) {
-    filtered = filtered.filter(item => item.apk && item.apk !== '-');
-}
+    
+    // Filter Upline
+    if (filterUpline) {
+        filtered = filtered.filter(item => 
+            item.upline && item.upline.toLowerCase().includes(filterUpline)
+        );
+    }
+    
+    // Filter CID
+    if (filterCid) {
+        filtered = filtered.filter(item => 
+            item.cid && item.cid.toLowerCase().includes(filterCid)
+        );
+    }
+    
+    // Filter Jenis Bank
+    if (filterBank) {
+        filtered = filtered.filter(item => 
+            item.jenis_bank === filterBank
+        );
+    }
+    
+    // Filter tanggal
+    if (filterDate) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (filterDate === 'today') {
+            filtered = filtered.filter(item => {
+                const itemDate = item.createdAt ? new Date(item.createdAt) : new Date(0);
+                return itemDate >= today;
+            });
+        } else if (filterDate === 'week') {
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            filtered = filtered.filter(item => {
+                const itemDate = item.createdAt ? new Date(item.createdAt) : new Date(0);
+                return itemDate >= weekAgo;
+            });
+        } else if (filterDate === 'month') {
+            const monthAgo = new Date(today);
+            monthAgo.setDate(today.getDate() - 30);
+            filtered = filtered.filter(item => {
+                const itemDate = item.createdAt ? new Date(item.createdAt) : new Date(0);
+                return itemDate >= monthAgo;
+            });
+        }
+    }
+    
+    // Filter nomor WA
+    if (filterHasHp) {
+        filtered = filtered.filter(item => item.hp && item.hp.length > 5);
+    }
+    
+    // Filter aplikasi
+    if (filterHasApk) {
+        filtered = filtered.filter(item => item.apk && item.apk !== '-');
+    }
     
     agentsFilteredData = filtered;
     
@@ -4101,61 +4105,67 @@ if (filterHasApk) {
     const filteredCountSpan = document.getElementById('agentFilteredCount');
     if (filteredCountSpan) filteredCountSpan.innerText = filtered.length;
     
+    console.log('Data setelah filter:', filtered.length);
+    
+    // CEK APAKAH DATA KOSONG
     if (filtered.length === 0) {
         container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Tidak ada data yang sesuai filter</p>';
         return;
     }
     
-    container.innerHTML = filtered.map(item => {
-    const isChecked = selectedAgentIds.get(item.id) === true;
-    return `
-        <div class="db-item-agent" data-id="${item.id}">
-            <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${isChecked ? 'checked' : ''}>
-            <div class="db-item-agent-info">
-                <h4>${escapeHtml(item.nama)}</h4>
-                <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)} | 🏷️ ${escapeHtml(item.agent_type !== '-' ? item.agent_type : '─')}</p>
-                <p>👤 Upline: ${escapeHtml(item.upline || '─')} | 🆔 CID: ${escapeHtml(item.cid || '─')} | 🏦 Bank: ${escapeHtml(item.jenis_bank || '─')}</p>
-                <small>📅 ${new Date(item.createdAt).toLocaleDateString('id-ID')}</small>
+    // RENDER HTML
+    let html = '';
+    for (const item of filtered) {
+        const isChecked = selectedAgentIds.get(item.id) === true;
+        html += `
+            <div class="db-item-agent" data-id="${item.id}">
+                <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${isChecked ? 'checked' : ''}>
+                <div class="db-item-agent-info">
+                    <h4>${escapeHtml(item.nama || '-')}</h4>
+                    <p>📱 ${escapeHtml(item.hp || '-')} | 🆔 ${escapeHtml(item.agent_id || '-')} | 🏷️ ${escapeHtml(item.agent_type || '-')}</p>
+                    <p>👤 Upline: ${escapeHtml(item.upline || '-')} | 🆔 CID: ${escapeHtml(item.cid || '-')} | 🏦 Bank: ${escapeHtml(item.jenis_bank || '-')}</p>
+                    <small>📅 ${item.createdAt ? new Date(item.createdAt).toLocaleDateString('id-ID') : '-'}</small>
+                </div>
+                <div class="db-item-agent-actions">
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')">💬 WA</button>
+                    <button class="db-item-move-followup" onclick="event.stopPropagation(); moveAgentToFollowup('${item.id}')">📞 Pindah ke Followup</button>
+                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteAgentItem('${item.id}')">🗑️ Hapus</button>
+                </div>
             </div>
-            <div class="db-item-agent-actions">
-                <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${item.hp}')">💬 WA</button>
-                <button class="db-item-move-followup" onclick="event.stopPropagation(); moveAgentToFollowup('${item.id}')">📞 Pindah ke Followup</button>
-                <button class="db-item-delete" onclick="event.stopPropagation(); deleteAgentItem('${item.id}')">🗑️ Hapus</button>
-            </div>
-        </div>
-    `;
-}).join('');
-
-    // Di dalam renderAgentList, setelah filtered diisi
-console.log('Sample item pertama:', filtered[0]);
-console.log('Field yang tersedia:', Object.keys(filtered[0] || {}));
+        `;
+    }
     
-    // Event listener untuk checkbox (di dalam renderAgentList, setelah innerHTML)
-document.querySelectorAll('#dbAgentList .db-item-checkbox-agent').forEach(cb => {
-    // Hapus event listener lama
-    const newCb = cb.cloneNode(true);
-    cb.parentNode.replaceChild(newCb, cb);
+    container.innerHTML = html;
+    console.log('HTML selesai dirender, total:', filtered.length);
     
-    newCb.addEventListener('change', (e) => {
-        e.stopPropagation();
-        const id = newCb.dataset.id;
-        if (newCb.checked) {
-            selectedAgentIds.set(id, true);
-        } else {
-            selectedAgentIds.delete(id);
+    // Event listener untuk checkbox
+    document.querySelectorAll('#dbAgentList .db-item-checkbox-agent').forEach(cb => {
+        cb.removeEventListener('change', handleCheckboxChange);
+        cb.addEventListener('change', handleCheckboxChange);
+        function handleCheckboxChange(e) {
+            e.stopPropagation();
+            const id = cb.dataset.id;
+            if (cb.checked) {
+                selectedAgentIds.set(id, true);
+            } else {
+                selectedAgentIds.delete(id);
+            }
+            updateSelectAllAgentButton();
         }
-        console.log('Checkbox berubah:', id, newCb.checked);
-        updateSelectAllAgentButton();
     });
-});
     
     // Event listener untuk klik item
     document.querySelectorAll('#dbAgentList .db-item-agent').forEach(el => {
-        el.addEventListener('click', (e) => {
-            if (e.target.type !== 'checkbox' && !e.target.classList.contains('db-item-wa') && !e.target.classList.contains('db-item-move-followup') && !e.target.classList.contains('db-item-delete')) {
+        el.removeEventListener('click', handleItemClick);
+        el.addEventListener('click', handleItemClick);
+        function handleItemClick(e) {
+            if (e.target.type !== 'checkbox' && 
+                !e.target.classList.contains('db-item-wa') && 
+                !e.target.classList.contains('db-item-move-followup') && 
+                !e.target.classList.contains('db-item-delete')) {
                 openAgentDetail(el.dataset.id);
             }
-        });
+        }
     });
     
     updateSelectAllAgentButton();
