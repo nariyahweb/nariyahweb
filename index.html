@@ -522,11 +522,14 @@
         </div>
         
         <!-- Tombol Import/Export -->
-        <div style="padding: 0 20px; margin-bottom: 16px; display: flex; gap: 10px;">
-            <button id="importTarifExcelBtn" class="db-import-excel" style="background: #10b981;">📥 Import Excel</button>
-            <button id="exportTarifExcelBtn" class="db-export-excel" style="background: #3b82f6;">📤 Export Excel</button>
-            <button id="downloadTarifExampleBtn" style="background: #f59e0b; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📋 Download Contoh</button>
-        </div>
+<div style="padding: 0 20px; margin-bottom: 16px; display: flex; gap: 10px;">
+    <button id="importTarifExcelBtn" class="db-import-excel" style="background: #10b981;">📥 Import Excel</button>
+    <button id="exportTarifExcelBtn" class="db-export-excel" style="background: #3b82f6;">📤 Export Excel</button>
+    <button id="downloadTarifExampleBtn" style="background: #f59e0b; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📋 Download Contoh</button>
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="tarifExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
         
         <!-- Daftar Tarif Admin -->
         <div style="padding: 0 20px 20px 20px;">
