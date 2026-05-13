@@ -431,6 +431,159 @@ document.getElementById('cancelDeadlineBtn')?.addEventListener('click', () => {
     closeModal('editDeadlineModal');
 });
 
+function setupTarifImport() {
+    const importBtn = document.getElementById('importTarifExcelBtn');
+    const fileInput = document.getElementById('tarifExcelFile');
+    if (!importBtn || !fileInput) return;
+    
+    // Hapus event listener lama jika ada
+    importBtn.removeEventListener('click', importBtn._handler);
+    fileInput.removeEventListener('change', fileInput._handler);
+    
+    importBtn._handler = () => fileInput.click();
+    importBtn.addEventListener('click', importBtn._handler);
+    
+    fileInput._handler = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        importBtn.textContent = '⏳ Memproses...';
+        importBtn.disabled = true;
+        
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                
+                if (!json || json.length === 0) {
+                    showNotifTop('File Excel kosong!', true);
+                    return;
+                }
+                
+                let success = 0, failed = 0;
+                const errors = [];
+                
+                for (const row of json) {
+                    try {
+                        let cid = row.cid || row.CID || row.Cid || '';
+                        let pospaid = row.pospaid || row.Pospaid || row.PLN_Pospaid || row.admin_pospaid || 0;
+                        let prepaid = row.prepaid || row.Prepaid || row.PLN_Prepaid || row.admin_prepaid || 0;
+                        let nontaglis = row.nontaglis || row.Nontaglis || row.PLN_Nontaglis || row.admin_nontaglis || 0;
+                        
+                        if (!cid) {
+                            failed++;
+                            errors.push(`Baris ke-${json.indexOf(row)+2}: CID kosong`);
+                            continue;
+                        }
+                        
+                        cid = cid.toString().trim();
+                        
+                        // Cek apakah sudah ada
+                        const existing = tarifAdminData.find(t => t.cid === cid);
+                        if (existing) {
+                            await db.collection('tarif_admin').doc(existing.id).update({
+                                admin_pospaid: parseInt(pospaid) || 0,
+                                admin_prepaid: parseInt(prepaid) || 0,
+                                admin_nontaglis: parseInt(nontaglis) || 0,
+                                updated_at: new Date().toISOString()
+                            });
+                        } else {
+                            await db.collection('tarif_admin').add({
+                                cid: cid,
+                                admin_pospaid: parseInt(pospaid) || 0,
+                                admin_prepaid: parseInt(prepaid) || 0,
+                                admin_nontaglis: parseInt(nontaglis) || 0,
+                                user_id: currentUser.uid,
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            });
+                        }
+                        success++;
+                    } catch(err) {
+                        failed++;
+                        errors.push(`Baris ke-${json.indexOf(row)+2}: ${err.message}`);
+                    }
+                }
+                
+                let resultMsg = `✅ Import selesai! Berhasil: ${success}, Gagal: ${failed}`;
+                if (errors.length > 0 && errors.length <= 3) {
+                    resultMsg += `\n\nError:\n${errors.join('\n')}`;
+                } else if (errors.length > 3) {
+                    resultMsg += `\n\n${errors.length} error terjadi.`;
+                }
+                showNotifTop(resultMsg, failed > 0);
+                await loadTarifAdmin();
+                fileInput.value = '';
+            } catch(err) {
+                showNotifTop('❌ Gagal import: ' + err.message, true);
+            } finally {
+                importBtn.textContent = '📥 Import Excel';
+                importBtn.disabled = false;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    };
+    fileInput.addEventListener('change', fileInput._handler);
+}
+
+async function exportTarifToExcel() {
+    if (tarifAdminData.length === 0) {
+        showNotifTop('Tidak ada data untuk diexport', true);
+        return;
+    }
+    
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    const exportData = tarifAdminData.map(item => ({
+        'CID': item.cid,
+        'PLN Pospaid (Admin)': item.admin_pospaid || 0,
+        'PLN Prepaid (Admin)': item.admin_prepaid || 0,
+        'PLN Nontaglis (Admin)': item.admin_nontaglis || 0,
+        'Terakhir Update': item.updated_at ? new Date(item.updated_at).toLocaleDateString('id-ID') : '-'
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Admin per CID');
+    XLSX.writeFile(wb, `tarif_admin_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showNotifTop('✅ Export data berhasil!');
+}
+
+function downloadTarifExample() {
+    const data = [
+        {
+            cid: '5213247',
+            pospaid: 7200,
+            prepaid: 7200,
+            nontaglis: 7200
+        },
+        {
+            cid: '5213248',
+            pospaid: 7500,
+            prepaid: 7500,
+            nontaglis: 7500
+        },
+        {
+            cid: '5213249',
+            pospaid: 7000,
+            prepaid: 7000,
+            nontaglis: 7000
+        }
+    ];
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Admin per CID');
+    XLSX.writeFile(wb, 'contoh_tarif_admin.xlsx');
+    showNotifTop('📋 Contoh file Excel berhasil diunduh');
+}
+
 // ========== SEMUA EVENT LISTENER DI DALAM DOMContentLoaded ==========
 document.addEventListener('DOMContentLoaded', function() {
     // ========== SIDEBAR ==========
@@ -498,6 +651,25 @@ if (produkMasterModal) {
             closeModal('produkMasterModal');
         }
     };
+}
+
+// Setup import/export tarif admin
+setupTarifImport();
+
+// Export button
+const exportTarifBtn = document.getElementById('exportTarifExcelBtn');
+if (exportTarifBtn) {
+    exportTarifBtn.removeEventListener('click', exportTarifBtn._handler);
+    exportTarifBtn._handler = () => exportTarifToExcel();
+    exportTarifBtn.addEventListener('click', exportTarifBtn._handler);
+}
+
+// Download example button
+const downloadTarifExampleBtn = document.getElementById('downloadTarifExampleBtn');
+if (downloadTarifExampleBtn) {
+    downloadTarifExampleBtn.removeEventListener('click', downloadTarifExampleBtn._handler);
+    downloadTarifExampleBtn._handler = () => downloadTarifExample();
+    downloadTarifExampleBtn.addEventListener('click', downloadTarifExampleBtn._handler);
 }
 
     // ========== TOGGLE PASSWORD ==========
