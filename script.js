@@ -711,20 +711,18 @@ if (downloadTarifExampleBtn) {
     }
 
     // ========== EVENT LISTENER DATABASE AGENT ==========
-    const selectAllAgentBtn = document.getElementById('selectAllAgent');
-    if (selectAllAgentBtn) {
-        selectAllAgentBtn.addEventListener('click', () => {
-            const allChecked = agentsFilteredData.length > 0 && agentsFilteredData.every(item => selectedAgentIds.get(item.id));
-            agentsFilteredData.forEach(item => {
-                if (allChecked) {
-                    selectedAgentIds.delete(item.id);
-                } else {
-                    selectedAgentIds.set(item.id, true);
-                }
-            });
-            renderAgentList(agentsData);
-        });
-    }
+    // Event listener untuk tombol Select All Agent
+document.getElementById('selectAllAgent')?.addEventListener('click', () => {
+    const allChecked = agentsFilteredData.length > 0 && agentsFilteredData.every(item => selectedAgentIds.get(item.id));
+    agentsFilteredData.forEach(item => {
+        if (allChecked) {
+            selectedAgentIds.delete(item.id);
+        } else {
+            selectedAgentIds.set(item.id, true);
+        }
+    });
+    renderAgentList(agentsData);
+});
 
     const deleteSelectedAgentBtn = document.getElementById('deleteSelectedAgent');
     if (deleteSelectedAgentBtn) {
@@ -4141,7 +4139,7 @@ async function openAgentDetail(id) {
         currentAgentIdForProduct = id;
         currentAgentProducts = d.produk || [];
         
-        // Isi form dengan data yang ada
+        // Isi form
         document.getElementById('agentDetailId').value = d.agent_id || '';
         document.getElementById('agentDetailNama').value = d.nama || '';
         document.getElementById('agentDetailType').value = d.agent_type || '';
@@ -4156,7 +4154,7 @@ async function openAgentDetail(id) {
         document.getElementById('agentDetailCid').value = d.cid || '';
         document.getElementById('agentDetailUpline').value = d.upline || '';
         
-        // Load tarif admin berdasarkan CID
+        // Load tarif admin
         if (d.cid) {
             await loadTarifAdminByCid(d.cid);
         } else {
@@ -4170,8 +4168,8 @@ async function openAgentDetail(id) {
         document.getElementById('agentDetailModal').style.display = 'flex';
         document.body.classList.add('modal-open');
     } catch (error) {
+        console.error('Error:', error);
         showNotifTop('❌ Gagal membuka detail: ' + error.message, true);
-        console.error(error);
     }
 }
 
@@ -4417,7 +4415,106 @@ function renderAgentProducts() {
     });
 }
 
-// Handler untuk perubahan admin
+// ========== HANDLER UNTUK PRODUK DI AGENT DETAIL ==========
+
+// Handler untuk perubahan harga jual (produk tanpa admin)
+function handleHargaChange(e) {
+    const produkId = e.target.dataset.id;
+    const harga = parseInt(e.target.value);
+    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
+    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+    
+    if (harga && harga > 0) {
+        addOrUpdateProduct(produkId, harga, qty);
+        updateProfitForProduct(produkId);
+    }
+}
+
+// Handler untuk perubahan qty (semua produk)
+function handleQtyChange(e) {
+    const produkId = e.target.dataset.id;
+    const qty = parseInt(e.target.value);
+    
+    if (qty > 0) {
+        // Update existing product data
+        const existingIndex = currentAgentProducts?.findIndex(p => p.produk_id === produkId);
+        if (existingIndex >= 0 && currentAgentProducts) {
+            currentAgentProducts[existingIndex].qty = qty;
+        }
+        updateProfitForProduct(produkId);
+    }
+}
+
+// Handler untuk tombol Tambah (produk tanpa admin)
+function handleTambahClick(e) {
+    const produkId = e.target.dataset.id;
+    const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
+    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
+    const harga = hargaInput ? parseInt(hargaInput.value) : 0;
+    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+    
+    if (!harga || harga <= 0) {
+        showNotifTop('⚠️ Isi harga jual terlebih dahulu!', true);
+        return;
+    }
+    
+    addOrUpdateProduct(produkId, harga, qty);
+    e.target.style.display = 'none';
+    const removeBtn = e.target.parentElement.querySelector('.remove-produk-btn');
+    if (removeBtn) removeBtn.style.display = 'inline-block';
+    updateProfitForProduct(produkId);
+}
+
+// Handler untuk tombol Hapus (produk tanpa admin)
+function handleHapusClick(e) {
+    const produkId = e.target.dataset.id;
+    removeProductFromAgent(produkId);
+    e.target.style.display = 'none';
+    const addBtn = e.target.parentElement.querySelector('.add-produk-btn');
+    if (addBtn) addBtn.style.display = 'inline-block';
+    updateProfitForProduct(produkId);
+}
+
+// Fungsi untuk menambah/update produk (tanpa admin)
+function addOrUpdateProduct(produkId, harga, qty) {
+    if (!currentAgentProducts) currentAgentProducts = [];
+    
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) return;
+    
+    const existingIndex = currentAgentProducts.findIndex(p => p.produk_id === produkId);
+    const productData = {
+        produk_id: produkId,
+        nama_produk: produk.nama,
+        harga: harga,
+        qty: qty || 1,
+        updated_at: new Date().toISOString()
+    };
+    
+    if (existingIndex >= 0) {
+        currentAgentProducts[existingIndex] = productData;
+    } else {
+        productData.added_at = new Date().toISOString();
+        currentAgentProducts.push(productData);
+    }
+    
+    // Highlight row
+    const row = document.querySelector(`tr[data-produk-id="${produkId}"]`);
+    if (row) {
+        row.style.backgroundColor = '#d1fae5';
+        setTimeout(() => {
+            row.style.backgroundColor = '';
+        }, 500);
+    }
+}
+
+// Fungsi untuk menghapus produk dari agent
+function removeProductFromAgent(produkId) {
+    if (!currentAgentProducts) return;
+    currentAgentProducts = currentAgentProducts.filter(p => p.produk_id !== produkId);
+}
+
+// Handler untuk perubahan admin (produk beradmin)
 function handleAdminChange(e) {
     const produkId = e.target.dataset.id;
     const admin = parseInt(e.target.value);
@@ -4448,17 +4545,107 @@ function handleFeeUplineChange(e) {
     }
 }
 
-// Handler untuk perubahan qty
-function handleQtyChange(e) {
-    const produkId = e.target.dataset.id;
-    const qty = parseInt(e.target.value);
-    updateProfitForProduct(produkId);
+// Fungsi untuk menambah/update produk beradmin
+function addOrUpdateProductWithAdmin(produkId, admin, feeUpline) {
+    if (!currentAgentProducts) currentAgentProducts = [];
     
-    // Update existing product data
-    const existingIndex = currentAgentProducts?.findIndex(p => p.produk_id === produkId);
-    if (existingIndex >= 0 && currentAgentProducts) {
-        currentAgentProducts[existingIndex].qty = qty;
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) return;
+    
+    const existingIndex = currentAgentProducts.findIndex(p => p.produk_id === produkId);
+    const qty = existingIndex >= 0 ? currentAgentProducts[existingIndex].qty : 1;
+    
+    const productData = {
+        produk_id: produkId,
+        nama_produk: produk.nama,
+        admin: admin,
+        fee_upline: feeUpline,
+        qty: qty,
+        updated_at: new Date().toISOString()
+    };
+    
+    if (existingIndex >= 0) {
+        currentAgentProducts[existingIndex] = productData;
+    } else {
+        productData.added_at = new Date().toISOString();
+        currentAgentProducts.push(productData);
     }
+}
+
+function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
+    addOrUpdateProductWithAdmin(produkId, admin, feeUpline);
+}
+
+// Update profit untuk satu produk
+function updateProfitForProduct(produkId) {
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) return;
+    
+    const isAdminBased = produk.jenis_produk === 'beradmin';
+    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
+    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+    
+    let profit = 0;
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    if (isAdminBased) {
+        const adminInput = document.querySelector(`.produk-admin[data-id="${produkId}"]`);
+        const feeUplineInput = document.querySelector(`.fee-upline[data-id="${produkId}"]`);
+        const admin = adminInput ? parseInt(adminInput.value) : 0;
+        const feeUpline = feeUplineInput ? parseInt(feeUplineInput.value) : 0;
+        profit = (admin - feeUpline) * qty;
+        
+        // Update fee agent display
+        const feeAgentSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .fee-agent`);
+        if (feeAgentSpan) {
+            feeAgentSpan.innerHTML = formatRupiah(admin);
+        }
+    } else {
+        const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
+        const hargaJual = hargaInput ? parseInt(hargaInput.value) : produk.harga_jual;
+        profit = (hargaJual - produk.hpp) * qty;
+    }
+    
+    const profitSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .profit-value`);
+    if (profitSpan) {
+        profitSpan.innerHTML = formatRupiah(profit);
+        profitSpan.style.color = profit >= 0 ? '#10b981' : '#ef4444';
+    }
+}
+
+// Handler untuk tombol Tambah produk beradmin
+function handleTambahAdminClick(e) {
+    const produkId = e.target.dataset.id;
+    const adminInput = document.querySelector(`.produk-admin[data-id="${produkId}"]`);
+    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
+    const admin = adminInput ? parseInt(adminInput.value) : 0;
+    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+    
+    if (!admin || admin <= 0) {
+        showNotifTop('⚠️ Isi admin terlebih dahulu!', true);
+        return;
+    }
+    
+    const feeUpline = Math.floor(admin * 0.1);
+    addOrUpdateProductWithAdmin(produkId, admin, feeUpline);
+    
+    e.target.style.display = 'none';
+    const removeBtn = e.target.parentElement.querySelector('.remove-produk-btn');
+    if (removeBtn) removeBtn.style.display = 'inline-block';
+    updateProfitForProduct(produkId);
+}
+
+// Handler untuk tombol Hapus produk beradmin
+function handleHapusAdminClick(e) {
+    const produkId = e.target.dataset.id;
+    removeProductFromAgent(produkId);
+    e.target.style.display = 'none';
+    const addBtn = e.target.parentElement.querySelector('.add-produk-btn');
+    if (addBtn) addBtn.style.display = 'inline-block';
+    updateProfitForProduct(produkId);
 }
 
 // Update profit untuk satu produk
