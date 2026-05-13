@@ -647,3 +647,25 @@ body.modal-open{overflow:hidden}
 .modal * {
     pointer-events: auto;
 }
+
+/* Perbaikan tampilan produk page */
+#produkPage .db-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+#produkPage .db-actions button {
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    #produkPage .db-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #produkPage .db-actions button {
+        width: 100%;
+    }
+}
