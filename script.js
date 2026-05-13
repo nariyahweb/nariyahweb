@@ -1010,17 +1010,28 @@ function renderTarifAdminList() {
     const container = document.getElementById('tarifAdminList');
     if (!container) return;
     
+    // Ambil keyword pencarian
+    const searchKeyword = document.getElementById('searchTarifInput')?.value.toLowerCase() || '';
+    
+    // Filter data berdasarkan CID
+    let filteredData = tarifAdminData;
+    if (searchKeyword) {
+        filteredData = tarifAdminData.filter(item => 
+            item.cid.toLowerCase().includes(searchKeyword)
+        );
+    }
+    
     const formatRupiah = (angka) => {
         if (!angka) return 'Rp 0';
         return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
     
-    if (tarifAdminData.length === 0) {
-        container.innerHTML = '<p style="text-align:center;padding:40px;">🏷️ Belum ada data admin per CID</p>';
+    if (filteredData.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;">🏷️ Tidak ada data admin per CID</p>';
         return;
     }
     
-    container.innerHTML = tarifAdminData.map(item => `
+    container.innerHTML = filteredData.map(item => `
         <div class="db-item" data-id="${item.id}">
             <div class="db-item-info">
                 <h4>🆔 CID: ${escapeHtml(item.cid)}</h4>
@@ -1038,6 +1049,11 @@ function renderTarifAdminList() {
         </div>
     `).join('');
 }
+
+// Event listener untuk pencarian
+document.getElementById('searchTarifInput')?.addEventListener('input', () => {
+    renderTarifAdminList();
+});
 
 async function saveTarifAdmin(cid, pospaid, prepaid, nontaglis, id = null) {
     if (!cid) {
@@ -4202,8 +4218,19 @@ function renderAgentProducts() {
         return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
     
-    if (!produkData || produkData.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">Belum ada produk master. Silakan tambah produk di menu Produk.</p>';
+    // Ambil keyword pencarian
+    const searchKeyword = document.getElementById('searchProdukAgent')?.value.toLowerCase() || '';
+    
+    // Filter produk berdasarkan keyword
+    let filteredProduk = [...produkData];
+    if (searchKeyword) {
+        filteredProduk = produkData.filter(p => 
+            p.nama.toLowerCase().includes(searchKeyword)
+        );
+    }
+    
+    if (filteredProduk.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:20px;">🔍 Tidak ada produk yang ditemukan</p>';
         return;
     }
     
@@ -4219,12 +4246,33 @@ function renderAgentProducts() {
         });
     }
     
-    let html = '<table style="width:100%; border-collapse: collapse;">';
+    let html = '<div style="margin-bottom: 12px;"><input type="text" id="searchProdukAgent" placeholder="🔍 Cari produk..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;"></div>';
+    html += '<table style="width:100%; border-collapse: collapse;">';
     html += `
         <thead>
             <tr>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Produk</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Detail Harga</th>
+    `;
+    
+    // Tentukan kolom berdasarkan jenis produk pertama
+    const firstProduct = filteredProduk[0];
+    const isFirstAdminBased = firstProduct?.jenis_produk === 'beradmin';
+    
+    if (isFirstAdminBased) {
+        html += `
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Admin</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">HPP</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Agent</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Upline</th>
+        `;
+    } else {
+        html += `
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">HPP</th>
+                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Harga Jual</th>
+        `;
+    }
+    
+    html += `
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Profit</th>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Qty</th>
                 <th style="text-align:center; padding:8px; border-bottom:1px solid #e5e7eb;">Aksi</th>
@@ -4233,7 +4281,7 @@ function renderAgentProducts() {
         <tbody>
     `;
     
-    for (const produk of produkData) {
+    for (const produk of filteredProduk) {
         const isAdminBased = produk.jenis_produk === 'beradmin';
         const existing = existingProductMap.get(produk.id);
         
@@ -4241,23 +4289,28 @@ function renderAgentProducts() {
         let hargaJual = existing ? existing.harga : (produk.harga_jual || 0);
         let qty = existing ? existing.qty : 1;
         let profit = 0;
+        let feeAgent = 0;
+        let feeUpline = 0;
         
         if (isAdminBased) {
             // Produk beradmin - ambil admin dari berbagai sumber
             if (produk.cid_based && cid) {
-                // Admin berdasarkan CID (khusus produk tertentu)
                 if (produk.id === 'pln_pospaid') adminValue = tarif?.admin_pospaid || 0;
                 else if (produk.id === 'pln_prepaid') adminValue = tarif?.admin_prepaid || 0;
                 else if (produk.id === 'pln_nontaglis') adminValue = tarif?.admin_nontaglis || 0;
                 else {
-                    // Untuk produk beradmin berbasis CID lainnya
                     adminValue = existing?.admin || 0;
                 }
             } else {
-                // Admin tetap dari master produk
                 adminValue = existing ? (existing.admin || produk.admin_default) : (produk.admin_default || 0);
             }
-            profit = adminValue * qty;
+            
+            // Fee Agent = admin (potongan untuk agent)
+            feeAgent = adminValue;
+            // Fee Upline = 10% dari admin (contoh, bisa disesuaikan)
+            feeUpline = Math.floor(adminValue * 0.1);
+            // Profit = admin - feeUpline
+            profit = adminValue - feeUpline;
         } else {
             // Produk tanpa admin
             profit = (hargaJual - produk.hpp) * qty;
@@ -4267,33 +4320,44 @@ function renderAgentProducts() {
             <tr data-produk-id="${produk.id}" style="border-bottom:1px solid #e5e7eb;">
                 <td style="padding:8px;">
                     <strong>${escapeHtml(produk.nama)}</strong><br>
-                    <small style="color:#9ca3af;">
-                        ${isAdminBased ? '🏷️ Berdasarkan Admin (Potongan)' : `💰 HPP: ${formatRupiah(produk.hpp)}`}
-                    </small>
+                    <small style="color:#9ca3af;">${isAdminBased ? '🏷️ Berdasarkan Admin' : '💰 Tanpa Admin'}</small>
+                </td>
+        `;
+        
+        if (isAdminBased) {
+            html += `
+                <td style="padding:8px;">
+                    <input type="number" class="produk-admin" data-id="${produk.id}" value="${adminValue}" placeholder="Admin" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
                 </td>
                 <td style="padding:8px;">
-                    ${isAdminBased ? `
-                        <div id="admin-display-${produk.id}">
-                            <span class="admin-value" style="font-size: 14px; font-weight: bold; color: #4f46e5;">
-                                Admin: ${formatRupiah(adminValue)}
-                            </span>
-                            <button type="button" class="edit-admin-btn" data-id="${produk.id}" style="background:none; border:none; color:#4f46e5; cursor:pointer; font-size:12px; margin-left:4px;">✏️</button>
-                        </div>
-                    ` : `
-                        <div>
-                            <input type="number" class="produk-harga" data-id="${produk.id}" value="${hargaJual}" placeholder="Harga Jual" step="100" style="width:140px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
-                            <br>
-                            <small style="color:#9ca3af;">HPP: ${formatRupiah(produk.hpp)}</small>
-                        </div>
-                    `}
+                    <span class="hpp-value">${formatRupiah(produk.hpp)}</span>
                 </td>
+                <td style="padding:8px;">
+                    <span class="fee-agent">${formatRupiah(feeAgent)}</span>
+                </td>
+                <td style="padding:8px;">
+                    <input type="number" class="fee-upline" data-id="${produk.id}" value="${feeUpline}" placeholder="Fee Upline" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
+                </td>
+            `;
+        } else {
+            html += `
+                <td style="padding:8px;">
+                    <span class="hpp-value">${formatRupiah(produk.hpp)}</span>
+                </td>
+                <td style="padding:8px;">
+                    <input type="number" class="produk-harga" data-id="${produk.id}" value="${hargaJual}" placeholder="Harga Jual" step="100" style="width:120px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
+                </td>
+            `;
+        }
+        
+        html += `
                 <td style="padding:8px;">
                     <span class="profit-value" style="font-weight: bold; color: ${profit > 0 ? '#10b981' : '#ef4444'};">
                         ${formatRupiah(profit)}
                     </span>
                 </td>
                 <td style="padding:8px;">
-                    <input type="number" class="produk-qty" data-id="${produk.id}" value="${qty}" placeholder="Qty" min="1" step="1" style="width:80px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
+                    <input type="number" class="produk-qty" data-id="${produk.id}" value="${qty}" placeholder="Qty" min="1" step="1" style="width:70px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
                 </td>
                 <td style="padding:8px; text-align:center;">
                     ${existing ? `
@@ -4308,6 +4372,25 @@ function renderAgentProducts() {
     
     html += '</tbody></table>';
     container.innerHTML = html;
+    
+    // Event listener untuk pencarian produk
+    const searchInput = document.getElementById('searchProdukAgent');
+    if (searchInput) {
+        searchInput.removeEventListener('input', renderAgentProducts);
+        searchInput.addEventListener('input', () => renderAgentProducts());
+    }
+    
+    // Event listener untuk input admin (produk beradmin)
+    document.querySelectorAll('.produk-admin').forEach(input => {
+        input.removeEventListener('change', handleAdminChange);
+        input.addEventListener('change', handleAdminChange);
+    });
+    
+    // Event listener untuk fee upline
+    document.querySelectorAll('.fee-upline').forEach(input => {
+        input.removeEventListener('change', handleFeeUplineChange);
+        input.addEventListener('change', handleFeeUplineChange);
+    });
     
     // Event listener untuk input harga (produk tanpa admin)
     document.querySelectorAll('.produk-harga').forEach(input => {
@@ -4332,97 +4415,72 @@ function renderAgentProducts() {
         btn.removeEventListener('click', handleHapusClick);
         btn.addEventListener('click', handleHapusClick);
     });
-    
-    // Event listener untuk edit admin (produk beradmin)
-    document.querySelectorAll('.edit-admin-btn').forEach(btn => {
-        btn.removeEventListener('click', handleEditAdmin);
-        btn.addEventListener('click', handleEditAdmin);
-    });
 }
 
-// Handler untuk edit admin pada produk beradmin
-function handleEditAdmin(e) {
+// Handler untuk perubahan admin
+function handleAdminChange(e) {
     const produkId = e.target.dataset.id;
-    const produk = produkData.find(p => p.id === produkId);
-    if (!produk) return;
+    const admin = parseInt(e.target.value);
+    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
+    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+    const feeUplineInput = document.querySelector(`.fee-upline[data-id="${produkId}"]`);
     
-    const existing = currentAgentProducts?.find(p => p.produk_id === produkId);
-    let currentAdmin = existing?.admin || produk.admin_default || 0;
-    
-    const newAdmin = prompt(
-        `✏️ Edit Admin untuk ${produk.nama}\n\n` +
-        `Admin saat ini: Rp ${currentAdmin.toLocaleString()}\n\n` +
-        `Masukkan nominal admin baru (contoh: 5000):`,
-        currentAdmin
-    );
-    
-    if (newAdmin !== null) {
-        const adminValue = parseInt(newAdmin);
-        if (isNaN(adminValue) || adminValue < 0) {
-            showNotifTop('⚠️ Masukkan angka yang valid!', true);
-            return;
-        }
+    if (!isNaN(admin)) {
+        // Hitung fee upline (10% dari admin)
+        const feeUpline = Math.floor(admin * 0.1);
+        if (feeUplineInput) feeUplineInput.value = feeUpline;
         
-        addOrUpdateProductWithAdmin(produkId, adminValue);
+        addOrUpdateProductWithAdmin(produkId, admin, feeUpline);
+        updateProfitForProduct(produkId);
     }
 }
 
-function addOrUpdateProductWithAdmin(produkId, admin) {
-    if (!currentAgentProducts) currentAgentProducts = [];
+// Handler untuk perubahan fee upline
+function handleFeeUplineChange(e) {
+    const produkId = e.target.dataset.id;
+    const feeUpline = parseInt(e.target.value);
+    const adminInput = document.querySelector(`.produk-admin[data-id="${produkId}"]`);
+    const admin = adminInput ? parseInt(adminInput.value) : 0;
     
+    if (!isNaN(feeUpline)) {
+        addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline);
+        updateProfitForProduct(produkId);
+    }
+}
+
+// Handler untuk perubahan qty
+function handleQtyChange(e) {
+    const produkId = e.target.dataset.id;
+    const qty = parseInt(e.target.value);
+    updateProfitForProduct(produkId);
+    
+    // Update existing product data
+    const existingIndex = currentAgentProducts?.findIndex(p => p.produk_id === produkId);
+    if (existingIndex >= 0 && currentAgentProducts) {
+        currentAgentProducts[existingIndex].qty = qty;
+    }
+}
+
+// Update profit untuk satu produk
+function updateProfitForProduct(produkId) {
     const produk = produkData.find(p => p.id === produkId);
     if (!produk) return;
     
-    const existingIndex = currentAgentProducts.findIndex(p => p.produk_id === produkId);
-    const qty = existingIndex >= 0 ? currentAgentProducts[existingIndex].qty : 1;
-    
-    const productData = {
-        produk_id: produkId,
-        nama_produk: produk.nama,
-        admin: admin,
-        qty: qty,
-        updated_at: new Date().toISOString()
-    };
-    
-    if (existingIndex >= 0) {
-        currentAgentProducts[existingIndex] = productData;
-    } else {
-        productData.added_at = new Date().toISOString();
-        currentAgentProducts.push(productData);
-    }
-    
-    // Update tampilan
-    const adminSpan = document.querySelector(`#admin-display-${produkId} .admin-value`);
-    const formatRupiah = (angka) => {
-        if (!angka) return 'Rp 0';
-        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    };
-    if (adminSpan) adminSpan.innerHTML = `Admin: ${formatRupiah(admin)}`;
-    
-    // Highlight row
-    const row = document.querySelector(`tr[data-produk-id="${produkId}"]`);
-    if (row) {
-        row.style.backgroundColor = '#d1fae5';
-        setTimeout(() => {
-            row.style.backgroundColor = '';
-        }, 500);
-    }
-    
-    showNotifTop(`✅ Admin untuk ${produk.nama} diupdate menjadi ${formatRupiah(admin)}`);
-    
-    // Update profit
-    updateProfitDisplay(produkId, admin, qty, produk);
-}
-
-function updateProfitDisplay(produkId, admin, qty, produk) {
     const isAdminBased = produk.jenis_produk === 'beradmin';
+    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
+    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
+    
     let profit = 0;
     
     if (isAdminBased) {
-        profit = admin * qty;
+        const adminInput = document.querySelector(`.produk-admin[data-id="${produkId}"]`);
+        const feeUplineInput = document.querySelector(`.fee-upline[data-id="${produkId}"]`);
+        const admin = adminInput ? parseInt(adminInput.value) : 0;
+        const feeUpline = feeUplineInput ? parseInt(feeUplineInput.value) : 0;
+        profit = (admin - feeUpline) * qty;
     } else {
-        const hargaJualInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
-        const hargaJual = hargaJualInput ? parseInt(hargaJualInput.value) : produk.harga_jual;
+        const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
+        const hargaJual = hargaInput ? parseInt(hargaInput.value) : produk.harga_jual;
         profit = (hargaJual - produk.hpp) * qty;
     }
     
@@ -4437,68 +4495,21 @@ function updateProfitDisplay(produkId, admin, qty, produk) {
     }
 }
 
-// Handler functions
-function handleHargaChange(e) {
-    const produkId = e.target.dataset.id;
-    const harga = parseInt(e.target.value);
-    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
-    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
-    
-    if (harga && harga > 0) {
-        addOrUpdateProduct(produkId, harga, qty);
-    }
-}
-
-function handleQtyChange(e) {
-    const produkId = e.target.dataset.id;
-    const qty = parseInt(e.target.value);
-    const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
-    const harga = hargaInput ? parseInt(hargaInput.value) : 0;
-    
-    if (harga > 0 && qty > 0) {
-        addOrUpdateProduct(produkId, harga, qty);
-    }
-}
-
-function handleTambahClick(e) {
-    const produkId = e.target.dataset.id;
-    const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
-    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
-    const harga = hargaInput ? parseInt(hargaInput.value) : 0;
-    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
-    
-    if (!harga || harga <= 0) {
-        showNotifTop('⚠️ Isi harga jual terlebih dahulu!', true);
-        return;
-    }
-    
-    addOrUpdateProduct(produkId, harga, qty);
-    e.target.style.display = 'none';
-    const removeBtn = e.target.parentElement.querySelector('.remove-produk-btn');
-    if (removeBtn) removeBtn.style.display = 'inline-block';
-}
-
-function handleHapusClick(e) {
-    const produkId = e.target.dataset.id;
-    removeProductFromAgent(produkId);
-    e.target.style.display = 'none';
-    const addBtn = e.target.parentElement.querySelector('.add-produk-btn');
-    if (addBtn) addBtn.style.display = 'inline-block';
-}
-
-// Fungsi untuk menambah/update produk
-function addOrUpdateProduct(produkId, harga, qty) {
+function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
     if (!currentAgentProducts) currentAgentProducts = [];
     
     const produk = produkData.find(p => p.id === produkId);
     if (!produk) return;
     
     const existingIndex = currentAgentProducts.findIndex(p => p.produk_id === produkId);
+    const qty = existingIndex >= 0 ? currentAgentProducts[existingIndex].qty : 1;
+    
     const productData = {
         produk_id: produkId,
         nama_produk: produk.nama,
-        harga: harga,
-        qty: qty || 1,
+        admin: admin,
+        fee_upline: feeUpline,
+        qty: qty,
         updated_at: new Date().toISOString()
     };
     
@@ -4507,28 +4518,6 @@ function addOrUpdateProduct(produkId, harga, qty) {
     } else {
         productData.added_at = new Date().toISOString();
         currentAgentProducts.push(productData);
-    }
-    
-    // Highlight row sebentar
-    const row = document.querySelector(`tr[data-produk-id="${produkId}"]`);
-    if (row) {
-        row.style.backgroundColor = '#d1fae5';
-        setTimeout(() => {
-            row.style.backgroundColor = '';
-        }, 500);
-    }
-}
-
-// Fungsi untuk menghapus produk dari agent
-function removeProductFromAgent(produkId) {
-    if (!currentAgentProducts) return;
-    currentAgentProducts = currentAgentProducts.filter(p => p.produk_id !== produkId);
-    
-    // Reset input harga ke nilai referensi dari master
-    const produk = produkData.find(p => p.id === produkId);
-    if (produk) {
-        const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
-        if (hargaInput) hargaInput.value = produk.harga_jual || 0;
     }
 }
 
@@ -4611,10 +4600,20 @@ function setupAgentImport() {
                 
                 let success = 0, failed = 0;
                 const duplicates = [];
+                const errors = [];
                 
                 for (const row of json) {
                     try {
+                        // WAJIB: agent_id (ID Agent)
                         let agentId = row.agent_id || row.Agent_ID || row.id || row.ID || '';
+                        
+                        if (!agentId) {
+                            failed++;
+                            errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent wajib diisi`);
+                            continue;
+                        }
+                        
+                        // OPTIONAL: field lainnya
                         let nama = row.nama || row.Nama || row.name || row.Name || '';
                         let hp = row.hp || row.HP || row.phone || row.Phone || '';
                         let apk = row.apk || row.APK || row.aplikasi || row.Aplikasi || '';
@@ -4623,61 +4622,72 @@ function setupAgentImport() {
                         let alamat = row.alamat || row.Alamat || '';
                         let email = row.email || row.Email || '';
                         let tlp = row.tlp || row.Tlp || row.Telepon || '';
-                        let upline = row.upline || row.Upline || row.atasan || row.Atasan || '';
                         let no_rekening = row.no_rekening || row.NoRekening || '';
                         let atas_nama = row.atas_nama || row.AtasNama || '';
                         let jenis_bank = row.jenis_bank || row.JenisBank || '';
                         let no_ktp = row.no_ktp || row.NoKtp || '';
                         let cid = row.cid || row.Cid || row.CID || '';
+                        let upline = row.upline || row.Upline || row.atasan || row.Atasan || '';
                         
-                        if (!nama || !hp) {
-                            failed++;
-                            continue;
+                        // Jika nama kosong, pakai ID Agent sebagai nama sementara
+                        if (!nama) nama = agentId;
+                        
+                        // Format nomor HP jika ada
+                        let cleanHp = '';
+                        if (hp) {
+                            cleanHp = hp.toString().trim();
+                            cleanHp = cleanHp.replace(/[^\d+]/g, '');
+                            if (!cleanHp.startsWith('+')) {
+                                cleanHp = cleanHp.replace(/^0+/, '');
+                                if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
+                                else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
+                                else cleanHp = '+' + cleanHp.replace(/^\+/, '');
+                            }
                         }
                         
-                        let cleanHp = hp.toString().trim();
-                        cleanHp = cleanHp.replace(/[^\d+]/g, '');
-                        if (!cleanHp.startsWith('+')) {
-                            cleanHp = cleanHp.replace(/^0+/, '');
-                            if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
-                            else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
-                            else cleanHp = '+' + cleanHp.replace(/^\+/, '');
-                        }
-                        
-                        if (!agentId) agentId = `AG-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-                        
-                        const existing = await db.collection('db_agent').where('hp', '==', cleanHp).get();
+                        // Cek duplikat berdasarkan agent_id (bukan hp)
+                        const existing = await db.collection('db_agent').where('agent_id', '==', agentId.toString().toUpperCase()).get();
                         if (!existing.empty) {
-                            duplicates.push(`Nomor ${cleanHp} sudah terdaftar`);
+                            duplicates.push(`ID Agent ${agentId} sudah terdaftar`);
                             failed++;
                             continue;
                         }
                         
+                        // Simpan data (hanya agent_id yang wajib)
                         await db.collection('db_agent').add({
-    agent_id: agentId.toString().toUpperCase(),
-    nama: nama.toString().trim(),
-    hp: cleanHp,
-    apk: apk.toString().trim() || '',
-    agent_type: agentType || '',
-    pemilik: pemilik || '',
-    alamat: alamat || '',
-    email: email || '',
-    tlp: tlp || '',
-    no_rekening: no_rekening || '',
-    atas_nama: atas_nama || '',
-    jenis_bank: jenis_bank || '',
-    no_ktp: no_ktp || '',
-    cid: cid || '',
-    user_id: currentUser.uid,
-    created_at: new Date().toISOString()
-});
+                            agent_id: agentId.toString().toUpperCase(),
+                            nama: nama.toString().trim(),
+                            hp: cleanHp || '',
+                            apk: apk.toString().trim() || '',
+                            agent_type: agentType || '',
+                            pemilik: pemilik || '',
+                            alamat: alamat || '',
+                            email: email || '',
+                            tlp: tlp || '',
+                            no_rekening: no_rekening || '',
+                            atas_nama: atas_nama || '',
+                            jenis_bank: jenis_bank || '',
+                            no_ktp: no_ktp || '',
+                            cid: cid || '',
+                            upline: upline || '',
+                            user_id: currentUser.uid,
+                            created_at: new Date().toISOString()
+                        });
                         success++;
                     } catch(err) {
                         failed++;
+                        errors.push(`Baris ke-${json.indexOf(row)+2}: ${err.message}`);
                     }
                 }
                 
-                showNotifTop(`✅ Import selesai! Berhasil: ${success}, Gagal: ${failed}${duplicates.length > 0 ? `\nDuplikat: ${duplicates.length}` : ''}`);
+                let resultMsg = `✅ Import selesai! Berhasil: ${success}, Gagal: ${failed}`;
+                if (duplicates.length > 0) {
+                    resultMsg += `\n\n⏭ Duplikat: ${duplicates.length} data dilewati`;
+                }
+                if (errors.length > 0 && errors.length <= 3) {
+                    resultMsg += `\n\nError:\n${errors.join('\n')}`;
+                }
+                alert(resultMsg);
                 loadDatabaseAgent();
                 fileInput.value = '';
             } catch(err) {
