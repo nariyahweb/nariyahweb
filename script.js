@@ -884,16 +884,40 @@ function renderProdukList() {
     const container = document.getElementById('produkList');
     if (!container) return;
     
-    if (produkData.length === 0) {
-        container.innerHTML = '<p style="text-align:center;padding:40px;">🏷️ Belum ada produk</p>';
+    // Ambil keyword pencarian
+    const searchKeyword = document.getElementById('searchProdukInput')?.value.toLowerCase() || '';
+    
+    // Filter produk
+    let filteredProduk = produkData;
+    if (searchKeyword) {
+        filteredProduk = produkData.filter(p => 
+            p.nama.toLowerCase().includes(searchKeyword) ||
+            (p.jenis_produk === 'beradmin' ? 'beradmin' : 'tanpa_admin').includes(searchKeyword)
+        );
+    }
+    
+    if (filteredProduk.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;">🏷️ Tidak ada produk ditemukan</p>';
         return;
     }
     
-    container.innerHTML = produkData.map(item => `
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    container.innerHTML = filteredProduk.map(item => {
+        const isAdminBased = item.jenis_produk === 'beradmin';
+        return `
         <div class="db-item" data-id="${item.id}">
             <div class="db-item-info">
                 <h4>📦 ${escapeHtml(item.nama)}</h4>
-                <p>💰 HPP: ${formatRupiah(item.hpp)} | 💵 Harga Jual: ${formatRupiah(item.harga_jual)}</p>
+                <p>
+                    ${isAdminBased ? 
+                        `🏷️ Beradmin | Admin Default: ${formatRupiah(item.admin_default || 0)} | ${item.cid_based ? 'CID Based ✅' : 'Admin Tetap'}` :
+                        `💰 Tanpa Admin | HPP: ${formatRupiah(item.hpp)} | Harga Jual: ${formatRupiah(item.harga_jual || 0)}`
+                    }
+                </p>
                 <small>${escapeHtml(item.keterangan || '')}</small>
             </div>
             <div class="db-item-actions">
@@ -901,8 +925,13 @@ function renderProdukList() {
                 <button class="db-item-delete" onclick="deleteProduk('${item.id}')">🗑️ Hapus</button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
+
+// Event listener untuk pencarian
+document.getElementById('searchProdukInput')?.addEventListener('input', () => {
+    renderProdukList();
+});
 
 function formatRupiah(angka) {
     if (!angka) return 'Rp 0';
@@ -915,10 +944,8 @@ async function saveProduk(nama, hpp, hargaJual, keterangan, adminDefault, jenisP
         return false;
     }
     
-    if (jenisProduk === 'beradmin' && !adminDefault) {
-        showNotifTop('⚠️ Produk beradmin harus memiliki Admin Default!', true);
-        return false;
-    }
+    // 🔥 Admin Default TIDAK wajib untuk produk beradmin
+    // Hapus validasi adminDefault
     
     const data = {
         nama: nama,
@@ -934,7 +961,7 @@ async function saveProduk(nama, hpp, hargaJual, keterangan, adminDefault, jenisP
         data.cid_based = false;
     } else {
         data.harga_jual = 0;
-        data.admin_default = parseInt(adminDefault) || 0;
+        data.admin_default = parseInt(adminDefault) || 0;  // Boleh 0
         data.cid_based = cidBased === 'yes';
     }
     
@@ -4232,11 +4259,11 @@ function renderAgentProducts() {
         return;
     }
     
-    // Ambil CID untuk produk yang admin-nya berdasarkan CID
+    // Ambil CID untuk produk beradmin berbasis CID
     const cid = document.getElementById('agentDetailCid')?.value || '';
     const tarif = tarifAdminData.find(t => t.cid === cid);
     
-    // Mapping produk yang sudah ada di agent
+    // Mapping data yang sudah ada di agent
     const existingProductMap = new Map();
     if (currentAgentProducts) {
         currentAgentProducts.forEach(p => {
@@ -4250,30 +4277,11 @@ function renderAgentProducts() {
         <thead>
             <tr>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Produk</th>
-    `;
-    
-    // Tentukan kolom berdasarkan jenis produk pertama
-    const firstProduct = filteredProduk[0];
-    const isFirstAdminBased = firstProduct?.jenis_produk === 'beradmin';
-    
-    if (isFirstAdminBased) {
-        html += `
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Admin</th>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">HPP</th>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Agent</th>
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Upline</th>
-        `;
-    } else {
-        html += `
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">HPP</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Harga Jual</th>
-        `;
-    }
-    
-    html += `
                 <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Profit</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Qty</th>
-                <th style="text-align:center; padding:8px; border-bottom:1px solid #e5e7eb;">Aksi</th>
             </tr>
         </thead>
         <tbody>
@@ -4284,11 +4292,9 @@ function renderAgentProducts() {
         const existing = existingProductMap.get(produk.id);
         
         let adminValue = 0;
-        let hargaJual = existing ? existing.harga : (produk.harga_jual || 0);
-        let qty = existing ? existing.qty : 1;
-        let profit = 0;
         let feeAgent = 0;
         let feeUpline = 0;
+        let profit = 0;
         
         if (isAdminBased) {
             // Produk beradmin - ambil admin dari berbagai sumber
@@ -4305,13 +4311,16 @@ function renderAgentProducts() {
             
             // Fee Agent = admin (potongan untuk agent)
             feeAgent = adminValue;
-            // Fee Upline = 10% dari admin (contoh, bisa disesuaikan)
-            feeUpline = Math.floor(adminValue * 0.1);
+            // Fee Upline = dari data existing atau 0
+            feeUpline = existing?.fee_upline || 0;
             // Profit = admin - feeUpline
             profit = adminValue - feeUpline;
         } else {
             // Produk tanpa admin
-            profit = (hargaJual - produk.hpp) * qty;
+            adminValue = 0;
+            feeAgent = 0;
+            feeUpline = 0;
+            profit = 0;
         }
         
         html += `
@@ -4320,12 +4329,11 @@ function renderAgentProducts() {
                     <strong>${escapeHtml(produk.nama)}</strong><br>
                     <small style="color:#9ca3af;">${isAdminBased ? '🏷️ Berdasarkan Admin' : '💰 Tanpa Admin'}</small>
                 </td>
-        `;
-        
-        if (isAdminBased) {
-            html += `
                 <td style="padding:8px;">
-                    <input type="number" class="produk-admin" data-id="${produk.id}" value="${adminValue}" placeholder="Admin" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
+                    ${isAdminBased ? 
+                        `<span class="admin-value">${formatRupiah(adminValue)}</span>` : 
+                        `<span class="admin-value">-</span>`
+                    }
                 </td>
                 <td style="padding:8px;">
                     <span class="hpp-value">${formatRupiah(produk.hpp)}</span>
@@ -4334,35 +4342,15 @@ function renderAgentProducts() {
                     <span class="fee-agent">${formatRupiah(feeAgent)}</span>
                 </td>
                 <td style="padding:8px;">
-                    <input type="number" class="fee-upline" data-id="${produk.id}" value="${feeUpline}" placeholder="Fee Upline" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
-                </td>
-            `;
-        } else {
-            html += `
-                <td style="padding:8px;">
-                    <span class="hpp-value">${formatRupiah(produk.hpp)}</span>
+                    ${isAdminBased ? 
+                        `<input type="number" class="fee-upline" data-id="${produk.id}" value="${feeUpline}" placeholder="Fee Upline" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">` : 
+                        `<span>-</span>`
+                    }
                 </td>
                 <td style="padding:8px;">
-                    <input type="number" class="produk-harga" data-id="${produk.id}" value="${hargaJual}" placeholder="Harga Jual" step="100" style="width:120px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
-                </td>
-            `;
-        }
-        
-        html += `
-                <td style="padding:8px;">
-                    <span class="profit-value" style="font-weight: bold; color: ${profit > 0 ? '#10b981' : '#ef4444'};">
+                    <span class="profit-value" style="font-weight: bold; color: ${profit >= 0 ? '#10b981' : '#ef4444'};">
                         ${formatRupiah(profit)}
                     </span>
-                </td>
-                <td style="padding:8px;">
-                    <input type="number" class="produk-qty" data-id="${produk.id}" value="${qty}" placeholder="Qty" min="1" step="1" style="width:70px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">
-                </td>
-                <td style="padding:8px; text-align:center;">
-                    ${existing ? `
-                        <button type="button" class="remove-produk-btn" data-id="${produk.id}" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer;">🗑️ Hapus</button>
-                    ` : `
-                        <button type="button" class="add-produk-btn" data-id="${produk.id}" style="background:#10b981; color:white; border:none; border-radius:6px; padding:4px 10px; cursor:pointer;">➕ Tambah</button>
-                    `}
                 </td>
             </tr>
         `;
@@ -4378,41 +4366,77 @@ function renderAgentProducts() {
         searchInput.addEventListener('input', () => renderAgentProducts());
     }
     
-    // Event listener untuk input admin (produk beradmin)
-    document.querySelectorAll('.produk-admin').forEach(input => {
-        input.removeEventListener('change', handleAdminChange);
-        input.addEventListener('change', handleAdminChange);
-    });
-    
-    // Event listener untuk fee upline
+    // Event listener untuk perubahan fee upline
     document.querySelectorAll('.fee-upline').forEach(input => {
         input.removeEventListener('change', handleFeeUplineChange);
         input.addEventListener('change', handleFeeUplineChange);
     });
+}
+
+// Handler untuk perubahan fee upline
+function handleFeeUplineChange(e) {
+    const produkId = e.target.dataset.id;
+    const feeUpline = parseInt(e.target.value) || 0;
+    const adminInput = document.querySelector(`tr[data-produk-id="${produkId}"] .admin-value`);
     
-    // Event listener untuk input harga (produk tanpa admin)
-    document.querySelectorAll('.produk-harga').forEach(input => {
-        input.removeEventListener('change', handleHargaChange);
-        input.addEventListener('change', handleHargaChange);
-    });
+    let admin = 0;
+    if (adminInput) {
+        admin = parseInt(adminInput.textContent.replace(/[^0-9]/g, '')) || 0;
+    }
     
-    // Event listener untuk qty (semua produk)
-    document.querySelectorAll('.produk-qty').forEach(input => {
-        input.removeEventListener('change', handleQtyChange);
-        input.addEventListener('change', handleQtyChange);
-    });
+    // Update data agent
+    addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline);
+    updateProfitForProduct(produkId);
+}
+
+function updateProfitForProduct(produkId) {
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) return;
     
-    // Event listener untuk tombol Tambah
-    document.querySelectorAll('.add-produk-btn').forEach(btn => {
-        btn.removeEventListener('click', handleTambahClick);
-        btn.addEventListener('click', handleTambahClick);
-    });
+    const isAdminBased = produk.jenis_produk === 'beradmin';
+    if (!isAdminBased) return;
     
-    // Event listener untuk tombol Hapus
-    document.querySelectorAll('.remove-produk-btn').forEach(btn => {
-        btn.removeEventListener('click', handleHapusClick);
-        btn.addEventListener('click', handleHapusClick);
-    });
+    const adminSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .admin-value`);
+    const feeUplineInput = document.querySelector(`.fee-upline[data-id="${produkId}"]`);
+    const profitSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .profit-value`);
+    
+    const admin = adminSpan ? parseInt(adminSpan.textContent.replace(/[^0-9]/g, '')) || 0 : 0;
+    const feeUpline = feeUplineInput ? parseInt(feeUplineInput.value) || 0 : 0;
+    const profit = admin - feeUpline;
+    
+    const formatRupiah = (angka) => {
+        if (!angka) return 'Rp 0';
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    if (profitSpan) {
+        profitSpan.innerHTML = formatRupiah(profit);
+        profitSpan.style.color = profit >= 0 ? '#10b981' : '#ef4444';
+    }
+}
+
+function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
+    if (!currentAgentProducts) currentAgentProducts = [];
+    
+    const produk = produkData.find(p => p.id === produkId);
+    if (!produk) return;
+    
+    const existingIndex = currentAgentProducts.findIndex(p => p.produk_id === produkId);
+    
+    const productData = {
+        produk_id: produkId,
+        nama_produk: produk.nama,
+        admin: admin,
+        fee_upline: feeUpline,
+        updated_at: new Date().toISOString()
+    };
+    
+    if (existingIndex >= 0) {
+        currentAgentProducts[existingIndex] = productData;
+    } else {
+        productData.added_at = new Date().toISOString();
+        currentAgentProducts.push(productData);
+    }
 }
 
 // ========== HANDLER UNTUK PRODUK DI AGENT DETAIL ==========
@@ -4475,39 +4499,6 @@ function handleHapusClick(e) {
     updateProfitForProduct(produkId);
 }
 
-// Fungsi untuk menambah/update produk (tanpa admin)
-function addOrUpdateProduct(produkId, harga, qty) {
-    if (!currentAgentProducts) currentAgentProducts = [];
-    
-    const produk = produkData.find(p => p.id === produkId);
-    if (!produk) return;
-    
-    const existingIndex = currentAgentProducts.findIndex(p => p.produk_id === produkId);
-    const productData = {
-        produk_id: produkId,
-        nama_produk: produk.nama,
-        harga: harga,
-        qty: qty || 1,
-        updated_at: new Date().toISOString()
-    };
-    
-    if (existingIndex >= 0) {
-        currentAgentProducts[existingIndex] = productData;
-    } else {
-        productData.added_at = new Date().toISOString();
-        currentAgentProducts.push(productData);
-    }
-    
-    // Highlight row
-    const row = document.querySelector(`tr[data-produk-id="${produkId}"]`);
-    if (row) {
-        row.style.backgroundColor = '#d1fae5';
-        setTimeout(() => {
-            row.style.backgroundColor = '';
-        }, 500);
-    }
-}
-
 // Fungsi untuk menghapus produk dari agent
 function removeProductFromAgent(produkId) {
     if (!currentAgentProducts) return;
@@ -4528,19 +4519,6 @@ function handleAdminChange(e) {
         if (feeUplineInput) feeUplineInput.value = feeUpline;
         
         addOrUpdateProductWithAdmin(produkId, admin, feeUpline);
-        updateProfitForProduct(produkId);
-    }
-}
-
-// Handler untuk perubahan fee upline
-function handleFeeUplineChange(e) {
-    const produkId = e.target.dataset.id;
-    const feeUpline = parseInt(e.target.value);
-    const adminInput = document.querySelector(`.produk-admin[data-id="${produkId}"]`);
-    const admin = adminInput ? parseInt(adminInput.value) : 0;
-    
-    if (!isNaN(feeUpline)) {
-        addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline);
         updateProfitForProduct(produkId);
     }
 }
@@ -4574,46 +4552,6 @@ function addOrUpdateProductWithAdmin(produkId, admin, feeUpline) {
 
 function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
     addOrUpdateProductWithAdmin(produkId, admin, feeUpline);
-}
-
-// Update profit untuk satu produk
-function updateProfitForProduct(produkId) {
-    const produk = produkData.find(p => p.id === produkId);
-    if (!produk) return;
-    
-    const isAdminBased = produk.jenis_produk === 'beradmin';
-    const qtyInput = document.querySelector(`.produk-qty[data-id="${produkId}"]`);
-    const qty = qtyInput ? parseInt(qtyInput.value) : 1;
-    
-    let profit = 0;
-    const formatRupiah = (angka) => {
-        if (!angka) return 'Rp 0';
-        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    };
-    
-    if (isAdminBased) {
-        const adminInput = document.querySelector(`.produk-admin[data-id="${produkId}"]`);
-        const feeUplineInput = document.querySelector(`.fee-upline[data-id="${produkId}"]`);
-        const admin = adminInput ? parseInt(adminInput.value) : 0;
-        const feeUpline = feeUplineInput ? parseInt(feeUplineInput.value) : 0;
-        profit = (admin - feeUpline) * qty;
-        
-        // Update fee agent display
-        const feeAgentSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .fee-agent`);
-        if (feeAgentSpan) {
-            feeAgentSpan.innerHTML = formatRupiah(admin);
-        }
-    } else {
-        const hargaInput = document.querySelector(`.produk-harga[data-id="${produkId}"]`);
-        const hargaJual = hargaInput ? parseInt(hargaInput.value) : produk.harga_jual;
-        profit = (hargaJual - produk.hpp) * qty;
-    }
-    
-    const profitSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .profit-value`);
-    if (profitSpan) {
-        profitSpan.innerHTML = formatRupiah(profit);
-        profitSpan.style.color = profit >= 0 ? '#10b981' : '#ef4444';
-    }
 }
 
 // Handler untuk tombol Tambah produk beradmin
@@ -4815,6 +4753,7 @@ function setupAgentImport() {
                         let no_ktp = row.no_ktp || row.NoKtp || '';
                         let cid = row.cid || row.Cid || row.CID || '';
                         let upline = row.upline || row.Upline || row.atasan || row.Atasan || '';
+                        let fee_upline = row.fee_upline || row.FeeUpline || row.fee || row.Fee || 0;
                         
                         // Jika nama kosong, pakai ID Agent sebagai nama sementara
                         if (!nama) nama = agentId;
@@ -4858,6 +4797,7 @@ function setupAgentImport() {
                             cid: cid || '',
                             upline: upline || '',
                             user_id: currentUser.uid,
+                            fee_upline: parseInt(fee_upline) || 0,
                             created_at: new Date().toISOString()
                         });
                         success++;
