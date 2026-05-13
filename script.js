@@ -882,6 +882,7 @@ document.getElementById('manageTarifAdminBtn')?.addEventListener('click', () => 
 });
 
 document.getElementById('closeTarifAdminModal')?.addEventListener('click', () => {
+    setupModalClickOutside('tarifAdminModal');
     closeModal('tarifAdminModal');
 });
 
@@ -4229,19 +4230,17 @@ async function openAgentDetail(id) {
     }
 }
 
+let currentTarifData = []; // variabel lokal untuk agent detail
+
 async function loadTarifAdminByCid(cid) {
     if (!cid) {
-        tarifAdminData = [];
+        currentTarifData = [];
         return;
     }
-    
-    const snapshot = await db.collection('tarif_admin')
-        .where('cid', '==', cid)
-        .get();
-    
-    tarifAdminData = [];
+    const snapshot = await db.collection('tarif_admin').where('cid', '==', cid).get();
+    currentTarifData = [];
     snapshot.forEach(doc => {
-        tarifAdminData.push({ id: doc.id, ...doc.data() });
+        currentTarifData.push({ id: doc.id, ...doc.data() });
     });
 }
 
@@ -4658,56 +4657,6 @@ function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
         currentAgentProducts.push(productData);
     }
 }
-
-// Global functions untuk produk agent
-window.openAddProductModal = function() {
-    if (!currentAgentIdForProduct) {
-        showNotifTop('⚠️ Pilih agent terlebih dahulu!', true);
-        return;
-    }
-    
-    document.getElementById('productModalTitle').innerText = '📦 Tambah Produk';
-    document.getElementById('productSelect').value = '';
-    document.getElementById('productPrice').value = '';
-    document.getElementById('productQty').value = '1';
-    document.getElementById('productModal').style.display = 'flex';
-};
-
-window.removeAgentProduct = function(index) {
-    if (!currentAgentProducts) return;
-    currentAgentProducts.splice(index, 1);
-    renderAgentProducts();
-};
-
-window.saveAgentProduct = async function() {
-    const produkId = document.getElementById('productSelect').value;
-    const price = parseInt(document.getElementById('productPrice').value);
-    const qty = parseInt(document.getElementById('productQty').value) || 1;
-    
-    if (!produkId || !price) {
-        showNotifTop('⚠️ Pilih produk dan isi harga!', true);
-        return;
-    }
-    
-    const produk = produkData.find(p => p.id === produkId);
-    if (!produk) {
-        showNotifTop('⚠️ Produk tidak ditemukan!', true);
-        return;
-    }
-    
-    if (!currentAgentProducts) currentAgentProducts = [];
-    
-    currentAgentProducts.push({
-        produk_id: produkId,
-        nama_produk: produk.nama,
-        harga: price,
-        qty: qty,
-        added_at: new Date().toISOString()
-    });
-    
-    renderAgentProducts();
-    closeModal('productModal');
-};
 
 function setupAgentImport() {
     const importBtn = document.getElementById('importAgentExcelBtn');
