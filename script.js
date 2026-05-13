@@ -673,6 +673,46 @@ if (downloadTarifExampleBtn) {
     downloadTarifExampleBtn.addEventListener('click', downloadTarifExampleBtn._handler);
 }
 
+    // ========== SELECT ALL AGENT ==========
+const selectAllAgentBtn = document.getElementById('selectAllAgent');
+if (selectAllAgentBtn) {
+    // Hapus event listener lama jika ada (dengan clone)
+    const newBtn = selectAllAgentBtn.cloneNode(true);
+    selectAllAgentBtn.parentNode.replaceChild(newBtn, selectAllAgentBtn);
+    
+    newBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        console.log('Tombol Pilih Semua diklik');
+        console.log('agentsFilteredData length:', agentsFilteredData.length);
+        
+        if (!agentsFilteredData || agentsFilteredData.length === 0) {
+            showNotifTop('⚠️ Tidak ada data yang ditampilkan', true);
+            return;
+        }
+        
+        // Cek apakah semua sudah tercentang
+        const allChecked = agentsFilteredData.every(item => selectedAgentIds.get(item.id) === true);
+        
+        // Toggle semua
+        agentsFilteredData.forEach(item => {
+            if (allChecked) {
+                selectedAgentIds.delete(item.id);
+            } else {
+                selectedAgentIds.set(item.id, true);
+            }
+        });
+        
+        // Refresh tampilan
+        renderAgentList(agentsData);
+        
+        // Update teks tombol
+        const btn = document.getElementById('selectAllAgent');
+        if (btn) {
+            btn.textContent = allChecked ? '✅ Pilih Semua' : '⬜ Batal Semua';
+        }
+    });
+}
+
     // ========== TOGGLE PASSWORD ==========
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const loginPassword = document.getElementById('loginPassword');
@@ -712,28 +752,6 @@ if (downloadTarifExampleBtn) {
     }
 
     // ========== EVENT LISTENER DATABASE AGENT ==========
-    // Event listener untuk tombol Select All Agent
-document.getElementById('selectAllAgent')?.addEventListener('click', () => {
-    console.log('Jumlah data terfilter:', agentsFilteredData.length);
-    if (!agentsFilteredData.length) {
-        showNotifTop('Tidak ada data untuk dipilih', true);
-        return;
-    }
-    // Cek apakah semua sudah tercentang
-    const allChecked = agentsFilteredData.every(item => selectedAgentIds.get(item.id));
-    // Loop dan toggle status
-    agentsFilteredData.forEach(item => {
-        if (allChecked) {
-            selectedAgentIds.delete(item.id);
-        } else {
-            selectedAgentIds.set(item.id, true);
-        }
-    });
-    // Render ulang daftar agar checkbox berubah
-    renderAgentList(agentsData);
-    // Update teks tombol
-    updateSelectAllAgentButton();
-});
 
     const deleteSelectedAgentBtn = document.getElementById('deleteSelectedAgent');
     if (deleteSelectedAgentBtn) {
@@ -4043,6 +4061,7 @@ function renderAgentList(items) {
                 return itemDate >= monthAgo;
             });
         }
+        updateSelectAllAgentButton();
     }
     
     // Filter hanya yang memiliki nomor WA
@@ -4111,7 +4130,11 @@ function renderAgentList(items) {
 function updateSelectAllAgentButton() {
     const btn = document.getElementById('selectAllAgent');
     if (!btn) return;
-    const allChecked = agentsFilteredData.length > 0 && agentsFilteredData.every(item => selectedAgentIds.get(item.id));
+    if (!agentsFilteredData || agentsFilteredData.length === 0) {
+        btn.textContent = '✅ Pilih Semua';
+        return;
+    }
+    const allChecked = agentsFilteredData.every(item => selectedAgentIds.get(item.id));
     btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
 }
 
