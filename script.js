@@ -961,6 +961,10 @@ function renderProdukList() {
     `}).join('');
 }
 
+// Di dalam renderAgentList, setelah filtered diisi
+console.log('Sample item pertama:', filtered[0]);
+console.log('Field yang tersedia:', Object.keys(filtered[0] || {}));
+
 window.deleteProduk = async function(id) {
     if (!confirm('Yakin hapus produk ini?')) return;
     try {
@@ -3992,12 +3996,16 @@ async function loadDatabaseAgent() {
             items.push({
                 id: doc.id,
                 nama: d.nama + ownerName,
-                hp: d.hp,
+                hp: d.hp || '',
                 agent_id: d.agent_id || '-',
                 agent_type: d.agent_type || '-',
                 apk: d.apk || '',
                 createdAt: d.created_at,
-                checked: selectedAgentIds.get(doc.id) || false
+                checked: selectedAgentIds.get(doc.id) || false,
+                // 🔥 TAMBAHKAN FIELD BARU DI SINI 🔥
+                upline: d.upline || '',
+                cid: d.cid || '',
+                jenis_bank: d.jenis_bank || ''
             });
         }
         agentsData = items;
@@ -4034,21 +4042,21 @@ if (searchTerm) {
     );
 }
 
-// 🔥 FILTER UPLINE (BARU)
+// 🔥 FILTER UPLINE
 if (filterUpline) {
     filtered = filtered.filter(item => 
         item.upline && item.upline.toLowerCase().includes(filterUpline)
     );
 }
 
-// 🔥 FILTER CID (BARU)
+// 🔥 FILTER CID
 if (filterCid) {
     filtered = filtered.filter(item => 
         item.cid && item.cid.toLowerCase().includes(filterCid)
     );
 }
 
-// 🔥 FILTER JENIS BANK (BARU)
+// 🔥 FILTER JENIS BANK
 if (filterBank) {
     filtered = filtered.filter(item => 
         item.jenis_bank === filterBank
@@ -4109,7 +4117,8 @@ if (filterHasApk) {
             <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${isChecked ? 'checked' : ''}>
             <div class="db-item-agent-info">
                 <h4>${escapeHtml(item.nama)}</h4>
-                <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)} | 🏷️ ${escapeHtml(item.agent_type !== '-' ? item.agent_type : '─')} | 📱 ${escapeHtml(item.apk !== '-' ? item.apk : '─')}</p>
+                <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)} | 🏷️ ${escapeHtml(item.agent_type !== '-' ? item.agent_type : '─')}</p>
+                <p>👤 Upline: ${escapeHtml(item.upline || '─')} | 🆔 CID: ${escapeHtml(item.cid || '─')} | 🏦 Bank: ${escapeHtml(item.jenis_bank || '─')}</p>
                 <small>📅 ${new Date(item.createdAt).toLocaleDateString('id-ID')}</small>
             </div>
             <div class="db-item-agent-actions">
