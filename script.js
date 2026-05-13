@@ -673,15 +673,16 @@ if (downloadTarifExampleBtn) {
     downloadTarifExampleBtn.addEventListener('click', downloadTarifExampleBtn._handler);
 }
 
-    // ========== SELECT ALL AGENT ==========
+// ========== SELECT ALL AGENT ==========
 const selectAllAgentBtn = document.getElementById('selectAllAgent');
 if (selectAllAgentBtn) {
-    // Hapus event listener lama jika ada (dengan clone)
-    const newBtn = selectAllAgentBtn.cloneNode(true);
-    selectAllAgentBtn.parentNode.replaceChild(newBtn, selectAllAgentBtn);
+    // Hapus event listener lama
+    const newSelectAllBtn = selectAllAgentBtn.cloneNode(true);
+    selectAllAgentBtn.parentNode.replaceChild(newSelectAllBtn, selectAllAgentBtn);
     
-    newBtn.addEventListener('click', function(e) {
+    newSelectAllBtn.addEventListener('click', function(e) {
         e.preventDefault();
+        e.stopPropagation();
         console.log('Tombol Pilih Semua diklik');
         console.log('agentsFilteredData length:', agentsFilteredData.length);
         
@@ -692,17 +693,22 @@ if (selectAllAgentBtn) {
         
         // Cek apakah semua sudah tercentang
         const allChecked = agentsFilteredData.every(item => selectedAgentIds.get(item.id) === true);
+        console.log('Semua sudah tercentang?', allChecked);
         
         // Toggle semua
         agentsFilteredData.forEach(item => {
             if (allChecked) {
                 selectedAgentIds.delete(item.id);
+                console.log('Hapus centang:', item.id);
             } else {
                 selectedAgentIds.set(item.id, true);
+                console.log('Centang:', item.id);
             }
         });
         
-        // Refresh tampilan
+        console.log('Total selectedAgentIds size:', selectedAgentIds.size);
+        
+        // Refresh tampilan dengan memanggil renderAgentList ulang
         renderAgentList(agentsData);
         
         // Update teks tombol
@@ -4085,9 +4091,11 @@ function renderAgentList(items) {
         return;
     }
     
-    container.innerHTML = filtered.map(item => `
+    container.innerHTML = filtered.map(item => {
+    const isChecked = selectedAgentIds.get(item.id) === true;
+    return `
         <div class="db-item-agent" data-id="${item.id}">
-            <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${item.checked ? 'checked' : ''}>
+            <input type="checkbox" class="db-item-checkbox-agent" data-id="${item.id}" ${isChecked ? 'checked' : ''}>
             <div class="db-item-agent-info">
                 <h4>${escapeHtml(item.nama)}</h4>
                 <p>📱 ${item.hp} | 🆔 ${escapeHtml(item.agent_id)} | 🏷️ ${escapeHtml(item.agent_type !== '-' ? item.agent_type : '─')} | 📱 ${escapeHtml(item.apk !== '-' ? item.apk : '─')}</p>
@@ -4099,21 +4107,27 @@ function renderAgentList(items) {
                 <button class="db-item-delete" onclick="event.stopPropagation(); deleteAgentItem('${item.id}')">🗑️ Hapus</button>
             </div>
         </div>
-    `).join('');
+    `;
+}).join('');
     
-    // Event listener untuk checkbox
-    document.querySelectorAll('#dbAgentList .db-item-checkbox-agent').forEach(cb => {
-        cb.addEventListener('change', (e) => {
-            e.stopPropagation();
-            const id = cb.dataset.id;
-            if (cb.checked) {
-                selectedAgentIds.set(id, true);
-            } else {
-                selectedAgentIds.delete(id);
-            }
-            updateSelectAllAgentButton();
-        });
+    // Event listener untuk checkbox (di dalam renderAgentList, setelah innerHTML)
+document.querySelectorAll('#dbAgentList .db-item-checkbox-agent').forEach(cb => {
+    // Hapus event listener lama
+    const newCb = cb.cloneNode(true);
+    cb.parentNode.replaceChild(newCb, cb);
+    
+    newCb.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const id = newCb.dataset.id;
+        if (newCb.checked) {
+            selectedAgentIds.set(id, true);
+        } else {
+            selectedAgentIds.delete(id);
+        }
+        console.log('Checkbox berubah:', id, newCb.checked);
+        updateSelectAllAgentButton();
     });
+});
     
     // Event listener untuk klik item
     document.querySelectorAll('#dbAgentList .db-item-agent').forEach(el => {
@@ -4134,8 +4148,9 @@ function updateSelectAllAgentButton() {
         btn.textContent = '✅ Pilih Semua';
         return;
     }
-    const allChecked = agentsFilteredData.every(item => selectedAgentIds.get(item.id));
+    const allChecked = agentsFilteredData.every(item => selectedAgentIds.get(item.id) === true);
     btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+    console.log('Update tombol:', btn.textContent);
 }
 
 async function moveAgentToFollowup(agentId) {
