@@ -4014,71 +4014,82 @@ function renderAgentList(items) {
     if (totalCountSpan) totalCountSpan.innerText = items.length;
     
     // Ambil nilai filter
-    const searchTerm = document.getElementById('searchAgentInput')?.value.toLowerCase() || '';
-    const filterType = document.getElementById('filterTypeAgent')?.value || '';
-    const filterApk = document.getElementById('filterApkAgent')?.value || '';
-    const filterDate = document.getElementById('filterDateAgent')?.value || '';
-    const filterHasHp = document.getElementById('filterHasHpAgent')?.checked || false;
-    const filterHasApk = document.getElementById('filterHasApkAgent')?.checked || false;
+const searchTerm = document.getElementById('searchAgentInput')?.value.toLowerCase() || '';
+const filterUpline = document.getElementById('filterUplineAgent')?.value.toLowerCase() || '';
+const filterCid = document.getElementById('filterCidAgent')?.value.toLowerCase() || '';
+const filterBank = document.getElementById('filterBankAgent')?.value || '';
+const filterDate = document.getElementById('filterDateAgent')?.value || '';
+const filterHasHp = document.getElementById('filterHasHpAgent')?.checked || false;
+const filterHasApk = document.getElementById('filterHasApkAgent')?.checked || false;
     
     // 🔥 HANYA SATU DEKLARASI filtered (jangan deklarasi ulang)
     let filtered = [...items];
     
     // Filter pencarian
-    if (searchTerm) {
-        filtered = filtered.filter(item => 
-            item.nama.toLowerCase().includes(searchTerm) || 
-            item.agent_id.toLowerCase().includes(searchTerm) || 
-            item.hp.includes(searchTerm)
-        );
+if (searchTerm) {
+    filtered = filtered.filter(item => 
+        item.nama.toLowerCase().includes(searchTerm) || 
+        item.agent_id.toLowerCase().includes(searchTerm) || 
+        item.hp.includes(searchTerm)
+    );
+}
+
+// 🔥 FILTER UPLINE (BARU)
+if (filterUpline) {
+    filtered = filtered.filter(item => 
+        item.upline && item.upline.toLowerCase().includes(filterUpline)
+    );
+}
+
+// 🔥 FILTER CID (BARU)
+if (filterCid) {
+    filtered = filtered.filter(item => 
+        item.cid && item.cid.toLowerCase().includes(filterCid)
+    );
+}
+
+// 🔥 FILTER JENIS BANK (BARU)
+if (filterBank) {
+    filtered = filtered.filter(item => 
+        item.jenis_bank === filterBank
+    );
+}
+
+// Filter tanggal
+if (filterDate) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (filterDate === 'today') {
+        filtered = filtered.filter(item => {
+            const itemDate = new Date(item.createdAt);
+            return itemDate >= today;
+        });
+    } else if (filterDate === 'week') {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        filtered = filtered.filter(item => {
+            const itemDate = new Date(item.createdAt);
+            return itemDate >= weekAgo;
+        });
+    } else if (filterDate === 'month') {
+        const monthAgo = new Date(today);
+        monthAgo.setDate(today.getDate() - 30);
+        filtered = filtered.filter(item => {
+            const itemDate = new Date(item.createdAt);
+            return itemDate >= monthAgo;
+        });
     }
-    
-    // Filter Type/Class
-    if (filterType) {
-        filtered = filtered.filter(item => item.agent_type === filterType);
-    }
-    
-    // Filter aplikasi
-    if (filterApk) {
-        filtered = filtered.filter(item => item.apk === filterApk);
-    }
-    
-    // Filter tanggal
-    if (filterDate) {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        if (filterDate === 'today') {
-            filtered = filtered.filter(item => {
-                const itemDate = new Date(item.createdAt);
-                return itemDate >= today;
-            });
-        } else if (filterDate === 'week') {
-            const weekAgo = new Date(today);
-            weekAgo.setDate(today.getDate() - 7);
-            filtered = filtered.filter(item => {
-                const itemDate = new Date(item.createdAt);
-                return itemDate >= weekAgo;
-            });
-        } else if (filterDate === 'month') {
-            const monthAgo = new Date(today);
-            monthAgo.setDate(today.getDate() - 30);
-            filtered = filtered.filter(item => {
-                const itemDate = new Date(item.createdAt);
-                return itemDate >= monthAgo;
-            });
-        }
-        updateSelectAllAgentButton();
-    }
-    
-    // Filter hanya yang memiliki nomor WA
-    if (filterHasHp) {
-        filtered = filtered.filter(item => item.hp && item.hp.length > 5);
-    }
-    
-    // Filter hanya yang memiliki aplikasi
-    if (filterHasApk) {
-        filtered = filtered.filter(item => item.apk && item.apk !== '-');
-    }
+}
+
+// Filter hanya yang memiliki nomor WA
+if (filterHasHp) {
+    filtered = filtered.filter(item => item.hp && item.hp.length > 5);
+}
+
+// Filter hanya yang memiliki aplikasi
+if (filterHasApk) {
+    filtered = filtered.filter(item => item.apk && item.apk !== '-');
+}
     
     agentsFilteredData = filtered;
     
@@ -4952,8 +4963,9 @@ function downloadAgentExample() {
 
 function setupAgentFilters() {
     const searchInput = document.getElementById('searchAgentInput');
-    const filterType = document.getElementById('filterTypeAgent');
-    const filterApk = document.getElementById('filterApkAgent');
+    const filterUpline = document.getElementById('filterUplineAgent');
+    const filterCid = document.getElementById('filterCidAgent');
+    const filterBank = document.getElementById('filterBankAgent');
     const filterDate = document.getElementById('filterDateAgent');
     const filterHasHp = document.getElementById('filterHasHpAgent');
     const filterHasApk = document.getElementById('filterHasApkAgent');
@@ -4964,8 +4976,9 @@ function setupAgentFilters() {
     };
     
     if (searchInput) searchInput.addEventListener('input', applyFilters);
-    if (filterType) filterType.addEventListener('change', applyFilters);
-    if (filterApk) filterApk.addEventListener('change', applyFilters);
+    if (filterUpline) filterUpline.addEventListener('input', applyFilters);
+    if (filterCid) filterCid.addEventListener('input', applyFilters);
+    if (filterBank) filterBank.addEventListener('change', applyFilters);
     if (filterDate) filterDate.addEventListener('change', applyFilters);
     if (filterHasHp) filterHasHp.addEventListener('change', applyFilters);
     if (filterHasApk) filterHasApk.addEventListener('change', applyFilters);
@@ -4973,8 +4986,9 @@ function setupAgentFilters() {
     if (resetBtn) {
         resetBtn.onclick = () => {
             if (searchInput) searchInput.value = '';
-            if (filterType) filterType.value = '';
-            if (filterApk) filterApk.value = '';
+            if (filterUpline) filterUpline.value = '';
+            if (filterCid) filterCid.value = '';
+            if (filterBank) filterBank.value = '';
             if (filterDate) filterDate.value = '';
             if (filterHasHp) filterHasHp.checked = false;
             if (filterHasApk) filterHasApk.checked = false;
