@@ -97,12 +97,7 @@
                         <div class="stat-card"><div class="stat-info"><h4>Prospek Aktif</h4><div class="value" id="activeProspek">0</div><small>Dalam Proses</small></div><div class="stat-icon bg-orange">👤</div></div>
                     </div>
 
-                    <div class="charts-row">
-                        <div class="chart-card"><h3>📊 Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
-                        <div class="chart-card"><h3>📊 Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
-                    </div>
-
-                    <!-- TARGET & KPI SECTION -->
+                                        <!-- TARGET & KPI SECTION -->
 <div class="target-kpi-section" style="margin-bottom: 24px;">
     <div class="target-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 style="color: #1f2937; font-size: 16px;">🎯 Target & KPI</h3>
@@ -153,6 +148,11 @@
         </div>
     </div>
 </div>
+
+                    <div class="charts-row">
+                        <div class="chart-card"><h3>📊 Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
+                        <div class="chart-card"><h3>📊 Prospek Agen</h3><canvas id="chartProspek"></canvas></div>
+                    </div>
 
                     <div class="dashboard-two-columns">
                         <div class="dashboard-column">
@@ -618,27 +618,27 @@
     </div>
 </div>
 
-    <!-- MODAL KELOLA TARGET (OWNER ONLY) -->
+<!-- MODAL KELOLA TARGET (OWNER ONLY) -->
 <div class="modal" id="manageTargetModal">
     <div class="modal-content" style="max-width: 500px;">
         <h3>⚙️ Kelola Target</h3>
         <div class="modal-subtitle">Atur target untuk periode berjalan</div>
         <div style="padding: 0 20px;">
             <div class="form-group">
-                <label>Target Agent (orang)</label>
+                <label>🎯 Target Agent (orang)</label>
                 <input type="number" id="targetAgentInput" class="target-input" placeholder="Jumlah target agent" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
             </div>
             <div class="form-group">
-                <label>Target CA (orang)</label>
+                <label>👥 Target CA (orang)</label>
                 <input type="number" id="targetCAInput" class="target-input" placeholder="Jumlah target CA" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
             </div>
             <div class="form-group">
-                <label>Target Koordinator (orang)</label>
+                <label>📊 Target Koordinator (orang)</label>
                 <input type="number" id="targetKoorInput" class="target-input" placeholder="Jumlah target koordinator" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
             </div>
             <div class="form-group">
-                <label>Target Transaksi per Bulan (Rp)</label>
-                <input type="number" id="targetTransaksiInput" class="target-input" placeholder="Target nominal transaksi" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+                <label>📈 Target Transaksi per Bulan (jumlah transaksi)</label>
+                <input type="number" id="targetTransaksiInput" class="target-input" placeholder="Jumlah target transaksi" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
             </div>
             <hr style="margin: 16px 0;">
             <h4 style="font-size: 14px; margin-bottom: 12px;">📅 Target per Bulan (Opsional)</h4>
