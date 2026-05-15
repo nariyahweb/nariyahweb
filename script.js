@@ -180,12 +180,12 @@ async function updateTargetDisplay() {
     document.getElementById('targetAgentValue').innerText = targetData.agent || 0;
     document.getElementById('targetCAValue').innerText = targetData.ca || 0;
     document.getElementById('targetKoorValue').innerText = targetData.koordinator || 0;
-    document.getElementById('targetTransaksiValue').innerText = formatRupiah(targetData.transaksi || 0);
+    document.getElementById('targetTransaksiValue').innerText = (targetData.transaksi || 0).toLocaleString('id-ID');
     
     document.getElementById('targetAgentReached').innerText = currentAgent;
     document.getElementById('targetCAReached').innerText = currentCA;
     document.getElementById('targetKoorReached').innerText = currentKoor;
-    document.getElementById('targetTransaksiReached').innerText = formatRupiah(currentTransaksi);
+    document.getElementById('targetTransaksiReached').innerText = currentTransaksi.toLocaleString('id-ID');
     
     // Update progress bar
     const agentPercent = targetData.agent ? Math.min((currentAgent / targetData.agent) * 100, 100) : 0;
@@ -205,9 +205,9 @@ async function updateTargetDisplay() {
     updateTrendChart();
 }
 
-// ========== HITUNG TOTAL TRANSAKSI BULAN INI ==========
+// ========== HITUNG TOTAL TRANSAKSI BULAN INI (JUMLAH) ==========
 async function hitungTotalTransaksiBulanIni() {
-    // Ambil data dari db_commitment (closing yang sudah komitmen)
+    // Ambil data dari db_closing (closing yang sudah terjadi di bulan ini)
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -218,11 +218,18 @@ async function hitungTotalTransaksiBulanIni() {
     }
     
     const snapshot = await query.get();
-    let totalTransaksi = 0;
     
-    // Asumsi: setiap closing memiliki nilai transaksi (bisa ditambahkan nanti)
-    // Untuk sementara, hitung jumlah closing * 1000000 sebagai estimasi
-    totalTransaksi = snapshot.size * 1000000;
+    // Filter berdasarkan tanggal closing di bulan ini
+    let totalTransaksi = 0;
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.closing_date) {
+            const closingDate = new Date(data.closing_date);
+            if (closingDate >= startOfMonth && closingDate <= endOfMonth) {
+                totalTransaksi++;
+            }
+        }
+    });
     
     return totalTransaksi;
 }
@@ -321,7 +328,7 @@ async function saveTargetData() {
         agent: parseInt(document.getElementById('targetAgentInput').value) || 0,
         ca: parseInt(document.getElementById('targetCAInput').value) || 0,
         koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,
-        transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,
+        transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,  // jumlah transaksi
         monthlyTargets: targetData.monthlyTargets || [],
         updated_at: new Date().toISOString(),
         updated_by: currentUser.uid
@@ -340,51 +347,61 @@ function renderMonthlyTargetList() {
     if (!container) return;
     
     if (!targetData.monthlyTargets || targetData.monthlyTargets.length === 0) {
-        container.innerHTML = '<p style="color:#9ca3af; text-align:center;">Belum ada target bulanan</p>';
+        container.innerHTML = '<p style="color:#9ca3af; text-align:center; padding:20px;">Belum ada target bulanan</p>';
         return;
     }
     
     container.innerHTML = targetData.monthlyTargets.map((item, idx) => `
-        <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
-            <input type="month" value="${item.month}" data-idx="${idx}" class="month-input" style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
-            <input type="number" value="${item.target_agent}" placeholder="Agent" data-idx="${idx}" class="month-agent" style="width:80px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
-            <input type="number" value="${item.target_ca}" placeholder="CA" data-idx="${idx}" class="month-ca" style="width:80px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
-            <input type="number" value="${item.target_koor}" placeholder="Koor" data-idx="${idx}" class="month-koor" style="width:80px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
+        <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center; flex-wrap: wrap;">
+            <input type="month" value="${item.month}" data-idx="${idx}" class="month-input" style="flex:2; min-width:120px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <input type="number" value="${item.target_agent || 0}" placeholder="Agent" data-idx="${idx}" class="month-agent" style="flex:1; min-width:70px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <input type="number" value="${item.target_ca || 0}" placeholder="CA" data-idx="${idx}" class="month-ca" style="flex:1; min-width:70px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <input type="number" value="${item.target_koor || 0}" placeholder="Koor" data-idx="${idx}" class="month-koor" style="flex:1; min-width:70px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
             <button class="delete-monthly-btn" data-idx="${idx}" style="background: #ef4444; color: white; border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer;">🗑️</button>
         </div>
     `).join('');
     
     // Event listener untuk update
     document.querySelectorAll('.month-input').forEach(input => {
-        input.addEventListener('change', (e) => {
+        input.removeEventListener('change', handleMonthChange);
+        input.addEventListener('change', handleMonthChange);
+        function handleMonthChange(e) {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets[idx].month = e.target.value;
-        });
+        }
     });
     document.querySelectorAll('.month-agent').forEach(input => {
-        input.addEventListener('change', (e) => {
+        input.removeEventListener('change', handleAgentChange);
+        input.addEventListener('change', handleAgentChange);
+        function handleAgentChange(e) {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets[idx].target_agent = parseInt(e.target.value) || 0;
-        });
+        }
     });
     document.querySelectorAll('.month-ca').forEach(input => {
-        input.addEventListener('change', (e) => {
+        input.removeEventListener('change', handleCAChange);
+        input.addEventListener('change', handleCAChange);
+        function handleCAChange(e) {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets[idx].target_ca = parseInt(e.target.value) || 0;
-        });
+        }
     });
     document.querySelectorAll('.month-koor').forEach(input => {
-        input.addEventListener('change', (e) => {
+        input.removeEventListener('change', handleKoorChange);
+        input.addEventListener('change', handleKoorChange);
+        function handleKoorChange(e) {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets[idx].target_koor = parseInt(e.target.value) || 0;
-        });
+        }
     });
     document.querySelectorAll('.delete-monthly-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.removeEventListener('click', handleDelete);
+        btn.addEventListener('click', handleDelete);
+        function handleDelete(e) {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets.splice(idx, 1);
             renderMonthlyTargetList();
-        });
+        }
     });
 }
 
@@ -912,10 +929,18 @@ if (produkMasterModal) {
     };
 }
 
-    // ========== TARGET KPI EVENT LISTENERS ==========
+// ========== TARGET KPI EVENT LISTENERS ==========
+// Pastikan elemen exist sebelum menambahkan event listener
 const manageTargetBtn = document.getElementById('manageTargetBtn');
 if (manageTargetBtn) {
-    manageTargetBtn.addEventListener('click', () => {
+    // Hapus event listener lama dengan clone
+    const newManageBtn = manageTargetBtn.cloneNode(true);
+    manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
+    
+    newManageBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Tombol Kelola Target diklik'); // Debug
         document.getElementById('targetAgentInput').value = targetData.agent || 0;
         document.getElementById('targetCAInput').value = targetData.ca || 0;
         document.getElementById('targetKoorInput').value = targetData.koordinator || 0;
