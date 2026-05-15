@@ -180,10 +180,15 @@ async function loadTargetData() {
 async function updateTargetDisplay() {
     console.log('updateTargetDisplay dipanggil, targetData:', targetData);
     
-    // Hitung pencapaian saat ini
-    const currentAgent = agentsData.filter(a => a.agent_type === 'AGENT' || a.agent_type === 'CollectingAgent (CA)').length;
+    // 🔥 PERBAIKAN: Hitung pencapaian sesuai mapping yang benar
+    // Agent: hanya yang agent_type = 'AGENT' (bukan termasuk CA)
+    const currentAgent = agentsData.filter(a => a.agent_type === 'AGENT').length;
+    
+    // Koordinator: KORWIL + SUB KORWIL
     const currentKoor = agentsData.filter(a => a.agent_type === 'Koordinator Wilayah (KORWIL)' || a.agent_type === 'SUB KORWIL').length;
-    const currentCA = agentsData.filter(a => a.agent_type === 'SUB CA' || a.agent_type === 'CollectingAgent (CA)').length;
+    
+    // CA: CollectingAgent (CA) + SUB CA
+    const currentCA = agentsData.filter(a => a.agent_type === 'CollectingAgent (CA)' || a.agent_type === 'SUB CA').length;
     
     // Ambil dari transaksi GLOBAL
     let currentTransaksi = window.totalTransaksiGlobal || 0;
