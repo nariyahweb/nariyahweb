@@ -1966,50 +1966,56 @@ auth.onAuthStateChanged(async user => {
         await loadTargetData();
         await loadTransaksiGlobal();
 // ========== INIT TARGET KPI BUTTON (HANYA UNTUK OWNER) ==========
-console.log('Initializing target button, user role:', currentUserRole);
-
-const manageTargetBtn = document.getElementById('manageTargetBtn');
-if (manageTargetBtn) {
-    console.log('Tombol manageTargetBtn ditemukan');
+setTimeout(() => {
+    console.log('Initializing target button, currentUserRole:', currentUserRole);
     
-    if (currentUserRole === 'owner') {
-        console.log('User adalah OWNER, menampilkan tombol kelola target');
-        manageTargetBtn.style.display = 'block';
+    const manageTargetBtn = document.getElementById('manageTargetBtn');
+    console.log('manageTargetBtn element:', manageTargetBtn);
+    
+    if (manageTargetBtn) {
+        console.log('Tombol manageTargetBtn ditemukan');
         
-        // Hapus event listener lama dengan clone
-        const newManageBtn = manageTargetBtn.cloneNode(true);
-        manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
-        
-        newManageBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Tombol Kelola Target diklik oleh Owner');
+        if (currentUserRole === 'owner') {
+            console.log('User adalah OWNER, menampilkan tombol kelola target');
             
-            // Isi form dengan data target saat ini
-            const agentInput = document.getElementById('targetAgentInput');
-            const koorInput = document.getElementById('targetKoorInput');
-            const caInput = document.getElementById('targetCAInput');
-            const transaksiInput = document.getElementById('targetTransaksiInput');
+            // TAMPILKAN TOMBOL DENGAN BEBERAPA CARA
+            manageTargetBtn.style.display = 'block';
+            manageTargetBtn.style.visibility = 'visible';
+            manageTargetBtn.style.opacity = '1';
+            manageTargetBtn.removeAttribute('hidden');
             
-            if (agentInput) agentInput.value = targetData.agent || 0;
-            if (koorInput) koorInput.value = targetData.koordinator || 0;
-            if (caInput) caInput.value = targetData.ca || 0;
-            if (transaksiInput) transaksiInput.value = targetData.transaksi || 0;
+            // Hapus event listener lama dengan clone
+            const newManageBtn = manageTargetBtn.cloneNode(true);
+            manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
             
-            // Render target bulanan
-            renderMonthlyTargetList();
-            
-            // Tampilkan modal
-            const modal = document.getElementById('manageTargetModal');
-            if (modal) modal.style.display = 'flex';
-        });
+            newManageBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Tombol Kelola Target diklik oleh Owner');
+                
+                const agentInput = document.getElementById('targetAgentInput');
+                const koorInput = document.getElementById('targetKoorInput');
+                const caInput = document.getElementById('targetCAInput');
+                const transaksiInput = document.getElementById('targetTransaksiInput');
+                
+                if (agentInput) agentInput.value = targetData.agent || 0;
+                if (koorInput) koorInput.value = targetData.koordinator || 0;
+                if (caInput) caInput.value = targetData.ca || 0;
+                if (transaksiInput) transaksiInput.value = targetData.transaksi || 0;
+                
+                renderMonthlyTargetList();
+                
+                const modal = document.getElementById('manageTargetModal');
+                if (modal) modal.style.display = 'flex';
+            });
+        } else {
+            console.log('User BUKAN owner, currentUserRole:', currentUserRole);
+            manageTargetBtn.style.display = 'none';
+        }
     } else {
-        console.log('User BUKAN owner, menyembunyikan tombol kelola target');
-        manageTargetBtn.style.display = 'none';
+        console.log('Tombol manageTargetBtn TIDAK DITEMUKAN di DOM');
     }
-} else {
-    console.log('Tombol manageTargetBtn TIDAK DITEMUKAN di DOM');
-}
+}, 500);
         
         loadProduk();
         loadUsersList();
