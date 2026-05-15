@@ -703,3 +703,19 @@ body.modal-open{overflow:hidden}
 #targetChartCard:hover, #trendChartCard:hover {
     transform: translateY(-4px);
 }
+
+/* Card Transaksi - Bisa Diklik */
+#targetTransaksiCard {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#targetTransaksiCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px -12px rgba(0, 0, 0, 0.2);
+    filter: brightness(1.05);
+}
+
+#targetTransaksiCard:active {
+    transform: translateY(0px);
+}
