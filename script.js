@@ -4706,10 +4706,6 @@ function addOrUpdateProductWithAdmin(produkId, admin, feeUpline) {
     }
 }
 
-function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
-    addOrUpdateProductWithAdmin(produkId, admin, feeUpline);
-}
-
 // Handler untuk tombol Tambah produk beradmin
 function handleTambahAdminClick(e) {
     const produkId = e.target.dataset.id;
