@@ -670,7 +670,7 @@ body.modal-open{overflow:hidden}
     }
 }
 
-/* Efek hover untuk produk item */
+/* Efek hover produk item */
 .produk-item {
     transition: all 0.2s ease;
     cursor: pointer;
