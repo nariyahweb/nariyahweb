@@ -929,50 +929,6 @@ if (produkMasterModal) {
     };
 }
 
-// ========== TARGET KPI EVENT LISTENERS ==========
-// Pastikan elemen exist sebelum menambahkan event listener
-const manageTargetBtn = document.getElementById('manageTargetBtn');
-if (manageTargetBtn) {
-    // Hapus event listener lama dengan clone
-    const newManageBtn = manageTargetBtn.cloneNode(true);
-    manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
-    
-    newManageBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('Tombol Kelola Target diklik'); // Debug
-        document.getElementById('targetAgentInput').value = targetData.agent || 0;
-        document.getElementById('targetCAInput').value = targetData.ca || 0;
-        document.getElementById('targetKoorInput').value = targetData.koordinator || 0;
-        document.getElementById('targetTransaksiInput').value = targetData.transaksi || 0;
-        renderMonthlyTargetList();
-        document.getElementById('manageTargetModal').style.display = 'flex';
-    });
-}
-
-document.getElementById('saveTargetBtn')?.addEventListener('click', saveTargetData);
-document.getElementById('cancelTargetBtn')?.addEventListener('click', () => closeModal('manageTargetModal'));
-
-document.getElementById('addMonthlyTargetBtn')?.addEventListener('click', () => {
-    if (!targetData.monthlyTargets) targetData.monthlyTargets = [];
-    const now = new Date();
-    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    targetData.monthlyTargets.push({
-        month: defaultMonth,
-        target_agent: 0,
-        target_ca: 0,
-        target_koor: 0
-    });
-    renderMonthlyTargetList();
-});
-
-// Tampilkan tombol kelola target hanya untuk owner
-if (currentUserRole === 'owner') {
-    document.getElementById('manageTargetBtn').style.display = 'block';
-} else {
-    document.getElementById('manageTargetBtn').style.display = 'none';
-}
-
 // Setup import/export tarif admin
 setupTarifImport();
 
@@ -1676,6 +1632,39 @@ auth.onAuthStateChanged(async user => {
         loadDBCommitment();
         loadDatabaseAgent();
         await loadTargetData();
+        // ========== INIT TARGET KPI BUTTON (HANYA UNTUK OWNER) ==========
+// Tampilkan tombol kelola target hanya untuk owner
+const manageTargetBtn = document.getElementById('manageTargetBtn');
+if (manageTargetBtn) {
+    if (currentUserRole === 'owner') {
+        manageTargetBtn.style.display = 'block';
+        
+        // Hapus event listener lama dengan clone untuk menghindari duplikasi
+        const newManageBtn = manageTargetBtn.cloneNode(true);
+        manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
+        
+        newManageBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Tombol Kelola Target diklik oleh Owner');
+            
+            // Isi form dengan data target saat ini
+            document.getElementById('targetAgentInput').value = targetData.agent || 0;
+            document.getElementById('targetCAInput').value = targetData.ca || 0;
+            document.getElementById('targetKoorInput').value = targetData.koordinator || 0;
+            document.getElementById('targetTransaksiInput').value = targetData.transaksi || 0;
+            
+            // Render target bulanan
+            renderMonthlyTargetList();
+            
+            // Tampilkan modal
+            document.getElementById('manageTargetModal').style.display = 'flex';
+        });
+    } else {
+        manageTargetBtn.style.display = 'none';
+    }
+}
+        
         loadProduk();
         loadUsersList();
     } else {
