@@ -669,3 +669,19 @@ body.modal-open{overflow:hidden}
         width: 100%;
     }
 }
+
+/* Efek hover untuk produk item */
+.produk-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.produk-item:hover {
+    background: #f9fafb;
+    transform: translateX(4px);
+    border-color: #c7d2fe;
+}
+
+.produk-item:hover h4 {
+    color: #4f46e5;
+}
