@@ -945,7 +945,7 @@ function renderProdukList() {
     container.innerHTML = filteredProduk.map(item => {
         const isAdminBased = item.jenis_produk === 'beradmin';
         return `
-        <div class="db-item" data-id="${item.id}">
+        <div class="db-item produk-item" data-id="${item.id}" style="cursor: pointer;">
             <div class="db-item-info">
                 <h4>📦 ${escapeHtml(item.nama)}</h4>
                 <p>
@@ -957,11 +957,22 @@ function renderProdukList() {
                 <small>${escapeHtml(item.keterangan || '')}</small>
             </div>
             <div class="db-item-actions">
-                <button class="db-item-edit" onclick="editProduk('${item.id}')">✏️ Edit</button>
-                <button class="db-item-delete" onclick="deleteProduk('${item.id}')">🗑️ Hapus</button>
+                <button class="db-item-delete" onclick="event.stopPropagation(); deleteProduk('${item.id}')">🗑️ Hapus</button>
             </div>
         </div>
     `}).join('');
+    
+    // Event listener untuk klik pada item produk (edit)
+    document.querySelectorAll('#produkList .produk-item').forEach(el => {
+        el.removeEventListener('click', handleProdukClick);
+        el.addEventListener('click', handleProdukClick);
+        function handleProdukClick(e) {
+            // Jangan trigger jika klik tombol hapus
+            if (e.target.classList.contains('db-item-delete')) return;
+            const id = el.dataset.id;
+            editProduk(id);
+        }
+    });
 }
 
 window.deleteProduk = async function(id) {
@@ -1038,9 +1049,13 @@ function editProduk(id) {
     
     if (produk.jenis_produk === 'tanpa_admin') {
         document.getElementById('produkMasterHargaJual').value = produk.harga_jual || '';
+        document.getElementById('tanpaAdminFields').style.display = 'block';
+        document.getElementById('beradminFields').style.display = 'none';
     } else {
         document.getElementById('produkMasterAdminDefault').value = produk.admin_default || '';
         document.getElementById('produkMasterCidBased').value = produk.cid_based ? 'yes' : 'no';
+        document.getElementById('tanpaAdminFields').style.display = 'none';
+        document.getElementById('beradminFields').style.display = 'block';
     }
     
     document.getElementById('produkMasterTitle').innerText = '✏️ Edit Produk';
