@@ -147,26 +147,33 @@ function formatPhone(input) {
 
 // ========== LOAD TARGET FROM FIRESTORE ==========
 async function loadTargetData() {
-    if (!currentUser) return;
+    if (!currentUser) {
+        console.log('loadTargetData: No user logged in');
+        return;
+    }
     
     try {
+        console.log('loadTargetData: Fetching target data...');
         const targetDoc = await db.collection('settings').doc('targetKPI').get();
         if (targetDoc.exists) {
             targetData = targetDoc.data();
+            console.log('loadTargetData: Data ditemukan', targetData);
         } else {
             // Default target jika belum ada
             targetData = {
                 agent: 10,
                 ca: 20,
                 koordinator: 5,
-                transaksi: 50000000,
+                transaksi: 100,
                 monthlyTargets: [],
                 updated_at: new Date().toISOString()
             };
+            console.log('loadTargetData: Data default digunakan', targetData);
         }
-        updateTargetDisplay();
+        await updateTargetDisplay();
     } catch(e) {
         console.error('Error load target:', e);
+        showNotifTop('❌ Gagal memuat target: ' + e.message, true);
     }
 }
 
@@ -337,21 +344,36 @@ async function updateTrendChart() {
 
 // ========== SAVE TARGET TO FIRESTORE ==========
 async function saveTargetData() {
+    console.log('saveTargetData: Menyimpan target...');
+    
+    const agentVal = parseInt(document.getElementById('targetAgentInput')?.value) || 0;
+    const koorVal = parseInt(document.getElementById('targetKoorInput')?.value) || 0;
+    const caVal = parseInt(document.getElementById('targetCAInput')?.value) || 0;
+    const transaksiVal = parseInt(document.getElementById('targetTransaksiInput')?.value) || 0;
+    
+    console.log('Nilai yang disimpan:', { agent: agentVal, koordinator: koorVal, ca: caVal, transaksi: transaksiVal });
+    
     const newTarget = {
-        agent: parseInt(document.getElementById('targetAgentInput').value) || 0,
-        koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,
-        ca: parseInt(document.getElementById('targetCAInput').value) || 0,
-        transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,
+        agent: agentVal,
+        koordinator: koorVal,
+        ca: caVal,
+        transaksi: transaksiVal,
         monthlyTargets: targetData.monthlyTargets || [],
         updated_at: new Date().toISOString(),
-        updated_by: currentUser.uid
+        updated_by: currentUser?.uid || 'unknown'
     };
     
-    await db.collection('settings').doc('targetKPI').set(newTarget, { merge: true });
-    targetData = newTarget;
-    showNotifTop('✅ Target berhasil disimpan!');
-    closeModal('manageTargetModal');
-    updateTargetDisplay();
+    try {
+        await db.collection('settings').doc('targetKPI').set(newTarget, { merge: true });
+        targetData = newTarget;
+        console.log('saveTargetData: Berhasil disimpan');
+        showNotifTop('✅ Target berhasil disimpan!');
+        closeModal('manageTargetModal');
+        await updateTargetDisplay();
+    } catch(error) {
+        console.error('Error saving target:', error);
+        showNotifTop('❌ Gagal menyimpan target: ' + error.message, true);
+    }
 }
 
 // ========== RENDER MONTHLY TARGET LIST ==========
@@ -1353,83 +1375,65 @@ document.getElementById('closeTarifAdminModal')?.addEventListener('click', () =>
 });
 
     // ========== TARGET KPI EVENT LISTENERS (DI DALAM DOMContentLoaded) ==========
-    // IMPORTANT: Tombol save, cancel, dan add monthly target
-    const saveTargetBtn = document.getElementById('saveTargetBtn');
-    if (saveTargetBtn) {
-        const newSaveBtn = saveTargetBtn.cloneNode(true);
-        saveTargetBtn.parentNode.replaceChild(newSaveBtn, saveTargetBtn);
-        
-        newSaveBtn.addEventListener('click', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Tombol Simpan Target diklik');
-            
-            try {
-                const newTarget = {
-                    agent: parseInt(document.getElementById('targetAgentInput').value) || 0,
-                    ca: parseInt(document.getElementById('targetCAInput').value) || 0,
-                    koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,
-                    transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,
-                    monthlyTargets: targetData.monthlyTargets || [],
-                    updated_at: new Date().toISOString(),
-                    updated_by: currentUser ? currentUser.uid : 'unknown'
-                };
-                
-                await db.collection('settings').doc('targetKPI').set(newTarget, { merge: true });
-                targetData = newTarget;
-                showNotifTop('✅ Target berhasil disimpan!');
-                closeModal('manageTargetModal');
-                await updateTargetDisplay();
-            } catch(error) {
-                console.error('Error saving target:', error);
-                showNotifTop('❌ Gagal menyimpan target: ' + error.message, true);
-            }
-        });
-    }
+const saveTargetBtn = document.getElementById('saveTargetBtn');
+if (saveTargetBtn) {
+    const newSaveBtn = saveTargetBtn.cloneNode(true);
+    saveTargetBtn.parentNode.replaceChild(newSaveBtn, saveTargetBtn);
+    
+    newSaveBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Tombol Simpan Target diklik');
+        await saveTargetData();
+    });
+}
 
-    const cancelTargetBtn = document.getElementById('cancelTargetBtn');
-    if (cancelTargetBtn) {
-        const newCancelBtn = cancelTargetBtn.cloneNode(true);
-        cancelTargetBtn.parentNode.replaceChild(newCancelBtn, cancelTargetBtn);
-        
-        newCancelBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Tombol Batal Target diklik');
-            closeModal('manageTargetModal');
-        });
-    }
+const cancelTargetBtn = document.getElementById('cancelTargetBtn');
+if (cancelTargetBtn) {
+    const newCancelBtn = cancelTargetBtn.cloneNode(true);
+    cancelTargetBtn.parentNode.replaceChild(newCancelBtn, cancelTargetBtn);
+    
+    newCancelBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Tombol Batal Target diklik');
+        closeModal('manageTargetModal');
+    });
+}
 
-    const addMonthlyTargetBtn = document.getElementById('addMonthlyTargetBtn');
-    if (addMonthlyTargetBtn) {
-        const newAddBtn = addMonthlyTargetBtn.cloneNode(true);
-        addMonthlyTargetBtn.parentNode.replaceChild(newAddBtn, addMonthlyTargetBtn);
+const addMonthlyTargetBtn = document.getElementById('addMonthlyTargetBtn');
+if (addMonthlyTargetBtn) {
+    const newAddBtn = addMonthlyTargetBtn.cloneNode(true);
+    addMonthlyTargetBtn.parentNode.replaceChild(newAddBtn, addMonthlyTargetBtn);
+    
+    newAddBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Tombol Tambah Target Bulanan diklik');
         
-        newAddBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Tombol Tambah Target Bulanan diklik');
-            
-            if (!targetData.monthlyTargets) targetData.monthlyTargets = [];
-            const now = new Date();
-            const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            targetData.monthlyTargets.push({
-                month: defaultMonth,
-                target_agent: 0,
-                target_ca: 0,
-                target_koor: 0
-            });
-            renderMonthlyTargetList();
+        if (!targetData.monthlyTargets) targetData.monthlyTargets = [];
+        const now = new Date();
+        const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        targetData.monthlyTargets.push({
+            month: defaultMonth,
+            target_agent: 0,
+            target_ca: 0,
+            target_koor: 0
         });
-    }
+        renderMonthlyTargetList();
+    });
+}
 
 // ========== EVENT LISTENER CARD TRANSAKSI (SEMUA CS BISA KLIK) ==========
 const targetTransaksiCard = document.getElementById('targetTransaksiCard');
 if (targetTransaksiCard) {
+    console.log('Card transaksi ditemukan, memasang event listener');
+    
     // Hapus event listener lama dengan clone
     const newCard = targetTransaksiCard.cloneNode(true);
     targetTransaksiCard.parentNode.replaceChild(newCard, targetTransaksiCard);
     
+    newCard.style.cursor = 'pointer';
     newCard.addEventListener('click', function(e) {
         // Jangan trigger jika klik di dalam progress bar atau children tertentu
         if (e.target.closest('.progress-bar')) return;
@@ -1437,6 +1441,8 @@ if (targetTransaksiCard) {
         console.log('Card Transaksi diklik, membuka modal input');
         showInputTransaksiModal();
     });
+} else {
+    console.log('Card transaksi TIDAK DITEMUKAN, pastikan id="targetTransaksiCard" ada di HTML');
 }
 
 // ========== EVENT LISTENER MODAL INPUT TRANSAKSI ==========
@@ -1959,34 +1965,50 @@ auth.onAuthStateChanged(async user => {
         loadDatabaseAgent();
         await loadTargetData();
         await loadTransaksiGlobal();
-        // ========== INIT TARGET KPI BUTTON (HANYA UNTUK OWNER) ==========
-// Tampilkan tombol kelola target hanya untuk owner
+// ========== INIT TARGET KPI BUTTON (HANYA UNTUK OWNER) ==========
+console.log('Initializing target button, user role:', currentUserRole);
+
 const manageTargetBtn = document.getElementById('manageTargetBtn');
 if (manageTargetBtn) {
+    console.log('Tombol manageTargetBtn ditemukan');
+    
     if (currentUserRole === 'owner') {
+        console.log('User adalah OWNER, menampilkan tombol kelola target');
         manageTargetBtn.style.display = 'block';
         
-        // Hapus event listener lama dengan clone untuk menghindari duplikasi
+        // Hapus event listener lama dengan clone
         const newManageBtn = manageTargetBtn.cloneNode(true);
         manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
         
         newManageBtn.addEventListener('click', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Tombol Kelola Target diklik oleh Owner');
-    
-    // Isi form dengan data target saat ini (URUTAN BARU)
-    document.getElementById('targetAgentInput').value = targetData.agent || 0;
-    document.getElementById('targetKoorInput').value = targetData.koordinator || 0;
-    document.getElementById('targetCAInput').value = targetData.ca || 0;
-    document.getElementById('targetTransaksiInput').value = targetData.transaksi || 0;
-    
-    renderMonthlyTargetList();
-    document.getElementById('manageTargetModal').style.display = 'flex';
-});
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Tombol Kelola Target diklik oleh Owner');
+            
+            // Isi form dengan data target saat ini
+            const agentInput = document.getElementById('targetAgentInput');
+            const koorInput = document.getElementById('targetKoorInput');
+            const caInput = document.getElementById('targetCAInput');
+            const transaksiInput = document.getElementById('targetTransaksiInput');
+            
+            if (agentInput) agentInput.value = targetData.agent || 0;
+            if (koorInput) koorInput.value = targetData.koordinator || 0;
+            if (caInput) caInput.value = targetData.ca || 0;
+            if (transaksiInput) transaksiInput.value = targetData.transaksi || 0;
+            
+            // Render target bulanan
+            renderMonthlyTargetList();
+            
+            // Tampilkan modal
+            const modal = document.getElementById('manageTargetModal');
+            if (modal) modal.style.display = 'flex';
+        });
     } else {
+        console.log('User BUKAN owner, menyembunyikan tombol kelola target');
         manageTargetBtn.style.display = 'none';
     }
+} else {
+    console.log('Tombol manageTargetBtn TIDAK DITEMUKAN di DOM');
 }
         
         loadProduk();
