@@ -776,16 +776,17 @@ if (selectAllAgentBtn) {
     setupAgentFilters();
 
     // Tambahkan tombol download contoh
-    const downloadExampleBtn = document.createElement('button');
-    downloadExampleBtn.textContent = '📋 Download Contoh Excel';
-    downloadExampleBtn.className = 'db-import-excel';
-    downloadExampleBtn.style.marginLeft = '10px';
-    downloadExampleBtn.style.background = '#f59e0b';
-    downloadExampleBtn.onclick = downloadAgentExample;
-    const actionsDiv = document.querySelector('#dbAgentPage .db-actions');
-    if (actionsDiv) {
-        actionsDiv.appendChild(downloadExampleBtn);
-    }
+const downloadExampleBtn = document.createElement('button');
+downloadExampleBtn.textContent = '📋 Download Contoh Excel';
+downloadExampleBtn.className = 'db-import-excel';
+downloadExampleBtn.style.marginLeft = '10px';
+downloadExampleBtn.style.background = '#f59e0b';
+downloadExampleBtn.onclick = () => downloadAgentExample(); // ← pastikan ini memanggil fungsi async
+const actionsDiv = document.querySelector('#dbAgentPage .db-actions');
+if (actionsDiv) {
+    actionsDiv.appendChild(downloadExampleBtn);
+}
+    
         // ========== SETUP CLICK OUTSIDE UNTUK SEMUA MODAL ==========
     function setupModalClickOutside(modalId) {
         const modal = document.getElementById(modalId);
@@ -4954,38 +4955,89 @@ async function exportAgentToExcel() {
     showNotifTop('✅ Export data berhasil!');
 }
 
-function downloadAgentExample() {
-    // Data dasar agent
-    const baseData = {
-        agent_id: 'AG-001',
-        nama: 'Budi Santoso',
-        agent_type: 'CollectingAgent (CA)',
-        pemilik: 'PT. Contoh',
-        alamat: 'Jl. Raya No. 123, Jakarta',
-        email: 'budi@example.com',
-        hp: '6281234567890',
-        upline: 'KORWIL Jakarta',
-        no_rekening: '1234567890',
-        atas_nama: 'Budi Santoso',
-        jenis_bank: 'BCA',
-        no_ktp: '3172010101950001',
-        cid: '5213247',
-        apk: 'GNP'
-    };
-    
-    // Tambahkan kolom untuk setiap produk
-    const produkMap = {};
-    produkData.forEach(produk => {
-        produkMap[`profit_${produk.id}`] = 0;
-        produkMap[`fee_upline_${produk.id}`] = 0;
-        produkMap[`fee_agent_${produk.id}`] = 0;
-    });
-    
-    const exampleData = [{ ...baseData, ...produkMap }];
-    const ws = XLSX.utils.json_to_sheet(exampleData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
-    XLSX.writeFile(wb, 'contoh_database_agent.xlsx');
+async function downloadAgentExample() {
+    try {
+        // Tampilkan notifikasi loading
+        showNotifTop('⏳ Memuat data produk...');
+        
+        // Ambil data produk dari Firestore
+        const produkSnapshot = await db.collection('produk').get();
+        const produkList = [];
+        produkSnapshot.forEach(doc => {
+            produkList.push({ id: doc.id, ...doc.data() });
+        });
+        
+        if (produkList.length === 0) {
+            showNotifTop('⚠️ Belum ada data produk. Silakan tambahkan produk terlebih dahulu!', true);
+            return;
+        }
+        
+        // Data dasar agent (contoh)
+        const baseData = {
+            'agent_id': 'AG-001',
+            'nama': 'Budi Santoso',
+            'agent_type': 'CollectingAgent (CA)',
+            'pemilik': 'PT. Contoh',
+            'alamat': 'Jl. Raya No. 123, Jakarta',
+            'email': 'budi@example.com',
+            'hp': '6281234567890',
+            'upline': 'KORWIL Jakarta',
+            'no_rekening': '1234567890',
+            'atas_nama': 'Budi Santoso',
+            'jenis_bank': 'BCA',
+            'no_ktp': '3172010101950001',
+            'cid': '5213247',
+            'apk': 'GNP'
+        };
+        
+        // Buat kolom untuk setiap produk (profit, fee_upline, fee_agent)
+        const produkColumns = {};
+        for (const produk of produkList) {
+            produkColumns[`profit_${produk.id}`] = 0;
+            produkColumns[`fee_upline_${produk.id}`] = 0;
+            produkColumns[`fee_agent_${produk.id}`] = 0;
+        }
+        
+        // Gabungkan data
+        const exampleData = [{ ...baseData, ...produkColumns }];
+        
+        // Buat worksheet
+        const ws = XLSX.utils.json_to_sheet(exampleData);
+        
+        // Atur lebar kolom (opsional)
+        ws['!cols'] = [
+            { wch: 12 }, // agent_id
+            { wch: 20 }, // nama
+            { wch: 25 }, // agent_type
+            { wch: 15 }, // pemilik
+            { wch: 30 }, // alamat
+            { wch: 25 }, // email
+            { wch: 15 }, // hp
+            { wch: 20 }, // upline
+            { wch: 15 }, // no_rekening
+            { wch: 20 }, // atas_nama
+            { wch: 12 }, // jenis_bank
+            { wch: 18 }, // no_ktp
+            { wch: 12 }, // cid
+            { wch: 8 }   // apk
+        ];
+        
+        // Tambahkan kolom produk ke lebar kolom
+        for (let i = 0; i < produkList.length; i++) {
+            ws['!cols'].push({ wch: 15 });
+        }
+        
+        // Buat workbook dan download
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
+        XLSX.writeFile(wb, `contoh_database_agent_${new Date().toISOString().split('T')[0]}.xlsx`);
+        
+        showNotifTop('📋 Contoh file Excel berhasil diunduh dengan daftar produk terbaru');
+        
+    } catch (error) {
+        console.error('Error download contoh:', error);
+        showNotifTop('❌ Gagal mengunduh contoh: ' + error.message, true);
+    }
 }
 
 function setupAgentFilters() {
