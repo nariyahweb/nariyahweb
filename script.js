@@ -37,6 +37,17 @@ let currentEditProdukId = null;
 let currentAgentIdForProduct = null;
 let currentAgentProducts = [];
 
+// ========== TARGET & KPI VARIABLES ==========
+let targetData = {
+    agent: 0,
+    ca: 0,
+    koordinator: 0,
+    transaksi: 0,
+    monthlyTargets: [] // [{ month: '2024-01', target: 10000000 }]
+};
+let targetChart = null;
+let trendChart = null;
+
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
     const notif = document.createElement('div');
@@ -130,6 +141,251 @@ function formatPhone(input) {
         value = '8' + value;
     }
     input.value = value;
+}
+
+// ========== LOAD TARGET FROM FIRESTORE ==========
+async function loadTargetData() {
+    if (!currentUser) return;
+    
+    try {
+        const targetDoc = await db.collection('settings').doc('targetKPI').get();
+        if (targetDoc.exists) {
+            targetData = targetDoc.data();
+        } else {
+            // Default target jika belum ada
+            targetData = {
+                agent: 10,
+                ca: 20,
+                koordinator: 5,
+                transaksi: 50000000,
+                monthlyTargets: [],
+                updated_at: new Date().toISOString()
+            };
+        }
+        updateTargetDisplay();
+    } catch(e) {
+        console.error('Error load target:', e);
+    }
+}
+
+// ========== UPDATE TARGET DISPLAY ==========
+async function updateTargetDisplay() {
+    // Hitung pencapaian saat ini
+    const currentAgent = agentsData.filter(a => a.agent_type === 'AGENT' || a.agent_type === 'CollectingAgent (CA)').length;
+    const currentCA = agentsData.filter(a => a.agent_type === 'SUB CA' || a.agent_type === 'CollectingAgent (CA)').length;
+    const currentKoor = agentsData.filter(a => a.agent_type === 'Koordinator Wilayah (KORWIL)' || a.agent_type === 'SUB KORWIL').length;
+    const currentTransaksi = await hitungTotalTransaksiBulanIni();
+    
+    // Update nilai di HTML
+    document.getElementById('targetAgentValue').innerText = targetData.agent || 0;
+    document.getElementById('targetCAValue').innerText = targetData.ca || 0;
+    document.getElementById('targetKoorValue').innerText = targetData.koordinator || 0;
+    document.getElementById('targetTransaksiValue').innerText = formatRupiah(targetData.transaksi || 0);
+    
+    document.getElementById('targetAgentReached').innerText = currentAgent;
+    document.getElementById('targetCAReached').innerText = currentCA;
+    document.getElementById('targetKoorReached').innerText = currentKoor;
+    document.getElementById('targetTransaksiReached').innerText = formatRupiah(currentTransaksi);
+    
+    // Update progress bar
+    const agentPercent = targetData.agent ? Math.min((currentAgent / targetData.agent) * 100, 100) : 0;
+    const caPercent = targetData.ca ? Math.min((currentCA / targetData.ca) * 100, 100) : 0;
+    const koorPercent = targetData.koordinator ? Math.min((currentKoor / targetData.koordinator) * 100, 100) : 0;
+    const transaksiPercent = targetData.transaksi ? Math.min((currentTransaksi / targetData.transaksi) * 100, 100) : 0;
+    
+    document.getElementById('targetAgentProgress').style.width = agentPercent + '%';
+    document.getElementById('targetCAProgress').style.width = caPercent + '%';
+    document.getElementById('targetKoorProgress').style.width = koorPercent + '%';
+    document.getElementById('targetTransaksiProgress').style.width = transaksiPercent + '%';
+    
+    // Update chart
+    updateTargetChart([agentPercent, caPercent, koorPercent, transaksiPercent]);
+    
+    // Update trend chart
+    updateTrendChart();
+}
+
+// ========== HITUNG TOTAL TRANSAKSI BULAN INI ==========
+async function hitungTotalTransaksiBulanIni() {
+    // Ambil data dari db_commitment (closing yang sudah komitmen)
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    
+    let query = db.collection('db_closing');
+    if (currentUserRole !== 'owner') {
+        query = query.where('user_id', '==', currentUser.uid);
+    }
+    
+    const snapshot = await query.get();
+    let totalTransaksi = 0;
+    
+    // Asumsi: setiap closing memiliki nilai transaksi (bisa ditambahkan nanti)
+    // Untuk sementara, hitung jumlah closing * 1000000 sebagai estimasi
+    totalTransaksi = snapshot.size * 1000000;
+    
+    return totalTransaksi;
+}
+
+// ========== UPDATE TARGET CHART ==========
+function updateTargetChart(percentages) {
+    const ctx = document.getElementById('targetChart');
+    if (!ctx) return;
+    
+    if (targetChart) targetChart.destroy();
+    
+    targetChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Agent', 'CA', 'Koordinator', 'Transaksi'],
+            datasets: [{
+                label: 'Pencapaian Target (%)',
+                data: percentages,
+                backgroundColor: ['#667eea', '#f093fb', '#4facfe', '#fa709a'],
+                borderRadius: 8,
+                barPercentage: 0.6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: { display: true, text: 'Persentase (%)' }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (context) => `${context.raw.toFixed(1)}%`
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ========== UPDATE TREND CHART ==========
+async function updateTrendChart() {
+    const ctx = document.getElementById('trendChart');
+    if (!ctx) return;
+    
+    if (trendChart) trendChart.destroy();
+    
+    // Ambil data 6 bulan terakhir
+    const months = [];
+    const agentData = [];
+    const caData = [];
+    const koorData = [];
+    
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+        const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthName = month.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+        months.push(monthName);
+        
+        // Cari target bulanan jika ada
+        const monthlyTarget = targetData.monthlyTargets?.find(m => m.month === month.toISOString().slice(0,7));
+        
+        // Hitung pencapaian untuk bulan tersebut (simulasi)
+        agentData.push(monthlyTarget?.agent || Math.floor(Math.random() * 10));
+        caData.push(monthlyTarget?.ca || Math.floor(Math.random() * 20));
+        koorData.push(monthlyTarget?.koordinator || Math.floor(Math.random() * 5));
+    }
+    
+    trendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [
+                { label: 'Agent', data: agentData, borderColor: '#667eea', backgroundColor: 'transparent', tension: 0.4 },
+                { label: 'CA', data: caData, borderColor: '#f093fb', backgroundColor: 'transparent', tension: 0.4 },
+                { label: 'Koordinator', data: koorData, borderColor: '#4facfe', backgroundColor: 'transparent', tension: 0.4 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+}
+
+// ========== SAVE TARGET TO FIRESTORE ==========
+async function saveTargetData() {
+    const newTarget = {
+        agent: parseInt(document.getElementById('targetAgentInput').value) || 0,
+        ca: parseInt(document.getElementById('targetCAInput').value) || 0,
+        koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,
+        transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,
+        monthlyTargets: targetData.monthlyTargets || [],
+        updated_at: new Date().toISOString(),
+        updated_by: currentUser.uid
+    };
+    
+    await db.collection('settings').doc('targetKPI').set(newTarget, { merge: true });
+    targetData = newTarget;
+    showNotifTop('✅ Target berhasil disimpan!');
+    closeModal('manageTargetModal');
+    updateTargetDisplay();
+}
+
+// ========== RENDER MONTHLY TARGET LIST ==========
+function renderMonthlyTargetList() {
+    const container = document.getElementById('monthlyTargetList');
+    if (!container) return;
+    
+    if (!targetData.monthlyTargets || targetData.monthlyTargets.length === 0) {
+        container.innerHTML = '<p style="color:#9ca3af; text-align:center;">Belum ada target bulanan</p>';
+        return;
+    }
+    
+    container.innerHTML = targetData.monthlyTargets.map((item, idx) => `
+        <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+            <input type="month" value="${item.month}" data-idx="${idx}" class="month-input" style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <input type="number" value="${item.target_agent}" placeholder="Agent" data-idx="${idx}" class="month-agent" style="width:80px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <input type="number" value="${item.target_ca}" placeholder="CA" data-idx="${idx}" class="month-ca" style="width:80px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <input type="number" value="${item.target_koor}" placeholder="Koor" data-idx="${idx}" class="month-koor" style="width:80px; padding: 8px; border-radius: 8px; border: 1px solid #e5e7eb;">
+            <button class="delete-monthly-btn" data-idx="${idx}" style="background: #ef4444; color: white; border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer;">🗑️</button>
+        </div>
+    `).join('');
+    
+    // Event listener untuk update
+    document.querySelectorAll('.month-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            targetData.monthlyTargets[idx].month = e.target.value;
+        });
+    });
+    document.querySelectorAll('.month-agent').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            targetData.monthlyTargets[idx].target_agent = parseInt(e.target.value) || 0;
+        });
+    });
+    document.querySelectorAll('.month-ca').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            targetData.monthlyTargets[idx].target_ca = parseInt(e.target.value) || 0;
+        });
+    });
+    document.querySelectorAll('.month-koor').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            targetData.monthlyTargets[idx].target_koor = parseInt(e.target.value) || 0;
+        });
+    });
+    document.querySelectorAll('.delete-monthly-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.target.dataset.idx);
+            targetData.monthlyTargets.splice(idx, 1);
+            renderMonthlyTargetList();
+        });
+    });
 }
 
 // ========== FUNGSI VALIDASI DUPLIKAT ==========
@@ -654,6 +910,42 @@ if (produkMasterModal) {
             closeModal('produkMasterModal');
         }
     };
+}
+
+    // ========== TARGET KPI EVENT LISTENERS ==========
+const manageTargetBtn = document.getElementById('manageTargetBtn');
+if (manageTargetBtn) {
+    manageTargetBtn.addEventListener('click', () => {
+        document.getElementById('targetAgentInput').value = targetData.agent || 0;
+        document.getElementById('targetCAInput').value = targetData.ca || 0;
+        document.getElementById('targetKoorInput').value = targetData.koordinator || 0;
+        document.getElementById('targetTransaksiInput').value = targetData.transaksi || 0;
+        renderMonthlyTargetList();
+        document.getElementById('manageTargetModal').style.display = 'flex';
+    });
+}
+
+document.getElementById('saveTargetBtn')?.addEventListener('click', saveTargetData);
+document.getElementById('cancelTargetBtn')?.addEventListener('click', () => closeModal('manageTargetModal'));
+
+document.getElementById('addMonthlyTargetBtn')?.addEventListener('click', () => {
+    if (!targetData.monthlyTargets) targetData.monthlyTargets = [];
+    const now = new Date();
+    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    targetData.monthlyTargets.push({
+        month: defaultMonth,
+        target_agent: 0,
+        target_ca: 0,
+        target_koor: 0
+    });
+    renderMonthlyTargetList();
+});
+
+// Tampilkan tombol kelola target hanya untuk owner
+if (currentUserRole === 'owner') {
+    document.getElementById('manageTargetBtn').style.display = 'block';
+} else {
+    document.getElementById('manageTargetBtn').style.display = 'none';
 }
 
 // Setup import/export tarif admin
@@ -1358,6 +1650,7 @@ auth.onAuthStateChanged(async user => {
         loadDBNomorSalah();
         loadDBCommitment();
         loadDatabaseAgent();
+        await loadTargetData();
         loadProduk();
         loadUsersList();
     } else {
