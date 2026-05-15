@@ -4960,7 +4960,7 @@ async function downloadAgentExample() {
         const produkSnapshot = await db.collection('produk').get();
         const produkList = [];
         produkSnapshot.forEach(doc => {
-            produkList.push({ id: doc.id, ...doc.data() });
+            produkList.push({ id: doc.id, nama: doc.data().nama });
         });
         
         if (produkList.length === 0) {
@@ -4986,12 +4986,17 @@ async function downloadAgentExample() {
             'apk': 'GNP'
         };
         
-        // Buat kolom untuk setiap produk (profit, fee_upline, fee_agent)
+        // 🔥 PERBAIKAN: Buat kolom dengan NAMA PRODUK (bukan ID)
         const produkColumns = {};
         for (const produk of produkList) {
-            produkColumns[`profit_${produk.id}`] = 0;
-            produkColumns[`fee_upline_${produk.id}`] = 0;
-            produkColumns[`fee_agent_${produk.id}`] = 0;
+            // Gunakan nama produk sebagai nama kolom, bersihkan karakter khusus
+            let cleanNama = produk.nama
+                .replace(/[^a-zA-Z0-9]/g, '_')  // Ganti karakter khusus dengan _
+                .replace(/_+/g, '_');            // Hapus multiple underscore
+            
+            produkColumns[`profit_${cleanNama}`] = 0;
+            produkColumns[`fee_upline_${cleanNama}`] = 0;
+            produkColumns[`fee_agent_${cleanNama}`] = 0;
         }
         
         // Gabungkan data
@@ -4999,29 +5004,6 @@ async function downloadAgentExample() {
         
         // Buat worksheet
         const ws = XLSX.utils.json_to_sheet(exampleData);
-        
-        // Atur lebar kolom (opsional)
-        ws['!cols'] = [
-            { wch: 12 }, // agent_id
-            { wch: 20 }, // nama
-            { wch: 25 }, // agent_type
-            { wch: 15 }, // pemilik
-            { wch: 30 }, // alamat
-            { wch: 25 }, // email
-            { wch: 15 }, // hp
-            { wch: 20 }, // upline
-            { wch: 15 }, // no_rekening
-            { wch: 20 }, // atas_nama
-            { wch: 12 }, // jenis_bank
-            { wch: 18 }, // no_ktp
-            { wch: 12 }, // cid
-            { wch: 8 }   // apk
-        ];
-        
-        // Tambahkan kolom produk ke lebar kolom
-        for (let i = 0; i < produkList.length; i++) {
-            ws['!cols'].push({ wch: 15 });
-        }
         
         // Buat workbook dan download
         const wb = XLSX.utils.book_new();
