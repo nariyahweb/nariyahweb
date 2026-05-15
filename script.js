@@ -1176,6 +1176,77 @@ document.getElementById('closeTarifAdminModal')?.addEventListener('click', () =>
     closeModal('tarifAdminModal');
 });
 
+    // ========== TARGET KPI EVENT LISTENERS (DI DALAM DOMContentLoaded) ==========
+    // IMPORTANT: Tombol save, cancel, dan add monthly target
+    const saveTargetBtn = document.getElementById('saveTargetBtn');
+    if (saveTargetBtn) {
+        const newSaveBtn = saveTargetBtn.cloneNode(true);
+        saveTargetBtn.parentNode.replaceChild(newSaveBtn, saveTargetBtn);
+        
+        newSaveBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Tombol Simpan Target diklik');
+            
+            try {
+                const newTarget = {
+                    agent: parseInt(document.getElementById('targetAgentInput').value) || 0,
+                    ca: parseInt(document.getElementById('targetCAInput').value) || 0,
+                    koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,
+                    transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,
+                    monthlyTargets: targetData.monthlyTargets || [],
+                    updated_at: new Date().toISOString(),
+                    updated_by: currentUser ? currentUser.uid : 'unknown'
+                };
+                
+                await db.collection('settings').doc('targetKPI').set(newTarget, { merge: true });
+                targetData = newTarget;
+                showNotifTop('✅ Target berhasil disimpan!');
+                closeModal('manageTargetModal');
+                await updateTargetDisplay();
+            } catch(error) {
+                console.error('Error saving target:', error);
+                showNotifTop('❌ Gagal menyimpan target: ' + error.message, true);
+            }
+        });
+    }
+
+    const cancelTargetBtn = document.getElementById('cancelTargetBtn');
+    if (cancelTargetBtn) {
+        const newCancelBtn = cancelTargetBtn.cloneNode(true);
+        cancelTargetBtn.parentNode.replaceChild(newCancelBtn, cancelTargetBtn);
+        
+        newCancelBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Tombol Batal Target diklik');
+            closeModal('manageTargetModal');
+        });
+    }
+
+    const addMonthlyTargetBtn = document.getElementById('addMonthlyTargetBtn');
+    if (addMonthlyTargetBtn) {
+        const newAddBtn = addMonthlyTargetBtn.cloneNode(true);
+        addMonthlyTargetBtn.parentNode.replaceChild(newAddBtn, addMonthlyTargetBtn);
+        
+        newAddBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Tombol Tambah Target Bulanan diklik');
+            
+            if (!targetData.monthlyTargets) targetData.monthlyTargets = [];
+            const now = new Date();
+            const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            targetData.monthlyTargets.push({
+                month: defaultMonth,
+                target_agent: 0,
+                target_ca: 0,
+                target_koor: 0
+            });
+            renderMonthlyTargetList();
+        });
+    }
+
 // ========== FUNGSI-FUNGSI TETAP DI LUAR (TIDAK DIPINDAHKAN) ==========
 // updateDeadlineBadge, updatePesanBadge, updateAllBadges, dll...
 // (fungsi-fungsi ini tetap di sini, karena dipanggil dari auth.onAuthStateChanged)
