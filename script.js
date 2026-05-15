@@ -49,7 +49,6 @@ let targetData = {
     monthlyTargets: [] // [{ month: '2024-01', target: 10000000 }]
 };
 let targetChart = null;
-let trendChart = null;
 
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
@@ -290,7 +289,10 @@ async function updateTrendChart() {
     const ctx = document.getElementById('trendChart');
     if (!ctx) return;
     
-    if (trendChart) trendChart.destroy();
+    // Hancurkan chart lama jika ada
+    if (trendChart) {
+        trendChart.destroy();
+    }
     
     // Ambil data 6 bulan terakhir
     const months = [];
@@ -308,9 +310,9 @@ async function updateTrendChart() {
         const monthlyTarget = targetData.monthlyTargets?.find(m => m.month === month.toISOString().slice(0,7));
         
         // Hitung pencapaian untuk bulan tersebut (simulasi)
-        agentData.push(monthlyTarget?.agent || Math.floor(Math.random() * 10));
-        caData.push(monthlyTarget?.ca || Math.floor(Math.random() * 20));
-        koorData.push(monthlyTarget?.koordinator || Math.floor(Math.random() * 5));
+        agentData.push(monthlyTarget?.target_agent || Math.floor(Math.random() * 10));
+        caData.push(monthlyTarget?.target_ca || Math.floor(Math.random() * 20));
+        koorData.push(monthlyTarget?.target_koor || Math.floor(Math.random() * 5));
     }
     
     trendChart = new Chart(ctx, {
@@ -337,8 +339,8 @@ async function updateTrendChart() {
 async function saveTargetData() {
     const newTarget = {
         agent: parseInt(document.getElementById('targetAgentInput').value) || 0,
-        koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,  // URUTAN BARU
-        ca: parseInt(document.getElementById('targetCAInput').value) || 0,            // URUTAN BARU
+        koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,
+        ca: parseInt(document.getElementById('targetCAInput').value) || 0,
         transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,
         monthlyTargets: targetData.monthlyTargets || [],
         updated_at: new Date().toISOString(),
@@ -374,45 +376,45 @@ function renderMonthlyTargetList() {
     
     // Event listener untuk update
     document.querySelectorAll('.month-input').forEach(input => {
-        input.removeEventListener('change', handleMonthChange);
-        input.addEventListener('change', handleMonthChange);
-        function handleMonthChange(e) {
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        newInput.addEventListener('change', (e) => {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets[idx].month = e.target.value;
-        }
+        });
     });
     document.querySelectorAll('.month-agent').forEach(input => {
-        input.removeEventListener('change', handleAgentChange);
-        input.addEventListener('change', handleAgentChange);
-        function handleAgentChange(e) {
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        newInput.addEventListener('change', (e) => {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets[idx].target_agent = parseInt(e.target.value) || 0;
-        }
+        });
     });
     document.querySelectorAll('.month-ca').forEach(input => {
-        input.removeEventListener('change', handleCAChange);
-        input.addEventListener('change', handleCAChange);
-        function handleCAChange(e) {
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        newInput.addEventListener('change', (e) => {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets[idx].target_ca = parseInt(e.target.value) || 0;
-        }
+        });
     });
     document.querySelectorAll('.month-koor').forEach(input => {
-        input.removeEventListener('change', handleKoorChange);
-        input.addEventListener('change', handleKoorChange);
-        function handleKoorChange(e) {
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        newInput.addEventListener('change', (e) => {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets[idx].target_koor = parseInt(e.target.value) || 0;
-        }
+        });
     });
     document.querySelectorAll('.delete-monthly-btn').forEach(btn => {
-        btn.removeEventListener('click', handleDelete);
-        btn.addEventListener('click', handleDelete);
-        function handleDelete(e) {
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', (e) => {
             const idx = parseInt(e.target.dataset.idx);
             targetData.monthlyTargets.splice(idx, 1);
             renderMonthlyTargetList();
-        }
+        });
     });
 }
 
