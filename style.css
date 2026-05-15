@@ -685,3 +685,21 @@ body.modal-open{overflow:hidden}
 .produk-item:hover h4 {
     color: #4f46e5;
 }
+
+/* Target & KPI Section */
+.target-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.target-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+}
+.progress-bar {
+    overflow: hidden;
+}
+#targetChartCard, #trendChartCard {
+    cursor: pointer;
+}
+#targetChartCard:hover, #trendChartCard:hover {
+    transform: translateY(-4px);
+}
