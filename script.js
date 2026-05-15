@@ -2126,9 +2126,13 @@ document.getElementById('infoModalClose')?.addEventListener('click', () => {
     closeModal('infoModal');
 });
 
+// ========== EVENT LISTENER PROFILE ==========
 const profileImg = document.getElementById('profileImg');
 if (profileImg) {
-    profileImg.addEventListener('click', () => {
+    const newProfileImg = profileImg.cloneNode(true);
+    profileImg.parentNode.replaceChild(newProfileImg, profileImg);
+    
+    newProfileImg.addEventListener('click', () => {
         document.getElementById('profileModal').style.display = 'flex';
         db.collection('users').doc(currentUser.uid).get().then(doc => {
             if (doc.exists) {
@@ -2139,6 +2143,8 @@ if (profileImg) {
         });
     });
 }
+
+// Fungsi showPhotoPreview (tetap sama)
 function showPhotoPreview(imageUrl) {
     const previewModal = document.getElementById('previewPhotoModal');
     const previewImage = document.getElementById('previewPhotoLarge');
@@ -2149,16 +2155,45 @@ function showPhotoPreview(imageUrl) {
         document.body.style.overflow = 'hidden';
     }
 }
+
+// 🔥 PERUBAHAN 1: Event listener untuk preview foto (klik foto untuk memperbesar)
 const previewFoto = document.getElementById('previewFoto');
-if (previewFoto) previewFoto.addEventListener('click', (e) => { e.stopPropagation(); showPhotoPreview(document.getElementById('previewFoto').src); });
-const cameraIcon = document.getElementById('cameraIcon');
-if (cameraIcon) cameraIcon.addEventListener('click', () => document.getElementById('profileFoto').click());
+if (previewFoto) {
+    const newPreviewFoto = previewFoto.cloneNode(true);
+    previewFoto.parentNode.replaceChild(newPreviewFoto, previewFoto);
+    
+    newPreviewFoto.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        showPhotoPreview(document.getElementById('previewFoto').src); 
+    });
+}
+
+// 🔥 PERUBAHAN 2: Ganti cameraIcon dengan cameraIconBtn (tombol di samping foto)
+const cameraIconBtn = document.getElementById('cameraIconBtn');
+if (cameraIconBtn) {
+    const newCameraBtn = cameraIconBtn.cloneNode(true);
+    cameraIconBtn.parentNode.replaceChild(newCameraBtn, cameraIconBtn);
+    
+    newCameraBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        document.getElementById('profileFoto').click();
+    });
+}
+
+// Event listener untuk input file foto
 const profileFotoInput = document.getElementById('profileFoto');
 if (profileFotoInput) {
-    profileFotoInput.addEventListener('change', function(e) {
+    const newProfileFotoInput = profileFotoInput.cloneNode(true);
+    profileFotoInput.parentNode.replaceChild(newProfileFotoInput, profileFotoInput);
+    
+    newProfileFotoInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file && file.type.startsWith('image/')) {
-            if (file.size > 1024*1024) { showNotif('Ukuran foto maksimal 1MB', true); return; }
+            if (file.size > 1024*1024) { 
+                showNotif('Ukuran foto maksimal 1MB', true); 
+                return; 
+            }
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('previewFoto').src = e.target.result;
@@ -2169,24 +2204,41 @@ if (profileFotoInput) {
         }
     });
 }
+
+// Event listener untuk tombol simpan profile
 const saveProfileBtn = document.getElementById('saveProfileBtn');
 if (saveProfileBtn) {
-    saveProfileBtn.addEventListener('click', async () => {
+    const newSaveProfileBtn = saveProfileBtn.cloneNode(true);
+    saveProfileBtn.parentNode.replaceChild(newSaveProfileBtn, saveProfileBtn);
+    
+    newSaveProfileBtn.addEventListener('click', async () => {
         const nama = document.getElementById('profileName').value;
         let hp = document.getElementById('profilePhone').value;
         const foto = document.getElementById('previewFoto').src;
-        if (!nama) { showNotif('Nama wajib diisi', true); return; }
-        if (hp) { hp = hp.replace(/\D/g, ''); if (hp.startsWith('0')) hp = hp.substring(1); hp = '+62' + hp; }
-        else hp = '+62';
+        if (!nama) { 
+            showNotif('Nama wajib diisi', true); 
+            return; 
+        }
+        if (hp) { 
+            hp = hp.replace(/\D/g, ''); 
+            if (hp.startsWith('0')) hp = hp.substring(1); 
+            hp = '+62' + hp; 
+        } else hp = '+62';
         try {
-            await db.collection('users').doc(currentUser.uid).set({ nama, hp, foto, email: currentUser.email, role: currentUserRole, updated_at: new Date().toISOString() }, { merge: true });
+            await db.collection('users').doc(currentUser.uid).set({ 
+                nama, hp, foto, email: currentUser.email, role: currentUserRole, 
+                updated_at: new Date().toISOString() 
+            }, { merge: true });
             document.getElementById('topUserName').innerText = nama;
             document.getElementById('profileImg').src = foto;
             closeModal('profileModal');
             showNotif('Profile tersimpan');
-        } catch(e) { showNotif('Gagal: ' + e.message, true); }
+        } catch(e) { 
+            showNotif('Gagal: ' + e.message, true); 
+        }
     });
 }
+
 function formatPhoneInput(input) {
     if (input) input.addEventListener('input', function() { let value = this.value.replace(/\D/g, ''); if (value.startsWith('0')) value = value.substring(1); this.value = value; });
 }
