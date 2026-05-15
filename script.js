@@ -171,35 +171,36 @@ async function loadTargetData() {
 // ========== UPDATE TARGET DISPLAY ==========
 async function updateTargetDisplay() {
     // Hitung pencapaian saat ini
+    // URUTAN: Agent, Koordinator, CA, Transaksi
     const currentAgent = agentsData.filter(a => a.agent_type === 'AGENT' || a.agent_type === 'CollectingAgent (CA)').length;
-    const currentCA = agentsData.filter(a => a.agent_type === 'SUB CA' || a.agent_type === 'CollectingAgent (CA)').length;
     const currentKoor = agentsData.filter(a => a.agent_type === 'Koordinator Wilayah (KORWIL)' || a.agent_type === 'SUB KORWIL').length;
+    const currentCA = agentsData.filter(a => a.agent_type === 'SUB CA' || a.agent_type === 'CollectingAgent (CA)').length;
     const currentTransaksi = await hitungTotalTransaksiBulanIni();
     
-    // Update nilai di HTML
+    // Update nilai di HTML (urutan: Agent, Koordinator, CA, Transaksi)
     document.getElementById('targetAgentValue').innerText = targetData.agent || 0;
-    document.getElementById('targetCAValue').innerText = targetData.ca || 0;
     document.getElementById('targetKoorValue').innerText = targetData.koordinator || 0;
+    document.getElementById('targetCAValue').innerText = targetData.ca || 0;
     document.getElementById('targetTransaksiValue').innerText = (targetData.transaksi || 0).toLocaleString('id-ID');
     
     document.getElementById('targetAgentReached').innerText = currentAgent;
-    document.getElementById('targetCAReached').innerText = currentCA;
     document.getElementById('targetKoorReached').innerText = currentKoor;
+    document.getElementById('targetCAReached').innerText = currentCA;
     document.getElementById('targetTransaksiReached').innerText = currentTransaksi.toLocaleString('id-ID');
     
-    // Update progress bar
+    // Update progress bar (urutan: Agent, Koordinator, CA, Transaksi)
     const agentPercent = targetData.agent ? Math.min((currentAgent / targetData.agent) * 100, 100) : 0;
-    const caPercent = targetData.ca ? Math.min((currentCA / targetData.ca) * 100, 100) : 0;
     const koorPercent = targetData.koordinator ? Math.min((currentKoor / targetData.koordinator) * 100, 100) : 0;
+    const caPercent = targetData.ca ? Math.min((currentCA / targetData.ca) * 100, 100) : 0;
     const transaksiPercent = targetData.transaksi ? Math.min((currentTransaksi / targetData.transaksi) * 100, 100) : 0;
     
     document.getElementById('targetAgentProgress').style.width = agentPercent + '%';
-    document.getElementById('targetCAProgress').style.width = caPercent + '%';
     document.getElementById('targetKoorProgress').style.width = koorPercent + '%';
+    document.getElementById('targetCAProgress').style.width = caPercent + '%';
     document.getElementById('targetTransaksiProgress').style.width = transaksiPercent + '%';
     
-    // Update chart
-    updateTargetChart([agentPercent, caPercent, koorPercent, transaksiPercent]);
+    // Update chart (urutan: Agent, Koordinator, CA, Transaksi)
+    updateTargetChart([agentPercent, koorPercent, caPercent, transaksiPercent]);
     
     // Update trend chart
     updateTrendChart();
@@ -244,11 +245,11 @@ function updateTargetChart(percentages) {
     targetChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Agent', 'CA', 'Koordinator', 'Transaksi'],
+            labels: ['Agent', 'Koordinator', 'CA', 'Transaksi'],  // URUTAN BARU
             datasets: [{
                 label: 'Pencapaian Target (%)',
                 data: percentages,
-                backgroundColor: ['#667eea', '#f093fb', '#4facfe', '#fa709a'],
+                backgroundColor: ['#667eea', '#4facfe', '#f093fb', '#fa709a'],  // Warna sesuai urutan
                 borderRadius: 8,
                 barPercentage: 0.6
             }]
@@ -326,9 +327,9 @@ async function updateTrendChart() {
 async function saveTargetData() {
     const newTarget = {
         agent: parseInt(document.getElementById('targetAgentInput').value) || 0,
-        ca: parseInt(document.getElementById('targetCAInput').value) || 0,
-        koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,
-        transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,  // jumlah transaksi
+        koordinator: parseInt(document.getElementById('targetKoorInput').value) || 0,  // URUTAN BARU
+        ca: parseInt(document.getElementById('targetCAInput').value) || 0,            // URUTAN BARU
+        transaksi: parseInt(document.getElementById('targetTransaksiInput').value) || 0,
         monthlyTargets: targetData.monthlyTargets || [],
         updated_at: new Date().toISOString(),
         updated_by: currentUser.uid
@@ -1715,22 +1716,19 @@ if (manageTargetBtn) {
         manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
         
         newManageBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Tombol Kelola Target diklik oleh Owner');
-            
-            // Isi form dengan data target saat ini
-            document.getElementById('targetAgentInput').value = targetData.agent || 0;
-            document.getElementById('targetCAInput').value = targetData.ca || 0;
-            document.getElementById('targetKoorInput').value = targetData.koordinator || 0;
-            document.getElementById('targetTransaksiInput').value = targetData.transaksi || 0;
-            
-            // Render target bulanan
-            renderMonthlyTargetList();
-            
-            // Tampilkan modal
-            document.getElementById('manageTargetModal').style.display = 'flex';
-        });
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Tombol Kelola Target diklik oleh Owner');
+    
+    // Isi form dengan data target saat ini (URUTAN BARU)
+    document.getElementById('targetAgentInput').value = targetData.agent || 0;
+    document.getElementById('targetKoorInput').value = targetData.koordinator || 0;
+    document.getElementById('targetCAInput').value = targetData.ca || 0;
+    document.getElementById('targetTransaksiInput').value = targetData.transaksi || 0;
+    
+    renderMonthlyTargetList();
+    document.getElementById('manageTargetModal').style.display = 'flex';
+});
     } else {
         manageTargetBtn.style.display = 'none';
     }
