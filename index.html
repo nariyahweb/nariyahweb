@@ -134,15 +134,15 @@
         </div>
     </div>
 
-    <!-- 4. Target Transaksi -->
-    <div class="target-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 16px; padding: 16px; color: white;">
-        <div style="font-size: 12px; opacity: 0.9;">📊 Target Transaksi/Bulan</div>
-        <div style="font-size: 28px; font-weight: 700;" id="targetTransaksiValue">0</div>
-        <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetTransaksiReached">0</span></div>
-        <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-            <div id="targetTransaksiProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-        </div>
+    <!-- 4. Target Transaksi - TAMBAHKAN ID -->
+<div class="target-card" id="targetTransaksiCard" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 16px; padding: 16px; color: white; cursor: pointer;">
+    <div style="font-size: 12px; opacity: 0.9;">📊 Target Transaksi/Bulan</div>
+    <div style="font-size: 28px; font-weight: 700;" id="targetTransaksiValue">0</div>
+    <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetTransaksiReached">0</span></div>
+    <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
+        <div id="targetTransaksiProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
     </div>
+</div>
 </div>
     <div class="chart-target-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
         <div class="chart-card" id="targetChartCard" style="padding: 16px;">
