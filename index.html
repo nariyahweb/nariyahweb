@@ -104,39 +104,46 @@
         <button id="manageTargetBtn" class="add-btn" style="background: #8b5cf6; display: none;">⚙️ Kelola Target</button>
     </div>
     <div class="target-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
-        <div class="target-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 16px; color: white;">
-            <div style="font-size: 12px; opacity: 0.9;">🎯 Target Agent</div>
-            <div style="font-size: 28px; font-weight: 700;" id="targetAgentValue">0</div>
-            <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetAgentReached">0</span></div>
-            <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-                <div id="targetAgentProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-            </div>
-        </div>
-        <div class="target-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 16px; padding: 16px; color: white;">
-            <div style="font-size: 12px; opacity: 0.9;">👥 Target CA</div>
-            <div style="font-size: 28px; font-weight: 700;" id="targetCAValue">0</div>
-            <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetCAReached">0</span></div>
-            <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-                <div id="targetCAProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-            </div>
-        </div>
-        <div class="target-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 16px; padding: 16px; color: white;">
-            <div style="font-size: 12px; opacity: 0.9;">📊 Target Koordinator</div>
-            <div style="font-size: 28px; font-weight: 700;" id="targetKoorValue">0</div>
-            <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetKoorReached">0</span></div>
-            <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-                <div id="targetKoorProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-            </div>
-        </div>
-        <div class="target-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 16px; padding: 16px; color: white;">
-            <div style="font-size: 12px; opacity: 0.9;">💰 Target Transaksi/Bulan</div>
-            <div style="font-size: 28px; font-weight: 700;" id="targetTransaksiValue">0</div>
-            <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetTransaksiReached">0</span></div>
-            <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-                <div id="targetTransaksiProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-            </div>
+    <!-- 1. Target Agent -->
+    <div class="target-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 16px; color: white;">
+        <div style="font-size: 12px; opacity: 0.9;">👤 Target Agent</div>
+        <div style="font-size: 28px; font-weight: 700;" id="targetAgentValue">0</div>
+        <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetAgentReached">0</span></div>
+        <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
+            <div id="targetAgentProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
         </div>
     </div>
+
+    <!-- 2. Target Koordinator -->
+    <div class="target-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 16px; padding: 16px; color: white;">
+        <div style="font-size: 12px; opacity: 0.9;">👥 Target Koordinator</div>
+        <div style="font-size: 28px; font-weight: 700;" id="targetKoorValue">0</div>
+        <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetKoorReached">0</span></div>
+        <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
+            <div id="targetKoorProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
+        </div>
+    </div>
+
+    <!-- 3. Target CA -->
+    <div class="target-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 16px; padding: 16px; color: white;">
+        <div style="font-size: 12px; opacity: 0.9;">🏦 Target CA</div>
+        <div style="font-size: 28px; font-weight: 700;" id="targetCAValue">0</div>
+        <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetCAReached">0</span></div>
+        <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
+            <div id="targetCAProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
+        </div>
+    </div>
+
+    <!-- 4. Target Transaksi -->
+    <div class="target-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 16px; padding: 16px; color: white;">
+        <div style="font-size: 12px; opacity: 0.9;">📊 Target Transaksi/Bulan</div>
+        <div style="font-size: 28px; font-weight: 700;" id="targetTransaksiValue">0</div>
+        <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetTransaksiReached">0</span></div>
+        <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
+            <div id="targetTransaksiProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
+        </div>
+    </div>
+</div>
     <div class="chart-target-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
         <div class="chart-card" id="targetChartCard" style="padding: 16px;">
             <h3>📈 Pencapaian Target</h3>
@@ -625,21 +632,21 @@
         <div class="modal-subtitle">Atur target untuk periode berjalan</div>
         <div style="padding: 0 20px;">
             <div class="form-group">
-                <label>🎯 Target Agent (orang)</label>
-                <input type="number" id="targetAgentInput" class="target-input" placeholder="Jumlah target agent" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
-            <div class="form-group">
-                <label>👥 Target CA (orang)</label>
-                <input type="number" id="targetCAInput" class="target-input" placeholder="Jumlah target CA" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
-            <div class="form-group">
-                <label>📊 Target Koordinator (orang)</label>
-                <input type="number" id="targetKoorInput" class="target-input" placeholder="Jumlah target koordinator" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
-            <div class="form-group">
-                <label>📈 Target Transaksi per Bulan (jumlah transaksi)</label>
-                <input type="number" id="targetTransaksiInput" class="target-input" placeholder="Jumlah target transaksi" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
+    <label>👤 Target Agent (orang)</label>
+    <input type="number" id="targetAgentInput" class="target-input" placeholder="Jumlah target agent" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+</div>
+<div class="form-group">
+    <label>👥 Target Koordinator (orang)</label>
+    <input type="number" id="targetKoorInput" class="target-input" placeholder="Jumlah target koordinator" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+</div>
+<div class="form-group">
+    <label>🏦 Target CA (orang)</label>
+    <input type="number" id="targetCAInput" class="target-input" placeholder="Jumlah target CA" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+</div>
+<div class="form-group">
+    <label>📊 Target Transaksi per Bulan (jumlah)</label>
+    <input type="number" id="targetTransaksiInput" class="target-input" placeholder="Jumlah target transaksi" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+</div>
             <hr style="margin: 16px 0;">
             <h4 style="font-size: 14px; margin-bottom: 12px;">📅 Target per Bulan (Opsional)</h4>
             <div id="monthlyTargetList" style="max-height: 250px; overflow-y: auto; margin-bottom: 16px;"></div>
