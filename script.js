@@ -2146,6 +2146,7 @@ function showPhotoPreview(imageUrl) {
         previewImage.src = imageUrl;
         previewModal.style.display = 'flex';
         document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
     }
 }
 const previewFoto = document.getElementById('previewFoto');
