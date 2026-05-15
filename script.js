@@ -36,6 +36,9 @@ let produkData = [];
 let currentEditProdukId = null;
 let currentAgentIdForProduct = null;
 let currentAgentProducts = [];
+let trendChart = null;
+let currentTransaksiId = null;  // Untuk edit transaksi
+let transaksiList = [];          // Menyimpan daftar transaksi
 
 // ========== TARGET & KPI VARIABLES ==========
 let targetData = {
@@ -171,13 +174,20 @@ async function loadTargetData() {
 // ========== UPDATE TARGET DISPLAY ==========
 async function updateTargetDisplay() {
     // Hitung pencapaian saat ini
-    // URUTAN: Agent, Koordinator, CA, Transaksi
     const currentAgent = agentsData.filter(a => a.agent_type === 'AGENT' || a.agent_type === 'CollectingAgent (CA)').length;
     const currentKoor = agentsData.filter(a => a.agent_type === 'Koordinator Wilayah (KORWIL)' || a.agent_type === 'SUB KORWIL').length;
     const currentCA = agentsData.filter(a => a.agent_type === 'SUB CA' || a.agent_type === 'CollectingAgent (CA)').length;
-    const currentTransaksi = await hitungTotalTransaksiBulanIni();
     
-    // Update nilai di HTML (urutan: Agent, Koordinator, CA, Transaksi)
+    // 🔥 PERUBAHAN: Ambil dari transaksi GLOBAL
+    let currentTransaksi = window.totalTransaksiGlobal || 0;
+    
+    // Jika belum ada data transaksi, load dulu
+    if (transaksiList.length === 0 && currentUser) {
+        await loadTransaksiGlobal();
+        currentTransaksi = window.totalTransaksiGlobal || 0;
+    }
+    
+    // Update nilai di HTML
     document.getElementById('targetAgentValue').innerText = targetData.agent || 0;
     document.getElementById('targetKoorValue').innerText = targetData.koordinator || 0;
     document.getElementById('targetCAValue').innerText = targetData.ca || 0;
@@ -188,7 +198,7 @@ async function updateTargetDisplay() {
     document.getElementById('targetCAReached').innerText = currentCA;
     document.getElementById('targetTransaksiReached').innerText = currentTransaksi.toLocaleString('id-ID');
     
-    // Update progress bar (urutan: Agent, Koordinator, CA, Transaksi)
+    // Update progress bar
     const agentPercent = targetData.agent ? Math.min((currentAgent / targetData.agent) * 100, 100) : 0;
     const koorPercent = targetData.koordinator ? Math.min((currentKoor / targetData.koordinator) * 100, 100) : 0;
     const caPercent = targetData.ca ? Math.min((currentCA / targetData.ca) * 100, 100) : 0;
@@ -199,7 +209,7 @@ async function updateTargetDisplay() {
     document.getElementById('targetCAProgress').style.width = caPercent + '%';
     document.getElementById('targetTransaksiProgress').style.width = transaksiPercent + '%';
     
-    // Update chart (urutan: Agent, Koordinator, CA, Transaksi)
+    // Update chart
     updateTargetChart([agentPercent, koorPercent, caPercent, transaksiPercent]);
     
     // Update trend chart
@@ -404,6 +414,169 @@ function renderMonthlyTargetList() {
             renderMonthlyTargetList();
         }
     });
+}
+
+// ========== FUNGSI LOAD TRANSAKSI (GLOBAL - SEMUA CS BISA LIHAT) ==========
+async function loadTransaksiGlobal() {
+    if (!currentUser) return;
+    
+    try {
+        // Ambil semua transaksi dari koleksi GLOBAL 'transaksi_global'
+        const snapshot = await db.collection('transaksi_global')
+            .orderBy('tanggal', 'desc')
+            .get();
+        
+        transaksiList = [];
+        let totalTransaksiBulanIni = 0;
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            transaksiList.push({ id: doc.id, ...data });
+            
+            // Hitung total transaksi bulan ini
+            const tglTransaksi = new Date(data.tanggal);
+            if (tglTransaksi >= startOfMonth && tglTransaksi <= endOfMonth) {
+                totalTransaksiBulanIni += data.nominal || 0;
+            }
+        });
+        
+        // Simpan total transaksi bulan ini ke variabel global
+        window.totalTransaksiGlobal = totalTransaksiBulanIni;
+        
+        // Update tampilan target
+        if (typeof updateTargetDisplay === 'function') {
+            await updateTargetDisplay();
+        }
+        
+        return totalTransaksiBulanIni;
+    } catch(e) {
+        console.error('Error load transaksi global:', e);
+        return 0;
+    }
+}
+
+// ========== SIMPAN TRANSAKSI (GLOBAL) ==========
+async function saveTransaksiGlobal(nominal, keterangan, tanggal, transaksiId = null) {
+    if (!currentUser) {
+        showNotifTop('⚠️ Anda harus login terlebih dahulu!', true);
+        return false;
+    }
+    
+    if (!nominal || nominal <= 0) {
+        showNotifTop('⚠️ Jumlah transaksi harus diisi dan lebih dari 0!', true);
+        return false;
+    }
+    
+    try {
+        // Gunakan koleksi GLOBAL 'transaksi_global'
+        const transaksiRef = db.collection('transaksi_global');
+        const data = {
+            nominal: parseInt(nominal),
+            keterangan: keterangan || '',
+            tanggal: tanggal || new Date().toISOString().split('T')[0],
+            created_at: new Date().toISOString(),
+            created_by: currentUser.uid,
+            created_by_name: currentUserName,
+            updated_at: new Date().toISOString()
+        };
+        
+        if (transaksiId) {
+            await transaksiRef.doc(transaksiId).update(data);
+            showNotifTop('✅ Transaksi berhasil diupdate!');
+        } else {
+            await transaksiRef.add(data);
+            showNotifTop('✅ Transaksi berhasil ditambahkan!');
+        }
+        
+        await loadTransaksiGlobal();
+        return true;
+    } catch(e) {
+        console.error('Error save transaksi global:', e);
+        showNotifTop('❌ Gagal menyimpan transaksi: ' + e.message, true);
+        return false;
+    }
+}
+
+// ========== HAPUS TRANSAKSI (GLOBAL) ==========
+async function deleteTransaksiGlobal(transaksiId) {
+    if (!confirm('Yakin ingin menghapus transaksi ini?')) return;
+    
+    try {
+        await db.collection('transaksi_global').doc(transaksiId).delete();
+        showNotifTop('🗑️ Transaksi dihapus');
+        await loadTransaksiGlobal();
+        renderTransaksiListGlobal();
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
+    }
+}
+
+// ========== RENDER DAFTAR TRANSAKSI (GLOBAL) ==========
+function renderTransaksiListGlobal() {
+    const container = document.getElementById('transaksiList');
+    if (!container) return;
+    
+    if (transaksiList.length === 0) {
+        container.innerHTML = '<p style="text-align:center; padding:40px; color:#9ca3af;">📭 Belum ada catatan transaksi</p>';
+        return;
+    }
+    
+    const formatRupiah = (angka) => {
+        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    container.innerHTML = transaksiList.map(item => `
+        <div class="db-item" style="border-left: 3px solid #4f46e5; margin-bottom: 8px;">
+            <div class="db-item-info">
+                <h4>💰 ${formatRupiah(item.nominal)}</h4>
+                <p>${escapeHtml(item.keterangan || '-')}</p>
+                <small>📅 ${new Date(item.tanggal).toLocaleDateString('id-ID')} | 👤 oleh: ${escapeHtml(item.created_by_name || 'CS')}</small>
+            </div>
+            <div class="db-item-actions">
+                ${currentUserRole === 'owner' || item.created_by === currentUser.uid ? 
+                    `<button class="db-item-edit" onclick="editTransaksiGlobal('${item.id}')">✏️ Edit</button>
+                     <button class="db-item-delete" onclick="deleteTransaksiGlobal('${item.id}')">🗑️ Hapus</button>` : 
+                    `<small style="color:#9ca3af;">Hanya pembuat yang bisa edit/hapus</small>`
+                }
+            </div>
+        </div>
+    `).join('');
+}
+
+// ========== EDIT TRANSAKSI (GLOBAL) ==========
+window.editTransaksiGlobal = function(id) {
+    const transaksi = transaksiList.find(t => t.id === id);
+    if (!transaksi) return;
+    
+    // Cek apakah yang edit adalah pembuat atau owner
+    if (currentUserRole !== 'owner' && transaksi.created_by !== currentUser.uid) {
+        showNotifTop('⚠️ Anda hanya bisa mengedit transaksi yang Anda buat sendiri!', true);
+        return;
+    }
+    
+    currentTransaksiId = id;
+    document.getElementById('transaksiNominal').value = transaksi.nominal;
+    document.getElementById('transaksiKeterangan').value = transaksi.keterangan || '';
+    document.getElementById('transaksiTanggal').value = transaksi.tanggal;
+    document.getElementById('inputTransaksiModal').style.display = 'flex';
+};
+
+// ========== TAMPILKAN MODAL INPUT TRANSAKSI ==========
+function showInputTransaksiModal() {
+    currentTransaksiId = null;
+    document.getElementById('transaksiNominal').value = '';
+    document.getElementById('transaksiKeterangan').value = '';
+    document.getElementById('transaksiTanggal').value = new Date().toISOString().split('T')[0];
+    document.getElementById('inputTransaksiModal').style.display = 'flex';
+}
+
+// ========== TAMPILKAN MODAL DAFTAR TRANSAKSI ==========
+function showTransaksiListModal() {
+    renderTransaksiListGlobal();
+    document.getElementById('transaksiListModal').style.display = 'flex';
 }
 
 // ========== FUNGSI VALIDASI DUPLIKAT ==========
@@ -1248,6 +1421,85 @@ document.getElementById('closeTarifAdminModal')?.addEventListener('click', () =>
         });
     }
 
+// ========== EVENT LISTENER CARD TRANSAKSI (SEMUA CS BISA KLIK) ==========
+const targetTransaksiCard = document.getElementById('targetTransaksiCard');
+if (targetTransaksiCard) {
+    // Hapus event listener lama dengan clone
+    const newCard = targetTransaksiCard.cloneNode(true);
+    targetTransaksiCard.parentNode.replaceChild(newCard, targetTransaksiCard);
+    
+    newCard.addEventListener('click', function(e) {
+        // Jangan trigger jika klik di dalam progress bar atau children tertentu
+        if (e.target.closest('.progress-bar')) return;
+        
+        console.log('Card Transaksi diklik, membuka modal input');
+        showInputTransaksiModal();
+    });
+}
+
+// ========== EVENT LISTENER MODAL INPUT TRANSAKSI ==========
+const saveTransaksiBtn = document.getElementById('saveTransaksiBtn');
+if (saveTransaksiBtn) {
+    const newSaveBtn = saveTransaksiBtn.cloneNode(true);
+    saveTransaksiBtn.parentNode.replaceChild(newSaveBtn, saveTransaksiBtn);
+    
+    newSaveBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const nominal = document.getElementById('transaksiNominal').value;
+        const keterangan = document.getElementById('transaksiKeterangan').value;
+        const tanggal = document.getElementById('transaksiTanggal').value;
+        
+        if (!nominal || parseInt(nominal) <= 0) {
+            showNotifTop('⚠️ Masukkan jumlah transaksi yang valid!', true);
+            return;
+        }
+        
+        await saveTransaksiGlobal(nominal, keterangan, tanggal, currentTransaksiId);
+        closeModal('inputTransaksiModal');
+        
+        // Reset form
+        document.getElementById('transaksiNominal').value = '';
+        document.getElementById('transaksiKeterangan').value = '';
+        document.getElementById('transaksiTanggal').value = new Date().toISOString().split('T')[0];
+        currentTransaksiId = null;
+    });
+}
+
+const cancelTransaksiBtn = document.getElementById('cancelTransaksiBtn');
+if (cancelTransaksiBtn) {
+    const newCancelBtn = cancelTransaksiBtn.cloneNode(true);
+    cancelTransaksiBtn.parentNode.replaceChild(newCancelBtn, cancelTransaksiBtn);
+    
+    newCancelBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal('inputTransaksiModal');
+        currentTransaksiId = null;
+    });
+}
+
+// ========== TOMBOL LIHAT DAFTAR TRANSAKSI ==========
+const addTransaksiHistoryBtn = () => {
+    const targetHeader = document.querySelector('.target-header');
+    if (targetHeader && !document.getElementById('viewTransaksiBtn')) {
+        const viewBtn = document.createElement('button');
+        viewBtn.id = 'viewTransaksiBtn';
+        viewBtn.textContent = '📋 Riwayat Transaksi';
+        viewBtn.className = 'add-btn';
+        viewBtn.style.background = '#10b981';
+        viewBtn.style.marginLeft = '10px';
+        viewBtn.onclick = showTransaksiListModal;
+        targetHeader.appendChild(viewBtn);
+    }
+};
+
+// Panggil setelah auth state
+if (currentUser) {
+    addTransaksiHistoryBtn();
+}
+
 // ========== FUNGSI-FUNGSI TETAP DI LUAR (TIDAK DIPINDAHKAN) ==========
 // updateDeadlineBadge, updatePesanBadge, updateAllBadges, dll...
 // (fungsi-fungsi ini tetap di sini, karena dipanggil dari auth.onAuthStateChanged)
@@ -1704,6 +1956,7 @@ auth.onAuthStateChanged(async user => {
         loadDBCommitment();
         loadDatabaseAgent();
         await loadTargetData();
+        await loadTransaksiGlobal();
         // ========== INIT TARGET KPI BUTTON (HANYA UNTUK OWNER) ==========
 // Tampilkan tombol kelola target hanya untuk owner
 const manageTargetBtn = document.getElementById('manageTargetBtn');
