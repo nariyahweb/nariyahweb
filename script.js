@@ -29,7 +29,6 @@ let tarifAdminData = [];
 let currentEditTarifId = null;
 let customersData = [];
 let prospekData = [];
-// Database Agent
 let selectedAgentIds = new Map();
 let agentsData = [];
 let agentsFilteredData = [];
