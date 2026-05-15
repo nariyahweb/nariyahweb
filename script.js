@@ -159,7 +159,6 @@ async function loadTargetData() {
             targetData = targetDoc.data();
             console.log('loadTargetData: Data ditemukan', targetData);
         } else {
-            // Default target jika belum ada
             targetData = {
                 agent: 10,
                 ca: 20,
@@ -170,7 +169,7 @@ async function loadTargetData() {
             };
             console.log('loadTargetData: Data default digunakan', targetData);
         }
-        await updateTargetDisplay();
+        await updateTargetDisplay();  // ← PASTIKAN INI DIPANGGIL
     } catch(e) {
         console.error('Error load target:', e);
         showNotifTop('❌ Gagal memuat target: ' + e.message, true);
@@ -179,30 +178,38 @@ async function loadTargetData() {
 
 // ========== UPDATE TARGET DISPLAY ==========
 async function updateTargetDisplay() {
+    console.log('updateTargetDisplay dipanggil, targetData:', targetData);
+    
     // Hitung pencapaian saat ini
     const currentAgent = agentsData.filter(a => a.agent_type === 'AGENT' || a.agent_type === 'CollectingAgent (CA)').length;
     const currentKoor = agentsData.filter(a => a.agent_type === 'Koordinator Wilayah (KORWIL)' || a.agent_type === 'SUB KORWIL').length;
     const currentCA = agentsData.filter(a => a.agent_type === 'SUB CA' || a.agent_type === 'CollectingAgent (CA)').length;
     
-    // 🔥 PERUBAHAN: Ambil dari transaksi GLOBAL
+    // Ambil dari transaksi GLOBAL
     let currentTransaksi = window.totalTransaksiGlobal || 0;
     
-    // Jika belum ada data transaksi, load dulu
-    if (transaksiList.length === 0 && currentUser) {
-        await loadTransaksiGlobal();
-        currentTransaksi = window.totalTransaksiGlobal || 0;
-    }
+    console.log('Pencapaian:', { currentAgent, currentKoor, currentCA, currentTransaksi });
     
     // Update nilai di HTML
-    document.getElementById('targetAgentValue').innerText = targetData.agent || 0;
-    document.getElementById('targetKoorValue').innerText = targetData.koordinator || 0;
-    document.getElementById('targetCAValue').innerText = targetData.ca || 0;
-    document.getElementById('targetTransaksiValue').innerText = (targetData.transaksi || 0).toLocaleString('id-ID');
+    const targetAgentEl = document.getElementById('targetAgentValue');
+    const targetKoorEl = document.getElementById('targetKoorValue');
+    const targetCAEl = document.getElementById('targetCAValue');
+    const targetTransaksiEl = document.getElementById('targetTransaksiValue');
     
-    document.getElementById('targetAgentReached').innerText = currentAgent;
-    document.getElementById('targetKoorReached').innerText = currentKoor;
-    document.getElementById('targetCAReached').innerText = currentCA;
-    document.getElementById('targetTransaksiReached').innerText = currentTransaksi.toLocaleString('id-ID');
+    if (targetAgentEl) targetAgentEl.innerText = targetData.agent || 0;
+    if (targetKoorEl) targetKoorEl.innerText = targetData.koordinator || 0;
+    if (targetCAEl) targetCAEl.innerText = targetData.ca || 0;
+    if (targetTransaksiEl) targetTransaksiEl.innerText = (targetData.transaksi || 0).toLocaleString('id-ID');
+    
+    const reachedAgentEl = document.getElementById('targetAgentReached');
+    const reachedKoorEl = document.getElementById('targetKoorReached');
+    const reachedCAEl = document.getElementById('targetCAReached');
+    const reachedTransaksiEl = document.getElementById('targetTransaksiReached');
+    
+    if (reachedAgentEl) reachedAgentEl.innerText = currentAgent;
+    if (reachedKoorEl) reachedKoorEl.innerText = currentKoor;
+    if (reachedCAEl) reachedCAEl.innerText = currentCA;
+    if (reachedTransaksiEl) reachedTransaksiEl.innerText = currentTransaksi.toLocaleString('id-ID');
     
     // Update progress bar
     const agentPercent = targetData.agent ? Math.min((currentAgent / targetData.agent) * 100, 100) : 0;
@@ -210,16 +217,23 @@ async function updateTargetDisplay() {
     const caPercent = targetData.ca ? Math.min((currentCA / targetData.ca) * 100, 100) : 0;
     const transaksiPercent = targetData.transaksi ? Math.min((currentTransaksi / targetData.transaksi) * 100, 100) : 0;
     
-    document.getElementById('targetAgentProgress').style.width = agentPercent + '%';
-    document.getElementById('targetKoorProgress').style.width = koorPercent + '%';
-    document.getElementById('targetCAProgress').style.width = caPercent + '%';
-    document.getElementById('targetTransaksiProgress').style.width = transaksiPercent + '%';
+    const progressAgent = document.getElementById('targetAgentProgress');
+    const progressKoor = document.getElementById('targetKoorProgress');
+    const progressCA = document.getElementById('targetCAProgress');
+    const progressTransaksi = document.getElementById('targetTransaksiProgress');
+    
+    if (progressAgent) progressAgent.style.width = agentPercent + '%';
+    if (progressKoor) progressKoor.style.width = koorPercent + '%';
+    if (progressCA) progressCA.style.width = caPercent + '%';
+    if (progressTransaksi) progressTransaksi.style.width = transaksiPercent + '%';
     
     // Update chart
     updateTargetChart([agentPercent, koorPercent, caPercent, transaksiPercent]);
     
     // Update trend chart
     updateTrendChart();
+    
+    console.log('updateTargetDisplay selesai');
 }
 
 // ========== HITUNG TOTAL TRANSAKSI BULAN INI (JUMLAH) ==========
@@ -1949,7 +1963,6 @@ auth.onAuthStateChanged(async user => {
         // Tampilkan menu owner jika role = owner
         if (currentUserRole === 'owner') {
             document.getElementById('ownerMenu').style.display = 'block';
-            // Owner bisa lihat semua data, jadi query tanpa filter user_id
         } else {
             document.getElementById('ownerMenu').style.display = 'none';
         }
@@ -1965,60 +1978,59 @@ auth.onAuthStateChanged(async user => {
         loadDatabaseAgent();
         await loadTargetData();
         await loadTransaksiGlobal();
-// ========== INIT TARGET KPI BUTTON (HANYA UNTUK OWNER) ==========
-setTimeout(() => {
-    console.log('Initializing target button, currentUserRole:', currentUserRole);
-    
-    const manageTargetBtn = document.getElementById('manageTargetBtn');
-    console.log('manageTargetBtn element:', manageTargetBtn);
-    
-    if (manageTargetBtn) {
-        console.log('Tombol manageTargetBtn ditemukan');
-        
-        if (currentUserRole === 'owner') {
-            console.log('User adalah OWNER, menampilkan tombol kelola target');
-            
-            // TAMPILKAN TOMBOL DENGAN BEBERAPA CARA
-            manageTargetBtn.style.display = 'block';
-            manageTargetBtn.style.visibility = 'visible';
-            manageTargetBtn.style.opacity = '1';
-            manageTargetBtn.removeAttribute('hidden');
-            
-            // Hapus event listener lama dengan clone
-            const newManageBtn = manageTargetBtn.cloneNode(true);
-            manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
-            
-            newManageBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Tombol Kelola Target diklik oleh Owner');
-                
-                const agentInput = document.getElementById('targetAgentInput');
-                const koorInput = document.getElementById('targetKoorInput');
-                const caInput = document.getElementById('targetCAInput');
-                const transaksiInput = document.getElementById('targetTransaksiInput');
-                
-                if (agentInput) agentInput.value = targetData.agent || 0;
-                if (koorInput) koorInput.value = targetData.koordinator || 0;
-                if (caInput) caInput.value = targetData.ca || 0;
-                if (transaksiInput) transaksiInput.value = targetData.transaksi || 0;
-                
-                renderMonthlyTargetList();
-                
-                const modal = document.getElementById('manageTargetModal');
-                if (modal) modal.style.display = 'flex';
-            });
-        } else {
-            console.log('User BUKAN owner, currentUserRole:', currentUserRole);
-            manageTargetBtn.style.display = 'none';
-        }
-    } else {
-        console.log('Tombol manageTargetBtn TIDAK DITEMUKAN di DOM');
-    }
-}, 500);
-        
         loadProduk();
         loadUsersList();
+        
+        // ========== INIT TARGET KPI BUTTON (HANYA UNTUK OWNER) ==========
+        console.log('Initializing target button, currentUserRole:', currentUserRole);
+        
+        // Gunakan setTimeout untuk memastikan DOM sudah siap
+        setTimeout(() => {
+            const manageTargetBtn = document.getElementById('manageTargetBtn');
+            console.log('manageTargetBtn element:', manageTargetBtn);
+            
+            if (manageTargetBtn) {
+                console.log('Tombol manageTargetBtn ditemukan');
+                
+                if (currentUserRole === 'owner') {
+                    console.log('User adalah OWNER, menampilkan tombol kelola target');
+                    manageTargetBtn.style.display = 'block';
+                    
+                    // Hapus event listener lama dengan clone
+                    const newManageBtn = manageTargetBtn.cloneNode(true);
+                    manageTargetBtn.parentNode.replaceChild(newManageBtn, manageTargetBtn);
+                    
+                    newManageBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Tombol Kelola Target diklik oleh Owner');
+                        
+                        // Isi form dengan data target saat ini
+                        const agentInput = document.getElementById('targetAgentInput');
+                        const koorInput = document.getElementById('targetKoorInput');
+                        const caInput = document.getElementById('targetCAInput');
+                        const transaksiInput = document.getElementById('targetTransaksiInput');
+                        
+                        if (agentInput) agentInput.value = targetData.agent || 0;
+                        if (koorInput) koorInput.value = targetData.koordinator || 0;
+                        if (caInput) caInput.value = targetData.ca || 0;
+                        if (transaksiInput) transaksiInput.value = targetData.transaksi || 0;
+                        
+                        // Render target bulanan
+                        renderMonthlyTargetList();
+                        
+                        // Tampilkan modal
+                        const modal = document.getElementById('manageTargetModal');
+                        if (modal) modal.style.display = 'flex';
+                    });
+                } else {
+                    console.log('User BUKAN owner, menyembunyikan tombol kelola target');
+                    manageTargetBtn.style.display = 'none';
+                }
+            } else {
+                console.log('Tombol manageTargetBtn TIDAK DITEMUKAN di DOM');
+            }
+        }, 500); // Delay 500ms untuk memastikan DOM siap
     } else {
         loginPage.style.display = 'flex';
         app.style.display = 'none';
