@@ -13,7 +13,7 @@ const db = firebase.firestore();
 db.settings({
     persistence: false
 });
-
+        
 let currentUser = null;
 let currentUserRole = 'cs';
 let currentUserName = '';
@@ -1078,6 +1078,58 @@ function downloadTarifExample() {
 
 // ========== SEMUA EVENT LISTENER DI DALAM DOMContentLoaded ==========
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // ========== DARK MODE FUNCTION ==========
+function initDarkMode() {
+    // Cek preferensi yang tersimpan di localStorage
+    const savedMode = localStorage.getItem('darkMode');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    
+    // Fungsi untuk mengaktifkan dark mode
+    function enableDarkMode() {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'enabled');
+        if (darkModeToggle) {
+            darkModeToggle.classList.add('active');
+        }
+    }
+    
+    // Fungsi untuk menonaktifkan dark mode
+    function disableDarkMode() {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'disabled');
+        if (darkModeToggle) {
+            darkModeToggle.classList.remove('active');
+        }
+    }
+    
+    // Terapkan mode berdasarkan preferensi tersimpan
+    if (savedMode === 'enabled') {
+        enableDarkMode();
+    } else {
+        disableDarkMode();
+    }
+    
+    // Event listener untuk toggle dark mode (hanya jika elemen ada)
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (document.body.classList.contains('dark-mode')) {
+                disableDarkMode();
+                showNotifTop('🌞 Mode Terang diaktifkan');
+            } else {
+                enableDarkMode();
+                showNotifTop('🌙 Mode Gelap diaktifkan');
+            }
+        });
+    }
+}
+
+// Panggil initDarkMode setelah DOM siap
+initDarkMode();
+    
     // ========== SIDEBAR ==========
     const sidebar = document.getElementById('sidebar');
     const hoverZone = document.getElementById('hoverZone');
