@@ -1974,11 +1974,6 @@ auth.onAuthStateChanged(async user => {
         
         await updateAllBadges();
         loadAllData();
-        initDarkMode();
-        setupDarkModeToggle();
-        setTimeout(() => {
-            setupChartClickEvents();
-        }, 2000);
         loadReminders();
         loadPesan();
         loadDBClosing();
@@ -2047,20 +2042,6 @@ auth.onAuthStateChanged(async user => {
         currentUser = null;
     }
 });
-
-// Pastikan dark mode toggle terupdate setelah modal profile dibuka
-const profileModal = document.getElementById('profileModal');
-if (profileModal) {
-    profileModal.addEventListener('click', function(e) {
-        // Ketika modal profile terbuka, update status toggle
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        if (darkModeToggle) {
-            const isDark = document.body.classList.contains('dark-mode');
-            darkModeToggle.checked = isDark;
-            updateDarkModeIcon(isDark);
-        }
-    });
-}
 
 // ========== PAGE NAVIGATION ==========
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
@@ -2265,129 +2246,6 @@ formatPhoneInput(document.getElementById('customerPhone'));
 formatPhoneInput(document.getElementById('prospekPhone'));
 formatPhoneInput(document.getElementById('profilePhone'));
 document.getElementById('previewPhotoModal')?.addEventListener('click', (e) => { if (e.target === document.getElementById('previewPhotoModal')) closeModal('previewPhotoModal'); });
-
-// ========================================
-// DARK MODE FUNCTIONS (dengan Tombol)
-// ========================================
-function initDarkMode() {
-    console.log('initDarkMode dipanggil');
-    const savedMode = localStorage.getItem('darkMode');
-    const darkModeBtn = document.getElementById('darkModeToggleBtn');
-    
-    console.log('savedMode:', savedMode);
-    
-    if (savedMode === 'enabled') {
-        document.body.classList.add('dark-mode');
-        if (darkModeBtn) {
-            darkModeBtn.innerHTML = '☀️ Nonaktifkan';
-            darkModeBtn.style.background = '#f59e0b';
-        }
-        updateDarkModeIcon(true);
-        console.log('Dark mode diaktifkan dari localStorage');
-    } else {
-        document.body.classList.remove('dark-mode');
-        if (darkModeBtn) {
-            darkModeBtn.innerHTML = '🌙 Aktifkan';
-            darkModeBtn.style.background = '#4f46e5';
-        }
-        updateDarkModeIcon(false);
-        console.log('Light mode diaktifkan dari localStorage');
-    }
-}
-
-function updateDarkModeIcon(isDark) {
-    const iconSpan = document.querySelector('#darkModeIcon');
-    if (iconSpan) {
-        iconSpan.textContent = isDark ? '🌙' : '☀️';
-        console.log('Icon diupdate:', iconSpan.textContent);
-    }
-}
-
-function enableDarkMode() {
-    console.log('enableDarkMode dipanggil');
-    document.body.classList.add('dark-mode');
-    localStorage.setItem('darkMode', 'enabled');
-    updateDarkModeIcon(true);
-    
-    const darkModeBtn = document.getElementById('darkModeToggleBtn');
-    if (darkModeBtn) {
-        darkModeBtn.innerHTML = '☀️ Nonaktifkan';
-        darkModeBtn.style.background = '#f59e0b';
-    }
-    
-    showNotifTop('🌙 Mode Gelap diaktifkan');
-}
-
-function disableDarkMode() {
-    console.log('disableDarkMode dipanggil');
-    document.body.classList.remove('dark-mode');
-    localStorage.setItem('darkMode', 'disabled');
-    updateDarkModeIcon(false);
-    
-    const darkModeBtn = document.getElementById('darkModeToggleBtn');
-    if (darkModeBtn) {
-        darkModeBtn.innerHTML = '🌙 Aktifkan';
-        darkModeBtn.style.background = '#4f46e5';
-    }
-    
-    showNotifTop('☀️ Mode Terang diaktifkan');
-}
-
-function setupDarkModeToggle() {
-    console.log('setupDarkModeToggle dipanggil');
-    const darkModeBtn = document.getElementById('darkModeToggleBtn');
-    
-    if (darkModeBtn) {
-        console.log('Tombol dark mode ditemukan, memasang event listener');
-        
-        // Hapus event listener lama
-        const newBtn = darkModeBtn.cloneNode(true);
-        darkModeBtn.parentNode.replaceChild(newBtn, darkModeBtn);
-        
-        newBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Tombol dark mode diklik');
-            
-            const isDark = document.body.classList.contains('dark-mode');
-            if (isDark) {
-                disableDarkMode();
-            } else {
-                enableDarkMode();
-            }
-        });
-        
-        console.log('Event listener berhasil dipasang');
-    } else {
-        console.log('Tombol dark mode dengan id "darkModeToggleBtn" TIDAK DITEMUKAN');
-    }
-}
-
-// Update saat modal profile dibuka
-function updateDarkModeButtonStatus() {
-    const darkModeBtn = document.getElementById('darkModeToggleBtn');
-    if (darkModeBtn) {
-        const isDark = document.body.classList.contains('dark-mode');
-        if (isDark) {
-            darkModeBtn.innerHTML = '☀️ Nonaktifkan';
-            darkModeBtn.style.background = '#f59e0b';
-        } else {
-            darkModeBtn.innerHTML = '🌙 Aktifkan';
-            darkModeBtn.style.background = '#4f46e5';
-        }
-        updateDarkModeIcon(isDark);
-    }
-}
-
-// Event listener untuk modal profile
-const profileModalForDarkMode = document.getElementById('profileModal');
-if (profileModalForDarkMode) {
-    profileModalForDarkMode.addEventListener('click', function(e) {
-        setTimeout(() => {
-            updateDarkModeButtonStatus();
-        }, 100);
-    });
-}
 
 // ========== FORMAT INPUT UNTUK MODAL ==========
 const customerIdInput = document.getElementById('customerId');
@@ -4429,208 +4287,6 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
     });
 }
 
-// ========================================
-// FUNGSI MODAL CHART (POPUP CHART)
-// ========================================
-let chartModal = null;
-let chartModalInstance = null;
-
-function showChartModal(chartType) {
-    console.log('showChartModal dipanggil dengan type:', chartType);
-    
-    // Pastikan chart asli masih ada datanya
-    if (chartType === 'customer' && (!chartCustomer || !chartCustomer.data)) {
-        console.log('Chart customer belum siap');
-        showNotifTop('⚠️ Chart sedang dimuat, coba lagi sebentar!', true);
-        return;
-    }
-    if (chartType === 'prospek' && (!chartProspek || !chartProspek.data)) {
-        console.log('Chart prospek belum siap');
-        showNotifTop('⚠️ Chart sedang dimuat, coba lagi sebentar!', true);
-        return;
-    }
-    
-    // Buat modal jika belum ada
-    let modal = document.getElementById('chartModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'chartModal';
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 600px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 0;">
-                    <h3 id="chartModalTitle" style="margin: 0;">📊 Chart</h3>
-                    <button id="closeChartModalBtn" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
-                </div>
-                <div style="padding: 20px;">
-                    <canvas id="chartModalCanvas" style="width: 100%; max-height: 400px;"></canvas>
-                </div>
-                <div class="modal-buttons">
-                    <button id="chartModalCloseBtn" class="btn-outline">Tutup</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        
-        // Event close
-        const closeBtn = document.getElementById('closeChartModalBtn');
-        const closeBtn2 = document.getElementById('chartModalCloseBtn');
-        if (closeBtn) closeBtn.onclick = () => closeModal('chartModal');
-        if (closeBtn2) closeBtn2.onclick = () => closeModal('chartModal');
-        modal.onclick = (e) => { if (e.target === modal) closeModal('chartModal'); };
-    }
-    
-    // Hancurkan chart instance lama
-    if (chartModalInstance) {
-        chartModalInstance.destroy();
-        chartModalInstance = null;
-    }
-    
-    const modalTitle = document.getElementById('chartModalTitle');
-    const modalCanvas = document.getElementById('chartModalCanvas');
-    const ctx = modalCanvas.getContext('2d');
-    
-    if (chartType === 'customer' && chartCustomer && chartCustomer.data) {
-        modalTitle.innerText = '📊 Chart Followup Agen (Diperbesar)';
-        const originalData = [...chartCustomer.data.datasets[0].data];
-        const originalLabels = [...chartCustomer.data.labels];
-        
-        chartModalInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: originalLabels,
-                datasets: [{
-                    data: originalData,
-                    backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
-                    borderWidth: 0,
-                    hoverOffset: 15,
-                    cutout: '60%'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 11 } } }
-                }
-            }
-        });
-    } 
-    else if (chartType === 'prospek' && chartProspek && chartProspek.data) {
-        modalTitle.innerText = '📊 Chart Prospek Agen (Diperbesar)';
-        const originalData = [...chartProspek.data.datasets[0].data];
-        const originalLabels = [...chartProspek.data.labels];
-        
-        chartModalInstance = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: originalLabels,
-                datasets: [{
-                    data: originalData,
-                    backgroundColor: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'],
-                    borderWidth: 0,
-                    hoverOffset: 15,
-                    cutout: '60%'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 11 } } }
-                }
-            }
-        });
-    } else {
-        showNotifTop('⚠️ Chart belum siap, silahkan refresh halaman', true);
-        return;
-    }
-    
-    modal.style.display = 'flex';
-}
-
-// ========== SETUP CHART CLICK EVENT ==========
-function setupChartClickEvents() {
-    console.log('setupChartClickEvents dipanggil');
-    
-    // Tunggu hingga DOM benar-benar siap
-    setTimeout(() => {
-        // Ambil elemen canvas chart
-        const customerCanvas = document.getElementById('chartCustomer');
-        const prospekCanvas = document.getElementById('chartProspek');
-        
-        console.log('Customer canvas:', customerCanvas);
-        console.log('Prospek canvas:', prospekCanvas);
-        
-        // Untuk Chart Followup - cari parent card
-        if (customerCanvas) {
-            // Cari card yang berisi chart customer
-            let customerCard = customerCanvas.closest('.chart-card');
-            if (!customerCard) {
-                // Coba cari parent yang lebih tinggi
-                customerCard = customerCanvas.parentElement?.parentElement;
-                while (customerCard && !customerCard.classList?.contains('chart-card')) {
-                    customerCard = customerCard.parentElement;
-                }
-            }
-            
-            if (customerCard) {
-                console.log('Chart Followup card ditemukan:', customerCard);
-                // Hapus event listener lama dengan clone
-                const newCard = customerCard.cloneNode(true);
-                customerCard.parentNode.replaceChild(newCard, customerCard);
-                newCard.style.cursor = 'pointer';
-                newCard.addEventListener('click', function(e) {
-                    // Jangan trigger jika klik di canvas (biar chart tetap bisa diinteraksi)
-                    if (e.target.tagName === 'CANVAS') return;
-                    e.stopPropagation();
-                    console.log('Chart Followup diklik');
-                    showChartModal('customer');
-                });
-            } else {
-                console.log('Chart Followup card TIDAK ditemukan, coba cara alternatif');
-                // Alternatif: buat wrapper card sendiri
-                const wrapper = customerCanvas.closest('.charts-row')?.querySelector('.chart-card:first-child');
-                if (wrapper) {
-                    wrapper.style.cursor = 'pointer';
-                    wrapper.addEventListener('click', () => showChartModal('customer'));
-                }
-            }
-        }
-        
-        // Untuk Chart Prospek
-        if (prospekCanvas) {
-            let prospekCard = prospekCanvas.closest('.chart-card');
-            if (!prospekCard) {
-                prospekCard = prospekCanvas.parentElement?.parentElement;
-                while (prospekCard && !prospekCard.classList?.contains('chart-card')) {
-                    prospekCard = prospekCard.parentElement;
-                }
-            }
-            
-            if (prospekCard) {
-                console.log('Chart Prospek card ditemukan:', prospekCard);
-                const newCard = prospekCard.cloneNode(true);
-                prospekCard.parentNode.replaceChild(newCard, prospekCard);
-                newCard.style.cursor = 'pointer';
-                newCard.addEventListener('click', function(e) {
-                    if (e.target.tagName === 'CANVAS') return;
-                    e.stopPropagation();
-                    console.log('Chart Prospek diklik');
-                    showChartModal('prospek');
-                });
-            } else {
-                console.log('Chart Prospek card TIDAK ditemukan');
-                const wrapper = prospekCanvas.closest('.charts-row')?.querySelector('.chart-card:last-child');
-                if (wrapper) {
-                    wrapper.style.cursor = 'pointer';
-                    wrapper.addEventListener('click', () => showChartModal('prospek'));
-                }
-            }
-        }
-    }, 1000);
-}
-
 // ========== LOAD ALL DATA ==========
 function loadAllData() {
     if (!currentUser) return;
@@ -4694,12 +4350,6 @@ function loadAllData() {
             }
         }
         updateChartCustomer(total, closing, pending, followup);
-        
-        // 🔥 TAMBAHKAN INI - panggil setupChartClickEvents dengan delay
-        setTimeout(() => {
-            setupChartClickEvents();
-        }, 500);
-        
         updateAllBadges();
         renderFullFollowupKanban();
     });
@@ -4747,12 +4397,6 @@ function loadAllData() {
             }
         }
         updateChartProspek(baru, dihubungi, negosiasi, tertarik);
-        
-        // 🔥 TAMBAHKAN INI - panggil setupChartClickEvents dengan delay
-        setTimeout(() => {
-            setupChartClickEvents();
-        }, 500);
-        
         updateAllBadges();
         renderFullProspekKanban();
     });
