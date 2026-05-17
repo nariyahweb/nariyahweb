@@ -1065,26 +1065,37 @@ body.modal-open{overflow:hidden}
     color: #374151;
 }
 
-/* ========== DARK MODE STYLES - PERBAIKAN LENGKAP ========== */
+/* ========== DARK MODE STYLES ========== */
 body.dark-mode {
     background: #0f172a;
 }
 
-/* Perbaikan teks judul di dark mode - JANGAN HITAM */
+/* ========== TYPOGRAPHY - JANGAN HITAM ========== */
 body.dark-mode h1, 
 body.dark-mode h2, 
 body.dark-mode h3, 
 body.dark-mode h4, 
+body.dark-mode p,
+body.dark-mode span:not(.badge):not(.count):not(.required),
 body.dark-mode .board-header h3,
 body.dark-mode .db-header h3,
 body.dark-mode .search-header h3,
 body.dark-mode .broadcast-header h3,
 body.dark-mode .import-header h3,
 body.dark-mode .fullpage-header h2,
-body.dark-mode .target-header h3 {
+body.dark-mode .target-header h3,
+body.dark-mode .modal-content h3,
+body.dark-mode .modal-subtitle,
+body.dark-mode .column-header span:first-child {
     color: #f1f5f9 !important;
 }
 
+body.dark-mode .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+/* ========== SIDEBAR ========== */
 body.dark-mode .sidebar {
     background: #1e293b;
     border-right-color: #334155;
@@ -1116,6 +1127,7 @@ body.dark-mode .menu-divider {
     background: #334155;
 }
 
+/* ========== MAIN CONTENT & TOPBAR ========== */
 body.dark-mode .main-content {
     background: #0f172a;
 }
@@ -1124,7 +1136,13 @@ body.dark-mode .topbar {
     background: linear-gradient(135deg, #1e1b4b, #2e1065);
 }
 
-/* Perbaikan Card Statistik */
+body.dark-mode .topbar .logo,
+body.dark-mode .topbar-center,
+body.dark-mode .topbar-right .notif-icon {
+    color: #f1f5f9 !important;
+}
+
+/* ========== STAT CARDS & CHARTS ========== */
 body.dark-mode .stat-card,
 body.dark-mode .chart-card,
 body.dark-mode .board-section,
@@ -1152,26 +1170,22 @@ body.dark-mode .chart-card h3 {
     color: #f1f5f9 !important;
 }
 
-/* PERBAIKAN UTAMA: SEMUA MODAL/POPUP JADI GELAP */
+/* ========== SEMUA MODAL/POPUP JADI GELAP ========== */
 body.dark-mode .modal {
-    background: rgba(0, 0, 0, 0.8) !important;
+    background: rgba(0, 0, 0, 0.85) !important;
 }
 
 body.dark-mode .modal-content {
     background: #1e293b !important;
     border: 1px solid #334155 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
 }
 
 body.dark-mode .modal-content h3 {
     color: #f1f5f9 !important;
 }
 
-body.dark-mode .modal-subtitle {
-    color: #94a3b8 !important;
-    border-bottom-color: #334155;
-}
-
-/* Form di dalam modal */
+/* ========== FORM DALAM MODAL ========== */
 body.dark-mode .form-group label {
     color: #cbd5e1 !important;
 }
@@ -1189,6 +1203,7 @@ body.dark-mode .form-group select:focus,
 body.dark-mode .form-group textarea:focus {
     border-color: #818cf8 !important;
     background: #1e293b !important;
+    outline: none;
 }
 
 body.dark-mode .input-icon span {
@@ -1201,7 +1216,7 @@ body.dark-mode .phone-prefix {
     color: #cbd5e1 !important;
 }
 
-/* Detail Modal */
+/* ========== DETAIL MODAL ========== */
 body.dark-mode .detail-header {
     background: linear-gradient(135deg, #1e1b4b, #2e1065) !important;
 }
@@ -1235,11 +1250,8 @@ body.dark-mode .detail-info-content .value {
     color: #f1f5f9 !important;
 }
 
-/* KANBAN - Perbaikan untuk Data Followup Agen dan Prospek Agen */
-body.dark-mode .kanban-board .kanban-column {
-    background: #0f172a !important;
-}
-
+/* ========== KANBAN - DATA FOLLOWUP AGEN & PROSPEK AGEN ========== */
+body.dark-mode .kanban-board .kanban-column,
 body.dark-mode .kanban-board-full .kanban-column {
     background: #0f172a !important;
 }
@@ -1261,6 +1273,7 @@ body.dark-mode .card-item {
 body.dark-mode .card-item:hover {
     background: #334155 !important;
     border-color: #818cf8 !important;
+    transform: translateY(-2px);
 }
 
 body.dark-mode .card-item .card-id {
@@ -1280,7 +1293,7 @@ body.dark-mode .card-item .card-deadline {
     color: #64748b !important;
 }
 
-/* Warna khusus untuk setiap kolom kanban di dark mode */
+/* Warna khusus setiap kolom kanban di dark mode */
 body.dark-mode .kanban-board .kanban-column[data-status="baru"],
 body.dark-mode .kanban-board .kanban-column[data-status="Baru"] {
     background: #1e1b4b !important;
@@ -1301,12 +1314,90 @@ body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"] {
     background: #064e3b !important;
 }
 
-/* Full Page Kanban */
+body.dark-mode .kanban-board-full .kanban-column[data-status="baru"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="Baru"] {
+    background: #1e1b4b !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="followup"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="Dihubungi"] {
+    background: #1e293b !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="pending"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="Negosiasi"] {
+    background: #451a03 !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="closing"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="Tertarik"] {
+    background: #064e3b !important;
+}
+
+/* ========== DEADLINE EFFECT - TIDAK MEMPENGARUHI MODE TERANG ========== */
+/* Mode Terang tetap seperti semula */
+.card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #fef2f2;
+    animation: blinkWarning 1s step-start infinite;
+}
+
+@keyframes blinkWarning {
+    50% {
+        border-color: #b91c1c;
+        background: #fee2e2;
+    }
+}
+
+.card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #fffbeb;
+}
+
+/* Mode Gelap dengan efek kedip tersendiri */
+body.dark-mode .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #450a0a;
+    animation: blinkWarningDark 1s step-start infinite;
+}
+
+@keyframes blinkWarningDark {
+    0% {
+        border-color: #ef4444;
+        background: #450a0a;
+    }
+    50% {
+        border-color: #dc2626;
+        background: #7f1d1d;
+    }
+    100% {
+        border-color: #ef4444;
+        background: #450a0a;
+    }
+}
+
+body.dark-mode .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #422006;
+}
+
+body.dark-mode .search-result-item.deadline-overdue {
+    background: #450a0a !important;
+    border-color: #ef4444 !important;
+    animation: blinkWarningDark 1s step-start infinite;
+}
+
+body.dark-mode .search-result-item.deadline-today {
+    background: #422006 !important;
+    border-color: #f59e0b !important;
+}
+
+/* ========== FULL PAGE KANBAN ========== */
 body.dark-mode .fullpage-header h2 {
     color: #f1f5f9 !important;
 }
 
-/* Database Items */
+/* ========== DATABASE ITEMS ========== */
 body.dark-mode .db-item {
     background: #0f172a !important;
     border-bottom-color: #334155;
@@ -1328,7 +1419,7 @@ body.dark-mode .db-item-info small {
     color: #64748b !important;
 }
 
-/* Database Agent Items */
+/* ========== DATABASE AGENT ITEMS ========== */
 body.dark-mode .db-item-agent {
     background: #0f172a !important;
     border-bottom-color: #334155;
@@ -1336,6 +1427,7 @@ body.dark-mode .db-item-agent {
 
 body.dark-mode .db-item-agent:hover {
     background: #1e293b !important;
+    transform: translateX(4px);
 }
 
 body.dark-mode .db-item-agent-info h4 {
@@ -1350,7 +1442,7 @@ body.dark-mode .db-item-agent-info small {
     color: #64748b !important;
 }
 
-/* Search Results */
+/* ========== SEARCH RESULTS ========== */
 body.dark-mode .search-result-item {
     background: #0f172a !important;
     border-color: #334155;
@@ -1358,6 +1450,7 @@ body.dark-mode .search-result-item {
 
 body.dark-mode .search-result-item:hover {
     background: #1e293b !important;
+    border-color: #818cf8 !important;
 }
 
 body.dark-mode .search-result-info h4 {
@@ -1372,7 +1465,7 @@ body.dark-mode .search-result-info small {
     color: #64748b !important;
 }
 
-/* Broadcast Cards */
+/* ========== BROADCAST CARDS ========== */
 body.dark-mode .broadcast-card {
     background: #0f172a !important;
     border-color: #334155;
@@ -1394,6 +1487,13 @@ body.dark-mode #templateName {
     color: #f1f5f9 !important;
 }
 
+body.dark-mode #customNumbers:focus,
+body.dark-mode #broadcastMessage:focus,
+body.dark-mode #templateName:focus {
+    border-color: #818cf8 !important;
+    outline: none;
+}
+
 body.dark-mode .selected-numbers {
     background: #0f172a !important;
 }
@@ -1403,7 +1503,12 @@ body.dark-mode .selected-numbers .number-item {
     border-bottom-color: #334155;
 }
 
-/* Buttons */
+body.dark-mode .variable-hint small,
+body.dark-mode .variable-hint code {
+    color: #94a3b8 !important;
+}
+
+/* ========== BUTTONS ========== */
 body.dark-mode .btn-outline {
     background: #334155 !important;
     color: #f1f5f9 !important;
@@ -1411,6 +1516,7 @@ body.dark-mode .btn-outline {
 
 body.dark-mode .btn-outline:hover {
     background: #475569 !important;
+    transform: translateY(-2px);
 }
 
 body.dark-mode .add-btn {
@@ -1420,6 +1526,7 @@ body.dark-mode .add-btn {
 
 body.dark-mode .add-btn:hover {
     background: #4338ca !important;
+    transform: translateY(-2px);
 }
 
 body.dark-mode .db-delete-selected {
@@ -1427,9 +1534,18 @@ body.dark-mode .db-delete-selected {
     color: white !important;
 }
 
+body.dark-mode .db-delete-selected:hover {
+    background: #b91c1c !important;
+}
+
 body.dark-mode .db-select-all {
     background: #1e293b !important;
     color: #818cf8 !important;
+    border: 1px solid #334155;
+}
+
+body.dark-mode .db-select-all:hover {
+    background: #334155 !important;
 }
 
 body.dark-mode .db-import-excel {
@@ -1437,12 +1553,39 @@ body.dark-mode .db-import-excel {
     color: white !important;
 }
 
+body.dark-mode .db-import-excel:hover {
+    background: #047857 !important;
+}
+
 body.dark-mode .db-export-excel {
     background: #2563eb !important;
     color: white !important;
 }
 
-/* Import Page - Perbaikan judul Import Data Excel */
+body.dark-mode .db-export-excel:hover {
+    background: #1d4ed8 !important;
+}
+
+body.dark-mode .broadcast-btn {
+    background: #25D366 !important;
+    color: white !important;
+}
+
+body.dark-mode .broadcast-btn:hover {
+    background: #20b85a !important;
+}
+
+body.dark-mode .btn-refresh {
+    background: #1e293b !important;
+    color: #818cf8 !important;
+    border: 1px solid #334155;
+}
+
+body.dark-mode .btn-refresh:hover {
+    background: #334155 !important;
+}
+
+/* ========== IMPORT PAGE - JUDUL IMPORT DATA EXCEL TERLIHAT ========== */
 body.dark-mode .import-header h3 {
     color: #f1f5f9 !important;
 }
@@ -1473,6 +1616,10 @@ body.dark-mode .drop-zone p {
     color: #cbd5e1 !important;
 }
 
+body.dark-mode .drop-zone:hover {
+    background: #334155 !important;
+}
+
 body.dark-mode .radio-option {
     border-color: #334155;
 }
@@ -1486,7 +1633,7 @@ body.dark-mode .radio-option p {
     color: #94a3b8 !important;
 }
 
-/* Filter dan Search */
+/* ========== FILTER DAN SEARCH ========== */
 body.dark-mode .search-filter label {
     color: #cbd5e1 !important;
 }
@@ -1503,6 +1650,16 @@ body.dark-mode .search-box .search-input {
 
 body.dark-mode .search-box .search-input:focus {
     border-color: #818cf8 !important;
+    outline: none;
+}
+
+body.dark-mode .search-btn {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+body.dark-mode .search-btn:hover {
+    background: #4338ca !important;
 }
 
 body.dark-mode .clear-btn {
@@ -1514,7 +1671,7 @@ body.dark-mode .clear-btn:hover {
     background: #475569 !important;
 }
 
-/* Pending Modal Items */
+/* ========== PENDING MODAL ITEMS ========== */
 body.dark-mode .pending-item {
     background: #0f172a !important;
 }
@@ -1525,18 +1682,16 @@ body.dark-mode .pending-item input[type="text"] {
     color: #f1f5f9 !important;
 }
 
-/* Deadline Cards */
-body.dark-mode .card-item.deadline-today {
-    background: #422006 !important;
-    border-color: #f59e0b !important;
+body.dark-mode .pending-item input[type="text"]:focus {
+    border-color: #818cf8 !important;
+    outline: none;
 }
 
-body.dark-mode .card-item.deadline-overdue {
-    background: #450a0a !important;
-    border-color: #ef4444 !important;
+body.dark-mode .delete-pending-item {
+    color: #f87171 !important;
 }
 
-/* Badges */
+/* ========== BADGES ========== */
 body.dark-mode .badge-customer {
     background: #1e293b !important;
     color: #a5b4fc !important;
@@ -1567,7 +1722,7 @@ body.dark-mode .badge-commitment {
     color: #818cf8 !important;
 }
 
-/* Status Badges */
+/* ========== STATUS BADGES ========== */
 body.dark-mode .status-badge {
     background: transparent;
 }
@@ -1607,7 +1762,7 @@ body.dark-mode .status-tertarik {
     color: #34d399 !important;
 }
 
-/* Template Items */
+/* ========== TEMPLATE ITEMS ========== */
 body.dark-mode .template-item {
     background: #0f172a !important;
     border-color: #334155;
@@ -1621,7 +1776,17 @@ body.dark-mode .template-item strong {
     color: #f1f5f9 !important;
 }
 
-/* Progress Panel */
+body.dark-mode .template-use-btn {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+body.dark-mode .template-delete-btn {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+/* ========== PROGRESS PANEL ========== */
 body.dark-mode .broadcast-panel {
     background: #1e293b !important;
     border-color: #334155;
@@ -1629,10 +1794,19 @@ body.dark-mode .broadcast-panel {
 
 body.dark-mode .panel-header {
     background: #4f46e5 !important;
+    color: white !important;
+}
+
+body.dark-mode .close-panel-btn {
+    color: white !important;
 }
 
 body.dark-mode .current-info {
     background: #0f172a !important;
+}
+
+body.dark-mode .current-label {
+    color: #94a3b8 !important;
 }
 
 body.dark-mode .current-name {
@@ -1653,6 +1827,14 @@ body.dark-mode .progress-bar-container {
     background: #334155 !important;
 }
 
+body.dark-mode .progress-bar-fill {
+    background: linear-gradient(90deg, #10b981, #059669) !important;
+}
+
+body.dark-mode .progress-text {
+    color: #cbd5e1 !important;
+}
+
 body.dark-mode .progress-list .panel-progress-item {
     background: #0f172a !important;
     border-bottom-color: #334155;
@@ -1662,7 +1844,17 @@ body.dark-mode .panel-progress-item.current {
     background: #1e293b !important;
 }
 
-/* Confirm Dialog */
+body.dark-mode .panel-progress-item.success {
+    background: #064e3b !important;
+    color: #34d399 !important;
+}
+
+body.dark-mode .panel-progress-item.failed {
+    background: #450a0a !important;
+    color: #fca5a5 !important;
+}
+
+/* ========== CONFIRM DIALOG ========== */
 body.dark-mode .confirm-dialog-content {
     background: #1e293b !important;
     border: 1px solid #334155;
@@ -1676,41 +1868,20 @@ body.dark-mode .confirm-dialog-content .modal-subtitle {
     color: #cbd5e1 !important;
 }
 
-/* Profile Modal Dark Mode Toggle */
+body.dark-mode .confirm-dialog-content p {
+    color: #fca5a5 !important;
+}
+
+/* ========== PROFILE MODAL DARK MODE TOGGLE ========== */
 body.dark-mode .dark-mode-toggle {
     background: #0f172a !important;
+    border: 1px solid #334155;
 }
 
 body.dark-mode .dark-mode-toggle span {
     color: #a5b4fc !important;
 }
 
-/* Target KPI Cards */
-body.dark-mode .target-card {
-    background: #1e293b !important;
-}
-
-body.dark-mode .target-card div[style*="color: white"] {
-    color: #f1f5f9 !important;
-}
-
-/* Tombol di modal */
-body.dark-mode .modal-buttons .btn-primary {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-body.dark-mode .modal-buttons .btn-danger {
-    background: #dc2626 !important;
-    color: white !important;
-}
-
-body.dark-mode .modal-buttons .btn-success {
-    background: #059669 !important;
-    color: white !important;
-}
-
-/* Toggle Dark Mode Button */
 .dark-mode-toggle {
     display: flex;
     align-items: center;
@@ -1723,19 +1894,10 @@ body.dark-mode .modal-buttons .btn-success {
     transition: all 0.3s ease;
 }
 
-body.dark-mode .dark-mode-toggle {
-    background: #0f172a;
-    border: 1px solid #334155;
-}
-
 .dark-mode-toggle span {
     font-size: 13px;
     font-weight: 500;
     color: #4f46e5;
-}
-
-body.dark-mode .dark-mode-toggle span {
-    color: #a5b4fc;
 }
 
 .dark-mode-toggle .toggle-switch {
@@ -1765,7 +1927,7 @@ body.dark-mode .dark-mode-toggle .toggle-switch {
     justify-content: center;
     font-size: 12px;
     transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 body.dark-mode .dark-mode-toggle .toggle-switch::after {
@@ -1774,123 +1936,157 @@ body.dark-mode .dark-mode-toggle .toggle-switch::after {
     background: #1e293b;
 }
 
-/* Scrollbar di dark mode */
+/* ========== TARGET KPI CARDS ========== */
+body.dark-mode .target-card {
+    background: #1e293b !important;
+}
+
+body.dark-mode .target-card div[style*="color: white"] {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .target-card .progress-bar {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ========== MODAL BUTTONS ========== */
+body.dark-mode .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+body.dark-mode .modal-buttons .btn-danger {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+body.dark-mode .modal-buttons .btn-success {
+    background: #059669 !important;
+    color: white !important;
+}
+
+body.dark-mode .modal-buttons button:hover {
+    transform: translateY(-2px);
+}
+
+/* ========== SCROLLBAR DARK MODE ========== */
 body.dark-mode ::-webkit-scrollbar-track {
     background: #1e293b;
 }
 
 body.dark-mode ::-webkit-scrollbar-thumb {
     background: #475569;
+    border-radius: 10px;
 }
 
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
 }
 
-/* ========== DEADLINE BLINK EFFECT - TIDAK MEMPENGARUHI MODE TERANG ========== */
-/* Efek kedip untuk deadline terlewat - Mode Terang (tetap seperti semula) */
-.card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #fef2f2;
-    animation: blinkWarning 1s step-start infinite;
+/* ========== TABEL DAN LIST LAINNYA ========== */
+body.dark-mode #agentStats {
+    color: #94a3b8 !important;
 }
 
-@keyframes blinkWarning {
-    50% {
-        border-color: #b91c1c;
-        background: #fee2e2;
-    }
+body.dark-mode .filter-status-group input,
+body.dark-mode .search-filter input {
+    accent-color: #818cf8;
 }
 
-/* Efek kedip untuk deadline terlewat - Mode Gelap (dengan warna gelap tapi tetap berkedip) */
-body.dark-mode .card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #450a0a;
-    animation: blinkWarningDark 1s step-start infinite;
+body.dark-mode .whatsapp-link-btn {
+    background: #059669 !important;
+    color: white !important;
 }
 
-@keyframes blinkWarningDark {
-    0% {
-        border-color: #ef4444;
-        background: #450a0a;
-    }
-    50% {
-        border-color: #dc2626;
-        background: #7f1d1d;
-    }
-    100% {
-        border-color: #ef4444;
-        background: #450a0a;
-    }
+body.dark-mode .mark-sent-btn {
+    background: #059669 !important;
+    color: white !important;
 }
 
-/* Efek untuk deadline hari ini - Mode Terang */
-.card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #fffbeb;
+body.dark-mode .mark-failed-btn,
+body.dark-mode .stop-btn {
+    background: #dc2626 !important;
+    color: white !important;
 }
 
-/* Efek untuk deadline hari ini - Mode Gelap */
-body.dark-mode .card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #422006;
+/* ========== PRODUK PAGE ========== */
+body.dark-mode .produk-item {
+    background: #0f172a !important;
 }
 
-/* Search Result Items - Deadline overdue di mode gelap */
-body.dark-mode .search-result-item.deadline-overdue {
-    background: #450a0a !important;
-    border-color: #ef4444 !important;
-    animation: blinkWarningDarkSearch 1s step-start infinite;
+body.dark-mode .produk-item:hover {
+    background: #1e293b !important;
 }
 
-@keyframes blinkWarningDarkSearch {
-    0% {
-        border-color: #ef4444;
-        background: #450a0a;
-    }
-    50% {
-        border-color: #dc2626;
-        background: #7f1d1d;
-    }
-    100% {
-        border-color: #ef4444;
-        background: #450a0a;
-    }
+body.dark-mode .produk-item h4 {
+    color: #f1f5f9 !important;
 }
 
-/* Search Result Items - Deadline hari ini di mode gelap */
-body.dark-mode .search-result-item.deadline-today {
-    background: #422006 !important;
-    border-color: #f59e0b !important;
+/* ========== REMINDER & PESAN PAGE ========== */
+body.dark-mode #reminderList .db-item,
+body.dark-mode #pesanList .db-item {
+    background: #0f172a !important;
 }
 
-/* Pastikan elemen yang memiliki deadline class tetap konsisten di semua mode */
-.card-item.deadline-overdue,
-.card-item.deadline-today,
-.search-result-item.deadline-overdue,
-.search-result-item.deadline-today {
-    transition: all 0.2s ease;
+body.dark-mode .unread {
+    background: #1e1b4b !important;
+    border-left-color: #818cf8 !important;
 }
 
-/* Untuk kanban board full page */
-.kanban-board-full .card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #fef2f2;
-    animation: blinkWarning 1s step-start infinite;
+/* ========== MANAGE USERS PAGE ========== */
+body.dark-mode #usersList .db-item {
+    background: #0f172a !important;
 }
 
-body.dark-mode .kanban-board-full .card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #450a0a;
-    animation: blinkWarningDark 1s step-start infinite;
+/* ========== INFO MODAL ========== */
+body.dark-mode #infoModal .modal-content div[style*="background: #eef2ff"] {
+    background: #1e293b !important;
 }
 
-.kanban-board-full .card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #fffbeb;
+body.dark-mode #infoModal .modal-content p {
+    color: #a5b4fc !important;
 }
 
-body.dark-mode .kanban-board-full .card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #422006;
+/* ========== TARIF ADMIN MODAL ========== */
+body.dark-mode #tarifAdminModal .modal-content input,
+body.dark-mode #tarifAdminModal .modal-content select {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #tarifAdminList .db-item {
+    background: #0f172a !important;
+}
+
+/* ========== PRODUK MASTER MODAL ========== */
+body.dark-mode #produkMasterModal .modal-content input,
+body.dark-mode #produkMasterModal .modal-content select,
+body.dark-mode #produkMasterModal .modal-content textarea {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* ========== AGENT DETAIL MODAL ========== */
+body.dark-mode #agentDetailModal .modal-content input,
+body.dark-mode #agentDetailModal .modal-content select,
+body.dark-mode #agentDetailModal .modal-content textarea {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #agentProductsContainer table {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #agentProductsContainer td {
+    border-bottom-color: #334155 !important;
+}
+
+body.dark-mode #agentProductsContainer input {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
 }
