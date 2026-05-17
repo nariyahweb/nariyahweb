@@ -2302,6 +2302,13 @@ function enableDarkMode() {
     document.body.classList.add('dark-mode');
     localStorage.setItem('darkMode', 'enabled');
     updateDarkModeIcon(true);
+    
+    // Sinkronkan toggle jika ada
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.checked = true;
+    }
+    
     showNotifTop('🌙 Mode Gelap diaktifkan');
 }
 
@@ -2310,6 +2317,13 @@ function disableDarkMode() {
     document.body.classList.remove('dark-mode');
     localStorage.setItem('darkMode', 'disabled');
     updateDarkModeIcon(false);
+    
+    // Sinkronkan toggle jika ada
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.checked = false;
+    }
+    
     showNotifTop('☀️ Mode Terang diaktifkan');
 }
 
@@ -2324,8 +2338,17 @@ function setupDarkModeToggle() {
         const newToggle = darkModeToggle.cloneNode(true);
         darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
         
+        // Set initial state
+        const isDark = document.body.classList.contains('dark-mode');
+        newToggle.checked = isDark;
+        updateDarkModeIcon(isDark);
+        
+        // Tambahkan event listener baru
         newToggle.addEventListener('change', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             console.log('Toggle berubah, checked:', this.checked);
+            
             if (this.checked) {
                 enableDarkMode();
             } else {
@@ -2333,10 +2356,7 @@ function setupDarkModeToggle() {
             }
         });
         
-        // Sinkronkan status toggle dengan class body
-        const isDark = document.body.classList.contains('dark-mode');
-        newToggle.checked = isDark;
-        updateDarkModeIcon(isDark);
+        console.log('Event listener berhasil dipasang, initial checked:', newToggle.checked);
     } else {
         console.log('Toggle switch dengan id "darkModeToggle" TIDAK DITEMUKAN');
     }
