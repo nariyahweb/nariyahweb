@@ -1976,6 +1976,7 @@ auth.onAuthStateChanged(async user => {
         loadAllData();
         initDarkMode();
         setupDarkModeToggle();
+        setupChartClickEvents();
         loadReminders();
         loadPesan();
         loadDBClosing();
@@ -4424,6 +4425,178 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
             }
         }
     });
+}
+
+// ========================================
+// FUNGSI MODAL CHART (POPUP CHART)
+// ========================================
+let chartModal = null;
+let chartModalInstance = null;
+
+function showChartModal(chartType) {
+    // Cek apakah modal sudah ada, jika belum buat
+    let chartModal = document.getElementById('chartModal');
+    if (!chartModal) {
+        chartModal = document.createElement('div');
+        chartModal.id = 'chartModal';
+        chartModal.className = 'modal';
+        chartModal.innerHTML = `
+            <div class="modal-content" style="max-width: 600px; max-height: 80vh;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 0;">
+                    <h3 id="chartModalTitle" style="margin: 0;">📊 Chart</h3>
+                    <button id="closeChartModalBtn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+                </div>
+                <div style="padding: 20px;">
+                    <canvas id="chartModalCanvas" style="max-height: 400px; width: 100%;"></canvas>
+                </div>
+                <div class="modal-buttons">
+                    <button id="chartModalCloseBtn" class="btn-outline">Tutup</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(chartModal);
+        
+        // Event listener untuk tutup modal
+        const closeBtn = document.getElementById('closeChartModalBtn');
+        const closeBtn2 = document.getElementById('chartModalCloseBtn');
+        if (closeBtn) closeBtn.onclick = () => closeModal('chartModal');
+        if (closeBtn2) closeBtn2.onclick = () => closeModal('chartModal');
+        
+        chartModal.onclick = (e) => {
+            if (e.target === chartModal) closeModal('chartModal');
+        };
+    }
+    
+    // Hancurkan chart instance lama jika ada
+    if (chartModalInstance) {
+        chartModalInstance.destroy();
+        chartModalInstance = null;
+    }
+    
+    const modalTitle = document.getElementById('chartModalTitle');
+    const modalCanvas = document.getElementById('chartModalCanvas');
+    
+    if (!modalCanvas) return;
+    
+    // Ambil data dari chart asli
+    if (chartType === 'customer' && chartCustomer) {
+        modalTitle.innerText = '📊 Chart Followup Agen (Diperbesar)';
+        const ctx = modalCanvas.getContext('2d');
+        
+        // Ambil data dari chart asli
+        const originalData = chartCustomer.data.datasets[0].data;
+        const originalLabels = chartCustomer.data.labels;
+        
+        chartModalInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: originalLabels,
+                datasets: [{
+                    data: originalData,
+                    backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                    borderWidth: 0,
+                    hoverOffset: 15,
+                    cutout: '60%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 12 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} (${percent}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } 
+    else if (chartType === 'prospek' && chartProspek) {
+        modalTitle.innerText = '📊 Chart Prospek Agen (Diperbesar)';
+        const ctx = modalCanvas.getContext('2d');
+        
+        const originalData = chartProspek.data.datasets[0].data;
+        const originalLabels = chartProspek.data.labels;
+        
+        chartModalInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: originalLabels,
+                datasets: [{
+                    data: originalData,
+                    backgroundColor: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'],
+                    borderWidth: 0,
+                    hoverOffset: 15,
+                    cutout: '60%'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 12 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${label}: ${value} (${percent}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        console.log('Chart belum siap');
+        return;
+    }
+    
+    document.getElementById('chartModal').style.display = 'flex';
+}
+
+// ========== EVENT LISTENER UNTUK CHART CARD ==========
+function setupChartClickEvents() {
+    const chartCustomerCard = document.querySelector('#chartCustomer')?.closest('.chart-card');
+    const chartProspekCard = document.querySelector('#chartProspek')?.closest('.chart-card');
+    
+    if (chartCustomerCard) {
+        const newCard = chartCustomerCard.cloneNode(true);
+        chartCustomerCard.parentNode.replaceChild(newCard, chartCustomerCard);
+        newCard.style.cursor = 'pointer';
+        newCard.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('Chart Followup diklik');
+            showChartModal('customer');
+        });
+    }
+    
+    if (chartProspekCard) {
+        const newCard = chartProspekCard.cloneNode(true);
+        chartProspekCard.parentNode.replaceChild(newCard, chartProspekCard);
+        newCard.style.cursor = 'pointer';
+        newCard.addEventListener('click', function(e) {
+            e.stopPropagation();
+            console.log('Chart Prospek diklik');
+            showChartModal('prospek');
+        });
+    }
 }
 
 // ========== LOAD ALL DATA ==========
