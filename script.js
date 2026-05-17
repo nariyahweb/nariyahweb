@@ -1974,6 +1974,8 @@ auth.onAuthStateChanged(async user => {
         
         await updateAllBadges();
         loadAllData();
+        initDarkMode();
+        setupDarkModeToggle();
         loadReminders();
         loadPesan();
         loadDBClosing();
@@ -2042,6 +2044,20 @@ auth.onAuthStateChanged(async user => {
         currentUser = null;
     }
 });
+
+// Pastikan dark mode toggle terupdate setelah modal profile dibuka
+const profileModal = document.getElementById('profileModal');
+if (profileModal) {
+    profileModal.addEventListener('click', function(e) {
+        // Ketika modal profile terbuka, update status toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            const isDark = document.body.classList.contains('dark-mode');
+            darkModeToggle.checked = isDark;
+            updateDarkModeIcon(isDark);
+        }
+    });
+}
 
 // ========== PAGE NAVIGATION ==========
 document.querySelectorAll('.menu-item[data-page]').forEach(item => {
@@ -2246,6 +2262,61 @@ formatPhoneInput(document.getElementById('customerPhone'));
 formatPhoneInput(document.getElementById('prospekPhone'));
 formatPhoneInput(document.getElementById('profilePhone'));
 document.getElementById('previewPhotoModal')?.addEventListener('click', (e) => { if (e.target === document.getElementById('previewPhotoModal')) closeModal('previewPhotoModal'); });
+
+// ========== DARK MODE FUNCTIONS ==========
+function initDarkMode() {
+    // Cek localStorage untuk mode yang tersimpan
+    const savedMode = localStorage.getItem('darkMode');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    
+    if (savedMode === 'enabled') {
+        document.body.classList.add('dark-mode');
+        if (darkModeToggle) darkModeToggle.checked = true;
+        updateDarkModeIcon(true);
+    } else {
+        document.body.classList.remove('dark-mode');
+        if (darkModeToggle) darkModeToggle.checked = false;
+        updateDarkModeIcon(false);
+    }
+}
+
+function updateDarkModeIcon(isDark) {
+    const iconSpan = document.querySelector('#darkModeIcon');
+    if (iconSpan) {
+        iconSpan.textContent = isDark ? '🌙' : '☀️';
+    }
+}
+
+function enableDarkMode() {
+    document.body.classList.add('dark-mode');
+    localStorage.setItem('darkMode', 'enabled');
+    updateDarkModeIcon(true);
+    showNotifTop('🌙 Mode Gelap diaktifkan');
+}
+
+function disableDarkMode() {
+    document.body.classList.remove('dark-mode');
+    localStorage.setItem('darkMode', 'disabled');
+    updateDarkModeIcon(false);
+    showNotifTop('☀️ Mode Terang diaktifkan');
+}
+
+// Event listener untuk toggle dark mode
+function setupDarkModeToggle() {
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        const newToggle = darkModeToggle.cloneNode(true);
+        darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
+        
+        newToggle.addEventListener('change', function(e) {
+            if (this.checked) {
+                enableDarkMode();
+            } else {
+                disableDarkMode();
+            }
+        });
+    }
+}
 
 // ========== FORMAT INPUT UNTUK MODAL ==========
 const customerIdInput = document.getElementById('customerId');
