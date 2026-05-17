@@ -1065,9 +1065,198 @@ body.modal-open{overflow:hidden}
     color: #374151;
 }
 
-/* ========== DARK MODE STYLES ========== */
+/* ========== DARK MODE STYLES - PERBAIKAN KANBAN & KEDIP ========== */
 body.dark-mode {
     background: #0f172a;
+}
+
+/* ========== KANBAN - DATA FOLLOWUP AGEN & PROSPEK AGEN ========== */
+/* Semua kolom memiliki latar belakang gelap yang sama */
+body.dark-mode .kanban-board .kanban-column,
+body.dark-mode .kanban-board-full .kanban-column {
+    background: #1e293b !important;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+/* Warna hanya pada JUDUL kolom sesuai status */
+body.dark-mode .kanban-board .kanban-column[data-status="baru"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #c4b5fd !important; /* Ungu terang */
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="followup"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #60a5fa !important; /* Biru terang */
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="pending"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #fbbf24 !important; /* Kuning terang */
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="closing"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #34d399 !important; /* Hijau terang */
+}
+
+/* Count badge di header kolom */
+body.dark-mode .kanban-board .column-header .count {
+    background: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+/* Full page kanban - sama perlakuan */
+body.dark-mode .kanban-board-full .kanban-column[data-status="baru"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #c4b5fd !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="followup"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="pending"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="closing"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #34d399 !important;
+}
+
+/* Card item di kanban */
+body.dark-mode .card-item {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .card-item:hover {
+    background: #334155 !important;
+    border-color: #818cf8 !important;
+    transform: translateY(-2px);
+}
+
+body.dark-mode .card-item .card-id {
+    background: #1e293b !important;
+    color: #a5b4fc !important;
+}
+
+body.dark-mode .card-item .card-name {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .card-item .card-phone span:first-child {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .card-item .card-deadline {
+    color: #64748b !important;
+}
+
+/* ========== DEADLINE BLINK EFFECT - PERBAIKAN AGAR BERKEDIP ========== */
+/* Mode Terang tetap seperti semula */
+.card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #fef2f2;
+    animation: blinkWarning 0.8s step-start infinite !important;
+}
+
+@keyframes blinkWarning {
+    0% {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+    50% {
+        border-color: #b91c1c;
+        background: #fee2e2;
+    }
+    100% {
+        border-color: #ef4444;
+        background: #fef2f2;
+    }
+}
+
+.card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #fffbeb;
+}
+
+/* Mode Gelap - PASTIKAN BERKEDIP */
+body.dark-mode .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #450a0a;
+    animation: blinkWarningDark 0.8s ease-in-out infinite !important;
+}
+
+@keyframes blinkWarningDark {
+    0% {
+        border-color: #ef4444;
+        background: #450a0a;
+        box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+    }
+    50% {
+        border-color: #f87171;
+        background: #7f1d1d;
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    }
+    100% {
+        border-color: #ef4444;
+        background: #450a0a;
+        box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+    }
+}
+
+body.dark-mode .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #422006;
+    animation: pulseToday 0.8s ease-in-out infinite !important;
+}
+
+@keyframes pulseToday {
+    0% {
+        border-color: #f59e0b;
+        background: #422006;
+        box-shadow: 0 0 0px rgba(245, 158, 11, 0);
+    }
+    50% {
+        border-color: #fbbf24;
+        background: #78350f;
+        box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+    }
+    100% {
+        border-color: #f59e0b;
+        background: #422006;
+        box-shadow: 0 0 0px rgba(245, 158, 11, 0);
+    }
+}
+
+/* Search result items - deadline efek */
+body.dark-mode .search-result-item.deadline-overdue {
+    background: #450a0a !important;
+    border-color: #ef4444 !important;
+    animation: blinkWarningDark 0.8s ease-in-out infinite !important;
+}
+
+body.dark-mode .search-result-item.deadline-today {
+    background: #422006 !important;
+    border-color: #f59e0b !important;
+    animation: pulseToday 0.8s ease-in-out infinite !important;
+}
+
+/* Full page kanban - deadline efek */
+body.dark-mode .kanban-board-full .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #450a0a;
+    animation: blinkWarningDark 0.8s ease-in-out infinite !important;
+}
+
+body.dark-mode .kanban-board-full .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #422006;
+    animation: pulseToday 0.8s ease-in-out infinite !important;
 }
 
 /* ========== TYPOGRAPHY - JANGAN HITAM ========== */
@@ -1075,24 +1264,14 @@ body.dark-mode h1,
 body.dark-mode h2, 
 body.dark-mode h3, 
 body.dark-mode h4, 
-body.dark-mode p,
-body.dark-mode span:not(.badge):not(.count):not(.required),
 body.dark-mode .board-header h3,
 body.dark-mode .db-header h3,
 body.dark-mode .search-header h3,
 body.dark-mode .broadcast-header h3,
 body.dark-mode .import-header h3,
 body.dark-mode .fullpage-header h2,
-body.dark-mode .target-header h3,
-body.dark-mode .modal-content h3,
-body.dark-mode .modal-subtitle,
-body.dark-mode .column-header span:first-child {
+body.dark-mode .target-header h3 {
     color: #f1f5f9 !important;
-}
-
-body.dark-mode .modal-subtitle {
-    color: #94a3b8 !important;
-    border-bottom-color: #334155;
 }
 
 /* ========== SIDEBAR ========== */
@@ -1136,12 +1315,6 @@ body.dark-mode .topbar {
     background: linear-gradient(135deg, #1e1b4b, #2e1065);
 }
 
-body.dark-mode .topbar .logo,
-body.dark-mode .topbar-center,
-body.dark-mode .topbar-right .notif-icon {
-    color: #f1f5f9 !important;
-}
-
 /* ========== STAT CARDS & CHARTS ========== */
 body.dark-mode .stat-card,
 body.dark-mode .chart-card,
@@ -1178,11 +1351,15 @@ body.dark-mode .modal {
 body.dark-mode .modal-content {
     background: #1e293b !important;
     border: 1px solid #334155 !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
 }
 
 body.dark-mode .modal-content h3 {
     color: #f1f5f9 !important;
+}
+
+body.dark-mode .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
 }
 
 /* ========== FORM DALAM MODAL ========== */
@@ -1203,7 +1380,6 @@ body.dark-mode .form-group select:focus,
 body.dark-mode .form-group textarea:focus {
     border-color: #818cf8 !important;
     background: #1e293b !important;
-    outline: none;
 }
 
 body.dark-mode .input-icon span {
@@ -1250,153 +1426,6 @@ body.dark-mode .detail-info-content .value {
     color: #f1f5f9 !important;
 }
 
-/* ========== KANBAN - DATA FOLLOWUP AGEN & PROSPEK AGEN ========== */
-body.dark-mode .kanban-board .kanban-column,
-body.dark-mode .kanban-board-full .kanban-column {
-    background: #0f172a !important;
-}
-
-body.dark-mode .kanban-board .column-header span:first-child {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .kanban-board .column-header .count {
-    background: #334155 !important;
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode .card-item {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-}
-
-body.dark-mode .card-item:hover {
-    background: #334155 !important;
-    border-color: #818cf8 !important;
-    transform: translateY(-2px);
-}
-
-body.dark-mode .card-item .card-id {
-    background: #0f172a !important;
-    color: #a5b4fc !important;
-}
-
-body.dark-mode .card-item .card-name {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .card-item .card-phone span:first-child {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode .card-item .card-deadline {
-    color: #64748b !important;
-}
-
-/* Warna khusus setiap kolom kanban di dark mode */
-body.dark-mode .kanban-board .kanban-column[data-status="baru"],
-body.dark-mode .kanban-board .kanban-column[data-status="Baru"] {
-    background: #1e1b4b !important;
-}
-
-body.dark-mode .kanban-board .kanban-column[data-status="followup"],
-body.dark-mode .kanban-board .kanban-column[data-status="Dihubungi"] {
-    background: #1e293b !important;
-}
-
-body.dark-mode .kanban-board .kanban-column[data-status="pending"],
-body.dark-mode .kanban-board .kanban-column[data-status="Negosiasi"] {
-    background: #451a03 !important;
-}
-
-body.dark-mode .kanban-board .kanban-column[data-status="closing"],
-body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"] {
-    background: #064e3b !important;
-}
-
-body.dark-mode .kanban-board-full .kanban-column[data-status="baru"],
-body.dark-mode .kanban-board-full .kanban-column[data-status="Baru"] {
-    background: #1e1b4b !important;
-}
-
-body.dark-mode .kanban-board-full .kanban-column[data-status="followup"],
-body.dark-mode .kanban-board-full .kanban-column[data-status="Dihubungi"] {
-    background: #1e293b !important;
-}
-
-body.dark-mode .kanban-board-full .kanban-column[data-status="pending"],
-body.dark-mode .kanban-board-full .kanban-column[data-status="Negosiasi"] {
-    background: #451a03 !important;
-}
-
-body.dark-mode .kanban-board-full .kanban-column[data-status="closing"],
-body.dark-mode .kanban-board-full .kanban-column[data-status="Tertarik"] {
-    background: #064e3b !important;
-}
-
-/* ========== DEADLINE EFFECT - TIDAK MEMPENGARUHI MODE TERANG ========== */
-/* Mode Terang tetap seperti semula */
-.card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #fef2f2;
-    animation: blinkWarning 1s step-start infinite;
-}
-
-@keyframes blinkWarning {
-    50% {
-        border-color: #b91c1c;
-        background: #fee2e2;
-    }
-}
-
-.card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #fffbeb;
-}
-
-/* Mode Gelap dengan efek kedip tersendiri */
-body.dark-mode .card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #450a0a;
-    animation: blinkWarningDark 1s step-start infinite;
-}
-
-@keyframes blinkWarningDark {
-    0% {
-        border-color: #ef4444;
-        background: #450a0a;
-    }
-    50% {
-        border-color: #dc2626;
-        background: #7f1d1d;
-    }
-    100% {
-        border-color: #ef4444;
-        background: #450a0a;
-    }
-}
-
-body.dark-mode .card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #422006;
-}
-
-body.dark-mode .search-result-item.deadline-overdue {
-    background: #450a0a !important;
-    border-color: #ef4444 !important;
-    animation: blinkWarningDark 1s step-start infinite;
-}
-
-body.dark-mode .search-result-item.deadline-today {
-    background: #422006 !important;
-    border-color: #f59e0b !important;
-}
-
-/* ========== FULL PAGE KANBAN ========== */
-body.dark-mode .fullpage-header h2 {
-    color: #f1f5f9 !important;
-}
-
 /* ========== DATABASE ITEMS ========== */
 body.dark-mode .db-item {
     background: #0f172a !important;
@@ -1427,7 +1456,6 @@ body.dark-mode .db-item-agent {
 
 body.dark-mode .db-item-agent:hover {
     background: #1e293b !important;
-    transform: translateX(4px);
 }
 
 body.dark-mode .db-item-agent-info h4 {
@@ -1450,7 +1478,6 @@ body.dark-mode .search-result-item {
 
 body.dark-mode .search-result-item:hover {
     background: #1e293b !important;
-    border-color: #818cf8 !important;
 }
 
 body.dark-mode .search-result-info h4 {
@@ -1487,25 +1514,8 @@ body.dark-mode #templateName {
     color: #f1f5f9 !important;
 }
 
-body.dark-mode #customNumbers:focus,
-body.dark-mode #broadcastMessage:focus,
-body.dark-mode #templateName:focus {
-    border-color: #818cf8 !important;
-    outline: none;
-}
-
 body.dark-mode .selected-numbers {
     background: #0f172a !important;
-}
-
-body.dark-mode .selected-numbers .number-item {
-    color: #cbd5e1 !important;
-    border-bottom-color: #334155;
-}
-
-body.dark-mode .variable-hint small,
-body.dark-mode .variable-hint code {
-    color: #94a3b8 !important;
 }
 
 /* ========== BUTTONS ========== */
@@ -1516,7 +1526,6 @@ body.dark-mode .btn-outline {
 
 body.dark-mode .btn-outline:hover {
     background: #475569 !important;
-    transform: translateY(-2px);
 }
 
 body.dark-mode .add-btn {
@@ -1526,7 +1535,6 @@ body.dark-mode .add-btn {
 
 body.dark-mode .add-btn:hover {
     background: #4338ca !important;
-    transform: translateY(-2px);
 }
 
 body.dark-mode .db-delete-selected {
@@ -1534,18 +1542,9 @@ body.dark-mode .db-delete-selected {
     color: white !important;
 }
 
-body.dark-mode .db-delete-selected:hover {
-    background: #b91c1c !important;
-}
-
 body.dark-mode .db-select-all {
     background: #1e293b !important;
     color: #818cf8 !important;
-    border: 1px solid #334155;
-}
-
-body.dark-mode .db-select-all:hover {
-    background: #334155 !important;
 }
 
 body.dark-mode .db-import-excel {
@@ -1553,39 +1552,12 @@ body.dark-mode .db-import-excel {
     color: white !important;
 }
 
-body.dark-mode .db-import-excel:hover {
-    background: #047857 !important;
-}
-
 body.dark-mode .db-export-excel {
     background: #2563eb !important;
     color: white !important;
 }
 
-body.dark-mode .db-export-excel:hover {
-    background: #1d4ed8 !important;
-}
-
-body.dark-mode .broadcast-btn {
-    background: #25D366 !important;
-    color: white !important;
-}
-
-body.dark-mode .broadcast-btn:hover {
-    background: #20b85a !important;
-}
-
-body.dark-mode .btn-refresh {
-    background: #1e293b !important;
-    color: #818cf8 !important;
-    border: 1px solid #334155;
-}
-
-body.dark-mode .btn-refresh:hover {
-    background: #334155 !important;
-}
-
-/* ========== IMPORT PAGE - JUDUL IMPORT DATA EXCEL TERLIHAT ========== */
+/* ========== IMPORT PAGE ========== */
 body.dark-mode .import-header h3 {
     color: #f1f5f9 !important;
 }
@@ -1603,21 +1575,9 @@ body.dark-mode .import-card h4 {
     color: #f1f5f9 !important;
 }
 
-body.dark-mode .info-list li {
-    color: #cbd5e1 !important;
-}
-
 body.dark-mode .drop-zone {
     background: #1e293b !important;
     border-color: #818cf8 !important;
-}
-
-body.dark-mode .drop-zone p {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode .drop-zone:hover {
-    background: #334155 !important;
 }
 
 body.dark-mode .radio-option {
@@ -1629,16 +1589,8 @@ body.dark-mode .radio-option.active {
     border-color: #818cf8;
 }
 
-body.dark-mode .radio-option p {
-    color: #94a3b8 !important;
-}
-
 /* ========== FILTER DAN SEARCH ========== */
 body.dark-mode .search-filter label {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode .filter-status-group label {
     color: #cbd5e1 !important;
 }
 
@@ -1648,47 +1600,9 @@ body.dark-mode .search-box .search-input {
     color: #f1f5f9 !important;
 }
 
-body.dark-mode .search-box .search-input:focus {
-    border-color: #818cf8 !important;
-    outline: none;
-}
-
-body.dark-mode .search-btn {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-body.dark-mode .search-btn:hover {
-    background: #4338ca !important;
-}
-
 body.dark-mode .clear-btn {
     background: #334155 !important;
     color: #f1f5f9 !important;
-}
-
-body.dark-mode .clear-btn:hover {
-    background: #475569 !important;
-}
-
-/* ========== PENDING MODAL ITEMS ========== */
-body.dark-mode .pending-item {
-    background: #0f172a !important;
-}
-
-body.dark-mode .pending-item input[type="text"] {
-    background: #1e293b !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .pending-item input[type="text"]:focus {
-    border-color: #818cf8 !important;
-    outline: none;
-}
-
-body.dark-mode .delete-pending-item {
-    color: #f87171 !important;
 }
 
 /* ========== BADGES ========== */
@@ -1747,141 +1661,7 @@ body.dark-mode .status-closing {
     color: #34d399 !important;
 }
 
-body.dark-mode .status-dihubungi {
-    background: #1e293b !important;
-    color: #60a5fa !important;
-}
-
-body.dark-mode .status-negosiasi {
-    background: #451a03 !important;
-    color: #fbbf24 !important;
-}
-
-body.dark-mode .status-tertarik {
-    background: #064e3b !important;
-    color: #34d399 !important;
-}
-
-/* ========== TEMPLATE ITEMS ========== */
-body.dark-mode .template-item {
-    background: #0f172a !important;
-    border-color: #334155;
-}
-
-body.dark-mode .template-item:hover {
-    background: #1e293b !important;
-}
-
-body.dark-mode .template-item strong {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .template-use-btn {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-body.dark-mode .template-delete-btn {
-    background: #dc2626 !important;
-    color: white !important;
-}
-
-/* ========== PROGRESS PANEL ========== */
-body.dark-mode .broadcast-panel {
-    background: #1e293b !important;
-    border-color: #334155;
-}
-
-body.dark-mode .panel-header {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-body.dark-mode .close-panel-btn {
-    color: white !important;
-}
-
-body.dark-mode .current-info {
-    background: #0f172a !important;
-}
-
-body.dark-mode .current-label {
-    color: #94a3b8 !important;
-}
-
-body.dark-mode .current-name {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .current-number {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode .message-preview {
-    background: #0f172a !important;
-    border-color: #334155;
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .progress-bar-container {
-    background: #334155 !important;
-}
-
-body.dark-mode .progress-bar-fill {
-    background: linear-gradient(90deg, #10b981, #059669) !important;
-}
-
-body.dark-mode .progress-text {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode .progress-list .panel-progress-item {
-    background: #0f172a !important;
-    border-bottom-color: #334155;
-}
-
-body.dark-mode .panel-progress-item.current {
-    background: #1e293b !important;
-}
-
-body.dark-mode .panel-progress-item.success {
-    background: #064e3b !important;
-    color: #34d399 !important;
-}
-
-body.dark-mode .panel-progress-item.failed {
-    background: #450a0a !important;
-    color: #fca5a5 !important;
-}
-
-/* ========== CONFIRM DIALOG ========== */
-body.dark-mode .confirm-dialog-content {
-    background: #1e293b !important;
-    border: 1px solid #334155;
-}
-
-body.dark-mode .confirm-dialog-content h3 {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .confirm-dialog-content .modal-subtitle {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode .confirm-dialog-content p {
-    color: #fca5a5 !important;
-}
-
-/* ========== PROFILE MODAL DARK MODE TOGGLE ========== */
-body.dark-mode .dark-mode-toggle {
-    background: #0f172a !important;
-    border: 1px solid #334155;
-}
-
-body.dark-mode .dark-mode-toggle span {
-    color: #a5b4fc !important;
-}
-
+/* ========== DARK MODE TOGGLE ========== */
 .dark-mode-toggle {
     display: flex;
     align-items: center;
@@ -1894,10 +1674,19 @@ body.dark-mode .dark-mode-toggle span {
     transition: all 0.3s ease;
 }
 
+body.dark-mode .dark-mode-toggle {
+    background: #0f172a !important;
+    border: 1px solid #334155;
+}
+
 .dark-mode-toggle span {
     font-size: 13px;
     font-weight: 500;
     color: #4f46e5;
+}
+
+body.dark-mode .dark-mode-toggle span {
+    color: #a5b4fc !important;
 }
 
 .dark-mode-toggle .toggle-switch {
@@ -1941,34 +1730,6 @@ body.dark-mode .target-card {
     background: #1e293b !important;
 }
 
-body.dark-mode .target-card div[style*="color: white"] {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .target-card .progress-bar {
-    background: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* ========== MODAL BUTTONS ========== */
-body.dark-mode .modal-buttons .btn-primary {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-body.dark-mode .modal-buttons .btn-danger {
-    background: #dc2626 !important;
-    color: white !important;
-}
-
-body.dark-mode .modal-buttons .btn-success {
-    background: #059669 !important;
-    color: white !important;
-}
-
-body.dark-mode .modal-buttons button:hover {
-    transform: translateY(-2px);
-}
-
 /* ========== SCROLLBAR DARK MODE ========== */
 body.dark-mode ::-webkit-scrollbar-track {
     background: #1e293b;
@@ -1981,112 +1742,4 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
-}
-
-/* ========== TABEL DAN LIST LAINNYA ========== */
-body.dark-mode #agentStats {
-    color: #94a3b8 !important;
-}
-
-body.dark-mode .filter-status-group input,
-body.dark-mode .search-filter input {
-    accent-color: #818cf8;
-}
-
-body.dark-mode .whatsapp-link-btn {
-    background: #059669 !important;
-    color: white !important;
-}
-
-body.dark-mode .mark-sent-btn {
-    background: #059669 !important;
-    color: white !important;
-}
-
-body.dark-mode .mark-failed-btn,
-body.dark-mode .stop-btn {
-    background: #dc2626 !important;
-    color: white !important;
-}
-
-/* ========== PRODUK PAGE ========== */
-body.dark-mode .produk-item {
-    background: #0f172a !important;
-}
-
-body.dark-mode .produk-item:hover {
-    background: #1e293b !important;
-}
-
-body.dark-mode .produk-item h4 {
-    color: #f1f5f9 !important;
-}
-
-/* ========== REMINDER & PESAN PAGE ========== */
-body.dark-mode #reminderList .db-item,
-body.dark-mode #pesanList .db-item {
-    background: #0f172a !important;
-}
-
-body.dark-mode .unread {
-    background: #1e1b4b !important;
-    border-left-color: #818cf8 !important;
-}
-
-/* ========== MANAGE USERS PAGE ========== */
-body.dark-mode #usersList .db-item {
-    background: #0f172a !important;
-}
-
-/* ========== INFO MODAL ========== */
-body.dark-mode #infoModal .modal-content div[style*="background: #eef2ff"] {
-    background: #1e293b !important;
-}
-
-body.dark-mode #infoModal .modal-content p {
-    color: #a5b4fc !important;
-}
-
-/* ========== TARIF ADMIN MODAL ========== */
-body.dark-mode #tarifAdminModal .modal-content input,
-body.dark-mode #tarifAdminModal .modal-content select {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode #tarifAdminList .db-item {
-    background: #0f172a !important;
-}
-
-/* ========== PRODUK MASTER MODAL ========== */
-body.dark-mode #produkMasterModal .modal-content input,
-body.dark-mode #produkMasterModal .modal-content select,
-body.dark-mode #produkMasterModal .modal-content textarea {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-/* ========== AGENT DETAIL MODAL ========== */
-body.dark-mode #agentDetailModal .modal-content input,
-body.dark-mode #agentDetailModal .modal-content select,
-body.dark-mode #agentDetailModal .modal-content textarea {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode #agentProductsContainer table {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode #agentProductsContainer td {
-    border-bottom-color: #334155 !important;
-}
-
-body.dark-mode #agentProductsContainer input {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
 }
