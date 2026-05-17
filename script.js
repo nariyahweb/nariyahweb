@@ -7,12 +7,22 @@ const firebaseConfig = {
     projectId: "floupyud"
 };
 
-firebase.initializeApp(firebaseConfig);
+// Inisialisasi Firebase (hindari double initialization)
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+} else {
+    firebase.app();
+}
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Nonaktifkan cache offline
-db.settings({ persistence: false }, { merge: true });
+// 🔥 PERBAIKAN - Gunakan merge: true atau hapus saja
+try {
+    db.settings({ persistence: false }, { merge: true });
+} catch(e) {
+    console.warn('Firestore settings error:', e);
+}
 
 // ========================================
 // GLOBAL VARIABLES
