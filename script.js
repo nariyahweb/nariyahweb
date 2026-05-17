@@ -4577,8 +4577,11 @@ function showChartModal(chartType) {
 
 // ========== EVENT LISTENER UNTUK CHART CARD ==========
 function setupChartClickEvents() {
-    const chartCustomerCard = document.querySelector('#chartCustomer')?.closest('.chart-card');
-    const chartProspekCard = document.querySelector('#chartProspek')?.closest('.chart-card');
+    const chartCustomerCard =
+        document.querySelector('#chartCustomer')?.closest('.chart-card');
+
+    const chartProspekCard =
+        document.querySelector('#chartProspek')?.closest('.chart-card');
 
     if (chartCustomerCard && !chartCustomerCard.dataset.listenerAdded) {
         chartCustomerCard.dataset.listenerAdded = 'true';
@@ -4586,7 +4589,6 @@ function setupChartClickEvents() {
 
         chartCustomerCard.addEventListener('click', function (e) {
             e.stopPropagation();
-            console.log('Chart Followup diklik');
             showChartModal('customer');
         });
     }
@@ -4597,7 +4599,6 @@ function setupChartClickEvents() {
 
         chartProspekCard.addEventListener('click', function (e) {
             e.stopPropagation();
-            console.log('Chart Prospek diklik');
             showChartModal('prospek');
         });
     }
