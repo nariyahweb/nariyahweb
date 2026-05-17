@@ -631,6 +631,157 @@ body.dark-mode .notif-toast {
 }
 
 /* ========================================
+   PERBAIKAN DARK MODE - SIDEBAR HOVER
+   ======================================== */
+body.dark-mode .sidebar {
+    background: #0f172a !important;
+    border-right-color: #1e293b !important;
+}
+
+body.dark-mode .sidebar-header {
+    border-bottom-color: #1e293b !important;
+}
+
+body.dark-mode .sidebar-header h2 {
+    color: #a78bfa !important;
+}
+
+body.dark-mode .menu-item {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .menu-item:hover {
+    background: linear-gradient(90deg, #1e293b, #0f172a) !important;
+    color: #c084fc !important;
+    transform: translateX(6px);
+}
+
+body.dark-mode .menu-item.active {
+    background: #1e293b !important;
+    color: #c084fc !important;
+}
+
+body.dark-mode .menu-item.active::before {
+    background: #c084fc !important;
+}
+
+body.dark-mode .menu-label {
+    color: #64748b !important;
+}
+
+body.dark-mode .menu-label:hover {
+    color: #a78bfa !important;
+}
+
+body.dark-mode .menu-divider {
+    background: #1e293b !important;
+}
+
+/* ========================================
+   PERBAIKAN DARK MODE - DEADLINE WARNA
+   ======================================== */
+/* Deadline Today - Kuning */
+body.dark-mode .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #451a03 !important;
+}
+
+body.dark-mode .card-item.deadline-today .card-name,
+body.dark-mode .card-item.deadline-today .card-phone,
+body.dark-mode .card-item.deadline-today .card-deadline,
+body.dark-mode .card-item.deadline-today .card-id {
+    color: #fde68a !important;
+}
+
+body.dark-mode .card-item.deadline-today .whatsapp-icon {
+    color: #25D366 !important;
+}
+
+/* Deadline Overdue - Merah Kedip */
+body.dark-mode .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #7f1d1d !important;
+    animation: blinkWarningDark 1s step-start infinite;
+}
+
+body.dark-mode .card-item.deadline-overdue .card-name,
+body.dark-mode .card-item.deadline-overdue .card-phone,
+body.dark-mode .card-item.deadline-overdue .card-deadline,
+body.dark-mode .card-item.deadline-overdue .card-id {
+    color: #fecaca !important;
+}
+
+body.dark-mode .card-item.deadline-overdue .whatsapp-icon {
+    color: #25D366 !important;
+}
+
+@keyframes blinkWarningDark {
+    50% {
+        border-color: #dc2626;
+        background: #991b1b;
+    }
+}
+
+/* Untuk Full Page Kanban */
+body.dark-mode .kanban-board-full .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #451a03 !important;
+}
+
+body.dark-mode .kanban-board-full .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #7f1d1d !important;
+    animation: blinkWarningDark 1s step-start infinite;
+}
+
+/* Search Results Deadline */
+body.dark-mode .search-result-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #451a03 !important;
+}
+
+body.dark-mode .search-result-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #7f1d1d !important;
+    animation: blinkWarningDark 1s step-start infinite;
+}
+
+body.dark-mode .search-result-item.deadline-today h4,
+body.dark-mode .search-result-item.deadline-today p,
+body.dark-mode .search-result-item.deadline-today small,
+body.dark-mode .search-result-item.deadline-overdue h4,
+body.dark-mode .search-result-item.deadline-overdue p,
+body.dark-mode .search-result-item.deadline-overdue small {
+    color: #fde68a !important;
+}
+
+/* ========================================
+   PERBAIKAN HOVER CARD DI DARK MODE
+   ======================================== */
+body.dark-mode .stat-card:hover {
+    background: #1e293b !important;
+    border-color: #4f46e5 !important;
+}
+
+body.dark-mode .chart-card:hover {
+    background: #1e293b !important;
+    border-color: #4f46e5 !important;
+}
+
+body.dark-mode .db-item:hover {
+    background: #1e293b !important;
+}
+
+body.dark-mode .db-item-agent:hover {
+    background: #1e293b !important;
+}
+
+body.dark-mode .search-result-item:hover {
+    background: #1e293b !important;
+    border-color: #4f46e5 !important;
+}
+
+/* ========================================
    MAIN CONTENT
    ======================================== */
 .main-content {
