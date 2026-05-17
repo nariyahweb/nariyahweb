@@ -1,3 +1,5 @@
+/* style.css - Perbaikan Dark Mode */
+
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f5f7fb;overflow-x:hidden;position:relative}
 #loginPage{display:flex;height:100vh;justify-content:center;align-items:center;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
@@ -345,7 +347,6 @@ body.modal-open{overflow:hidden}
 @media(max-width:768px){.stats-grid{grid-template-columns:1fr}.content-area{padding:12px}.topbar-center{display:none}.toggle-btn{display:block!important}.fullpage-header{flex-direction:column;align-items:stretch}.fullpage-header .add-btn{width:100%}.board-header{flex-direction:column;align-items:flex-start;gap:8px}.board-header .add-btn{width:100%}.kanban-board{grid-template-columns:repeat(4,minmax(100px,1fr))!important;gap:8px}.kanban-board-full{grid-template-columns:repeat(4,minmax(100px,1fr));gap:8px}}
 @media(max-width:640px){.kanban-board{grid-template-columns:repeat(4,minmax(85px,1fr))!important;gap:6px}.kanban-board .card-name{font-size:9px}.kanban-board .card-phone span:first-child{font-size:8px}.kanban-board .whatsapp-icon{font-size:9px}.kanban-board-full{grid-template-columns:repeat(4,minmax(85px,1fr));gap:6px}}
 /* ========== PERBAIKAN Z-INDEX MODAL (TAMBAHAN) ========== */
-/* PERBAIKAN MODAL NEGOSIASI - Z-INDEX TERTINGGI */
 #prospekNegosiasiModal {
     position: fixed !important;
     top: 0 !important;
@@ -359,11 +360,9 @@ body.modal-open{overflow:hidden}
     z-index: 9999999 !important;
     backdrop-filter: blur(4px);
 }
-
 #prospekNegosiasiModal[style*="display: flex"] {
     display: flex !important;
 }
-
 #prospekNegosiasiModal .modal-content {
     background: #fff !important;
     border-radius: 24px;
@@ -375,13 +374,9 @@ body.modal-open{overflow:hidden}
     z-index: 10000000 !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
-
-/* Pastikan tidak ada elemen yang menutupi modal */
 #prospekNegosiasiModal * {
     pointer-events: auto;
 }
-
-/* PERBAIKAN POPUP KONFIRMASI - Z-INDEX LEBIH TINGGI */
 .confirm-dialog-overlay {
     position: fixed !important;
     top: 0 !important;
@@ -395,7 +390,6 @@ body.modal-open{overflow:hidden}
     z-index: 99999999 !important;
     backdrop-filter: blur(4px);
 }
-
 .confirm-dialog-content {
     background: white !important;
     border-radius: 24px !important;
@@ -405,8 +399,6 @@ body.modal-open{overflow:hidden}
     position: relative !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
 }
-
-/* ========== NOTIFIKASI TOPBAR DI ATAS SEMUA ========== */
 #notifBox {
     position: fixed !important;
     top: 20px !important;
@@ -415,15 +407,12 @@ body.modal-open{overflow:hidden}
     bottom: auto !important;
     z-index: 999999999 !important;
 }
-
 .notif-toast {
     z-index: 999999999 !important;
     position: relative !important;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     pointer-events: auto;
 }
-
-/* Pastikan tombol di dalam modal popup bisa diklik */
 .modal .btn-primary,
 .modal .btn-danger,
 .modal .btn-outline,
@@ -432,64 +421,49 @@ body.modal-open{overflow:hidden}
     z-index: 100000 !important;
     pointer-events: auto !important;
 }
-
-/* Khusus untuk followup confirm modal */
 #followupConfirmModal {
     z-index: 999999 !important;
 }
-
 #followupConfirmModal .modal-content {
     z-index: 999999 !important;
 }
-
 #followupConfirmModal button {
     z-index: 9999999 !important;
     pointer-events: auto !important;
 }
-
-/* Agar klik pada tombol tidak tertangkap modal di belakangnya */
 .modal {
-    pointer-events: none; /* Modal tidak menerima klik */
+    pointer-events: none;
     cursor: pointer;
 }
-
 .modal .modal-content {
     cursor: default;
-    pointer-events: auto; /* Tapi konten modal tetap bisa diklik */
+    pointer-events: auto;
 }
-
 .modal .modal-content button {
     pointer-events: auto !important;
 }
-
-/* Fix untuk modal yang bertumpuk */
 #pendingModal,
 #followupConfirmModal,
 #prospekNegosiasiModal {
-    pointer-events: none; /* Overlay tidak menerima klik */
+    pointer-events: none;
 }
-
 #pendingModal .modal-content,
 #followupConfirmModal .modal-content,
 #prospekNegosiasiModal .modal-content {
-    pointer-events: auto; /* Konten tetap bisa diklik */
+    pointer-events: auto;
 }
-
 #pendingModal button,
 #followupConfirmModal button,
 #prospekNegosiasiModal button {
     pointer-events: auto !important;
     z-index: 9999999 !important;
 }
-
-/* Notifikasi Topbar - PASTIKAN DI DEPAN */
 #notifBox {
     position: fixed !important;
     top: 20px !important;
     right: 20px !important;
     z-index: 2147483647 !important;
 }
-
 .notif-toast {
     z-index: 2147483647 !important;
     position: relative !important;
@@ -501,12 +475,9 @@ body.modal-open{overflow:hidden}
     box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
     font-size: 14px !important;
 }
-
 .notif-error {
     background: #ef4444 !important;
 }
-
-/* ========== DATABASE AGENT ========== */
 .db-import-excel, .db-export-excel {
     transition: all 0.2s;
 }
@@ -565,8 +536,6 @@ body.modal-open{overflow:hidden}
 .db-item-move-followup:hover {
     background: #4338ca;
 }
-
-/* ========== PERBAIKAN POPUP EDIT DEADLINE ========== */
 #editDeadlineModal {
     z-index: 9999999 !important;
     position: fixed !important;
@@ -580,11 +549,9 @@ body.modal-open{overflow:hidden}
     align-items: center !important;
     backdrop-filter: blur(4px);
 }
-
 #editDeadlineModal[style*="display: flex"] {
     display: flex !important;
 }
-
 #editDeadlineModal .modal-content {
     z-index: 9999999 !important;
     background: white !important;
@@ -594,17 +561,13 @@ body.modal-open{overflow:hidden}
     position: relative !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
 }
-
 #editDeadlineModal button {
     z-index: 9999999 !important;
     pointer-events: auto !important;
 }
-
 #editDeadlineModal .modal-content button {
     z-index: 9999999 !important;
 }
-
-/* ========== PERBAIKAN MODAL CLICK OUTSIDE ========== */
 .modal {
     display: none;
     position: fixed;
@@ -617,11 +580,9 @@ body.modal-open{overflow:hidden}
     justify-content: center;
     align-items: center;
 }
-
 .modal.show {
     display: flex !important;
 }
-
 .modal .modal-content {
     background: white;
     border-radius: 24px;
@@ -632,34 +593,25 @@ body.modal-open{overflow:hidden}
     z-index: 100000;
     pointer-events: auto;
 }
-
-/* Overlay menangkap klik */
 .modal {
     pointer-events: auto;
     cursor: pointer;
 }
-
 .modal .modal-content {
     cursor: default;
 }
-
-/* Pastikan tidak ada elemen yang menghalangi modal */
 .modal * {
     pointer-events: auto;
 }
-
-/* Perbaikan tampilan produk page */
 #produkPage .db-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
 }
-
 #produkPage .db-actions button {
     white-space: nowrap;
 }
-
 @media (max-width: 768px) {
     #produkPage .db-actions {
         flex-direction: column;
@@ -669,24 +621,18 @@ body.modal-open{overflow:hidden}
         width: 100%;
     }
 }
-
-/* Efek hover produk item */
 .produk-item {
     transition: all 0.2s ease;
     cursor: pointer;
 }
-
 .produk-item:hover {
     background: #f9fafb;
     transform: translateX(4px);
     border-color: #c7d2fe;
 }
-
 .produk-item:hover h4 {
     color: #4f46e5;
 }
-
-/* Target & KPI Section */
 .target-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -703,26 +649,18 @@ body.modal-open{overflow:hidden}
 #targetChartCard:hover, #trendChartCard:hover {
     transform: translateY(-4px);
 }
-
-/* Card Transaksi - Bisa Diklik */
 #targetTransaksiCard {
     cursor: pointer;
     transition: all 0.3s ease;
 }
-
 #targetTransaksiCard:hover {
     transform: translateY(-4px);
     box-shadow: 0 15px 30px -12px rgba(0, 0, 0, 0.2);
     filter: brightness(1.05);
 }
-
 #targetTransaksiCard:active {
     transform: translateY(0px);
 }
-
-/* ========== PERBAIKAN MODAL / POPUP ========== */
-
-/* Reset modal agar tidak acak-acakan */
 .modal {
     position: fixed !important;
     top: 0 !important;
@@ -736,11 +674,9 @@ body.modal-open{overflow:hidden}
     z-index: 99999 !important;
     backdrop-filter: blur(4px);
 }
-
 .modal[style*="display: flex"] {
     display: flex !important;
 }
-
 .modal-content {
     background: white !important;
     border-radius: 24px !important;
@@ -752,18 +688,13 @@ body.modal-open{overflow:hidden}
     z-index: 100000 !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
 }
-
-/* Untuk modal yang membutuhkan lebar lebih besar */
 .modal-content.wide {
     max-width: 800px !important;
 }
-
-/* Form group dalam modal */
 .modal .form-group {
     margin-bottom: 16px;
     padding: 0;
 }
-
 .modal .form-group label {
     display: block;
     font-size: 12px;
@@ -771,7 +702,6 @@ body.modal-open{overflow:hidden}
     color: #374151;
     margin-bottom: 6px;
 }
-
 .modal .form-group input,
 .modal .form-group select,
 .modal .form-group textarea {
@@ -783,12 +713,9 @@ body.modal-open{overflow:hidden}
     background: #fafafc;
     font-family: inherit;
 }
-
-/* Input icon dalam modal */
 .modal .input-icon {
     position: relative;
 }
-
 .modal .input-icon span {
     position: absolute;
     left: 12px;
@@ -797,19 +724,15 @@ body.modal-open{overflow:hidden}
     font-size: 16px;
     color: #9ca3af;
 }
-
 .modal .input-icon input,
 .modal .input-icon select {
     padding-left: 40px;
 }
-
-/* Phone input dalam modal */
 .modal .phone-input {
     display: flex;
     gap: 8px;
     align-items: center;
 }
-
 .modal .phone-prefix {
     background: #f3f4f6;
     border: 1.5px solid #e5e7eb;
@@ -821,8 +744,6 @@ body.modal-open{overflow:hidden}
     font-size: 13px;
     height: 46px;
 }
-
-/* Modal buttons */
 .modal .modal-buttons {
     display: flex;
     gap: 12px;
@@ -830,7 +751,6 @@ body.modal-open{overflow:hidden}
     border-top: 1px solid #f0f0f0;
     margin-top: 8px;
 }
-
 .modal .modal-buttons button {
     flex: 1;
     padding: 12px;
@@ -841,32 +761,25 @@ body.modal-open{overflow:hidden}
     font-size: 13px;
     transition: all 0.2s;
 }
-
 .modal .modal-buttons button:hover {
     transform: translateY(-2px);
 }
-
 .modal .modal-buttons .btn-primary {
     background: #4f46e5;
     color: #fff;
 }
-
 .modal .modal-buttons .btn-outline {
     background: #f3f4f6;
     color: #374151;
 }
-
 .modal .modal-buttons .btn-danger {
     background: #ef4444;
     color: #fff;
 }
-
 .modal .modal-buttons .btn-success {
     background: #10b981;
     color: #fff;
 }
-
-/* ========== PERBAIKAN MODAL PREVIEW FOTO ========== */
 #previewPhotoModal .modal-content {
     max-width: 90vw !important;
     max-height: 90vh !important;
@@ -877,7 +790,6 @@ body.modal-open{overflow:hidden}
     justify-content: center;
     align-items: center;
 }
-
 #previewPhotoModal .preview-photo-content {
     background: rgba(0, 0, 0, 0.9) !important;
     border-radius: 16px !important;
@@ -885,7 +797,6 @@ body.modal-open{overflow:hidden}
     max-width: 90vw;
     max-height: 90vh;
 }
-
 #previewPhotoModal .preview-photo-header {
     display: flex;
     justify-content: space-between;
@@ -893,13 +804,11 @@ body.modal-open{overflow:hidden}
     margin-bottom: 16px;
     color: white;
 }
-
 #previewPhotoModal .preview-photo-header h3 {
     margin: 0;
     font-size: 18px;
     color: white;
 }
-
 #previewPhotoModal .preview-photo-header .close-preview {
     background: none;
     border: none;
@@ -907,45 +816,33 @@ body.modal-open{overflow:hidden}
     font-size: 24px;
     cursor: pointer;
 }
-
 #previewPhotoModal .preview-photo-body {
     text-align: center;
 }
-
 #previewPhotoModal .preview-photo-body img {
     max-width: 80vw;
     max-height: 75vh;
     object-fit: contain;
     border-radius: 12px;
 }
-
 #previewPhotoModal .modal-buttons {
     border-top: 1px solid rgba(255,255,255,0.2);
     margin-top: 16px;
     padding-top: 16px;
 }
-
 #previewPhotoModal .modal-buttons button {
     background: #4f46e5;
     color: white;
 }
-
-/* ========== PERBAIKAN MODAL DETAIL AGENT ========== */
 #agentDetailModal .modal-content {
     max-width: 600px !important;
 }
-
-/* ========== PERBAIKAN MODAL TARIF ADMIN ========== */
 #tarifAdminModal .modal-content {
     max-width: 800px !important;
 }
-
-/* ========== PERBAIKAN MODAL PRODUK ========== */
 #produkMasterModal .modal-content {
     max-width: 450px !important;
 }
-
-/* Modal Content Styles */
 .modal-content h3 {
     font-size: 20px;
     font-weight: 700;
@@ -953,18 +850,15 @@ body.modal-open{overflow:hidden}
     margin-bottom: 4px;
     color: #1f2937;
 }
-
 .modal-subtitle {
     font-size: 12px;
     color: #6b7280;
     padding: 0 20px 12px;
     border-bottom: 1px solid #f0f0f0;
 }
-
 .form-group {
     margin-bottom: 16px;
 }
-
 .form-group label {
     display: block;
     font-size: 12px;
@@ -972,11 +866,9 @@ body.modal-open{overflow:hidden}
     color: #374151;
     margin-bottom: 6px;
 }
-
 .form-group label .required {
     color: #ef4444;
 }
-
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -988,7 +880,6 @@ body.modal-open{overflow:hidden}
     background: #fafafc;
     font-family: inherit;
 }
-
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -996,11 +887,9 @@ body.modal-open{overflow:hidden}
     border-color: #4f46e5;
     background: #fff;
 }
-
 .input-icon {
     position: relative;
 }
-
 .input-icon span {
     position: absolute;
     left: 12px;
@@ -1009,18 +898,15 @@ body.modal-open{overflow:hidden}
     font-size: 16px;
     color: #9ca3af;
 }
-
 .input-icon input,
 .input-icon select {
     padding-left: 40px;
 }
-
 .phone-input {
     display: flex;
     gap: 8px;
     align-items: center;
 }
-
 .phone-prefix {
     background: #f3f4f6;
     border: 1.5px solid #e5e7eb;
@@ -1032,14 +918,12 @@ body.modal-open{overflow:hidden}
     font-size: 13px;
     height: 46px;
 }
-
 .modal-buttons {
     display: flex;
     gap: 12px;
     padding: 16px 20px 20px;
     border-top: 1px solid #f0f0f0;
 }
-
 .modal-buttons button {
     flex: 1;
     padding: 12px;
@@ -1050,81 +934,58 @@ body.modal-open{overflow:hidden}
     font-size: 13px;
     transition: all 0.2s;
 }
-
 .modal-buttons button:hover {
     transform: translateY(-2px);
 }
-
 .btn-primary {
     background: #4f46e5;
     color: #fff;
 }
-
 .btn-outline {
     background: #f3f4f6;
     color: #374151;
 }
 
-/* ========== DARK MODE STYLES - SESUAI PERMINTAAN ========== */
+/* ========== DARK MODE STYLES - PERBAIKAN TOTAL ========== */
 body.dark-mode {
     background: #0f172a;
 }
 
-/* Perbaikan teks judul di dark mode */
-body.dark-mode h1, 
-body.dark-mode h2, 
-body.dark-mode h3, 
-body.dark-mode h4, 
-body.dark-mode .board-header h3,
-body.dark-mode .db-header h3,
-body.dark-mode .search-header h3,
-body.dark-mode .broadcast-header h3,
-body.dark-mode .import-header h3,
-body.dark-mode .fullpage-header h2,
-body.dark-mode .target-header h3 {
-    color: #f1f5f9 !important;
-}
-
+/* Sidebar Dark Mode */
 body.dark-mode .sidebar {
     background: #1e293b;
     border-right-color: #334155;
 }
-
 body.dark-mode .sidebar-header h2 {
-    color: #818cf8 !important;
+    color: #818cf8;
 }
-
 body.dark-mode .menu-item {
-    color: #cbd5e1 !important;
+    color: #94a3b8;
 }
-
 body.dark-mode .menu-item:hover {
     background: linear-gradient(90deg, #1e293b, #0f172a);
-    color: #a5b4fc !important;
+    color: #cbd5e6;
 }
-
 body.dark-mode .menu-item.active {
     background: #1e293b;
-    color: #818cf8 !important;
+    color: #a5b4fc;
 }
-
 body.dark-mode .menu-label {
-    color: #64748b !important;
+    color: #64748b;
 }
-
 body.dark-mode .menu-divider {
     background: #334155;
 }
 
+/* Main Content Dark Mode */
 body.dark-mode .main-content {
     background: #0f172a;
 }
-
 body.dark-mode .topbar {
     background: linear-gradient(135deg, #1e1b4b, #2e1065);
 }
 
-/* Stat Cards */
+/* Cards Dark Mode */
 body.dark-mode .stat-card,
 body.dark-mode .chart-card,
 body.dark-mode .board-section,
@@ -1132,347 +993,454 @@ body.dark-mode .db-section,
 body.dark-mode .search-section,
 body.dark-mode .broadcast-section,
 body.dark-mode .import-section {
-    background: #1e293b !important;
+    background: #1e293b;
     border-color: #334155;
 }
 
-body.dark-mode .stat-card .stat-info h4 {
+/* Text Colors Dark Mode - PASTIKAN TIDAK ADA WARNA HITAM */
+body.dark-mode .stat-card .stat-info h4,
+body.dark-mode .chart-card h3,
+body.dark-mode .board-header h3,
+body.dark-mode .db-header h3,
+body.dark-mode .search-header h3,
+body.dark-mode .broadcast-header h3,
+body.dark-mode .stat-info .value,
+body.dark-mode .card-name,
+body.dark-mode .card-id,
+body.dark-mode .card-phone span:first-child,
+body.dark-mode .card-deadline,
+body.dark-mode .db-item-info h4,
+body.dark-mode .db-item-info p,
+body.dark-mode .db-item-info small,
+body.dark-mode .search-result-info h4,
+body.dark-mode .search-result-info p,
+body.dark-mode .search-result-info small,
+body.dark-mode .broadcast-card h4,
+body.dark-mode .radio-label,
+body.dark-mode .template-item strong,
+body.dark-mode .db-item-agent-info h4,
+body.dark-mode .db-item-agent-info p,
+body.dark-mode .db-item-agent-info small,
+body.dark-mode .target-card div,
+body.dark-mode .target-card div[style*="font-size"],
+body.dark-mode .current-name,
+body.dark-mode .current-number,
+body.dark-mode .message-preview {
+    color: #e2e8f0 !important;
+}
+
+/* Subtitle & Smaller Text Dark Mode */
+body.dark-mode .stat-info small,
+body.dark-mode .modal-subtitle,
+body.dark-mode .detail-info-content label,
+body.dark-mode .import-header p,
+body.dark-mode .broadcast-header p {
     color: #94a3b8 !important;
 }
 
-body.dark-mode .stat-card .stat-info .value {
+/* Column Headers Dark Mode */
+body.dark-mode .purple-header,
+body.dark-mode .blue-header,
+body.dark-mode .orange-header,
+body.dark-mode .green-header {
     color: #a5b4fc !important;
 }
-
-body.dark-mode .stat-card .stat-info small {
-    color: #64748b !important;
+body.dark-mode .purple-header .count,
+body.dark-mode .blue-header .count,
+body.dark-mode .orange-header .count,
+body.dark-mode .green-header .count {
+    background: rgba(255,255,255,0.15);
+    color: #e2e8f0;
 }
 
-body.dark-mode .chart-card h3 {
-    color: #f1f5f9 !important;
+/* Kanban Columns Dark Mode - SAMA DENGAN DASHBOARD */
+body.dark-mode .kanban-board .kanban-column {
+    background: #0f172a;
 }
-
-/* ========== KANBAN - SEMUA KOLOM WARNA #2596be ========== */
-body.dark-mode .kanban-board .kanban-column,
 body.dark-mode .kanban-board-full .kanban-column {
-    background: #2596be !important;
+    background: #0f172a;
+}
+body.dark-mode .kanban-board .kanban-column[data-status="baru"],
+body.dark-mode .kanban-board .kanban-column[data-status="Baru"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="baru"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="Baru"] {
+    background: #1e1b4b;
+}
+body.dark-mode .kanban-board .kanban-column[data-status="followup"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="followup"] {
+    background: #1e293b;
+}
+body.dark-mode .kanban-board .kanban-column[data-status="pending"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="pending"] {
+    background: #422006;
+}
+body.dark-mode .kanban-board .kanban-column[data-status="closing"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="closing"] {
+    background: #064e3b;
+}
+body.dark-mode .kanban-board .kanban-column[data-status="Dihubungi"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="Dihubungi"] {
+    background: #1e293b;
+}
+body.dark-mode .kanban-board .kanban-column[data-status="Negosiasi"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="Negosiasi"] {
+    background: #422006;
+}
+body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"],
+body.dark-mode .kanban-board-full .kanban-column[data-status="Tertarik"] {
+    background: #064e3b;
 }
 
-/* Judul kanban dengan warna masing-masing */
-body.dark-mode .kanban-board .column-header.purple-header span:first-child,
-body.dark-mode .kanban-board-full .column-header.purple-header span:first-child {
-    color: #9333ea !important; /* Ungu untuk Baru */
-}
-
-body.dark-mode .kanban-board .column-header.blue-header span:first-child,
-body.dark-mode .kanban-board-full .column-header.blue-header span:first-child {
-    color: #2563eb !important; /* Biru untuk Follow Up/Dihubungi */
-}
-
-body.dark-mode .kanban-board .column-header.orange-header span:first-child,
-body.dark-mode .kanban-board-full .column-header.orange-header span:first-child {
-    color: #ea580c !important; /* Oranye untuk Pending/Negosiasi */
-}
-
-body.dark-mode .kanban-board .column-header.green-header span:first-child,
-body.dark-mode .kanban-board-full .column-header.green-header span:first-child {
-    color: #16a34a !important; /* Hijau untuk Closing/Tertarik */
-}
-
-body.dark-mode .kanban-board .column-header .count,
-body.dark-mode .kanban-board-full .column-header .count {
-    background: rgba(255,255,255,0.3) !important;
-    color: #1f2937 !important;
-}
-
-/* Card item - putih seperti mode terang */
+/* Card Items Dark Mode */
 body.dark-mode .card-item {
-    background: #ffffff !important;
-    border-color: #e5e7eb !important;
+    background: #334155;
+    border-color: #475569;
 }
-
-body.dark-mode .card-item:hover {
-    background: #ffffff !important;
-    border-color: #c7d2fe !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
+body.dark-mode .card-item .card-name,
 body.dark-mode .card-item .card-id {
-    background: #eef2ff !important;
-    color: #4f46e5 !important;
+    color: #e2e8f0;
 }
-
-body.dark-mode .card-item .card-name {
-    color: #1f2937 !important;
-}
-
 body.dark-mode .card-item .card-phone span:first-child {
-    color: #6b7280 !important;
+    color: #cbd5e1;
 }
-
-body.dark-mode .card-item .card-deadline {
-    color: #9ca3af !important;
-}
-
-/* ========== EFEK KEDIP DEADLINE TERLEWAT - SAMA PERSIS DENGAN MODE TERANG ========== */
-.card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #fef2f2 !important;
-    animation: blinkWarning 0.8s step-start infinite !important;
-}
-
-body.dark-mode .card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #fef2f2 !important;
-    animation: blinkWarning 0.8s step-start infinite !important;
-}
-
-@keyframes blinkWarning {
-    0% { border-color: #ef4444; background: #fef2f2; }
-    50% { border-color: #b91c1c; background: #fee2e2; }
-    100% { border-color: #ef4444; background: #fef2f2; }
-}
-
-/* Deadline hari ini - warna oranye solid tanpa kedip */
-.card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #fffbeb !important;
-}
-
 body.dark-mode .card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #fffbeb !important;
+    background: #422006 !important;
+    border-color: #f59e0b !important;
+}
+body.dark-mode .card-item.deadline-overdue {
+    background: #450a0a !important;
+    border-color: #ef4444 !important;
 }
 
-/* ========== MODAL / POPUP DI DARK MODE ========== */
-body.dark-mode .modal {
-    background: rgba(0, 0, 0, 0.8) !important;
-}
-
+/* Modals Dark Mode - Background GELAP */
 body.dark-mode .modal-content {
     background: #1e293b !important;
-    border: 1px solid #334155 !important;
 }
-
-body.dark-mode .modal-content h3 {
-    color: #f1f5f9 !important;
-}
-
+body.dark-mode .modal-content h3,
 body.dark-mode .modal-subtitle {
-    color: #94a3b8 !important;
+    color: #e2e8f0 !important;
+}
+body.dark-mode .modal-subtitle {
     border-bottom-color: #334155;
 }
-
 body.dark-mode .form-group label {
-    color: #cbd5e1 !important;
+    color: #94a3b8 !important;
 }
-
 body.dark-mode .form-group input,
 body.dark-mode .form-group select,
 body.dark-mode .form-group textarea {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
 }
-
 body.dark-mode .form-group input:focus,
 body.dark-mode .form-group select:focus,
 body.dark-mode .form-group textarea:focus {
-    border-color: #818cf8 !important;
+    border-color: #818cf8;
+    background: #1e293b;
+}
+body.dark-mode .input-icon span {
+    color: #64748b;
+}
+body.dark-mode .phone-prefix {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+body.dark-mode .modal-buttons {
+    border-top-color: #334155;
+}
+body.dark-mode .modal-buttons .btn-outline {
+    background: #334155;
+    color: #e2e8f0;
+}
+body.dark-mode .modal-buttons .btn-outline:hover {
+    background: #475569;
+}
+body.dark-mode .confirm-dialog-content {
     background: #1e293b !important;
 }
-
-body.dark-mode .input-icon span {
-    color: #64748b !important;
+body.dark-mode .confirm-dialog-content h3 {
+    color: #e2e8f0 !important;
+}
+body.dark-mode .confirm-dialog-content .modal-subtitle {
+    color: #94a3b8 !important;
 }
 
-body.dark-mode .phone-prefix {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #cbd5e1 !important;
-}
-
-/* Detail Modal */
+/* Detail Modal Dark Mode */
 body.dark-mode .detail-header {
-    background: linear-gradient(135deg, #1e1b4b, #2e1065) !important;
+    background: linear-gradient(135deg, #1e1b4b, #2e1065);
 }
-
-body.dark-mode .detail-header h3 {
-    color: white !important;
-}
-
 body.dark-mode .detail-body,
 body.dark-mode .detail-footer {
-    background: #1e293b !important;
+    background: #1e293b;
 }
-
 body.dark-mode .detail-info {
-    background: #0f172a !important;
+    background: #0f172a;
 }
-
 body.dark-mode .detail-info-item {
     border-bottom-color: #334155;
 }
-
-body.dark-mode .detail-info-content label {
-    color: #94a3b8 !important;
+body.dark-mode .detail-info-icon {
+    background: #1e293b;
 }
-
 body.dark-mode .detail-info-content .value {
-    color: #f1f5f9 !important;
+    color: #e2e8f0;
 }
 
-/* Database Items */
+/* DB Items Dark Mode */
 body.dark-mode .db-item {
-    background: #0f172a !important;
+    background: #0f172a;
     border-bottom-color: #334155;
 }
-
 body.dark-mode .db-item:hover {
-    background: #1e293b !important;
+    background: #1e293b;
 }
-
-body.dark-mode .db-item-info h4 {
-    color: #f1f5f9 !important;
+body.dark-mode .db-item.unread {
+    background: #1e293b;
+    border-left-color: #818cf8;
 }
-
-body.dark-mode .db-item-info p,
-body.dark-mode .db-item-info small {
-    color: #cbd5e1 !important;
-}
-
-/* Database Agent */
 body.dark-mode .db-item-agent {
-    background: #0f172a !important;
+    background: #0f172a;
     border-bottom-color: #334155;
 }
-
 body.dark-mode .db-item-agent:hover {
-    background: #1e293b !important;
+    background: #1e293b;
 }
 
-body.dark-mode .db-item-agent-info h4 {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .db-item-agent-info p,
-body.dark-mode .db-item-agent-info small {
-    color: #cbd5e1 !important;
-}
-
-/* Search Results */
+/* Search Results Dark Mode */
 body.dark-mode .search-result-item {
-    background: #0f172a !important;
+    background: #0f172a;
     border-color: #334155;
 }
-
 body.dark-mode .search-result-item:hover {
-    background: #1e293b !important;
+    background: #1e293b;
 }
 
-body.dark-mode .search-result-info h4 {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .search-result-info p,
-body.dark-mode .search-result-info small {
-    color: #cbd5e1 !important;
-}
-
-/* Broadcast */
+/* Broadcast Cards Dark Mode */
 body.dark-mode .broadcast-card {
-    background: #0f172a !important;
+    background: #0f172a;
     border-color: #334155;
 }
-
-body.dark-mode .broadcast-card h4 {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .radio-label {
-    color: #cbd5e1 !important;
-}
-
 body.dark-mode #customNumbers,
 body.dark-mode #broadcastMessage,
 body.dark-mode #templateName {
-    background: #0f172a !important;
-    border-color: #334155 !important;
-    color: #f1f5f9 !important;
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
 }
-
-/* Buttons */
-body.dark-mode .btn-outline {
-    background: #334155 !important;
-    color: #f1f5f9 !important;
+body.dark-mode .selected-numbers {
+    background: #0f172a;
 }
-
-body.dark-mode .btn-outline:hover {
-    background: #475569 !important;
-}
-
-body.dark-mode .add-btn {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-body.dark-mode .db-delete-selected {
-    background: #dc2626 !important;
-    color: white !important;
-}
-
-body.dark-mode .db-select-all {
-    background: #1e293b !important;
-    color: #818cf8 !important;
-}
-
-body.dark-mode .db-import-excel {
-    background: #059669 !important;
-    color: white !important;
-}
-
-body.dark-mode .db-export-excel {
-    background: #2563eb !important;
-    color: white !important;
-}
-
-/* Import Page */
-body.dark-mode .import-header h3 {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .import-header p {
-    color: #94a3b8 !important;
-}
-
-body.dark-mode .import-card {
-    background: #0f172a !important;
+body.dark-mode .template-item {
+    background: #0f172a;
     border-color: #334155;
 }
-
-body.dark-mode .import-card h4 {
-    color: #f1f5f9 !important;
+body.dark-mode .template-item:hover {
+    background: #1e293b;
 }
-
+body.dark-mode .radio-option {
+    border-color: #334155;
+}
+body.dark-mode .radio-option.active {
+    background: #1e293b;
+    border-color: #818cf8;
+}
+body.dark-mode .radio-option p {
+    color: #94a3b8;
+}
 body.dark-mode .drop-zone {
-    background: #1e293b !important;
-    border-color: #818cf8 !important;
+    background: #0f172a;
+    border-color: #818cf8;
+}
+body.dark-mode .drop-zone p {
+    color: #a5b4fc;
 }
 
-/* Badges */
+/* Progress Panel Dark Mode */
+body.dark-mode .progress-panel {
+    background: #0f172a;
+    border-top-color: #334155;
+}
+body.dark-mode .current-info {
+    background: #0f172a;
+}
+body.dark-mode .panel-progress-item {
+    background: #0f172a;
+    border-bottom-color: #334155;
+}
+body.dark-mode .panel-progress-item.current {
+    background: #1e293b;
+}
+body.dark-mode .progress-bar-container {
+    background: #334155;
+}
+
+/* Pending Items Dark Mode */
+body.dark-mode .pending-item {
+    background: #0f172a;
+}
+body.dark-mode .pending-item input[type="text"] {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+/* Status Badges Dark Mode */
+body.dark-mode .status-badge {
+    background: transparent;
+}
+body.dark-mode .status-baru {
+    background: #1e1b4b;
+    color: #c4b5fd;
+}
+body.dark-mode .status-followup {
+    background: #1e293b;
+    color: #60a5fa;
+}
+body.dark-mode .status-pending {
+    background: #451a03;
+    color: #fbbf24;
+}
+body.dark-mode .status-closing {
+    background: #064e3b;
+    color: #34d399;
+}
+body.dark-mode .status-dihubungi {
+    background: #1e293b;
+    color: #60a5fa;
+}
+body.dark-mode .status-negosiasi {
+    background: #451a03;
+    color: #fbbf24;
+}
+body.dark-mode .status-tertarik {
+    background: #064e3b;
+    color: #34d399;
+}
+
+/* Search Badges Dark Mode */
 body.dark-mode .badge-customer {
-    background: #1e293b !important;
-    color: #a5b4fc !important;
+    background: #1e293b;
+    color: #a5b4fc;
 }
-
 body.dark-mode .badge-prospek {
-    background: #1e1b4b !important;
-    color: #c4b5fd !important;
+    background: #1e1b4b;
+    color: #c4b5fd;
+}
+body.dark-mode .badge-closing {
+    background: #064e3b;
+    color: #34d399;
+}
+body.dark-mode .badge-tidak {
+    background: #450a0a;
+    color: #fca5a5;
+}
+body.dark-mode .badge-nomor-salah {
+    background: #451a03;
+    color: #fcd34d;
+}
+body.dark-mode .badge-commitment {
+    background: #1e1b4b;
+    color: #818cf8;
 }
 
-body.dark-mode .badge-closing {
-    background: #064e3b !important;
-    color: #34d399 !important;
+/* Buttons Dark Mode */
+body.dark-mode .add-btn {
+    background: #4f46e5;
+}
+body.dark-mode .add-btn:hover {
+    background: #4338ca;
+}
+body.dark-mode .db-select-all {
+    background: #1e293b;
+    color: #a5b4fc;
+}
+body.dark-mode .db-delete-selected {
+    background: #dc2626;
+    color: white;
+}
+body.dark-mode .db-import-excel {
+    background: #059669;
+}
+body.dark-mode .db-export-excel {
+    background: #2563eb;
+}
+body.dark-mode .broadcast-btn {
+    background: #059669;
+}
+body.dark-mode .broadcast-btn:hover {
+    background: #047857;
+}
+body.dark-mode .whatsapp-link-btn {
+    background: #059669;
+}
+body.dark-mode .mark-sent-btn {
+    background: #059669;
+}
+body.dark-mode .mark-failed-btn,
+body.dark-mode .stop-btn {
+    background: #dc2626;
+}
+body.dark-mode .search-btn {
+    background: #4f46e5;
+}
+body.dark-mode .clear-btn {
+    background: #334155;
+    color: #e2e8f0;
+}
+body.dark-mode .clear-btn:hover {
+    background: #475569;
+}
+body.dark-mode .db-item-wa {
+    background: #059669;
+}
+body.dark-mode .db-item-delete {
+    background: #dc2626;
+    color: white;
+}
+body.dark-mode .db-item-move-followup {
+    background: #4f46e5;
+}
+body.dark-mode .db-item-move-followup:hover {
+    background: #4338ca;
+}
+
+/* Import Card Dark Mode */
+body.dark-mode .import-card {
+    background: #0f172a;
+}
+body.dark-mode .info-list li {
+    color: #94a3b8;
+}
+
+/* Filter & Search Dark Mode */
+body.dark-mode .search-filter label,
+body.dark-mode .filter-status-group label {
+    color: #94a3b8;
+}
+body.dark-mode .search-filter input,
+body.dark-mode .filter-status-group input {
+    accent-color: #818cf8;
+}
+body.dark-mode .search-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+body.dark-mode .search-input:focus {
+    border-color: #818cf8;
+}
+body.dark-mode #agentStats {
+    color: #94a3b8;
+}
+
+/* Target Card Dark Mode */
+body.dark-mode .target-card {
+    background: #1e293b !important;
+}
+body.dark-mode .target-card div[style*="color"] {
+    color: #e2e8f0 !important;
 }
 
 /* Toggle Dark Mode Button */
@@ -1487,22 +1455,17 @@ body.dark-mode .badge-closing {
     cursor: pointer;
     transition: all 0.3s ease;
 }
-
 body.dark-mode .dark-mode-toggle {
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: #1e293b;
 }
-
 .dark-mode-toggle span {
     font-size: 13px;
     font-weight: 500;
     color: #4f46e5;
 }
-
 body.dark-mode .dark-mode-toggle span {
     color: #a5b4fc;
 }
-
 .dark-mode-toggle .toggle-switch {
     position: relative;
     width: 50px;
@@ -1511,11 +1474,9 @@ body.dark-mode .dark-mode-toggle span {
     border-radius: 12px;
     transition: all 0.3s ease;
 }
-
 body.dark-mode .dark-mode-toggle .toggle-switch {
     background: #818cf8;
 }
-
 .dark-mode-toggle .toggle-switch::after {
     content: '🌞';
     position: absolute;
@@ -1532,27 +1493,8 @@ body.dark-mode .dark-mode-toggle .toggle-switch {
     transition: all 0.3s ease;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-
 body.dark-mode .dark-mode-toggle .toggle-switch::after {
     content: '🌙';
     left: 26px;
     background: #1e293b;
-}
-
-/* Target Cards */
-body.dark-mode .target-card {
-    background: #1e293b !important;
-}
-
-/* Scrollbar */
-body.dark-mode ::-webkit-scrollbar-track {
-    background: #1e293b;
-}
-
-body.dark-mode ::-webkit-scrollbar-thumb {
-    background: #475569;
-}
-
-body.dark-mode ::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
 }
