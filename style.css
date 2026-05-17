@@ -2696,6 +2696,177 @@ body.modal-open {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* ========== PERBAIKAN KANBAN DI SIDEBAR (FULL PAGE) ========== */
+/* Header kolom kanban - judul lebih tebal dan jarak dengan jumlah */
+.kanban-board-full .column-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 10px 12px !important;
+    margin-bottom: 14px !important;
+    border-radius: 10px !important;
+    background: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Judul kolom - lebih tebal */
+.kanban-board-full .column-header span:first-child {
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    font-size: 13px !important;
+}
+
+/* Badge/Lingkaran jumlah - lebih besar dan dengan styling bulat */
+.kanban-board-full .column-header .count {
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    padding: 5px 11px !important;
+    border-radius: 30px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    min-width: 34px !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(79, 70, 229, 0.2) !important;
+}
+
+/* Jarak antara judul dan jumlah sudah otomatis karena justify-content: space-between */
+
+/* Warna judul kolom sesuai status di mode terang */
+.kanban-board-full .kanban-column[data-status="baru"] .column-header span:first-child,
+.kanban-board-full .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #7c3aed !important;
+}
+
+.kanban-board-full .kanban-column[data-status="followup"] .column-header span:first-child,
+.kanban-board-full .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #2563eb !important;
+}
+
+.kanban-board-full .kanban-column[data-status="pending"] .column-header span:first-child,
+.kanban-board-full .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #d97706 !important;
+}
+
+.kanban-board-full .kanban-column[data-status="closing"] .column-header span:first-child,
+.kanban-board-full .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #059669 !important;
+}
+
+/* Warna judul kolom sesuai status di mode gelap */
+body.dark-mode .kanban-board-full .kanban-column[data-status="baru"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #c4b5fd !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="followup"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="pending"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="closing"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #34d399 !important;
+}
+
+/* Dark mode badge styling */
+body.dark-mode .kanban-board-full .column-header .count {
+    background: #334155 !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+body.dark-mode .kanban-board-full .column-header {
+    background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ========== PERBAIKAN KANBAN DI DASHBOARD ========== */
+/* Header kolom kanban dashboard */
+.kanban-board .column-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 6px 8px !important;
+    margin-bottom: 10px !important;
+}
+
+/* Judul kolom dashboard - tebal */
+.kanban-board .column-header span:first-child {
+    font-weight: 700 !important;
+    font-size: 12px !important;
+}
+
+/* Badge jumlah dashboard */
+.kanban-board .column-header .count {
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    padding: 2px 8px !important;
+    border-radius: 20px !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    min-width: 26px !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.dark-mode .kanban-board .column-header .count {
+    background: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+/* Warna judul dashboard mode terang */
+.kanban-board .kanban-column[data-status="baru"] .column-header span:first-child,
+.kanban-board .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #7c3aed !important;
+}
+
+.kanban-board .kanban-column[data-status="followup"] .column-header span:first-child,
+.kanban-board .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #2563eb !important;
+}
+
+.kanban-board .kanban-column[data-status="pending"] .column-header span:first-child,
+.kanban-board .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #d97706 !important;
+}
+
+.kanban-board .kanban-column[data-status="closing"] .column-header span:first-child,
+.kanban-board .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #059669 !important;
+}
+
+/* Warna judul dashboard mode gelap */
+body.dark-mode .kanban-board .kanban-column[data-status="baru"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #c4b5fd !important;
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="followup"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="pending"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="closing"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #34d399 !important;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
     .stats-grid {
