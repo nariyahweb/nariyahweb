@@ -1976,7 +1976,11 @@ auth.onAuthStateChanged(async user => {
         loadAllData();
         initDarkMode();
         setupDarkModeToggle();
+        updateCharts();
+
+        setTimeout(() => {
         setupChartClickEvents();
+        }, 100);
         loadReminders();
         loadPesan();
         loadDBClosing();
