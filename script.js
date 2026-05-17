@@ -2264,26 +2264,29 @@ formatPhoneInput(document.getElementById('profilePhone'));
 document.getElementById('previewPhotoModal')?.addEventListener('click', (e) => { if (e.target === document.getElementById('previewPhotoModal')) closeModal('previewPhotoModal'); });
 
 // ========================================
-// DARK MODE FUNCTIONS
+// DARK MODE FUNCTIONS (dengan Tombol)
 // ========================================
 function initDarkMode() {
     console.log('initDarkMode dipanggil');
-    
-    // Cek localStorage untuk mode yang tersimpan
     const savedMode = localStorage.getItem('darkMode');
-    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeBtn = document.getElementById('darkModeToggleBtn');
     
     console.log('savedMode:', savedMode);
-    console.log('darkModeToggle:', darkModeToggle);
     
     if (savedMode === 'enabled') {
         document.body.classList.add('dark-mode');
-        if (darkModeToggle) darkModeToggle.checked = true;
+        if (darkModeBtn) {
+            darkModeBtn.innerHTML = '☀️ Nonaktifkan';
+            darkModeBtn.style.background = '#f59e0b';
+        }
         updateDarkModeIcon(true);
         console.log('Dark mode diaktifkan dari localStorage');
     } else {
         document.body.classList.remove('dark-mode');
-        if (darkModeToggle) darkModeToggle.checked = false;
+        if (darkModeBtn) {
+            darkModeBtn.innerHTML = '🌙 Aktifkan';
+            darkModeBtn.style.background = '#4f46e5';
+        }
         updateDarkModeIcon(false);
         console.log('Light mode diaktifkan dari localStorage');
     }
@@ -2303,10 +2306,10 @@ function enableDarkMode() {
     localStorage.setItem('darkMode', 'enabled');
     updateDarkModeIcon(true);
     
-    // Sinkronkan toggle jika ada
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        darkModeToggle.checked = true;
+    const darkModeBtn = document.getElementById('darkModeToggleBtn');
+    if (darkModeBtn) {
+        darkModeBtn.innerHTML = '☀️ Nonaktifkan';
+        darkModeBtn.style.background = '#f59e0b';
     }
     
     showNotifTop('🌙 Mode Gelap diaktifkan');
@@ -2318,10 +2321,10 @@ function disableDarkMode() {
     localStorage.setItem('darkMode', 'disabled');
     updateDarkModeIcon(false);
     
-    // Sinkronkan toggle jika ada
-    const darkModeToggle = document.getElementById('darkModeToggle');
-    if (darkModeToggle) {
-        darkModeToggle.checked = false;
+    const darkModeBtn = document.getElementById('darkModeToggleBtn');
+    if (darkModeBtn) {
+        darkModeBtn.innerHTML = '🌙 Aktifkan';
+        darkModeBtn.style.background = '#4f46e5';
     }
     
     showNotifTop('☀️ Mode Terang diaktifkan');
@@ -2329,52 +2332,56 @@ function disableDarkMode() {
 
 function setupDarkModeToggle() {
     console.log('setupDarkModeToggle dipanggil');
-    const darkModeToggle = document.getElementById('darkModeToggle');
+    const darkModeBtn = document.getElementById('darkModeToggleBtn');
     
-    if (darkModeToggle) {
-        console.log('Toggle switch ditemukan, memasang event listener');
+    if (darkModeBtn) {
+        console.log('Tombol dark mode ditemukan, memasang event listener');
         
-        // Hapus event listener lama dengan clone
-        const newToggle = darkModeToggle.cloneNode(true);
-        darkModeToggle.parentNode.replaceChild(newToggle, darkModeToggle);
+        // Hapus event listener lama
+        const newBtn = darkModeBtn.cloneNode(true);
+        darkModeBtn.parentNode.replaceChild(newBtn, darkModeBtn);
         
-        // Set initial state
-        const isDark = document.body.classList.contains('dark-mode');
-        newToggle.checked = isDark;
-        updateDarkModeIcon(isDark);
-        
-        // Tambahkan event listener baru
-        newToggle.addEventListener('change', function(e) {
+        newBtn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            console.log('Toggle berubah, checked:', this.checked);
+            console.log('Tombol dark mode diklik');
             
-            if (this.checked) {
-                enableDarkMode();
-            } else {
+            const isDark = document.body.classList.contains('dark-mode');
+            if (isDark) {
                 disableDarkMode();
+            } else {
+                enableDarkMode();
             }
         });
         
-        console.log('Event listener berhasil dipasang, initial checked:', newToggle.checked);
+        console.log('Event listener berhasil dipasang');
     } else {
-        console.log('Toggle switch dengan id "darkModeToggle" TIDAK DITEMUKAN');
+        console.log('Tombol dark mode dengan id "darkModeToggleBtn" TIDAK DITEMUKAN');
     }
 }
 
-// ========== UPDATE DARK MODE TOGGLE SAAT MODAL PROFILE DIBUKA ==========
+// Update saat modal profile dibuka
+function updateDarkModeButtonStatus() {
+    const darkModeBtn = document.getElementById('darkModeToggleBtn');
+    if (darkModeBtn) {
+        const isDark = document.body.classList.contains('dark-mode');
+        if (isDark) {
+            darkModeBtn.innerHTML = '☀️ Nonaktifkan';
+            darkModeBtn.style.background = '#f59e0b';
+        } else {
+            darkModeBtn.innerHTML = '🌙 Aktifkan';
+            darkModeBtn.style.background = '#4f46e5';
+        }
+        updateDarkModeIcon(isDark);
+    }
+}
+
+// Event listener untuk modal profile
 const profileModalForDarkMode = document.getElementById('profileModal');
 if (profileModalForDarkMode) {
     profileModalForDarkMode.addEventListener('click', function(e) {
-        // Ketika modal profile terbuka, update status toggle
         setTimeout(() => {
-            const darkModeToggle = document.getElementById('darkModeToggle');
-            if (darkModeToggle) {
-                const isDark = document.body.classList.contains('dark-mode');
-                darkModeToggle.checked = isDark;
-                updateDarkModeIcon(isDark);
-                console.log('Toggle status disinkronkan:', isDark);
-            }
+            updateDarkModeButtonStatus();
         }, 100);
     });
 }
