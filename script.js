@@ -12,7 +12,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // Nonaktifkan cache offline
-db.settings({ persistence: false });
+db.settings({ persistence: false }, { merge: true });
 
 // ========================================
 // GLOBAL VARIABLES
@@ -855,6 +855,114 @@ function showInputDialog(title, message, fields, onConfirm) {
     modal.onclick = (e) => {
         if (e.target === modal) {
             modal.remove();
+            document.body.classList.remove('modal-open');
+        }
+    };
+}
+
+// ========================================
+// CONVERT MODAL SETUP
+// ========================================
+function setupConvertModal() {
+    const confirmBtn = document.getElementById('confirmConvertBtn');
+    const cancelBtn = document.getElementById('cancelConvertBtn');
+    const modal = document.getElementById('convertModal');
+    
+    if (!modal) return;
+    
+    if (confirmBtn) {
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        
+        newConfirmBtn.onclick = async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const agentId = document.getElementById('convertAgentId')?.value;
+            const followupDate = document.getElementById('convertFollowupDate')?.value;
+            
+            if (!agentId) {
+                alert('⚠️ ID Agent wajib diisi!');
+                return;
+            }
+            if (!followupDate) {
+                alert('⚠️ Tanggal followup wajib diisi!');
+                return;
+            }
+            if (!currentConvertProspekId) {
+                alert('⚠️ Error: Data prospek tidak ditemukan');
+                return;
+            }
+            
+            showConfirmDialog(
+                'Pindahkan ke Followup Agen?',
+                `Apakah Anda yakin ingin memindahkan prospek ini ke FOLLOWUP AGEN dengan ID Agent: ${agentId}?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan ke Prospek Agen!`,
+                async () => {
+                    try {
+                        showNotif('⏳ Memproses pemindahan...');
+                        const prospekDoc = await db.collection('prospek').doc(currentConvertProspekId).get();
+                        const prospekData = prospekDoc.data();
+                        
+                        if (!prospekData) {
+                            showNotif('❌ Data prospek tidak ditemukan', true);
+                            return;
+                        }
+                        
+                        const cleanHp = prospekData.hp;
+                        const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
+                        
+                        if (duplicateAgent) {
+                            showNotif(`⚠️ ID Agent "${agentId}" sudah terdaftar oleh ${duplicateAgent.owner}!`, true);
+                            return;
+                        }
+                        if (duplicateHp) {
+                            showNotif(`⚠️ Nomor WhatsApp "${cleanHp}" sudah terdaftar oleh ${duplicateHp.owner}!`, true);
+                            return;
+                        }
+                        
+                        await db.collection('customers').add({
+                            agent_id: agentId,
+                            nama: prospekData.nama,
+                            hp: prospekData.hp,
+                            tanggal: followupDate,
+                            status: 'baru',
+                            apk: '',
+                            user_id: prospekData.user_id,
+                            created_at: new Date().toISOString(),
+                            followup_data: null,
+                            pending_data: []
+                        });
+                        
+                        await db.collection('prospek').doc(currentConvertProspekId).delete();
+                        
+                        modal.style.display = 'none';
+                        document.body.classList.remove('modal-open');
+                        closeModal('detailModal');
+                        showNotif('✅ Berhasil dipindahkan ke Followup Agen!');
+                        loadAllData();
+                    } catch(error) {
+                        showNotif('❌ Gagal: ' + error.message, true);
+                    }
+                }
+            );
+        };
+    }
+    
+    if (cancelBtn) {
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        newCancelBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        };
+    }
+    
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            modal.style.display = 'none';
             document.body.classList.remove('modal-open');
         }
     };
