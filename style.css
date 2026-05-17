@@ -1721,3 +1721,299 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
 }
+
+/* ========== PERBAIKAN KANBAN DI SIDEBAR (FULL PAGE) ========== */
+/* Header kolom kanban - judul lebih tebal dan jarak dengan jumlah */
+body.dark-mode .kanban-board-full .column-header,
+.kanban-board-full .column-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    margin-bottom: 12px !important;
+    border-radius: 10px !important;
+}
+
+/* Judul kolom - lebih tebal */
+.kanban-board-full .column-header span:first-child {
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.5px !important;
+}
+
+body.dark-mode .kanban-board-full .column-header span:first-child {
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Badge/Lingkaran jumlah - lebih besar dan dengan styling bulat */
+.kanban-board-full .column-header .count {
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    padding: 4px 10px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    min-width: 32px !important;
+    text-align: center !important;
+    display: inline-block !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+
+body.dark-mode .kanban-board-full .column-header .count {
+    background: #334155 !important;
+    color: #cbd5e1 !important;
+    padding: 4px 10px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    min-width: 32px !important;
+    text-align: center !important;
+}
+
+/* Jarak antara judul dan jumlah */
+.kanban-board-full .column-header {
+    gap: 16px !important;
+}
+
+/* Warna judul kolom sesuai status di mode terang */
+.kanban-board-full .kanban-column[data-status="baru"] .column-header span:first-child,
+.kanban-board-full .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #7c3aed !important;
+}
+
+.kanban-board-full .kanban-column[data-status="followup"] .column-header span:first-child,
+.kanban-board-full .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #2563eb !important;
+}
+
+.kanban-board-full .kanban-column[data-status="pending"] .column-header span:first-child,
+.kanban-board-full .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #d97706 !important;
+}
+
+.kanban-board-full .kanban-column[data-status="closing"] .column-header span:first-child,
+.kanban-board-full .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #059669 !important;
+}
+
+/* Warna judul kolom sesuai status di mode gelap */
+body.dark-mode .kanban-board-full .kanban-column[data-status="baru"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #c4b5fd !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="followup"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="pending"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .kanban-board-full .kanban-column[data-status="closing"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #34d399 !important;
+}
+
+/* ========== PERBAIKAN KANBAN DI DASHBOARD ========== */
+/* Header kolom kanban dashboard */
+.kanban-board .column-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 6px 8px !important;
+    margin-bottom: 10px !important;
+}
+
+/* Judul kolom dashboard - tebal */
+.kanban-board .column-header span:first-child {
+    font-weight: 700 !important;
+    font-size: 13px !important;
+}
+
+/* Badge jumlah dashboard */
+.kanban-board .column-header .count {
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    padding: 2px 8px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    min-width: 28px !important;
+    text-align: center !important;
+}
+
+body.dark-mode .kanban-board .column-header .count {
+    background: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+/* Warna judul dashboard mode terang */
+.kanban-board .kanban-column[data-status="baru"] .column-header span:first-child,
+.kanban-board .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #7c3aed !important;
+}
+
+.kanban-board .kanban-column[data-status="followup"] .column-header span:first-child,
+.kanban-board .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #2563eb !important;
+}
+
+.kanban-board .kanban-column[data-status="pending"] .column-header span:first-child,
+.kanban-board .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #d97706 !important;
+}
+
+.kanban-board .kanban-column[data-status="closing"] .column-header span:first-child,
+.kanban-board .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #059669 !important;
+}
+
+/* Warna judul dashboard mode gelap */
+body.dark-mode .kanban-board .kanban-column[data-status="baru"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Baru"] .column-header span:first-child {
+    color: #c4b5fd !important;
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="followup"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+    color: #60a5fa !important;
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="pending"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+    color: #fbbf24 !important;
+}
+
+body.dark-mode .kanban-board .kanban-column[data-status="closing"] .column-header span:first-child,
+body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+    color: #34d399 !important;
+}
+
+/* ========== DARK MODE STYLES - KANBAN ========== */
+body.dark-mode {
+    background: #0f172a;
+}
+
+/* Kanban di Dashboard - lebih gelap */
+body.dark-mode .dashboard-two-columns .kanban-board .kanban-column,
+body.dark-mode #dashboardPage .kanban-board .kanban-column {
+    background: #0f0f1a !important;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+/* Kanban di Sidebar (Full Page) - tetap sedang */
+body.dark-mode .kanban-board-full .kanban-column,
+body.dark-mode #followupFullPage .kanban-board-full .kanban-column,
+body.dark-mode #prospekFullPage .kanban-board-full .kanban-column {
+    background: #1e293b !important;
+    border-radius: 16px;
+    padding: 16px;
+}
+
+/* Card item di kanban */
+body.dark-mode .card-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .card-item:hover {
+    background: #334155 !important;
+    border-color: #818cf8 !important;
+    transform: translateY(-2px);
+}
+
+body.dark-mode .card-item .card-id {
+    background: #0f172a !important;
+    color: #a5b4fc !important;
+}
+
+body.dark-mode .card-item .card-name {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .card-item .card-phone span:first-child {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .card-item .card-deadline {
+    color: #64748b !important;
+}
+
+/* ========== DEADLINE BLINK EFFECT - PASTI BERKEDIP ========== */
+/* Mode Terang */
+.card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #fef2f2;
+    animation: blinkWarning 0.6s ease-in-out infinite !important;
+}
+
+@keyframes blinkWarning {
+    0% { border-color: #ef4444; background: #fef2f2; box-shadow: 0 0 0px #ef4444; }
+    50% { border-color: #b91c1c; background: #fee2e2; box-shadow: 0 0 6px #ef4444; }
+    100% { border-color: #ef4444; background: #fef2f2; box-shadow: 0 0 0px #ef4444; }
+}
+
+.card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #fffbeb;
+}
+
+/* Mode Gelap - DIPAKSA BERKEDIP */
+body.dark-mode .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #450a0a !important;
+    animation: blinkWarningDark 0.6s ease-in-out infinite !important;
+}
+
+@keyframes blinkWarningDark {
+    0% { 
+        border-color: #ef4444; 
+        background: #450a0a; 
+        box-shadow: 0 0 0px #ef4444;
+    }
+    50% { 
+        border-color: #f87171; 
+        background: #7f1d1d; 
+        box-shadow: 0 0 10px #ef4444;
+    }
+    100% { 
+        border-color: #ef4444; 
+        background: #450a0a; 
+        box-shadow: 0 0 0px #ef4444;
+    }
+}
+
+body.dark-mode .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #422006 !important;
+    animation: pulseToday 0.6s ease-in-out infinite !important;
+}
+
+@keyframes pulseToday {
+    0% { border-color: #f59e0b; background: #422006; box-shadow: 0 0 0px #f59e0b; }
+    50% { border-color: #fbbf24; background: #78350f; box-shadow: 0 0 8px #f59e0b; }
+    100% { border-color: #f59e0b; background: #422006; box-shadow: 0 0 0px #f59e0b; }
+}
+
+/* Full page kanban - deadline efek */
+body.dark-mode .kanban-board-full .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #450a0a !important;
+    animation: blinkWarningDark 0.6s ease-in-out infinite !important;
+}
+
+body.dark-mode .kanban-board-full .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #422006 !important;
+    animation: pulseToday 0.6s ease-in-out infinite !important;
+}
+
+/* ========== SISANYA TETAP SAMA SEPERTI SEBELUMNYA ========== */
+/* (Typography, Sidebar, Main Content, Stat Cards, Charts, Modal, Form, Detail Modal, Database Items, Search Results, Broadcast Cards, Buttons, Import Page, Filter, Badges, Status Badges, Dark Mode Toggle, Target KPI Cards, Scrollbar) */
+/* ... kode lainnya tetap sama seperti yang sudah diberikan sebelumnya ... */
