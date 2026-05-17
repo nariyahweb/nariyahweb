@@ -1786,3 +1786,111 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
     background: #64748b;
 }
+
+/* ========== DEADLINE BLINK EFFECT - TIDAK MEMPENGARUHI MODE TERANG ========== */
+/* Efek kedip untuk deadline terlewat - Mode Terang (tetap seperti semula) */
+.card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #fef2f2;
+    animation: blinkWarning 1s step-start infinite;
+}
+
+@keyframes blinkWarning {
+    50% {
+        border-color: #b91c1c;
+        background: #fee2e2;
+    }
+}
+
+/* Efek kedip untuk deadline terlewat - Mode Gelap (dengan warna gelap tapi tetap berkedip) */
+body.dark-mode .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #450a0a;
+    animation: blinkWarningDark 1s step-start infinite;
+}
+
+@keyframes blinkWarningDark {
+    0% {
+        border-color: #ef4444;
+        background: #450a0a;
+    }
+    50% {
+        border-color: #dc2626;
+        background: #7f1d1d;
+    }
+    100% {
+        border-color: #ef4444;
+        background: #450a0a;
+    }
+}
+
+/* Efek untuk deadline hari ini - Mode Terang */
+.card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #fffbeb;
+}
+
+/* Efek untuk deadline hari ini - Mode Gelap */
+body.dark-mode .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #422006;
+}
+
+/* Search Result Items - Deadline overdue di mode gelap */
+body.dark-mode .search-result-item.deadline-overdue {
+    background: #450a0a !important;
+    border-color: #ef4444 !important;
+    animation: blinkWarningDarkSearch 1s step-start infinite;
+}
+
+@keyframes blinkWarningDarkSearch {
+    0% {
+        border-color: #ef4444;
+        background: #450a0a;
+    }
+    50% {
+        border-color: #dc2626;
+        background: #7f1d1d;
+    }
+    100% {
+        border-color: #ef4444;
+        background: #450a0a;
+    }
+}
+
+/* Search Result Items - Deadline hari ini di mode gelap */
+body.dark-mode .search-result-item.deadline-today {
+    background: #422006 !important;
+    border-color: #f59e0b !important;
+}
+
+/* Pastikan elemen yang memiliki deadline class tetap konsisten di semua mode */
+.card-item.deadline-overdue,
+.card-item.deadline-today,
+.search-result-item.deadline-overdue,
+.search-result-item.deadline-today {
+    transition: all 0.2s ease;
+}
+
+/* Untuk kanban board full page */
+.kanban-board-full .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #fef2f2;
+    animation: blinkWarning 1s step-start infinite;
+}
+
+body.dark-mode .kanban-board-full .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #450a0a;
+    animation: blinkWarningDark 1s step-start infinite;
+}
+
+.kanban-board-full .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #fffbeb;
+}
+
+body.dark-mode .kanban-board-full .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #422006;
+}
