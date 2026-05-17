@@ -981,6 +981,25 @@ body.dark-mode .search-result-item:hover {
     max-height: 140px;
 }
 
+/* Modal Chart - Popup Chart */
+#chartModal .modal-content {
+    max-width: 600px;
+}
+
+#chartModal canvas {
+    max-height: 400px;
+    width: 100%;
+}
+
+#closeChartModalBtn {
+    transition: transform 0.2s;
+}
+
+#closeChartModalBtn:hover {
+    transform: scale(1.1);
+    color: #ef4444;
+}
+
 /* ========================================
    KANBAN BOARD
    ======================================== */
