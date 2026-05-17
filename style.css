@@ -510,6 +510,264 @@ body {
 }
 
 /* ========================================
+   DARK MODE TOGGLE SWITCH
+   ======================================== */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #4f46e5;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background: #1a1a2e;
+}
+
+body.dark-mode .sidebar,
+body.dark-mode .topbar,
+body.dark-mode .stat-card,
+body.dark-mode .chart-card,
+body.dark-mode .board-section,
+body.dark-mode .db-section,
+body.dark-mode .search-section,
+body.dark-mode .broadcast-section,
+body.dark-mode .import-section,
+body.dark-mode .modal-content,
+body.dark-mode .broadcast-card,
+body.dark-mode .import-card,
+body.dark-mode .template-item,
+body.dark-mode .selected-numbers,
+body.dark-mode .broadcast-panel,
+body.dark-mode .current-info,
+body.dark-mode .message-preview,
+body.dark-mode .detail-info,
+body.dark-mode .detail-footer,
+body.dark-mode .login-container {
+    background: #16213e !important;
+    border-color: #2c3e50 !important;
+}
+
+body.dark-mode .stat-card .stat-info h4,
+body.dark-mode .stat-card .stat-info small,
+body.dark-mode .chart-card h3,
+body.dark-mode .board-header h3,
+body.dark-mode .db-header h3,
+body.dark-mode .search-header h3,
+body.dark-mode .search-header p,
+body.dark-mode .broadcast-header h3,
+body.dark-mode .broadcast-header p,
+body.dark-mode .modal-content h3,
+body.dark-mode .modal-subtitle,
+body.dark-mode .form-group label,
+body.dark-mode .db-item-info h4,
+body.dark-mode .db-item-info p,
+body.dark-mode .db-item-info small,
+body.dark-mode .detail-info-content .value,
+body.dark-mode .detail-info-content label,
+body.dark-mode .current-name,
+body.dark-mode .current-number,
+body.dark-mode .current-label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .menu-item,
+body.dark-mode .menu-label,
+body.dark-mode .sidebar-header h2 {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .menu-item:hover {
+    background: linear-gradient(90deg, #1e293b, #0f172a) !important;
+    color: #a78bfa !important;
+}
+
+body.dark-mode .menu-item.active {
+    background: #1e293b !important;
+    color: #a78bfa !important;
+}
+
+body.dark-mode .kanban-board .kanban-column {
+    background: #0f172a !important;
+}
+
+body.dark-mode .kanban-board .card-item,
+body.dark-mode .kanban-board-full .card-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .kanban-board .card-item:hover,
+body.dark-mode .kanban-board-full .card-item:hover {
+    background: #2d3a4e !important;
+    border-color: #4f46e5 !important;
+}
+
+body.dark-mode .kanban-board .card-id {
+    background: #334155 !important;
+    color: #a78bfa !important;
+}
+
+body.dark-mode .kanban-board .card-name,
+body.dark-mode .kanban-board-full .card-name {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .kanban-board .card-phone,
+body.dark-mode .kanban-board .card-deadline,
+body.dark-mode .kanban-board-full .card-phone,
+body.dark-mode .kanban-board-full .card-deadline {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select,
+body.dark-mode .form-group textarea,
+body.dark-mode .search-input,
+body.dark-mode #customNumbers,
+body.dark-mode #broadcastMessage,
+body.dark-mode .phone-prefix {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .form-group input:focus,
+body.dark-mode .form-group select:focus,
+body.dark-mode .search-input:focus {
+    border-color: #4f46e5 !important;
+}
+
+body.dark-mode .input-icon span,
+body.dark-mode .detail-info-icon {
+    color: #94a3b8 !important;
+    background: #1e293b !important;
+}
+
+body.dark-mode .btn-outline,
+body.dark-mode .clear-btn,
+body.dark-mode .modal-buttons button:last-child {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .db-item {
+    border-color: #2c3e50 !important;
+}
+
+body.dark-mode .db-item:hover {
+    background: #1e293b !important;
+}
+
+body.dark-mode .db-item.unread {
+    background: #1e1b4b !important;
+    border-left-color: #4f46e5 !important;
+}
+
+body.dark-mode .search-result-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .search-result-item:hover {
+    background: #2d3a4e !important;
+}
+
+body.dark-mode .search-result-info h4,
+body.dark-mode .search-result-info p,
+body.dark-mode .search-result-info small {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .radio-option,
+body.dark-mode .template-item {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode .radio-option.active {
+    background: #1e1b4b !important;
+    border-color: #4f46e5 !important;
+}
+
+body.dark-mode .notif-toast {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .notif-error {
+    background: #7f1d1d !important;
+    color: #fecaca !important;
+}
+
+body.dark-mode .progress-bar-container {
+    background: #334155 !important;
+}
+
+body.dark-mode .progress-bar-fill {
+    background: linear-gradient(90deg, #4f46e5, #8b5cf6) !important;
+}
+
+body.dark-mode .detail-header {
+    background: linear-gradient(135deg, #3730a3, #5b21b6) !important;
+}
+
+body.dark-mode .detail-avatar {
+    background: rgba(255, 255, 255, 0.15) !important;
+}
+
+body.dark-mode .target-card {
+    filter: brightness(0.95);
+}
+
+body.dark-mode .target-card:hover {
+    filter: brightness(1.05);
+}
+
+body.dark-mode #notifBox .notif-toast {
+    background: #1e293b !important;
+    border-left: 3px solid #4f46e5 !important;
+}
+
+/* ========================================
    MAIN CONTENT
    ======================================== */
 .main-content {
