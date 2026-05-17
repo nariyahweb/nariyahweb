@@ -1070,66 +1070,62 @@ body.dark-mode {
     background: #0f172a;
 }
 
-/* ========== KANBAN - DATA FOLLOWUP AGEN & PROSPEK AGEN ========== */
-/* Semua kolom memiliki latar belakang gelap yang sama */
-body.dark-mode .kanban-board .kanban-column,
-body.dark-mode .kanban-board-full .kanban-column {
+/* ========== KANBAN DI DASHBOARD - LEBIH GELAP ========== */
+body.dark-mode .dashboard-two-columns .kanban-board .kanban-column,
+body.dark-mode #dashboardPage .kanban-board .kanban-column {
+    background: #0f0f1a !important;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+/* ========== KANBAN DI SIDEBAR (FULL PAGE) - TETAP SEDANG ========== */
+body.dark-mode .kanban-board-full .kanban-column,
+body.dark-mode #followupFullPage .kanban-board-full .kanban-column,
+body.dark-mode #prospekFullPage .kanban-board-full .kanban-column {
     background: #1e293b !important;
     border-radius: 12px;
     padding: 12px;
 }
 
-/* Warna hanya pada JUDUL kolom sesuai status */
+/* Warna JUDUL kolom sesuai status - Konsisten untuk semua kanban */
 body.dark-mode .kanban-board .kanban-column[data-status="baru"] .column-header span:first-child,
-body.dark-mode .kanban-board .kanban-column[data-status="Baru"] .column-header span:first-child {
+body.dark-mode .kanban-board .kanban-column[data-status="Baru"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="baru"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Baru"] .column-header span:first-child {
     color: #c4b5fd !important; /* Ungu terang */
 }
 
 body.dark-mode .kanban-board .kanban-column[data-status="followup"] .column-header span:first-child,
-body.dark-mode .kanban-board .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
+body.dark-mode .kanban-board .kanban-column[data-status="Dihubungi"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="followup"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
     color: #60a5fa !important; /* Biru terang */
 }
 
 body.dark-mode .kanban-board .kanban-column[data-status="pending"] .column-header span:first-child,
-body.dark-mode .kanban-board .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
+body.dark-mode .kanban-board .kanban-column[data-status="Negosiasi"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="pending"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
     color: #fbbf24 !important; /* Kuning terang */
 }
 
 body.dark-mode .kanban-board .kanban-column[data-status="closing"] .column-header span:first-child,
-body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"] .column-header span:first-child {
+body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="closing"] .column-header span:first-child,
+body.dark-mode .kanban-board-full .kanban-column[data-status="Tertarik"] .column-header span:first-child {
     color: #34d399 !important; /* Hijau terang */
 }
 
 /* Count badge di header kolom */
-body.dark-mode .kanban-board .column-header .count {
+body.dark-mode .kanban-board .column-header .count,
+body.dark-mode .kanban-board-full .column-header .count {
     background: #334155 !important;
     color: #cbd5e1 !important;
 }
 
-/* Full page kanban - sama perlakuan */
-body.dark-mode .kanban-board-full .kanban-column[data-status="baru"] .column-header span:first-child,
-body.dark-mode .kanban-board-full .kanban-column[data-status="Baru"] .column-header span:first-child {
-    color: #c4b5fd !important;
-}
-
-body.dark-mode .kanban-board-full .kanban-column[data-status="followup"] .column-header span:first-child,
-body.dark-mode .kanban-board-full .kanban-column[data-status="Dihubungi"] .column-header span:first-child {
-    color: #60a5fa !important;
-}
-
-body.dark-mode .kanban-board-full .kanban-column[data-status="pending"] .column-header span:first-child,
-body.dark-mode .kanban-board-full .kanban-column[data-status="Negosiasi"] .column-header span:first-child {
-    color: #fbbf24 !important;
-}
-
-body.dark-mode .kanban-board-full .kanban-column[data-status="closing"] .column-header span:first-child,
-body.dark-mode .kanban-board-full .kanban-column[data-status="Tertarik"] .column-header span:first-child {
-    color: #34d399 !important;
-}
-
-/* Card item di kanban */
+/* Card item di kanban - konsisten untuk semua */
 body.dark-mode .card-item {
-    background: #0f172a !important;
+    background: #1e293b !important;
     border-color: #334155 !important;
 }
 
@@ -1140,7 +1136,7 @@ body.dark-mode .card-item:hover {
 }
 
 body.dark-mode .card-item .card-id {
-    background: #1e293b !important;
+    background: #0f172a !important;
     color: #a5b4fc !important;
 }
 
@@ -1156,27 +1152,18 @@ body.dark-mode .card-item .card-deadline {
     color: #64748b !important;
 }
 
-/* ========== DEADLINE BLINK EFFECT - PERBAIKAN AGAR BERKEDIP ========== */
-/* Mode Terang tetap seperti semula */
+/* ========== DEADLINE BLINK EFFECT - DIPAKSA AGAR BERKEDIP ========== */
+/* Mode Terang */
 .card-item.deadline-overdue {
     border: 2px solid #ef4444 !important;
     background: #fef2f2;
-    animation: blinkWarning 0.8s step-start infinite !important;
+    animation: blinkWarning 0.6s ease-in-out infinite !important;
 }
 
 @keyframes blinkWarning {
-    0% {
-        border-color: #ef4444;
-        background: #fef2f2;
-    }
-    50% {
-        border-color: #b91c1c;
-        background: #fee2e2;
-    }
-    100% {
-        border-color: #ef4444;
-        background: #fef2f2;
-    }
+    0% { border-color: #ef4444; background: #fef2f2; box-shadow: 0 0 0px #ef4444; }
+    50% { border-color: #b91c1c; background: #fee2e2; box-shadow: 0 0 6px #ef4444; }
+    100% { border-color: #ef4444; background: #fef2f2; box-shadow: 0 0 0px #ef4444; }
 }
 
 .card-item.deadline-today {
@@ -1184,79 +1171,70 @@ body.dark-mode .card-item .card-deadline {
     background: #fffbeb;
 }
 
-/* Mode Gelap - PASTIKAN BERKEDIP */
+/* Mode Gelap - DIPAKSA MENGGUNAKAN !important */
 body.dark-mode .card-item.deadline-overdue {
     border: 2px solid #ef4444 !important;
-    background: #450a0a;
-    animation: blinkWarningDark 0.8s ease-in-out infinite !important;
+    background: #450a0a !important;
+    animation: blinkWarningDark 0.6s ease-in-out infinite !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 @keyframes blinkWarningDark {
-    0% {
-        border-color: #ef4444;
-        background: #450a0a;
-        box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+    0% { 
+        border-color: #ef4444; 
+        background: #450a0a; 
+        box-shadow: 0 0 0px #ef4444;
     }
-    50% {
-        border-color: #f87171;
-        background: #7f1d1d;
-        box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    50% { 
+        border-color: #f87171; 
+        background: #7f1d1d; 
+        box-shadow: 0 0 10px #ef4444;
     }
-    100% {
-        border-color: #ef4444;
-        background: #450a0a;
-        box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+    100% { 
+        border-color: #ef4444; 
+        background: #450a0a; 
+        box-shadow: 0 0 0px #ef4444;
     }
 }
 
 body.dark-mode .card-item.deadline-today {
     border: 2px solid #f59e0b !important;
-    background: #422006;
-    animation: pulseToday 0.8s ease-in-out infinite !important;
+    background: #422006 !important;
+    animation: pulseToday 0.6s ease-in-out infinite !important;
 }
 
 @keyframes pulseToday {
-    0% {
-        border-color: #f59e0b;
-        background: #422006;
-        box-shadow: 0 0 0px rgba(245, 158, 11, 0);
-    }
-    50% {
-        border-color: #fbbf24;
-        background: #78350f;
-        box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
-    }
-    100% {
-        border-color: #f59e0b;
-        background: #422006;
-        box-shadow: 0 0 0px rgba(245, 158, 11, 0);
-    }
+    0% { border-color: #f59e0b; background: #422006; box-shadow: 0 0 0px #f59e0b; }
+    50% { border-color: #fbbf24; background: #78350f; box-shadow: 0 0 8px #f59e0b; }
+    100% { border-color: #f59e0b; background: #422006; box-shadow: 0 0 0px #f59e0b; }
+}
+
+/* Full page kanban - deadline efek */
+body.dark-mode .kanban-board-full .card-item.deadline-overdue {
+    border: 2px solid #ef4444 !important;
+    background: #450a0a !important;
+    animation: blinkWarningDark 0.6s ease-in-out infinite !important;
+}
+
+body.dark-mode .kanban-board-full .card-item.deadline-today {
+    border: 2px solid #f59e0b !important;
+    background: #422006 !important;
+    animation: pulseToday 0.6s ease-in-out infinite !important;
 }
 
 /* Search result items - deadline efek */
 body.dark-mode .search-result-item.deadline-overdue {
     background: #450a0a !important;
     border-color: #ef4444 !important;
-    animation: blinkWarningDark 0.8s ease-in-out infinite !important;
+    animation: blinkWarningDark 0.6s ease-in-out infinite !important;
 }
 
 body.dark-mode .search-result-item.deadline-today {
     background: #422006 !important;
     border-color: #f59e0b !important;
-    animation: pulseToday 0.8s ease-in-out infinite !important;
-}
-
-/* Full page kanban - deadline efek */
-body.dark-mode .kanban-board-full .card-item.deadline-overdue {
-    border: 2px solid #ef4444 !important;
-    background: #450a0a;
-    animation: blinkWarningDark 0.8s ease-in-out infinite !important;
-}
-
-body.dark-mode .kanban-board-full .card-item.deadline-today {
-    border: 2px solid #f59e0b !important;
-    background: #422006;
-    animation: pulseToday 0.8s ease-in-out infinite !important;
+    animation: pulseToday 0.6s ease-in-out infinite !important;
 }
 
 /* ========== TYPOGRAPHY - JANGAN HITAM ========== */
