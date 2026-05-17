@@ -4575,23 +4575,23 @@ function showChartModal(chartType) {
 function setupChartClickEvents() {
     const chartCustomerCard = document.querySelector('#chartCustomer')?.closest('.chart-card');
     const chartProspekCard = document.querySelector('#chartProspek')?.closest('.chart-card');
-    
-    if (chartCustomerCard) {
-        const newCard = chartCustomerCard.cloneNode(true);
-        chartCustomerCard.parentNode.replaceChild(newCard, chartCustomerCard);
-        newCard.style.cursor = 'pointer';
-        newCard.addEventListener('click', function(e) {
+
+    if (chartCustomerCard && !chartCustomerCard.dataset.listenerAdded) {
+        chartCustomerCard.dataset.listenerAdded = 'true';
+        chartCustomerCard.style.cursor = 'pointer';
+
+        chartCustomerCard.addEventListener('click', function (e) {
             e.stopPropagation();
             console.log('Chart Followup diklik');
             showChartModal('customer');
         });
     }
-    
-    if (chartProspekCard) {
-        const newCard = chartProspekCard.cloneNode(true);
-        chartProspekCard.parentNode.replaceChild(newCard, chartProspekCard);
-        newCard.style.cursor = 'pointer';
-        newCard.addEventListener('click', function(e) {
+
+    if (chartProspekCard && !chartProspekCard.dataset.listenerAdded) {
+        chartProspekCard.dataset.listenerAdded = 'true';
+        chartProspekCard.style.cursor = 'pointer';
+
+        chartProspekCard.addEventListener('click', function (e) {
             e.stopPropagation();
             console.log('Chart Prospek diklik');
             showChartModal('prospek');
