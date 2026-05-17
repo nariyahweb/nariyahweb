@@ -1976,11 +1976,7 @@ auth.onAuthStateChanged(async user => {
         loadAllData();
         initDarkMode();
         setupDarkModeToggle();
-        renderCharts();
-
-        setTimeout(() => {
         setupChartClickEvents();
-        }, 100);
         loadReminders();
         loadPesan();
         loadDBClosing();
@@ -4438,6 +4434,8 @@ let chartModal = null;
 let chartModalInstance = null;
 
 function showChartModal(chartType) {
+    console.log('showChartModal dipanggil dengan type:', chartType);
+    
     // Cek apakah modal sudah ada, jika belum buat
     let chartModal = document.getElementById('chartModal');
     if (!chartModal) {
@@ -4480,16 +4478,21 @@ function showChartModal(chartType) {
     const modalTitle = document.getElementById('chartModalTitle');
     const modalCanvas = document.getElementById('chartModalCanvas');
     
-    if (!modalCanvas) return;
+    if (!modalCanvas) {
+        console.error('Canvas modal tidak ditemukan');
+        return;
+    }
     
     // Ambil data dari chart asli
-    if (chartType === 'customer' && chartCustomer) {
+    if (chartType === 'customer' && chartCustomer && chartCustomer.data) {
         modalTitle.innerText = '📊 Chart Followup Agen (Diperbesar)';
         const ctx = modalCanvas.getContext('2d');
         
         // Ambil data dari chart asli
         const originalData = chartCustomer.data.datasets[0].data;
         const originalLabels = chartCustomer.data.labels;
+        
+        console.log('Data chart customer:', originalData, originalLabels);
         
         chartModalInstance = new Chart(ctx, {
             type: 'doughnut',
@@ -4525,13 +4528,16 @@ function showChartModal(chartType) {
                 }
             }
         });
+        document.getElementById('chartModal').style.display = 'flex';
     } 
-    else if (chartType === 'prospek' && chartProspek) {
+    else if (chartType === 'prospek' && chartProspek && chartProspek.data) {
         modalTitle.innerText = '📊 Chart Prospek Agen (Diperbesar)';
         const ctx = modalCanvas.getContext('2d');
         
         const originalData = chartProspek.data.datasets[0].data;
         const originalLabels = chartProspek.data.labels;
+        
+        console.log('Data chart prospek:', originalData, originalLabels);
         
         chartModalInstance = new Chart(ctx, {
             type: 'doughnut',
@@ -4567,41 +4573,71 @@ function showChartModal(chartType) {
                 }
             }
         });
+        document.getElementById('chartModal').style.display = 'flex';
     } else {
-        console.log('Chart belum siap');
-        return;
+        console.log('Chart belum siap:', { 
+            chartType, 
+            hasCustomerChart: !!chartCustomer, 
+            hasCustomerData: chartCustomer && !!chartCustomer.data,
+            hasProspekChart: !!chartProspek,
+            hasProspekData: chartProspek && !!chartProspek.data
+        });
+        showNotifTop('⚠️ Chart sedang dimuat, coba klik lagi sebentar!', true);
     }
-    
-    document.getElementById('chartModal').style.display = 'flex';
 }
 
 // ========== EVENT LISTENER UNTUK CHART CARD ==========
 function setupChartClickEvents() {
-    const chartCustomerCard =
-        document.querySelector('#chartCustomer')?.closest('.chart-card');
-
-    const chartProspekCard =
-        document.querySelector('#chartProspek')?.closest('.chart-card');
-
-    if (chartCustomerCard && !chartCustomerCard.dataset.listenerAdded) {
-        chartCustomerCard.dataset.listenerAdded = 'true';
-        chartCustomerCard.style.cursor = 'pointer';
-
-        chartCustomerCard.addEventListener('click', function (e) {
-            e.stopPropagation();
-            showChartModal('customer');
-        });
-    }
-
-    if (chartProspekCard && !chartProspekCard.dataset.listenerAdded) {
-        chartProspekCard.dataset.listenerAdded = 'true';
-        chartProspekCard.style.cursor = 'pointer';
-
-        chartProspekCard.addEventListener('click', function (e) {
-            e.stopPropagation();
-            showChartModal('prospek');
-        });
-    }
+    console.log('setupChartClickEvents dipanggil');
+    
+    // Gunakan setTimeout untuk memastikan DOM sudah siap
+    setTimeout(() => {
+        // Cari elemen chart card dengan cara yang lebih robust
+        const chartCustomerCanvas = document.getElementById('chartCustomer');
+        const chartProspekCanvas = document.getElementById('chartProspek');
+        
+        if (chartCustomerCanvas) {
+            // Cari card induk dengan class chart-card
+            let chartCustomerCard = chartCustomerCanvas.closest('.chart-card');
+            if (chartCustomerCard) {
+                console.log('Chart Followup card ditemukan');
+                // Hapus event listener lama jika ada
+                const newCard = chartCustomerCard.cloneNode(true);
+                chartCustomerCard.parentNode.replaceChild(newCard, chartCustomerCard);
+                newCard.style.cursor = 'pointer';
+                newCard.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    console.log('Chart Followup diklik');
+                    showChartModal('customer');
+                });
+            } else {
+                console.log('Chart Followup card TIDAK ditemukan');
+            }
+        } else {
+            console.log('Chart Customer canvas tidak ditemukan');
+        }
+        
+        if (chartProspekCanvas) {
+            // Cari card induk dengan class chart-card
+            let chartProspekCard = chartProspekCanvas.closest('.chart-card');
+            if (chartProspekCard) {
+                console.log('Chart Prospek card ditemukan');
+                // Hapus event listener lama jika ada
+                const newCard = chartProspekCard.cloneNode(true);
+                chartProspekCard.parentNode.replaceChild(newCard, chartProspekCard);
+                newCard.style.cursor = 'pointer';
+                newCard.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    console.log('Chart Prospek diklik');
+                    showChartModal('prospek');
+                });
+            } else {
+                console.log('Chart Prospek card TIDAK ditemukan');
+            }
+        } else {
+            console.log('Chart Prospek canvas tidak ditemukan');
+        }
+    }, 1000); // Delay 1 detik untuk memastikan chart sudah dirender
 }
 
 // ========== LOAD ALL DATA ==========
@@ -4667,6 +4703,12 @@ function loadAllData() {
             }
         }
         updateChartCustomer(total, closing, pending, followup);
+        
+        // 🔥 TAMBAHKAN INI - panggil setupChartClickEvents dengan delay
+        setTimeout(() => {
+            setupChartClickEvents();
+        }, 500);
+        
         updateAllBadges();
         renderFullFollowupKanban();
     });
@@ -4714,6 +4756,12 @@ function loadAllData() {
             }
         }
         updateChartProspek(baru, dihubungi, negosiasi, tertarik);
+        
+        // 🔥 TAMBAHKAN INI - panggil setupChartClickEvents dengan delay
+        setTimeout(() => {
+            setupChartClickEvents();
+        }, 500);
+        
         updateAllBadges();
         renderFullProspekKanban();
     });
