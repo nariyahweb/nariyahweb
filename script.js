@@ -1976,7 +1976,7 @@ auth.onAuthStateChanged(async user => {
         loadAllData();
         initDarkMode();
         setupDarkModeToggle();
-        updateCharts();
+        renderCharts();
 
         setTimeout(() => {
         setupChartClickEvents();
