@@ -1976,7 +1976,9 @@ auth.onAuthStateChanged(async user => {
         loadAllData();
         initDarkMode();
         setupDarkModeToggle();
-        setupChartClickEvents();
+        setTimeout(() => {
+            setupChartClickEvents();
+        }, 2000);
         loadReminders();
         loadPesan();
         loadDBClosing();
@@ -4436,40 +4438,49 @@ let chartModalInstance = null;
 function showChartModal(chartType) {
     console.log('showChartModal dipanggil dengan type:', chartType);
     
-    // Cek apakah modal sudah ada, jika belum buat
-    let chartModal = document.getElementById('chartModal');
-    if (!chartModal) {
-        chartModal = document.createElement('div');
-        chartModal.id = 'chartModal';
-        chartModal.className = 'modal';
-        chartModal.innerHTML = `
-            <div class="modal-content" style="max-width: 600px; max-height: 80vh;">
+    // Pastikan chart asli masih ada datanya
+    if (chartType === 'customer' && (!chartCustomer || !chartCustomer.data)) {
+        console.log('Chart customer belum siap');
+        showNotifTop('⚠️ Chart sedang dimuat, coba lagi sebentar!', true);
+        return;
+    }
+    if (chartType === 'prospek' && (!chartProspek || !chartProspek.data)) {
+        console.log('Chart prospek belum siap');
+        showNotifTop('⚠️ Chart sedang dimuat, coba lagi sebentar!', true);
+        return;
+    }
+    
+    // Buat modal jika belum ada
+    let modal = document.getElementById('chartModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'chartModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 600px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px 0;">
                     <h3 id="chartModalTitle" style="margin: 0;">📊 Chart</h3>
-                    <button id="closeChartModalBtn" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+                    <button id="closeChartModalBtn" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                 </div>
                 <div style="padding: 20px;">
-                    <canvas id="chartModalCanvas" style="max-height: 400px; width: 100%;"></canvas>
+                    <canvas id="chartModalCanvas" style="width: 100%; max-height: 400px;"></canvas>
                 </div>
                 <div class="modal-buttons">
                     <button id="chartModalCloseBtn" class="btn-outline">Tutup</button>
                 </div>
             </div>
         `;
-        document.body.appendChild(chartModal);
+        document.body.appendChild(modal);
         
-        // Event listener untuk tutup modal
+        // Event close
         const closeBtn = document.getElementById('closeChartModalBtn');
         const closeBtn2 = document.getElementById('chartModalCloseBtn');
         if (closeBtn) closeBtn.onclick = () => closeModal('chartModal');
         if (closeBtn2) closeBtn2.onclick = () => closeModal('chartModal');
-        
-        chartModal.onclick = (e) => {
-            if (e.target === chartModal) closeModal('chartModal');
-        };
+        modal.onclick = (e) => { if (e.target === modal) closeModal('chartModal'); };
     }
     
-    // Hancurkan chart instance lama jika ada
+    // Hancurkan chart instance lama
     if (chartModalInstance) {
         chartModalInstance.destroy();
         chartModalInstance = null;
@@ -4477,22 +4488,12 @@ function showChartModal(chartType) {
     
     const modalTitle = document.getElementById('chartModalTitle');
     const modalCanvas = document.getElementById('chartModalCanvas');
+    const ctx = modalCanvas.getContext('2d');
     
-    if (!modalCanvas) {
-        console.error('Canvas modal tidak ditemukan');
-        return;
-    }
-    
-    // Ambil data dari chart asli
     if (chartType === 'customer' && chartCustomer && chartCustomer.data) {
         modalTitle.innerText = '📊 Chart Followup Agen (Diperbesar)';
-        const ctx = modalCanvas.getContext('2d');
-        
-        // Ambil data dari chart asli
-        const originalData = chartCustomer.data.datasets[0].data;
-        const originalLabels = chartCustomer.data.labels;
-        
-        console.log('Data chart customer:', originalData, originalLabels);
+        const originalData = [...chartCustomer.data.datasets[0].data];
+        const originalLabels = [...chartCustomer.data.labels];
         
         chartModalInstance = new Chart(ctx, {
             type: 'doughnut',
@@ -4510,34 +4511,15 @@ function showChartModal(chartType) {
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { font: { size: 12 } }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ${value} (${percent}%)`;
-                            }
-                        }
-                    }
+                    legend: { position: 'bottom', labels: { font: { size: 11 } } }
                 }
             }
         });
-        document.getElementById('chartModal').style.display = 'flex';
     } 
     else if (chartType === 'prospek' && chartProspek && chartProspek.data) {
         modalTitle.innerText = '📊 Chart Prospek Agen (Diperbesar)';
-        const ctx = modalCanvas.getContext('2d');
-        
-        const originalData = chartProspek.data.datasets[0].data;
-        const originalLabels = chartProspek.data.labels;
-        
-        console.log('Data chart prospek:', originalData, originalLabels);
+        const originalData = [...chartProspek.data.datasets[0].data];
+        const originalLabels = [...chartProspek.data.labels];
         
         chartModalInstance = new Chart(ctx, {
             type: 'doughnut',
@@ -4555,89 +4537,98 @@ function showChartModal(chartType) {
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { font: { size: 12 } }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.label || '';
-                                const value = context.raw || 0;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${label}: ${value} (${percent}%)`;
-                            }
-                        }
-                    }
+                    legend: { position: 'bottom', labels: { font: { size: 11 } } }
                 }
             }
         });
-        document.getElementById('chartModal').style.display = 'flex';
     } else {
-        console.log('Chart belum siap:', { 
-            chartType, 
-            hasCustomerChart: !!chartCustomer, 
-            hasCustomerData: chartCustomer && !!chartCustomer.data,
-            hasProspekChart: !!chartProspek,
-            hasProspekData: chartProspek && !!chartProspek.data
-        });
-        showNotifTop('⚠️ Chart sedang dimuat, coba klik lagi sebentar!', true);
+        showNotifTop('⚠️ Chart belum siap, silahkan refresh halaman', true);
+        return;
     }
+    
+    modal.style.display = 'flex';
 }
 
-// ========== EVENT LISTENER UNTUK CHART CARD ==========
+// ========== SETUP CHART CLICK EVENT ==========
 function setupChartClickEvents() {
     console.log('setupChartClickEvents dipanggil');
     
-    // Gunakan setTimeout untuk memastikan DOM sudah siap
+    // Tunggu hingga DOM benar-benar siap
     setTimeout(() => {
-        // Cari elemen chart card dengan cara yang lebih robust
-        const chartCustomerCanvas = document.getElementById('chartCustomer');
-        const chartProspekCanvas = document.getElementById('chartProspek');
+        // Ambil elemen canvas chart
+        const customerCanvas = document.getElementById('chartCustomer');
+        const prospekCanvas = document.getElementById('chartProspek');
         
-        if (chartCustomerCanvas) {
-            // Cari card induk dengan class chart-card
-            let chartCustomerCard = chartCustomerCanvas.closest('.chart-card');
-            if (chartCustomerCard) {
-                console.log('Chart Followup card ditemukan');
-                // Hapus event listener lama jika ada
-                const newCard = chartCustomerCard.cloneNode(true);
-                chartCustomerCard.parentNode.replaceChild(newCard, chartCustomerCard);
+        console.log('Customer canvas:', customerCanvas);
+        console.log('Prospek canvas:', prospekCanvas);
+        
+        // Untuk Chart Followup - cari parent card
+        if (customerCanvas) {
+            // Cari card yang berisi chart customer
+            let customerCard = customerCanvas.closest('.chart-card');
+            if (!customerCard) {
+                // Coba cari parent yang lebih tinggi
+                customerCard = customerCanvas.parentElement?.parentElement;
+                while (customerCard && !customerCard.classList?.contains('chart-card')) {
+                    customerCard = customerCard.parentElement;
+                }
+            }
+            
+            if (customerCard) {
+                console.log('Chart Followup card ditemukan:', customerCard);
+                // Hapus event listener lama dengan clone
+                const newCard = customerCard.cloneNode(true);
+                customerCard.parentNode.replaceChild(newCard, customerCard);
                 newCard.style.cursor = 'pointer';
                 newCard.addEventListener('click', function(e) {
+                    // Jangan trigger jika klik di canvas (biar chart tetap bisa diinteraksi)
+                    if (e.target.tagName === 'CANVAS') return;
                     e.stopPropagation();
                     console.log('Chart Followup diklik');
                     showChartModal('customer');
                 });
             } else {
-                console.log('Chart Followup card TIDAK ditemukan');
+                console.log('Chart Followup card TIDAK ditemukan, coba cara alternatif');
+                // Alternatif: buat wrapper card sendiri
+                const wrapper = customerCanvas.closest('.charts-row')?.querySelector('.chart-card:first-child');
+                if (wrapper) {
+                    wrapper.style.cursor = 'pointer';
+                    wrapper.addEventListener('click', () => showChartModal('customer'));
+                }
             }
-        } else {
-            console.log('Chart Customer canvas tidak ditemukan');
         }
         
-        if (chartProspekCanvas) {
-            // Cari card induk dengan class chart-card
-            let chartProspekCard = chartProspekCanvas.closest('.chart-card');
-            if (chartProspekCard) {
-                console.log('Chart Prospek card ditemukan');
-                // Hapus event listener lama jika ada
-                const newCard = chartProspekCard.cloneNode(true);
-                chartProspekCard.parentNode.replaceChild(newCard, chartProspekCard);
+        // Untuk Chart Prospek
+        if (prospekCanvas) {
+            let prospekCard = prospekCanvas.closest('.chart-card');
+            if (!prospekCard) {
+                prospekCard = prospekCanvas.parentElement?.parentElement;
+                while (prospekCard && !prospekCard.classList?.contains('chart-card')) {
+                    prospekCard = prospekCard.parentElement;
+                }
+            }
+            
+            if (prospekCard) {
+                console.log('Chart Prospek card ditemukan:', prospekCard);
+                const newCard = prospekCard.cloneNode(true);
+                prospekCard.parentNode.replaceChild(newCard, prospekCard);
                 newCard.style.cursor = 'pointer';
                 newCard.addEventListener('click', function(e) {
+                    if (e.target.tagName === 'CANVAS') return;
                     e.stopPropagation();
                     console.log('Chart Prospek diklik');
                     showChartModal('prospek');
                 });
             } else {
                 console.log('Chart Prospek card TIDAK ditemukan');
+                const wrapper = prospekCanvas.closest('.charts-row')?.querySelector('.chart-card:last-child');
+                if (wrapper) {
+                    wrapper.style.cursor = 'pointer';
+                    wrapper.addEventListener('click', () => showChartModal('prospek'));
+                }
             }
-        } else {
-            console.log('Chart Prospek canvas tidak ditemukan');
         }
-    }, 1000); // Delay 1 detik untuk memastikan chart sudah dirender
+    }, 1000);
 }
 
 // ========== LOAD ALL DATA ==========
