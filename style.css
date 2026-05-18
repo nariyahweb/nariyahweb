@@ -3322,58 +3322,23 @@ body.dark-mode .selected-numbers {
     background: #0f172a !important;
 }
 
-body.dark-mode .broadcast-panel {
-    background: #1e293b !important;
-    border-color: #334155;
-}
-
-body.dark-mode .panel-header {
-    background: #4f46e5 !important;
-}
-
-body.dark-mode .current-info {
-    background: #0f172a !important;
-}
-
-body.dark-mode .current-name {
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .current-number {
+body.dark-mode .selected-numbers .number-item {
     color: #cbd5e1 !important;
-}
-
-body.dark-mode .message-preview {
-    background: #0f172a !important;
-    border-color: #334155;
-    color: #f1f5f9 !important;
-}
-
-body.dark-mode .progress-bar-container {
-    background: #334155 !important;
-}
-
-body.dark-mode .progress-text {
-    color: #cbd5e1 !important;
-}
-
-body.dark-mode .progress-list .panel-progress-item {
-    background: #0f172a !important;
     border-bottom-color: #334155;
 }
 
-body.dark-mode .panel-progress-item.current {
-    background: #1e293b !important;
+body.dark-mode .template-item {
+    background: #0f172a !important;
+    border-color: #334155;
 }
 
-body.dark-mode .panel-progress-item.success {
-    background: #064e3b !important;
-    color: #34d399 !important;
+body.dark-mode .template-item strong {
+    color: #f1f5f9 !important;
 }
 
-body.dark-mode .panel-progress-item.failed {
-    background: #450a0a !important;
-    color: #fca5a5 !important;
+body.dark-mode .variable-hint small,
+body.dark-mode .variable-hint code {
+    color: #94a3b8 !important;
 }
 
 /* Dark Mode - Buttons */
@@ -3433,18 +3398,31 @@ body.dark-mode .import-card h4 {
     color: #f1f5f9 !important;
 }
 
+body.dark-mode .info-list li {
+    color: #cbd5e1 !important;
+}
+
 body.dark-mode .drop-zone {
     background: #1e293b !important;
     border-color: #818cf8 !important;
 }
 
+body.dark-mode .drop-zone p {
+    color: #a5b4fc !important;
+}
+
 body.dark-mode .radio-option {
     border-color: #334155;
+    background: #0f172a !important;
 }
 
 body.dark-mode .radio-option.active {
     background: #1e293b !important;
     border-color: #818cf8;
+}
+
+body.dark-mode .radio-option p {
+    color: #94a3b8 !important;
 }
 
 /* Dark Mode - Filter & Search */
