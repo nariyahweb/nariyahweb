@@ -6020,11 +6020,22 @@ async function setupAgentImport() {
                 }
                 
                 progress.update(10, '📥 Import Data', 'Memuat data produk...');
-                await new Promise(resolve => setTimeout(resolve, 10));
                 
-                const produkMap = await getProdukMapCached();
+                // Load data produk dari database
+                const produkSnapshot = await db.collection('produk').get();
+                const produkMap = new Map();
+                const produkList = [];
                 
-                // Deteksi header baris 1,2,3
+                produkSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    produkList.push({ id: doc.id, nama: data.nama, jenis: data.jenis_produk });
+                    const namaLower = data.nama.toLowerCase().trim();
+                    const namaClean = namaLower.replace(/[^a-z0-9]/g, '');
+                    produkMap.set(namaLower, data);
+                    produkMap.set(namaClean, data);
+                });
+                
+                // Header baris 1,2,3
                 const headerRow1 = rawJson[0] || [];
                 const headerRow2 = rawJson[1] || [];
                 const headerRow3 = rawJson[2] || [];
@@ -6065,6 +6076,7 @@ async function setupAgentImport() {
                 
                 progress.update(15, '📥 Import Data', 'Memeriksa duplikat data...');
                 
+                // Ambil semua agent_id yang sudah ada
                 const allExistingAgents = await db.collection('db_agent').get();
                 const existingAgentIds = new Set();
                 allExistingAgents.forEach(doc => {
@@ -6078,52 +6090,45 @@ async function setupAgentImport() {
                 
                 progress.update(20, '📥 Import Data', `Memproses ${totalRows} baris data...`);
                 
-                // ========== DETEKSI KOLOM PRODUK YANG LEBIH AKURAT ==========
+                // ========== DETEKSI KOLOM PRODUK ==========
+                // Mapping: nama_produk -> { colProfit, colFeeUpline }
                 const produkColumnMap = new Map();
                 
                 for (let i = 0; i < headerRow1.length; i++) {
-                    const namaProduk = headerRow1[i] ? String(headerRow1[i]).trim() : '';
-                    const tipeData = headerRow2[i] ? String(headerRow2[i]).trim().toUpperCase() : '';
-                    
-                    if (!namaProduk) continue;
+                    const colName = String(headerRow1[i] || '').trim().toLowerCase();
                     
                     // Skip kolom standar
                     if (i === agentIdCol || i === namaCol || i === hpCol || i === apkCol ||
-                        i === agentTypeCol || i === pemilikCol || i === alamatCol) {
+                        i === agentTypeCol || i === pemilikCol || i === alamatCol ||
+                        i === emailCol || i === tlpCol || i === noRekeningCol ||
+                        i === atasNamaCol || i === jenisBankCol || i === noKtpCol ||
+                        i === cidCol || i === uplineCol) {
                         continue;
                     }
                     
-                    // Cek apakah ini nama produk
-                    const isNamaProduk = namaProduk.length > 0 && 
-                                         namaProduk.length < 40 && 
-                                         isNaN(namaProduk) &&
-                                         !namaProduk.toUpperCase().includes('PROFIT') &&
-                                         !namaProduk.toUpperCase().includes('FEE') &&
-                                         !namaProduk.toUpperCase().includes('ADMIN');
-                    
-                    if (isNamaProduk) {
-                        let type = 'profit';
-                        if (tipeData === 'PROFIT' || tipeData.includes('PROFIT')) {
-                            type = 'profit';
-                        } else if (tipeData === 'FEE UPLINE' || tipeData.includes('FEE UPLINE')) {
-                            type = 'fee_upline';
-                        } else if (tipeData === 'FEE AGENT' || tipeData.includes('FEE AGENT')) {
-                            type = 'fee_agent';
-                        } else if (tipeData === 'ADMIN' || tipeData.includes('ADMIN')) {
-                            type = 'admin';
+                    // Cek apakah kolom adalah profit_xxx atau fee_upline_xxx
+                    if (colName.startsWith('profit_')) {
+                        const produkNama = colName.replace('profit_', '').replace(/_/g, ' ');
+                        if (!produkColumnMap.has(produkNama)) {
+                            produkColumnMap.set(produkNama, { profitCol: i, feeCol: -1 });
+                        } else {
+                            const existing = produkColumnMap.get(produkNama);
+                            existing.profitCol = i;
+                            produkColumnMap.set(produkNama, existing);
                         }
-                        
-                        produkColumnMap.set(i, {
-                            produkNama: namaProduk,
-                            type: type,
-                            colIndex: i
-                        });
-                        
-                        console.log(`📌 Kolom ${i}: ${namaProduk} -> ${type}`);
+                    } else if (colName.startsWith('fee_upline_')) {
+                        const produkNama = colName.replace('fee_upline_', '').replace(/_/g, ' ');
+                        if (!produkColumnMap.has(produkNama)) {
+                            produkColumnMap.set(produkNama, { profitCol: -1, feeCol: i });
+                        } else {
+                            const existing = produkColumnMap.get(produkNama);
+                            existing.feeCol = i;
+                            produkColumnMap.set(produkNama, existing);
+                        }
                     }
                 }
                 
-                console.log(`📊 Total kolom produk terdeteksi: ${produkColumnMap.size}`);
+                console.log('Produk column map:', Array.from(produkColumnMap.keys()));
                 
                 const BATCH_SIZE = 450;
                 let batches = [];
@@ -6182,109 +6187,77 @@ async function setupAgentImport() {
                             produk: []
                         };
                         
-                        // ========== PROSES PRODUK - KUMPULKAN NILAI PER PRODUK ==========
-                        const produkValues = new Map();
-                        
-                        for (const [colIndex, prodInfo] of produkColumnMap.entries()) {
-                            if (colIndex < row.length) {
-                                let value = row[colIndex];
-                                
-                                if (value === undefined || value === null || value === '') continue;
-                                
-                                let numValue = 0;
-                                if (typeof value === 'string') {
-                                    const cleanValue = value.replace(/[^0-9.-]/g, '');
-                                    numValue = parseFloat(cleanValue) || 0;
-                                } else if (typeof value === 'number') {
-                                    numValue = value;
-                                } else {
-                                    numValue = parseFloat(String(value)) || 0;
-                                }
-                                
-                                // 🔥 PERUBAHAN: JANGAN SKIP JIKA NILAI 0 (bisa jadi 0)
-                                // if (numValue === 0) continue;
-                                
-                                if (!produkValues.has(prodInfo.produkNama)) {
-                                    produkValues.set(prodInfo.produkNama, {
-                                        profit: 0,
-                                        fee_upline: 0,
-                                        fee_agent: 0,
-                                        admin: 0
-                                    });
-                                }
-                                
-                                const current = produkValues.get(prodInfo.produkNama);
-                                
-                                if (prodInfo.type === 'profit') {
-                                    current.profit = numValue;
-                                    console.log(`   📈 ${prodInfo.produkNama} - PROFIT: ${numValue}`);
-                                } else if (prodInfo.type === 'fee_upline') {
-                                    current.fee_upline = numValue;
-                                    console.log(`   📊 ${prodInfo.produkNama} - FEE UPLINE: ${numValue}`);
-                                } else if (prodInfo.type === 'fee_agent') {
-                                    current.fee_agent = numValue;
-                                    console.log(`   💰 ${prodInfo.produkNama} - FEE AGENT: ${numValue}`);
-                                } else if (prodInfo.type === 'admin') {
-                                    current.admin = numValue;
-                                    console.log(`   🏷️ ${prodInfo.produkNama} - ADMIN: ${numValue}`);
-                                }
-                                
-                                produkValues.set(prodInfo.produkNama, current);
-                            }
-                        }
-                        
-                        // Debug: tampilkan semua produk yang ditemukan
-                        if (produkValues.size > 0) {
-                            console.log(`📦 Produk ditemukan untuk agent ${agentId}:`);
-                            for (const [nama, values] of produkValues.entries()) {
-                                console.log(`   - ${nama}: Profit=${values.profit}, Fee Upline=${values.fee_upline}`);
-                            }
-                        }
-                        
-                        // ========== SIMPAN PRODUK KE AGENT ==========
+                        // ========== PROSES PRODUK ==========
                         const produkListData = [];
-                        const produkMapArray = Array.from(produkMap.values());
                         
-                        for (const [produkNama, values] of produkValues.entries()) {
+                        for (const [produkNama, cols] of produkColumnMap.entries()) {
                             // Cari produk di database
-                            let foundProduk = matchProductName(produkNama, produkMapArray);
+                            let foundProduk = null;
+                            const searchNama = produkNama.toLowerCase().trim();
                             
-                            if (foundProduk) {
-                                const produkDataToSave = {
-                                    produk_id: foundProduk.id,
-                                    nama_produk: foundProduk.nama,
-                                    profit: values.profit || 0,
-                                    fee_upline: values.fee_upline || 0,
-                                    fee_agent: values.fee_agent || 0,
-                                    admin: values.admin || 0,
-                                    qty: 1,
-                                    added_at: new Date().toISOString()
-                                };
+                            for (const p of produkList) {
+                                const pNamaLower = p.nama.toLowerCase();
+                                const pNamaClean = pNamaLower.replace(/[^a-z0-9]/g, '');
+                                const searchClean = searchNama.replace(/[^a-z0-9]/g, '');
                                 
-                                // 🔥 HITUNG ULANG FEE AGENT JIKA PERLU (profit + fee_upline + fee_agent = admin)
-                                const isAdminBased = foundProduk.jenis_produk === 'beradmin';
-                                if (isAdminBased && produkDataToSave.admin > 0) {
-                                    const totalProfitAndFee = (produkDataToSave.profit || 0) + (produkDataToSave.fee_upline || 0);
-                                    if (totalProfitAndFee > produkDataToSave.admin) {
-                                        // Jika total melebihi admin, sesuaikan profit
-                                        produkDataToSave.profit = produkDataToSave.admin - (produkDataToSave.fee_upline || 0);
-                                        if (produkDataToSave.profit < 0) produkDataToSave.profit = 0;
-                                        produkDataToSave.fee_agent = produkDataToSave.admin - produkDataToSave.profit - produkDataToSave.fee_upline;
-                                    } else {
-                                        produkDataToSave.fee_agent = produkDataToSave.admin - totalProfitAndFee;
-                                    }
-                                    if (produkDataToSave.fee_agent < 0) produkDataToSave.fee_agent = 0;
+                                if (pNamaLower === searchNama || 
+                                    pNamaClean === searchClean ||
+                                    pNamaLower.includes(searchNama) || 
+                                    searchNama.includes(pNamaLower)) {
+                                    foundProduk = p;
+                                    break;
                                 }
-                                
-                                produkListData.push(produkDataToSave);
-                                console.log(`   ✅ ${produkNama} -> ${foundProduk.nama} (Profit: ${produkDataToSave.profit}, Fee Upline: ${produkDataToSave.fee_upline}, Fee Agent: ${produkDataToSave.fee_agent})`);
-                            } else {
-                                console.log(`   ❌ Produk tidak ditemukan di database: ${produkNama}`);
                             }
+                            
+                            if (!foundProduk) {
+                                console.log(`Produk tidak ditemukan: ${produkNama}`);
+                                continue;
+                            }
+                            
+                            // Ambil nilai profit dan fee upline dari Excel
+                            let profit = 0;
+                            let feeUpline = 0;
+                            
+                            if (cols.profitCol !== -1 && cols.profitCol < row.length) {
+                                let val = row[cols.profitCol];
+                                if (val !== undefined && val !== null && val !== '') {
+                                    profit = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.-]/g, '')) || 0;
+                                }
+                            }
+                            
+                            if (cols.feeCol !== -1 && cols.feeCol < row.length) {
+                                let val = row[cols.feeCol];
+                                if (val !== undefined && val !== null && val !== '') {
+                                    feeUpline = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.-]/g, '')) || 0;
+                                }
+                            }
+                            
+                            console.log(`Produk: ${produkNama}, Profit: ${profit}, Fee Upline: ${feeUpline}`);
+                            
+                            // Hitung admin (jika diperlukan)
+                            let admin = 0;
+                            let feeAgent = 0;
+                            
+                            if (foundProduk.jenis === 'beradmin') {
+                                // Untuk produk beradmin, admin bisa didapat dari tarif_admin
+                                // Atau bisa dihitung dari profit + fee_upline + fee_agent
+                                feeAgent = profit + feeUpline; // Sementara, nanti bisa dihitung ulang
+                            }
+                            
+                            produkListData.push({
+                                produk_id: foundProduk.id,
+                                nama_produk: foundProduk.nama,
+                                profit: profit,
+                                fee_upline: feeUpline,
+                                fee_agent: feeAgent,
+                                admin: admin,
+                                qty: 1,
+                                added_at: new Date().toISOString()
+                            });
                         }
                         
                         agentData.produk = produkListData;
-                        console.log(`📋 Total produk untuk agent ${agentId}: ${produkListData.length}`);
+                        console.log(`Agent ${agentId} memiliki ${produkListData.length} produk`);
                         
                         currentBatch.set(agentRef, agentData);
                         operationCount++;
@@ -6329,7 +6302,6 @@ async function setupAgentImport() {
                 
                 await loadDatabaseAgent();
                 fileInput.value = '';
-                produkMapCache = null;
                 
             } catch (err) {
                 console.error('Import error:', err);
