@@ -3627,6 +3627,131 @@ body.dark-mode .confirm-dialog-content h3 {
     background-color: transparent !important;
 }
 
+/* ========== FLOATING PROGRESS BAR ========== */
+.floating-progress {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    left: auto !important;
+    top: auto !important;
+    width: 320px !important;
+    max-width: 90vw !important;
+    z-index: 999999 !important;
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+    animation: slideInRight 0.3s ease-out !important;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.floating-progress .progress-bar-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.floating-progress .progress-bar-track {
+    flex: 1;
+    height: 8px;
+    background: #334155;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.floating-progress .progress-bar-fill-custom {
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5, #8b5cf6);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.floating-progress .progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #a5b4fc;
+    min-width: 45px;
+    text-align: center;
+}
+
+.floating-progress .progress-detail {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 8px;
+}
+
+.floating-progress .progress-status {
+    font-size: 12px;
+    font-weight: 500;
+    color: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.floating-progress .progress-status .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #4f46e5;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.floating-progress .progress-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.floating-progress .progress-close:hover {
+    background: #334155;
+    color: #f1f5f9;
+}
+
+/* Light mode */
+body:not(.dark-mode) .floating-progress {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+body:not(.dark-mode) .floating-progress .progress-status {
+    color: #1e293b !important;
+}
+
+body:not(.dark-mode) .floating-progress .progress-text {
+    color: #4f46e5 !important;
+}
+
+body:not(.dark-mode) .floating-progress .progress-detail {
+    color: #64748b !important;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
     .stats-grid {
