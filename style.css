@@ -3361,6 +3361,126 @@ body.dark-mode .confirm-dialog-content .modal-buttons #confirmNoBtn:hover {
     background: #475569 !important;
 }
 
+/* ========== PERBAIKAN DARK MODE - SEMUA ALERT & PERINGATAN ========== */
+
+/* Alert/Swal/Toast Peringatan */
+body.dark-mode .swal2-popup,
+body.dark-mode .swal2-modal {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode .swal2-title {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .swal2-html-container,
+body.dark-mode .swal2-content {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .swal2-confirm {
+    background: #4f46e5 !important;
+}
+
+body.dark-mode .swal2-cancel {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Alert bawaan browser (custom) */
+body.dark-mode .alert,
+body.dark-mode .alert-danger,
+body.dark-mode .alert-warning,
+body.dark-mode .alert-info {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Notif Box sudah diatur sebelumnya */
+body.dark-mode #notifBox .notif-toast {
+    background: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #notifBox .notif-error {
+    background: #7f1d1d !important;
+    border-color: #ef4444 !important;
+}
+
+body.dark-mode #notifBox .notif-success {
+    background: #064e3b !important;
+    border-color: #10b981 !important;
+}
+
+/* Dialog peringatan dari showConfirmDialog */
+body.dark-mode .confirm-dialog-overlay {
+    background: rgba(0, 0, 0, 0.95) !important;
+}
+
+body.dark-mode .confirm-dialog-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.dark-mode .confirm-dialog-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-subtitle {
+    color: #cbd5e1 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode .confirm-dialog-content p {
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-buttons #confirmYesBtn {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-buttons #confirmNoBtn {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-buttons #confirmNoBtn:hover {
+    background: #475569 !important;
+}
+
+/* Input Dialog */
+body.dark-mode .modal .input-dialog,
+body.dark-mode .modal-content .input-dialog {
+    background: #1e293b !important;
+}
+
+/* ShowNotif Top */
+body.dark-mode .notif-toast {
+    background: #1e293b !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode .notif-toast.notif-error {
+    background: #7f1d1d !important;
+    border-color: #ef4444 !important;
+}
+
+body.dark-mode .notif-toast.notif-success {
+    background: #064e3b !important;
+    border-color: #10b981 !important;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
     .stats-grid {
