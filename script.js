@@ -693,7 +693,6 @@ async function checkDuplicateProspek(hp, excludeId = null) {
 }
 
 // ========== FUNGSI KONFIRMASI DENGAN POPUP ==========
-// ========== FUNGSI KONFIRMASI DENGAN POPUP ==========
 function showConfirmDialog(title, message, onConfirm, onCancel) {
     // Tutup sementara modal negosiasi jika terbuka (opsional, biar tidak bentrok)
     const negosiasiModal = document.getElementById('prospekNegosiasiModal');
@@ -706,6 +705,9 @@ function showConfirmDialog(title, message, onConfirm, onCancel) {
     // Hapus confirm dialog yang sudah ada
     const existingConfirm = document.querySelector('.confirm-dialog-overlay');
     if (existingConfirm) existingConfirm.remove();
+    
+    // Cek apakah dark mode aktif
+    const isDarkMode = document.body.classList.contains('dark-mode');
     
     // Buat overlay
     const overlay = document.createElement('div');
@@ -724,23 +726,33 @@ function showConfirmDialog(title, message, onConfirm, onCancel) {
         backdrop-filter: blur(4px);
     `;
     
+    // Style untuk dark mode
+    const dialogBgColor = isDarkMode ? '#1e293b' : 'white';
+    const dialogTextColor = isDarkMode ? '#f1f5f9' : '#1f2937';
+    const dialogSubtitleColor = isDarkMode ? '#94a3b8' : '#6b7280';
+    const borderColor = isDarkMode ? '#334155' : '#f0f0f0';
+    const warningColor = isDarkMode ? '#fca5a5' : '#ef4444';
+    const btnCancelBg = isDarkMode ? '#334155' : '#f3f4f6';
+    const btnCancelColor = isDarkMode ? '#f1f5f9' : '#374151';
+    
     overlay.innerHTML = `
         <div class="confirm-dialog-content" style="
-            background: white !important;
+            background: ${dialogBgColor} !important;
             border-radius: 24px !important;
             max-width: 400px !important;
             width: 90% !important;
             z-index: 100000000 !important;
             position: relative !important;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid ${borderColor} !important;
         ">
-            <h3 style="color: #ef4444; font-size: 20px; font-weight: 700; padding: 20px 20px 0; margin-bottom: 4px;">⚠️ ${title}</h3>
-            <div class="modal-subtitle" style="color: #374151; white-space: pre-line; padding: 0 20px 12px; font-size: 12px;">${message}</div>
+            <h3 style="color: ${dialogTextColor}; font-size: 20px; font-weight: 700; padding: 20px 20px 0; margin-bottom: 4px;">⚠️ ${title}</h3>
+            <div class="modal-subtitle" style="color: ${dialogSubtitleColor}; white-space: pre-line; padding: 0 20px 12px; border-bottom: 1px solid ${borderColor}; font-size: 12px;">${message}</div>
             <div style="padding: 0 20px 20px 20px;">
-                <p style="font-size: 12px; color: #ef4444; margin-bottom: 16px;">⚠️ Peringatan: Data yang sudah dipindahkan TIDAK BISA dikembalikan!</p>
+                <p style="font-size: 12px; color: ${warningColor}; margin-bottom: 16px;">⚠️ Peringatan: Data yang sudah dipindahkan TIDAK BISA dikembalikan!</p>
                 <div class="modal-buttons" style="display: flex; gap: 12px; margin-top: 8px;">
                     <button id="confirmYesBtn" style="flex: 1; padding: 12px; border: 0; border-radius: 14px; cursor: pointer; font-weight: 600; font-size: 13px; background: #dc2626; color: #fff;">✅ Ya, Lanjutkan</button>
-                    <button id="confirmNoBtn" style="flex: 1; padding: 12px; border: 0; border-radius: 14px; cursor: pointer; font-weight: 600; font-size: 13px; background: #f3f4f6; color: #374151;">❌ Batal</button>
+                    <button id="confirmNoBtn" style="flex: 1; padding: 12px; border: 0; border-radius: 14px; cursor: pointer; font-weight: 600; font-size: 13px; background: ${btnCancelBg}; color: ${btnCancelColor};">❌ Batal</button>
                 </div>
             </div>
         </div>
