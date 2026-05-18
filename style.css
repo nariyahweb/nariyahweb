@@ -3656,6 +3656,17 @@ body.dark-mode .confirm-dialog-content h3 {
     }
 }
 
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
 .floating-progress .progress-bar-wrapper {
     display: flex;
     align-items: center;
@@ -3734,6 +3745,23 @@ body.dark-mode .confirm-dialog-content h3 {
     color: #f1f5f9;
 }
 
+/* Light mode */
+body:not(.dark-mode) .floating-progress {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+body:not(.dark-mode) .floating-progress .progress-status {
+    color: #1e293b !important;
+}
+
+body:not(.dark-mode) .floating-progress .progress-text {
+    color: #4f46e5 !important;
+}
+
+body:not(.dark-mode) .floating-progress .progress-detail {
+    color: #64748b !important;
+}
 /* Light mode */
 body:not(.dark-mode) .floating-progress {
     background: #ffffff !important;
