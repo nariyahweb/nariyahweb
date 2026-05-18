@@ -5179,29 +5179,27 @@ function updateProductSelect() {
 }
 
 // Render daftar produk agent
-// ========== RENDER PRODUK DI POPUP AGENT (VERSI PERBAIKAN) ==========
-function renderAgentProducts() {
+// ========== RENDER PRODUK DI POPUP AGENT (DENGAN PERHITUNGAN YANG BENAR) ==========
+async function renderAgentProducts() {
     const container = document.getElementById('agentProductsContainer');
     if (!container) return;
     
     const formatRupiah = (angka) => {
-        if (!angka) return 'Rp 0';
+        if (!angka || angka === 0) return 'Rp 0';
         return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
     
     // Cek apakah elemen search sudah ada, jika belum buat
     let searchInput = document.getElementById('searchProdukAgent');
     if (!searchInput) {
-        // Buat wrapper untuk search input agar tidak hilang setiap render
         const searchWrapper = document.createElement('div');
         searchWrapper.style.marginBottom = '12px';
         searchWrapper.innerHTML = '<input type="text" id="searchProdukAgent" placeholder="🔍 Cari produk..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">';
         container.parentNode.insertBefore(searchWrapper, container);
         searchInput = document.getElementById('searchProdukAgent');
         
-        // Tambahkan event listener sekali saja
         searchInput.addEventListener('input', function() {
-            renderAgentProducts(); // panggil ulang dengan filter
+            renderAgentProducts();
         });
     }
     
@@ -5215,10 +5213,19 @@ function renderAgentProducts() {
         return;
     }
     
+    // Ambil CID agent
     const cid = document.getElementById('agentDetailCid')?.value || '';
-    const tarif = currentTarifData.find(t => t.cid === cid);
     
-    // Load existing data
+    // Load tarif admin berdasarkan CID (ambil dari database tarif_admin)
+    let tarifData = null;
+    if (cid) {
+        const tarifSnapshot = await db.collection('tarif_admin').where('cid', '==', cid).get();
+        if (!tarifSnapshot.empty) {
+            tarifData = tarifSnapshot.docs[0].data();
+        }
+    }
+    
+    // Load existing data dari agent
     const existingMap = new Map();
     if (currentAgentProducts) {
         currentAgentProducts.forEach(p => existingMap.set(p.produk_id, p));
@@ -5227,13 +5234,13 @@ function renderAgentProducts() {
     let html = '<table style="width:100%; border-collapse: collapse;">';
     html += `
         <thead>
-            <tr>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Produk</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Admin</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">HPP</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Profit</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Upline</th>
-                <th style="text-align:left; padding:8px; border-bottom:1px solid #e5e7eb;">Fee Agent</th>
+            <tr style="background: #f8fafc; border-bottom: 2px solid #e5e7eb;">
+                <th style="text-align:left; padding:10px;">Produk</th>
+                <th style="text-align:left; padding:10px;">Admin (Otomatis dari CID)</th>
+                <th style="text-align:left; padding:10px;">HPP</th>
+                <th style="text-align:left; padding:10px;">Profit</th>
+                <th style="text-align:left; padding:10px;">Fee Upline</th>
+                <th style="text-align:left; padding:10px;">Fee Agent</th>
             </tr>
         </thead>
         <tbody>
@@ -5249,51 +5256,72 @@ function renderAgentProducts() {
         let feeAgent = 0;
         
         if (isAdminBased) {
-            // Hitung admin
-            if (produk.cid_based && cid) {
-                if (produk.id === 'pln_pospaid') adminValue = tarif?.admin_pospaid || 0;
-                else if (produk.id === 'pln_prepaid') adminValue = tarif?.admin_prepaid || 0;
-                else if (produk.id === 'pln_nontaglis') adminValue = tarif?.admin_nontaglis || 0;
-                else adminValue = existing?.admin || 0;
+            // ========== HITUNG ADMIN BERDASARKAN CID ==========
+            const produkNamaLower = produk.nama.toLowerCase();
+            
+            if (produk.cid_based && cid && tarifData) {
+                // Admin berdasarkan CID dan jenis produk (PLN)
+                if (produkNamaLower.includes('pospaid') || produkNamaLower.includes('posp')) {
+                    adminValue = tarifData.admin_pospaid || 0;
+                } else if (produkNamaLower.includes('prepaid') || produkNamaLower.includes('prep')) {
+                    adminValue = tarifData.admin_prepaid || 0;
+                } else if (produkNamaLower.includes('nontaglis') || produkNamaLower.includes('nont')) {
+                    adminValue = tarifData.admin_nontaglis || 0;
+                } else {
+                    adminValue = existing?.admin || produk.admin_default || 0;
+                }
             } else {
                 adminValue = existing?.admin || produk.admin_default || 0;
             }
             
             profit = existing?.profit || 0;
             feeUpline = existing?.fee_upline || 0;
-            feeAgent = adminValue - profit - feeUpline;
+            
+            // ========== PERHITUNGAN FEE AGENT (TIDAK BOLEH MINUS) ==========
+            let calculatedFeeAgent = adminValue - profit - feeUpline;
+            
+            // Jika fee agent minus, sesuaikan dengan mengurangi profit
+            if (calculatedFeeAgent < 0) {
+                profit = adminValue - feeUpline;
+                if (profit < 0) profit = 0;
+                calculatedFeeAgent = adminValue - profit - feeUpline;
+                if (calculatedFeeAgent < 0) calculatedFeeAgent = 0;
+            }
+            
+            feeAgent = (existing?.fee_agent !== undefined && existing.fee_agent >= 0) ? 
+                existing.fee_agent : calculatedFeeAgent;
+            
+            // Pastikan fee agent tidak minus
+            if (feeAgent < 0) feeAgent = 0;
         }
+        
+        // Warna peringatan jika admin = 0 untuk produk beradmin
+        const adminWarning = (isAdminBased && adminValue === 0 && cid) ? 
+            '<span style="color: #f59e0b; font-size: 10px; margin-left: 5px;">⚠️ CID tidak ditemukan di Tarif Admin</span>' : '';
+        
+        const adminDisplay = isAdminBased ? 
+            `<span class="admin-value" data-id="${produk.id}" style="font-weight: 600; color: ${adminValue === 0 ? '#f59e0b' : '#4f46e5'};">${formatRupiah(adminValue)}</span>${adminWarning}` : '-';
+        
+        const profitInput = isAdminBased ? 
+            `<input type="number" class="profit-input" data-id="${produk.id}" value="${profit}" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">` : '-';
+        
+        const feeUplineInput = isAdminBased ? 
+            `<input type="number" class="fee-upline-input" data-id="${produk.id}" value="${feeUpline}" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">` : '-';
+        
+        const feeAgentDisplay = isAdminBased ? 
+            `<span class="fee-agent-value" data-id="${produk.id}" style="font-weight: 600; color: ${feeAgent >= 0 ? '#10b981' : '#ef4444'};">${formatRupiah(feeAgent)}</span>` : '-';
         
         html += `
             <tr data-produk-id="${produk.id}" style="border-bottom:1px solid #e5e7eb;">
-                <td style="padding:8px;">
+                <td style="padding:10px;">
                     <strong>${escapeHtml(produk.nama)}</strong><br>
                     <small style="color:#9ca3af;">${isAdminBased ? '🏷️ Berdasarkan Admin' : '💰 Tanpa Admin'}</small>
                 </td>
-                <td style="padding:8px;">
-                    ${isAdminBased ? `<span class="admin-value">${formatRupiah(adminValue)}</span>` : '-'}
-                </td>
-                <td style="padding:8px;">
-                    <span class="hpp-value">${formatRupiah(produk.hpp)}</span>
-                </td>
-                <td style="padding:8px;">
-                    ${isAdminBased ? 
-                        `<input type="number" class="profit-input" data-id="${produk.id}" value="${profit}" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">` : 
-                        '-'
-                    }
-                </td>
-                <td style="padding:8px;">
-                    ${isAdminBased ? 
-                        `<input type="number" class="fee-upline-input" data-id="${produk.id}" value="${feeUpline}" step="100" style="width:100px; padding:6px; border-radius:8px; border:1px solid #e5e7eb;">` : 
-                        '-'
-                    }
-                </td>
-                <td style="padding:8px;">
-                    ${isAdminBased ? 
-                        `<span class="fee-agent-value" data-id="${produk.id}">${formatRupiah(feeAgent)}</span>` : 
-                        '-'
-                    }
-                </td>
+                <td style="padding:10px;">${adminDisplay}</td>
+                <td style="padding:10px;"><span class="hpp-value">${formatRupiah(produk.hpp)}</span></td>
+                <td style="padding:10px;">${profitInput}</td>
+                <td style="padding:10px;">${feeUplineInput}</td>
+                <td style="padding:10px;">${feeAgentDisplay}</td>
             </tr>
         `;
     }
@@ -5301,53 +5329,71 @@ function renderAgentProducts() {
     html += '</tbody></table>';
     container.innerHTML = html;
     
-    // Event listener untuk profit dan fee upline
+    // ========== EVENT LISTENER UNTUK PRODUK BERADMIN ==========
     document.querySelectorAll('.profit-input').forEach(input => {
         input.removeEventListener('change', handleProfitChange);
         input.addEventListener('change', handleProfitChange);
     });
+    
     document.querySelectorAll('.fee-upline-input').forEach(input => {
         input.removeEventListener('change', handleFeeUplineChange);
         input.addEventListener('change', handleFeeUplineChange);
     });
 }
 
+// Handler untuk perubahan profit
 function handleProfitChange(e) {
     const produkId = e.target.dataset.id;
-    const profit = parseInt(e.target.value) || 0;
+    let profit = parseInt(e.target.value) || 0;
+    if (profit < 0) profit = 0;
     updateAgentProductField(produkId, 'profit', profit);
 }
 
-function handleFeeAgentChange(e) {
-    const produkId = e.target.dataset.id;
-    const feeAgent = parseInt(e.target.value) || 0;
-    // Update data agent
-    addOrUpdateProductWithFee(produkId, 'fee_agent', feeAgent);
-    updateProfitForProduct(produkId);
-}
-
+// Handler untuk perubahan fee upline
 function handleFeeUplineChange(e) {
     const produkId = e.target.dataset.id;
-    const feeUpline = parseInt(e.target.value) || 0;
+    let feeUpline = parseInt(e.target.value) || 0;
+    if (feeUpline < 0) feeUpline = 0;
     updateAgentProductField(produkId, 'fee_upline', feeUpline);
 }
 
-function updateAgentProductField(produkId, field, value) {
+// Update field produk agent
+async function updateAgentProductField(produkId, field, value) {
     if (!currentAgentProducts) currentAgentProducts = [];
-    const index = currentAgentProducts.findIndex(p => p.produk_id === produkId);
+    
     const produk = produkData.find(p => p.id === produkId);
     if (!produk) return;
     
-    // Dapatkan admin dari tampilan
-    const adminSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .admin-value`);
+    const isAdminBased = produk.jenis_produk === 'beradmin';
+    const index = currentAgentProducts.findIndex(p => p.produk_id === produkId);
+    
+    // Dapatkan admin dari tampilan (untuk produk beradmin)
     let admin = 0;
-    if (adminSpan) {
-        admin = parseInt(adminSpan.textContent.replace(/[^0-9]/g, '')) || 0;
+    if (isAdminBased) {
+        const adminSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .admin-value`);
+        if (adminSpan) {
+            admin = parseInt(adminSpan.textContent.replace(/[^0-9]/g, '')) || 0;
+        }
     }
     
     let profit = field === 'profit' ? value : (currentAgentProducts[index]?.profit || 0);
     let feeUpline = field === 'fee_upline' ? value : (currentAgentProducts[index]?.fee_upline || 0);
-    const feeAgent = admin - profit - feeUpline;
+    
+    // Hitung fee agent (TIDAK BOLEH MINUS)
+    let feeAgent = admin - profit - feeUpline;
+    if (feeAgent < 0) {
+        // Jika fee agent minus, sesuaikan profit
+        profit = admin - feeUpline;
+        if (profit < 0) profit = 0;
+        feeAgent = admin - profit - feeUpline;
+        if (feeAgent < 0) feeAgent = 0;
+        
+        // Update input profit jika perlu
+        if (field === 'fee_upline') {
+            const profitInput = document.querySelector(`tr[data-produk-id="${produkId}"] .profit-input`);
+            if (profitInput) profitInput.value = profit;
+        }
+    }
     
     const productData = {
         produk_id: produkId,
@@ -5368,11 +5414,16 @@ function updateAgentProductField(produkId, field, value) {
     
     // Update tampilan fee agent
     const feeAgentSpan = document.querySelector(`tr[data-produk-id="${produkId}"] .fee-agent-value`);
-    const formatRupiah = (angka) => {
-        if (!angka) return 'Rp 0';
-        return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    };
-    if (feeAgentSpan) feeAgentSpan.innerHTML = formatRupiah(feeAgent);
+    if (feeAgentSpan) {
+        feeAgentSpan.innerHTML = formatRupiah(feeAgent);
+        feeAgentSpan.style.color = feeAgent >= 0 ? '#10b981' : '#ef4444';
+    }
+}
+
+// Fungsi format Rupiah global
+function formatRupiah(angka) {
+    if (!angka || angka === 0) return 'Rp 0';
+    return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 // ========== HANDLER UNTUK PRODUK DI AGENT DETAIL ==========
