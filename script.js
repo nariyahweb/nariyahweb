@@ -5578,19 +5578,48 @@ function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
     }
 }
 
+// ========== FUNGSI IMPORT DATABASE AGENT (DENGAN PENYESUAIAN NAMA PRODUK) ==========
+async function getProdukMap() {
+    // Ambil semua produk dari database
+    const produkSnapshot = await db.collection('produk').get();
+    const produkMap = new Map(); // key: nama_produk (lowercase), value: { id, nama, jenis_produk, admin_default, cid_based }
+    
+    produkSnapshot.forEach(doc => {
+        const data = doc.data();
+        const namaLower = data.nama.toLowerCase().trim();
+        produkMap.set(namaLower, {
+            id: doc.id,
+            nama: data.nama,
+            jenis_produk: data.jenis_produk || 'tanpa_admin',
+            admin_default: data.admin_default || 0,
+            cid_based: data.cid_based || false,
+            hpp: data.hpp || 0,
+            harga_jual: data.harga_jual || 0
+        });
+    });
+    
+    return produkMap;
+}
+
 function setupAgentImport() {
     const importBtn = document.getElementById('importAgentExcelBtn');
     const fileInput = document.getElementById('agentExcelFile');
     if (!importBtn || !fileInput) return;
     
-    importBtn.onclick = () => fileInput.click();
+    // Hapus event listener lama
+    const newImportBtn = importBtn.cloneNode(true);
+    importBtn.parentNode.replaceChild(newImportBtn, importBtn);
+    
+    newImportBtn.onclick = () => fileInput.click();
     
     fileInput.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         
-        importBtn.textContent = '⏳ Memproses...';
-        importBtn.disabled = true;
+        const btn = newImportBtn;
+        const originalText = btn.textContent;
+        btn.textContent = '⏳ Memproses...';
+        btn.disabled = true;
         
         const reader = new FileReader();
         reader.onload = async (event) => {
@@ -5601,139 +5630,295 @@ function setupAgentImport() {
                 const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
                 
                 if (!json || json.length === 0) {
-                    showNotifTop('File Excel kosong!', true);
+                    showNotifTop('❌ File Excel kosong!', true);
                     return;
                 }
                 
-                let success = 0, failed = 0;
-                const duplicates = [];
-                const errors = [];
+                // Ambil data produk dari database
+                const produkMap = await getProdukMap();
+                const produkList = Array.from(produkMap.keys());
                 
-                for (const row of json) {
+                // Deteksi kolom yang ada di file Excel
+                const firstRow = json[0];
+                const columnNames = Object.keys(firstRow);
+                
+                // Mapping kolom standar
+                const columnMap = {
+                    agent_id: null,
+                    nama: null,
+                    hp: null,
+                    apk: null,
+                    agent_type: null,
+                    pemilik: null,
+                    alamat: null,
+                    email: null,
+                    tlp: null,
+                    no_rekening: null,
+                    atas_nama: null,
+                    jenis_bank: null,
+                    no_ktp: null,
+                    cid: null,
+                    upline: null
+                };
+                
+                // Mapping untuk kolom standar
+                const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
+                const possibleNama = ['nama', 'Nama', 'name', 'Name', 'customer_name', 'CustomerName'];
+                const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
+                const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app'];
+                const possibleAgentType = ['agent_type', 'Agent_Type', 'type', 'Type', 'class', 'Class', 'tipe'];
+                const possiblePemilik = ['pemilik', 'Pemilik', 'owner', 'Owner'];
+                const possibleAlamat = ['alamat', 'Alamat', 'address', 'Address'];
+                const possibleEmail = ['email', 'Email', 'mail', 'Mail'];
+                const possibleTlp = ['tlp', 'Tlp', 'telepon', 'Telepon', 'phone_number'];
+                const possibleNoRekening = ['no_rekening', 'NoRekening', 'rekening', 'Rekening', 'norek'];
+                const possibleAtasNama = ['atas_nama', 'AtasNama', 'an', 'An'];
+                const possibleJenisBank = ['jenis_bank', 'JenisBank', 'bank', 'Bank'];
+                const possibleNoKtp = ['no_ktp', 'NoKtp', 'ktp', 'Ktp', 'nik'];
+                const possibleCid = ['cid', 'Cid', 'CID'];
+                const possibleUpline = ['upline', 'Upline', 'atasan', 'Atasan'];
+                
+                for (const col of columnNames) {
+                    const colLower = col.toLowerCase();
+                    
+                    if (possibleAgentId.some(p => p.toLowerCase() === colLower)) columnMap.agent_id = col;
+                    if (possibleNama.some(p => p.toLowerCase() === colLower)) columnMap.nama = col;
+                    if (possibleHp.some(p => p.toLowerCase() === colLower)) columnMap.hp = col;
+                    if (possibleApk.some(p => p.toLowerCase() === colLower)) columnMap.apk = col;
+                    if (possibleAgentType.some(p => p.toLowerCase() === colLower)) columnMap.agent_type = col;
+                    if (possiblePemilik.some(p => p.toLowerCase() === colLower)) columnMap.pemilik = col;
+                    if (possibleAlamat.some(p => p.toLowerCase() === colLower)) columnMap.alamat = col;
+                    if (possibleEmail.some(p => p.toLowerCase() === colLower)) columnMap.email = col;
+                    if (possibleTlp.some(p => p.toLowerCase() === colLower)) columnMap.tlp = col;
+                    if (possibleNoRekening.some(p => p.toLowerCase() === colLower)) columnMap.no_rekening = col;
+                    if (possibleAtasNama.some(p => p.toLowerCase() === colLower)) columnMap.atas_nama = col;
+                    if (possibleJenisBank.some(p => p.toLowerCase() === colLower)) columnMap.jenis_bank = col;
+                    if (possibleNoKtp.some(p => p.toLowerCase() === colLower)) columnMap.no_ktp = col;
+                    if (possibleCid.some(p => p.toLowerCase() === colLower)) columnMap.cid = col;
+                    if (possibleUpline.some(p => p.toLowerCase() === colLower)) columnMap.upline = col;
+                }
+                
+                // Validasi kolom wajib
+                if (!columnMap.agent_id) {
+                    showNotifTop('❌ Kolom "agent_id" (ID Agent) tidak ditemukan dalam file Excel!', true);
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+                
+                // Mapping untuk kolom produk (profit, fee_upline, fee_agent)
+                const profitColumns = [];
+                const feeUplineColumns = [];
+                const feeAgentColumns = [];
+                
+                for (const col of columnNames) {
+                    const colLower = col.toLowerCase();
+                    
+                    // Cek apakah kolom mengandung nama produk untuk profit
+                    for (const produkNama of produkList) {
+                        const produkKey = produkNama.toLowerCase();
+                        if (colLower.includes(produkKey) && colLower.includes('profit')) {
+                            profitColumns.push({ col, produkNama: produkNama });
+                        }
+                        if (colLower.includes(produkKey) && colLower.includes('fee_upline')) {
+                            feeUplineColumns.push({ col, produkNama: produkNama });
+                        }
+                        if (colLower.includes(produkKey) && colLower.includes('fee_agent')) {
+                            feeAgentColumns.push({ col, produkNama: produkNama });
+                        }
+                    }
+                }
+                
+                let success = 0, failed = 0;
+                const errors = [];
+                const duplicates = [];
+                
+                for (let i = 0; i < json.length; i++) {
+                    const row = json[i];
                     try {
-                        // WAJIB: agent_id (ID Agent)
-                        let agentId = row.agent_id || row.Agent_ID || row.id || row.ID || '';
+                        const agentId = row[columnMap.agent_id]?.toString().trim().toUpperCase();
                         
                         if (!agentId) {
                             failed++;
-                            errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent wajib diisi`);
+                            errors.push(`Baris ke-${i + 2}: ID Agent wajib diisi`);
                             continue;
                         }
                         
-                        // OPTIONAL: field lainnya
-                        let nama = row.nama || row.Nama || row.name || row.Name || '';
-                        let hp = row.hp || row.HP || row.phone || row.Phone || '';
-                        let apk = row.apk || row.APK || row.aplikasi || row.Aplikasi || '';
-                        let agentType = row.agent_type || row.Agent_Type || row.type || row.Type || row.class || row.Class || '';
-                        let pemilik = row.pemilik || row.Pemilik || '';
-                        let alamat = row.alamat || row.Alamat || '';
-                        let email = row.email || row.Email || '';
-                        let tlp = row.tlp || row.Tlp || row.Telepon || '';
-                        let no_rekening = row.no_rekening || row.NoRekening || '';
-                        let atas_nama = row.atas_nama || row.AtasNama || '';
-                        let jenis_bank = row.jenis_bank || row.JenisBank || '';
-                        let no_ktp = row.no_ktp || row.NoKtp || '';
-                        let cid = row.cid || row.Cid || row.CID || '';
-                        let upline = row.upline || row.Upline || row.atasan || row.Atasan || '';
-                        let fee_upline = row.fee_upline || row.FeeUpline || row.fee || row.Fee || 0;
-                        
-                        // Jika nama kosong, pakai ID Agent sebagai nama sementara
-                        if (!nama) nama = agentId;
-                        
-                        // Format nomor HP jika ada
-                        let cleanHp = '';
-                        if (hp) {
-                            cleanHp = hp.toString().trim();
-                            cleanHp = cleanHp.replace(/[^\d+]/g, '');
-                            if (!cleanHp.startsWith('+')) {
-                                cleanHp = cleanHp.replace(/^0+/, '');
-                                if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
-                                else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
-                                else cleanHp = '+' + cleanHp.replace(/^\+/, '');
-                            }
-                        }
-                        
-                        // Cek duplikat berdasarkan agent_id (bukan hp)
-                        const existing = await db.collection('db_agent').where('agent_id', '==', agentId.toString().toUpperCase()).get();
+                        // Cek duplikat agent_id
+                        const existing = await db.collection('db_agent').where('agent_id', '==', agentId).get();
                         if (!existing.empty) {
                             duplicates.push(`ID Agent ${agentId} sudah terdaftar`);
                             failed++;
                             continue;
                         }
                         
-                        // Simpan data (hanya agent_id yang wajib)
-                        await db.collection('db_agent').add({
-                            agent_id: agentId.toString().toUpperCase(),
-                            nama: nama.toString().trim(),
-                            hp: cleanHp || '',
-                            apk: apk.toString().trim() || '',
-                            agent_type: agentType || '',
-                            pemilik: pemilik || '',
-                            alamat: alamat || '',
-                            email: email || '',
-                            tlp: tlp || '',
-                            no_rekening: no_rekening || '',
-                            atas_nama: atas_nama || '',
-                            jenis_bank: jenis_bank || '',
-                            no_ktp: no_ktp || '',
-                            cid: cid || '',
-                            upline: upline || '',
+                        // Data dasar agent
+                        const agentData = {
+                            agent_id: agentId,
+                            nama: row[columnMap.nama]?.toString().trim() || agentId,
+                            hp: formatPhoneNumber(row[columnMap.hp] || ''),
+                            apk: row[columnMap.apk]?.toString().trim() || '',
+                            agent_type: row[columnMap.agent_type]?.toString().trim() || '',
+                            pemilik: row[columnMap.pemilik]?.toString().trim() || '',
+                            alamat: row[columnMap.alamat]?.toString().trim() || '',
+                            email: row[columnMap.email]?.toString().trim() || '',
+                            tlp: row[columnMap.tlp]?.toString().trim() || '',
+                            no_rekening: row[columnMap.no_rekening]?.toString().trim() || '',
+                            atas_nama: row[columnMap.atas_nama]?.toString().trim() || '',
+                            jenis_bank: row[columnMap.jenis_bank]?.toString().trim() || '',
+                            no_ktp: row[columnMap.no_ktp]?.toString().trim() || '',
+                            cid: row[columnMap.cid]?.toString().trim() || '',
+                            upline: row[columnMap.upline]?.toString().trim() || '',
                             user_id: currentUser.uid,
-                            fee_upline: parseInt(fee_upline) || 0,
-                            created_at: new Date().toISOString()
-                        });
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            produk: []
+                        };
+                        
+                        // Proses data produk dari kolom
+                        const produkListData = [];
+                        
+                        // Mapping produk berdasarkan profit columns
+                        for (const profitCol of profitColumns) {
+                            const profitValue = parseFloat(row[profitCol.col]) || 0;
+                            if (profitValue > 0) {
+                                const produkInfo = produkMap.get(profitCol.produkNama.toLowerCase());
+                                if (produkInfo) {
+                                    // Cari fee_upline dan fee_agent yang sesuai
+                                    let feeUpline = 0;
+                                    let feeAgent = 0;
+                                    
+                                    const feeUplineCol = feeUplineColumns.find(f => f.produkNama === profitCol.produkNama);
+                                    if (feeUplineCol) {
+                                        feeUpline = parseFloat(row[feeUplineCol.col]) || 0;
+                                    }
+                                    
+                                    const feeAgentCol = feeAgentColumns.find(f => f.produkNama === profitCol.produkNama);
+                                    if (feeAgentCol) {
+                                        feeAgent = parseFloat(row[feeAgentCol.col]) || 0;
+                                    }
+                                    
+                                    produkListData.push({
+                                        produk_id: produkInfo.id,
+                                        nama_produk: produkInfo.nama,
+                                        profit: profitValue,
+                                        fee_upline: feeUpline,
+                                        fee_agent: feeAgent,
+                                        admin: produkInfo.jenis_produk === 'beradmin' ? (profitValue + feeUpline + feeAgent) : 0,
+                                        qty: 1,
+                                        added_at: new Date().toISOString()
+                                    });
+                                }
+                            }
+                        }
+                        
+                        // Jika tidak ada produk dari kolom profit, cek dari kolom fee_upline
+                        if (produkListData.length === 0) {
+                            for (const feeCol of feeUplineColumns) {
+                                const feeValue = parseFloat(row[feeCol.col]) || 0;
+                                if (feeValue > 0) {
+                                    const produkInfo = produkMap.get(feeCol.produkNama.toLowerCase());
+                                    if (produkInfo) {
+                                        produkListData.push({
+                                            produk_id: produkInfo.id,
+                                            nama_produk: produkInfo.nama,
+                                            profit: 0,
+                                            fee_upline: feeValue,
+                                            fee_agent: 0,
+                                            admin: produkInfo.jenis_produk === 'beradmin' ? feeValue : 0,
+                                            qty: 1,
+                                            added_at: new Date().toISOString()
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Jika masih tidak ada, cek dari kolom fee_agent
+                        if (produkListData.length === 0) {
+                            for (const feeCol of feeAgentColumns) {
+                                const feeValue = parseFloat(row[feeCol.col]) || 0;
+                                if (feeValue > 0) {
+                                    const produkInfo = produkMap.get(feeCol.produkNama.toLowerCase());
+                                    if (produkInfo) {
+                                        produkListData.push({
+                                            produk_id: produkInfo.id,
+                                            nama_produk: produkInfo.nama,
+                                            profit: 0,
+                                            fee_upline: 0,
+                                            fee_agent: feeValue,
+                                            admin: produkInfo.jenis_produk === 'beradmin' ? feeValue : 0,
+                                            qty: 1,
+                                            added_at: new Date().toISOString()
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        
+                        agentData.produk = produkListData;
+                        
+                        await db.collection('db_agent').add(agentData);
                         success++;
-                    } catch(err) {
+                        
+                    } catch (rowError) {
                         failed++;
-                        errors.push(`Baris ke-${json.indexOf(row)+2}: ${err.message}`);
+                        errors.push(`Baris ke-${i + 2}: ${rowError.message}`);
                     }
                 }
                 
                 let resultMsg = `✅ Import selesai! Berhasil: ${success}, Gagal: ${failed}`;
-                if (duplicates.length > 0) {
-                    resultMsg += `\n\n⏭ Duplikat: ${duplicates.length} data dilewati`;
+                if (duplicates.length > 0 && duplicates.length <= 5) {
+                    resultMsg += `\n\n⏭ Data duplikat dilewati:\n${duplicates.join('\n')}`;
+                } else if (duplicates.length > 5) {
+                    resultMsg += `\n\n⏭ ${duplicates.length} data duplikat dilewati`;
                 }
-                if (errors.length > 0 && errors.length <= 3) {
-                    resultMsg += `\n\nError:\n${errors.join('\n')}`;
+                if (errors.length > 0 && errors.length <= 5) {
+                    resultMsg += `\n\n❌ Error:\n${errors.join('\n')}`;
+                } else if (errors.length > 5) {
+                    resultMsg += `\n\n❌ ${errors.length} error terjadi. Periksa format data Anda.`;
                 }
+                
                 alert(resultMsg);
-                loadDatabaseAgent();
+                await loadDatabaseAgent();
                 fileInput.value = '';
-            } catch(err) {
-                showNotifTop('❌ Gagal import: ' + err.message, true);
+                
+            } catch (err) {
+                console.error('Import error:', err);
+                showNotifTop('❌ Gagal memproses file: ' + err.message, true);
             } finally {
-                importBtn.textContent = '📥 Import Excel';
-                importBtn.disabled = false;
+                btn.textContent = originalText;
+                btn.disabled = false;
             }
         };
+        
+        reader.onerror = () => {
+            showNotifTop('❌ Gagal membaca file', true);
+            btn.textContent = originalText;
+            btn.disabled = false;
+        };
+        
         reader.readAsArrayBuffer(file);
     };
 }
 
-async function exportAgentToExcel() {
-    if (agentsData.length === 0) {
-        showNotifTop('Tidak ada data untuk diexport', true);
-        return;
+// Fungsi format nomor HP
+function formatPhoneNumber(value) {
+    if (!value) return '';
+    let cleanHp = value.toString().trim();
+    cleanHp = cleanHp.replace(/[^\d+]/g, '');
+    if (!cleanHp.startsWith('+')) {
+        cleanHp = cleanHp.replace(/^0+/, '');
+        if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
+        else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
+        else cleanHp = '+' + cleanHp.replace(/^\+/, '');
     }
-    
-    const exportData = agentsData.map(item => ({
-        'ID Agent': item.agent_id,
-        'Nama': item.nama.replace(/ \(.*\)/, ''),
-        'Type/Class': item.agent_type,
-        'Nomor WhatsApp': item.hp,
-        'Tanggal Input': new Date(item.createdAt).toLocaleDateString('id-ID')
-    }));
-    
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
-    XLSX.writeFile(wb, `database_agent_${new Date().toISOString().split('T')[0]}.xlsx`);
-    showNotifTop('✅ Export data berhasil!');
+    return cleanHp;
 }
 
+// Fungsi download contoh Excel dengan nama produk dari database
 async function downloadAgentExample() {
     try {
-        // Tampilkan notifikasi loading
         showNotifTop('⏳ Memuat data produk...');
         
         // Ambil data produk dari Firestore
@@ -5766,17 +5951,39 @@ async function downloadAgentExample() {
             'apk': 'GNP'
         };
         
-        // 🔥 PERBAIKAN: Buat kolom dengan NAMA PRODUK (bukan ID)
+        // Buat kolom untuk setiap produk dengan format: profit_{nama_produk}, fee_upline_{nama_produk}, fee_agent_{nama_produk}
         const produkColumns = {};
         for (const produk of produkList) {
-            // Gunakan nama produk sebagai nama kolom, bersihkan karakter khusus
+            // Bersihkan nama produk untuk dijadikan nama kolom
             let cleanNama = produk.nama
-                .replace(/[^a-zA-Z0-9]/g, '_')  // Ganti karakter khusus dengan _
-                .replace(/_+/g, '_');            // Hapus multiple underscore
+                .replace(/[^a-zA-Z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .toLowerCase();
             
             produkColumns[`profit_${cleanNama}`] = 0;
             produkColumns[`fee_upline_${cleanNama}`] = 0;
             produkColumns[`fee_agent_${cleanNama}`] = 0;
+        }
+        
+        // Tambahkan beberapa contoh nilai untuk produk pertama
+        if (produkList.length > 0) {
+            const firstProductClean = produkList[0].nama
+                .replace(/[^a-zA-Z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .toLowerCase();
+            produkColumns[`profit_${firstProductClean}`] = 5000;
+            produkColumns[`fee_upline_${firstProductClean}`] = 1000;
+            produkColumns[`fee_agent_${firstProductClean}`] = 4000;
+        }
+        
+        if (produkList.length > 1) {
+            const secondProductClean = produkList[1].nama
+                .replace(/[^a-zA-Z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .toLowerCase();
+            produkColumns[`profit_${secondProductClean}`] = 3000;
+            produkColumns[`fee_upline_${secondProductClean}`] = 500;
+            produkColumns[`fee_agent_${secondProductClean}`] = 2500;
         }
         
         // Gabungkan data
@@ -5784,6 +5991,31 @@ async function downloadAgentExample() {
         
         // Buat worksheet
         const ws = XLSX.utils.json_to_sheet(exampleData);
+        
+        // Atur lebar kolom agar lebih rapi
+        ws['!cols'] = [
+            { wch: 15 }, // agent_id
+            { wch: 20 }, // nama
+            { wch: 25 }, // agent_type
+            { wch: 20 }, // pemilik
+            { wch: 30 }, // alamat
+            { wch: 25 }, // email
+            { wch: 15 }, // hp
+            { wch: 20 }, // upline
+            { wch: 20 }, // no_rekening
+            { wch: 20 }, // atas_nama
+            { wch: 12 }, // jenis_bank
+            { wch: 20 }, // no_ktp
+            { wch: 15 }, // cid
+            { wch: 10 }  // apk
+        ];
+        
+        // Tambahkan lebar untuk kolom produk
+        for (const produk of produkList) {
+            ws['!cols'].push({ wch: 15 });
+            ws['!cols'].push({ wch: 15 });
+            ws['!cols'].push({ wch: 15 });
+        }
         
         // Buat workbook dan download
         const wb = XLSX.utils.book_new();
@@ -5796,6 +6028,65 @@ async function downloadAgentExample() {
         console.error('Error download contoh:', error);
         showNotifTop('❌ Gagal mengunduh contoh: ' + error.message, true);
     }
+}
+
+async function exportAgentToExcel() {
+    if (agentsData.length === 0) {
+        showNotifTop('Tidak ada data untuk diexport', true);
+        return;
+    }
+    
+    // Ambil data produk dari database untuk menentukan kolom
+    const produkSnapshot = await db.collection('produk').get();
+    const produkList = [];
+    produkSnapshot.forEach(doc => {
+        produkList.push({ id: doc.id, nama: doc.data().nama });
+    });
+    
+    const exportData = [];
+    
+    for (const agent of agentsData) {
+        // Data dasar
+        const row = {
+            'agent_id': agent.agent_id,
+            'nama': agent.nama.replace(/ \(.*\)/, ''),
+            'agent_type': agent.agent_type,
+            'pemilik': agent.pemilik || '',
+            'alamat': agent.alamat || '',
+            'email': agent.email || '',
+            'hp': agent.hp || '',
+            'upline': agent.upline || '',
+            'no_rekening': agent.no_rekening || '',
+            'atas_nama': agent.atas_nama || '',
+            'jenis_bank': agent.jenis_bank || '',
+            'no_ktp': agent.no_ktp || '',
+            'cid': agent.cid || '',
+            'apk': agent.apk || ''
+        };
+        
+        // Tambahkan kolom produk
+        for (const produk of produkList) {
+            const cleanNama = produk.nama
+                .replace(/[^a-zA-Z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .toLowerCase();
+            
+            // Cari produk di agent
+            const agentProduk = agent.produk?.find(p => p.produk_id === produk.id);
+            
+            row[`profit_${cleanNama}`] = agentProduk?.profit || 0;
+            row[`fee_upline_${cleanNama}`] = agentProduk?.fee_upline || 0;
+            row[`fee_agent_${cleanNama}`] = agentProduk?.fee_agent || 0;
+        }
+        
+        exportData.push(row);
+    }
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
+    XLSX.writeFile(wb, `database_agent_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showNotifTop('✅ Export data berhasil!');
 }
 
 function setupAgentFilters() {
