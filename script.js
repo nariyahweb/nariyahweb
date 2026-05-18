@@ -5578,8 +5578,8 @@ function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
     }
 }
 
-// ========== FUNGSI IMPORT DATABASE AGENT (OPTIMASI UNTUK RIBUAN DATA) ==========
-let produkMapCache = null; // Cache untuk data produk
+// ========== FUNGSI IMPORT DATABASE AGENT (DENGAN HEADER BERTINGKAT) ==========
+let produkMapCache = null;
 
 async function getProdukMapCached() {
     if (produkMapCache) return produkMapCache;
@@ -5632,33 +5632,42 @@ async function setupAgentImport() {
             fileInput.parentNode.appendChild(progressDiv);
         }
         progressDiv.style.display = 'block';
-        progressDiv.innerHTML = '📊 Memproses file Excel... 0%';
+        progressDiv.innerHTML = '📊 Membaca file Excel... 0%';
         
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
                 
-                if (!json || json.length === 0) {
-                    showNotifTop('❌ File Excel kosong!', true);
-                    return;
+                // ========== DETEKSI HEADER BERTINGKAT ==========
+                // Ambil range data
+                const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:ZZ1000');
+                
+                // Baca header baris 1 (nama produk utama) dan baris 2 (sub-header)
+                const headerRow1 = [];
+                const headerRow2 = [];
+                
+                for (let C = range.s.c; C <= range.e.c; C++) {
+                    const cellAddress1 = XLSX.utils.encode_cell({ r: range.s.r, c: C });
+                    const cellAddress2 = XLSX.utils.encode_cell({ r: range.s.r + 1, c: C });
+                    const cell1 = worksheet[cellAddress1];
+                    const cell2 = worksheet[cellAddress2];
+                    
+                    let val1 = cell1 ? String(cell1.v).trim() : '';
+                    let val2 = cell2 ? String(cell2.v).trim() : '';
+                    
+                    // Hapus karakter aneh
+                    val1 = val1.replace(/[^\w\s]/g, '').toUpperCase();
+                    val2 = val2.replace(/[^\w\s]/g, '').toUpperCase();
+                    
+                    headerRow1.push(val1);
+                    headerRow2.push(val2);
                 }
                 
-                progressDiv.innerHTML = `📊 Memuat data produk... 10%`;
-                await new Promise(resolve => setTimeout(resolve, 10));
-                
-                // AMBIL DATA PRODUK SEKALI SAJA (CACHE)
-                const produkMap = await getProdukMapCached();
-                const produkList = Array.from(produkMap.keys());
-                
-                // Deteksi kolom di file Excel
-                const firstRow = json[0];
-                const columnNames = Object.keys(firstRow);
-                
-                // Mapping kolom standar (sama seperti sebelumnya)
+                // Mapping kolom standar
                 const columnMap = {
                     agent_id: null, nama: null, hp: null, apk: null,
                     agent_type: null, pemilik: null, alamat: null,
@@ -5667,51 +5676,133 @@ async function setupAgentImport() {
                     cid: null, upline: null
                 };
                 
-                // Mapping kolom (sama seperti sebelumnya)
-                const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
-                const possibleNama = ['nama', 'Nama', 'name', 'Name'];
-                const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP'];
-                const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi'];
-                const possibleAgentType = ['agent_type', 'Agent_Type', 'type', 'Type', 'class', 'Class'];
-                const possiblePemilik = ['pemilik', 'Pemilik', 'owner', 'Owner'];
-                const possibleAlamat = ['alamat', 'Alamat', 'address', 'Address'];
-                const possibleEmail = ['email', 'Email'];
-                const possibleTlp = ['tlp', 'Tlp', 'telepon', 'Telepon'];
-                const possibleNoRekening = ['no_rekening', 'NoRekening', 'rekening', 'Rekening'];
-                const possibleAtasNama = ['atas_nama', 'AtasNama', 'an'];
-                const possibleJenisBank = ['jenis_bank', 'JenisBank', 'bank', 'Bank'];
-                const possibleNoKtp = ['no_ktp', 'NoKtp', 'ktp', 'nik'];
-                const possibleCid = ['cid', 'Cid', 'CID'];
-                const possibleUpline = ['upline', 'Upline', 'atasan'];
+                // Mapping untuk kolom produk (produk -> { colIndex, type })
+                const produkColumns = new Map(); // key: colIndex, value: { produkNama, type, colLetter }
                 
-                for (const col of columnNames) {
-                    const colLower = col.toLowerCase();
-                    if (possibleAgentId.some(p => p.toLowerCase() === colLower)) columnMap.agent_id = col;
-                    if (possibleNama.some(p => p.toLowerCase() === colLower)) columnMap.nama = col;
-                    if (possibleHp.some(p => p.toLowerCase() === colLower)) columnMap.hp = col;
-                    if (possibleApk.some(p => p.toLowerCase() === colLower)) columnMap.apk = col;
-                    if (possibleAgentType.some(p => p.toLowerCase() === colLower)) columnMap.agent_type = col;
-                    if (possiblePemilik.some(p => p.toLowerCase() === colLower)) columnMap.pemilik = col;
-                    if (possibleAlamat.some(p => p.toLowerCase() === colLower)) columnMap.alamat = col;
-                    if (possibleEmail.some(p => p.toLowerCase() === colLower)) columnMap.email = col;
-                    if (possibleTlp.some(p => p.toLowerCase() === colLower)) columnMap.tlp = col;
-                    if (possibleNoRekening.some(p => p.toLowerCase() === colLower)) columnMap.no_rekening = col;
-                    if (possibleAtasNama.some(p => p.toLowerCase() === colLower)) columnMap.atas_nama = col;
-                    if (possibleJenisBank.some(p => p.toLowerCase() === colLower)) columnMap.jenis_bank = col;
-                    if (possibleNoKtp.some(p => p.toLowerCase() === colLower)) columnMap.no_ktp = col;
-                    if (possibleCid.some(p => p.toLowerCase() === colLower)) columnMap.cid = col;
-                    if (possibleUpline.some(p => p.toLowerCase() === colLower)) columnMap.upline = col;
+                // Daftar keyword untuk kolom standar
+                const standardKeywords = {
+                    agent_id: ['AGENT_ID', 'AGENTID', 'ID', 'ID AGENT'],
+                    nama: ['NAMA', 'NAME'],
+                    hp: ['HP', 'NOMOR', 'PHONE', 'WHATSAPP', 'NO HP'],
+                    apk: ['APK', 'APLIKASI'],
+                    agent_type: ['AGENT_TYPE', 'TYPE', 'CLASS', 'TIPE'],
+                    pemilik: ['PEMILIK', 'OWNER'],
+                    alamat: ['ALAMAT', 'ADDRESS'],
+                    email: ['EMAIL', 'MAIL'],
+                    tlp: ['TLP', 'TELEPON'],
+                    no_rekening: ['NO_REKENING', 'REKENING', 'NOREK'],
+                    atas_nama: ['ATAS_NAMA', 'AN'],
+                    jenis_bank: ['JENIS_BANK', 'BANK'],
+                    no_ktp: ['NO_KTP', 'KTP', 'NIK'],
+                    cid: ['CID'],
+                    upline: ['UPLINE', 'ATASAN']
+                };
+                
+                // Deteksi kolom standar dari header baris 1
+                for (let i = 0; i < headerRow1.length; i++) {
+                    const headerVal = headerRow1[i];
+                    
+                    for (const [key, keywords] of Object.entries(standardKeywords)) {
+                        if (keywords.some(kw => headerVal.includes(kw) || kw.includes(headerVal))) {
+                            columnMap[key] = i;
+                            break;
+                        }
+                    }
                 }
                 
-                if (!columnMap.agent_id) {
-                    showNotifTop('❌ Kolom "agent_id" tidak ditemukan!', true);
+                // Jika tidak ditemukan di baris 1, cek baris 2
+                for (let i = 0; i < headerRow2.length; i++) {
+                    if (columnMap.agent_id === null && headerRow2[i].includes('AGENT')) {
+                        columnMap.agent_id = i;
+                    }
+                    if (columnMap.nama === null && (headerRow2[i].includes('NAMA') || headerRow2[i].includes('NAME'))) {
+                        columnMap.nama = i;
+                    }
+                    if (columnMap.hp === null && (headerRow2[i].includes('HP') || headerRow2[i].includes('NOMOR'))) {
+                        columnMap.hp = i;
+                    }
+                }
+                
+                // Deteksi kolom produk (header baris 1 adalah nama produk, header baris 2 adalah profit/fee_upline)
+                for (let i = 0; i < headerRow1.length; i++) {
+                    const produkName = headerRow1[i];
+                    const subHeader = headerRow2[i];
+                    
+                    // Skip jika sudah terdeteksi sebagai kolom standar
+                    if (Object.values(columnMap).includes(i)) continue;
+                    if (produkName === '' || produkName === '-' || produkName === 'undefined') continue;
+                    
+                    // Cek apakah ini nama produk (bukan angka dan tidak terlalu panjang)
+                    if (produkName && produkName.length > 0 && produkName.length < 30 && isNaN(produkName)) {
+                        // Cek sub-header untuk menentukan tipe (profit atau fee_upline)
+                        let type = null;
+                        if (subHeader === 'PROFIT' || subHeader === 'PROFIT (PROFIT)' || subHeader === 'PROFIT' || subHeader === 'PROFIT' || subHeader === 'FEE AGENT') {
+                            type = 'profit';
+                        } else if (subHeader === 'FEE UPLINE' || subHeader === 'FEE UPLINE (FEE UPLINE)' || subHeader === 'FEE_UPLINE') {
+                            type = 'fee_upline';
+                        } else if (subHeader === 'FEE AGENT' || subHeader === 'FEE AGENT (FEE AGENT)') {
+                            type = 'fee_agent';
+                        } else if (subHeader === 'ADMIN' || subHeader === 'ADMIN (ADMIN)') {
+                            type = 'admin';
+                        } else {
+                            // Default: treat as profit
+                            type = 'profit';
+                        }
+                        
+                        produkColumns.set(i, {
+                            produkNama: produkName,
+                            type: type,
+                            colIndex: i
+                        });
+                    }
+                }
+                
+                progressDiv.innerHTML = `📊 Memuat data produk... 10%`;
+                await new Promise(resolve => setTimeout(resolve, 10));
+                
+                // Ambil data produk dari database
+                const produkMap = await getProdukMapCached();
+                
+                // Ambil data dari baris ke-4 sampai akhir (mulai data)
+                const startRow = range.s.r + 3; // Mulai dari baris 4 (index 3)
+                const json = [];
+                
+                for (let R = startRow; R <= range.e.r; R++) {
+                    const rowData = {};
+                    for (let C = range.s.c; C <= range.e.c; C++) {
+                        const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+                        const cell = worksheet[cellAddress];
+                        const value = cell ? cell.v : '';
+                        
+                        // Cek apakah ini kolom standar
+                        let isStandard = false;
+                        for (const [key, colIndex] of Object.entries(columnMap)) {
+                            if (colIndex === C) {
+                                rowData[key] = value;
+                                isStandard = true;
+                                break;
+                            }
+                        }
+                        
+                        // Cek apakah ini kolom produk
+                        if (produkColumns.has(C)) {
+                            const prodInfo = produkColumns.get(C);
+                            const key = `${prodInfo.produkNama}_${prodInfo.type}`;
+                            rowData[key] = value;
+                        }
+                    }
+                    json.push(rowData);
+                }
+                
+                if (json.length === 0) {
+                    showNotifTop('❌ Tidak ada data yang ditemukan dalam file Excel!', true);
                     return;
                 }
                 
                 progressDiv.innerHTML = `📊 Memeriksa duplikat... 20%`;
                 await new Promise(resolve => setTimeout(resolve, 10));
                 
-                // ========== OPTIMASI: Ambil semua agent_id yang sudah ada SEKALIGUS ==========
+                // Ambil semua agent_id yang sudah ada
                 const allExistingAgents = await db.collection('db_agent').get();
                 const existingAgentIds = new Set();
                 allExistingAgents.forEach(doc => {
@@ -5724,29 +5815,8 @@ async function setupAgentImport() {
                 progressDiv.innerHTML = `📊 Memproses ${json.length} baris data... 30%`;
                 await new Promise(resolve => setTimeout(resolve, 10));
                 
-                // Mapping untuk kolom produk
-                const profitColumns = [];
-                const feeUplineColumns = [];
-                const feeAgentColumns = [];
-                
-                for (const col of columnNames) {
-                    const colLower = col.toLowerCase();
-                    for (const produkNama of produkList) {
-                        const produkKey = produkNama.toLowerCase();
-                        if (colLower.includes(produkKey) && colLower.includes('profit')) {
-                            profitColumns.push({ col, produkNama: produkNama });
-                        }
-                        if (colLower.includes(produkKey) && colLower.includes('fee_upline')) {
-                            feeUplineColumns.push({ col, produkNama: produkNama });
-                        }
-                        if (colLower.includes(produkKey) && colLower.includes('fee_agent')) {
-                            feeAgentColumns.push({ col, produkNama: produkNama });
-                        }
-                    }
-                }
-                
-                // ========== OPTIMASI: Siapkan batch untuk write ==========
-                const BATCH_SIZE = 500; // Firestore batch maksimal 500 operasi
+                // Kelompokkan data produk per baris
+                const BATCH_SIZE = 500;
                 let batches = [];
                 let currentBatch = db.batch();
                 let operationCount = 0;
@@ -5757,7 +5827,6 @@ async function setupAgentImport() {
                 for (let i = 0; i < json.length; i++) {
                     const row = json[i];
                     
-                    // Update progress setiap 100 baris
                     if (i % 100 === 0) {
                         const percent = 30 + Math.floor((i / json.length) * 60);
                         progressDiv.innerHTML = `📊 Memproses data... ${percent}% (${i}/${json.length})`;
@@ -5765,81 +5834,124 @@ async function setupAgentImport() {
                     }
                     
                     try {
-                        const agentId = row[columnMap.agent_id]?.toString().trim().toUpperCase();
+                        let agentId = row.agent_id;
+                        if (!agentId && row.agent_id === 0) agentId = row.agent_id;
                         
                         if (!agentId) {
                             failed++;
-                            errors.push(`Baris ${i + 2}: ID Agent kosong`);
+                            errors.push(`Baris ${i + 4}: ID Agent kosong`);
                             continue;
                         }
                         
-                        // CEK DUPLIKAT PAKAI SET (Cepat)
+                        agentId = String(agentId).trim().toUpperCase();
+                        
                         if (existingAgentIds.has(agentId)) {
                             duplicate++;
                             continue;
                         }
                         
-                        // Tandai sebagai sudah ada (untuk baris berikutnya dalam import yang sama)
                         existingAgentIds.add(agentId);
                         
                         // Data dasar agent
-                        const agentRef = db.collection('db_agent').doc(); // Buat reference
+                        const agentRef = db.collection('db_agent').doc();
                         const agentData = {
                             agent_id: agentId,
-                            nama: row[columnMap.nama]?.toString().trim() || agentId,
-                            hp: formatPhoneNumber(row[columnMap.hp] || ''),
-                            apk: row[columnMap.apk]?.toString().trim() || '',
-                            agent_type: row[columnMap.agent_type]?.toString().trim() || '',
-                            pemilik: row[columnMap.pemilik]?.toString().trim() || '',
-                            alamat: row[columnMap.alamat]?.toString().trim() || '',
-                            email: row[columnMap.email]?.toString().trim() || '',
-                            tlp: row[columnMap.tlp]?.toString().trim() || '',
-                            no_rekening: row[columnMap.no_rekening]?.toString().trim() || '',
-                            atas_nama: row[columnMap.atas_nama]?.toString().trim() || '',
-                            jenis_bank: row[columnMap.jenis_bank]?.toString().trim() || '',
-                            no_ktp: row[columnMap.no_ktp]?.toString().trim() || '',
-                            cid: row[columnMap.cid]?.toString().trim() || '',
-                            upline: row[columnMap.upline]?.toString().trim() || '',
+                            nama: row.nama ? String(row.nama).trim() : agentId,
+                            hp: formatPhoneNumber(row.hp || ''),
+                            apk: row.apk ? String(row.apk).trim() : '',
+                            agent_type: row.agent_type ? String(row.agent_type).trim() : '',
+                            pemilik: row.pemilik ? String(row.pemilik).trim() : '',
+                            alamat: row.alamat ? String(row.alamat).trim() : '',
+                            email: row.email ? String(row.email).trim() : '',
+                            tlp: row.tlp ? String(row.tlp).trim() : '',
+                            no_rekening: row.no_rekening ? String(row.no_rekening).trim() : '',
+                            atas_nama: row.atas_nama ? String(row.atas_nama).trim() : '',
+                            jenis_bank: row.jenis_bank ? String(row.jenis_bank).trim() : '',
+                            no_ktp: row.no_ktp ? String(row.no_ktp).trim() : '',
+                            cid: row.cid ? String(row.cid).trim() : '',
+                            upline: row.upline ? String(row.upline).trim() : '',
                             user_id: currentUser.uid,
                             created_at: new Date().toISOString(),
                             updated_at: new Date().toISOString(),
                             produk: []
                         };
                         
-                        // Proses data produk (sama seperti sebelumnya)
-                        const produkListData = [];
-                        for (const profitCol of profitColumns) {
-                            const profitValue = parseFloat(row[profitCol.col]) || 0;
-                            if (profitValue > 0) {
-                                const produkInfo = produkMap.get(profitCol.produkNama.toLowerCase());
-                                if (produkInfo) {
-                                    const feeUplineCol = feeUplineColumns.find(f => f.produkNama === profitCol.produkNama);
-                                    const feeUpline = feeUplineCol ? (parseFloat(row[feeUplineCol.col]) || 0) : 0;
-                                    const feeAgentCol = feeAgentColumns.find(f => f.produkNama === profitCol.produkNama);
-                                    const feeAgent = feeAgentCol ? (parseFloat(row[feeAgentCol.col]) || 0) : 0;
-                                    
-                                    produkListData.push({
-                                        produk_id: produkInfo.id,
-                                        nama_produk: produkInfo.nama,
-                                        profit: profitValue,
-                                        fee_upline: feeUpline,
-                                        fee_agent: feeAgent,
-                                        admin: produkInfo.jenis_produk === 'beradmin' ? (profitValue + feeUpline + feeAgent) : 0,
-                                        qty: 1,
-                                        added_at: new Date().toISOString()
-                                    });
+                        // Proses data produk - kelompokkan per produk
+                        const produkTemp = new Map(); // key: produkNama, value: { profit, fee_upline }
+                        
+                        for (const [key, value] of Object.entries(row)) {
+                            if (key.includes('_profit')) {
+                                const produkNama = key.replace('_profit', '');
+                                const profitVal = parseFloat(value) || 0;
+                                if (profitVal > 0) {
+                                    if (!produkTemp.has(produkNama)) {
+                                        produkTemp.set(produkNama, { profit: 0, fee_upline: 0, fee_agent: 0 });
+                                    }
+                                    produkTemp.get(produkNama).profit = profitVal;
                                 }
+                            } else if (key.includes('_fee_upline')) {
+                                const produkNama = key.replace('_fee_upline', '');
+                                const feeVal = parseFloat(value) || 0;
+                                if (feeVal > 0) {
+                                    if (!produkTemp.has(produkNama)) {
+                                        produkTemp.set(produkNama, { profit: 0, fee_upline: 0, fee_agent: 0 });
+                                    }
+                                    produkTemp.get(produkNama).fee_upline = feeVal;
+                                }
+                            } else if (key.includes('_fee_agent')) {
+                                const produkNama = key.replace('_fee_agent', '');
+                                const feeVal = parseFloat(value) || 0;
+                                if (feeVal > 0) {
+                                    if (!produkTemp.has(produkNama)) {
+                                        produkTemp.set(produkNama, { profit: 0, fee_upline: 0, fee_agent: 0 });
+                                    }
+                                    produkTemp.get(produkNama).fee_agent = feeVal;
+                                }
+                            } else if (key.includes('_admin')) {
+                                const produkNama = key.replace('_admin', '');
+                                const adminVal = parseFloat(value) || 0;
+                                if (adminVal > 0) {
+                                    if (!produkTemp.has(produkNama)) {
+                                        produkTemp.set(produkNama, { profit: 0, fee_upline: 0, fee_agent: 0, admin: adminVal });
+                                    } else {
+                                        produkTemp.get(produkNama).admin = adminVal;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Konversi ke array produk
+                        const produkListData = [];
+                        for (const [produkNama, values] of produkTemp.entries()) {
+                            // Cari di database berdasarkan nama
+                            let produkInfo = null;
+                            for (const [dbNama, dbInfo] of produkMap.entries()) {
+                                if (produkNama.toLowerCase().includes(dbNama) || dbNama.includes(produkNama.toLowerCase())) {
+                                    produkInfo = dbInfo;
+                                    break;
+                                }
+                            }
+                            
+                            if (produkInfo) {
+                                produkListData.push({
+                                    produk_id: produkInfo.id,
+                                    nama_produk: produkInfo.nama,
+                                    profit: values.profit || 0,
+                                    fee_upline: values.fee_upline || 0,
+                                    fee_agent: values.fee_agent || 0,
+                                    admin: values.admin || (produkInfo.jenis_produk === 'beradmin' ? (values.profit + values.fee_upline + values.fee_agent) : 0),
+                                    qty: 1,
+                                    added_at: new Date().toISOString()
+                                });
                             }
                         }
                         
                         agentData.produk = produkListData;
                         
-                        // Tambahkan ke batch
                         currentBatch.set(agentRef, agentData);
                         operationCount++;
                         success++;
                         
-                        // Jika batch penuh, simpan dan buat batch baru
                         if (operationCount >= BATCH_SIZE) {
                             batches.push(currentBatch);
                             currentBatch = db.batch();
@@ -5848,11 +5960,10 @@ async function setupAgentImport() {
                         
                     } catch (rowError) {
                         failed++;
-                        errors.push(`Baris ${i + 2}: ${rowError.message}`);
+                        errors.push(`Baris ${i + 4}: ${rowError.message}`);
                     }
                 }
                 
-                // Simpan batch terakhir jika masih ada
                 if (operationCount > 0) {
                     batches.push(currentBatch);
                 }
@@ -5860,13 +5971,11 @@ async function setupAgentImport() {
                 progressDiv.innerHTML = `📊 Menyimpan data ke database... 90%`;
                 await new Promise(resolve => setTimeout(resolve, 10));
                 
-                // ========== EKSEKUSI SEMUA BATCH SECARA SEQUENTIAL ==========
                 let batchIndex = 0;
                 for (const batch of batches) {
                     batchIndex++;
                     progressDiv.innerHTML = `📊 Menyimpan batch ${batchIndex}/${batches.length}... 90%`;
                     await batch.commit();
-                    // Delay kecil agar tidak overload
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
                 
@@ -5883,8 +5992,6 @@ async function setupAgentImport() {
                 alert(resultMsg);
                 await loadDatabaseAgent();
                 fileInput.value = '';
-                
-                // Reset cache produk setelah import (optional)
                 produkMapCache = null;
                 
             } catch (err) {
