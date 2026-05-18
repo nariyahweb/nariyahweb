@@ -40,6 +40,99 @@ let trendChart = null;
 let currentTransaksiId = null;  // Untuk edit transaksi
 let transaksiList = [];          // Menyimpan daftar transaksi
 
+// ========== FLOATING PROGRESS UNIVERSAL ==========
+let activeProgress = null;
+
+function showFloatingProgress(title, total = 0) {
+    // Hapus progress yang sudah ada
+    if (activeProgress) {
+        activeProgress.remove();
+        activeProgress = null;
+    }
+    
+    const container = document.createElement('div');
+    container.className = 'floating-progress';
+    container.innerHTML = `
+        <button class="progress-close" id="progressCloseBtn">✕</button>
+        <div class="progress-status" id="progressStatus">
+            <span class="spinner"></span>
+            <span id="progressStatusText">${title}</span>
+        </div>
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill-custom" id="floatingProgressFill"></div>
+            </div>
+            <div class="progress-text" id="floatingProgressText">0%</div>
+        </div>
+        <div class="progress-detail">
+            <span id="floatingProgressDetail">Memulai proses...</span>
+            <span class="progress-count" id="floatingProgressCount">${total > 0 ? `0 / ${total}` : ''}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(container);
+    activeProgress = container;
+    
+    // Tombol close
+    const closeBtn = container.querySelector('#progressCloseBtn');
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            if (activeProgress) {
+                activeProgress.remove();
+                activeProgress = null;
+            }
+        };
+    }
+    
+    return {
+        update: (percent, status, detail, current = 0, total = 0) => {
+            const fillEl = document.getElementById('floatingProgressFill');
+            const textEl = document.getElementById('floatingProgressText');
+            const statusEl = document.getElementById('progressStatusText');
+            const detailEl = document.getElementById('floatingProgressDetail');
+            const countEl = document.getElementById('floatingProgressCount');
+            
+            if (fillEl) fillEl.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+            if (textEl) textEl.innerHTML = `${Math.floor(percent)}%`;
+            if (statusEl && status) statusEl.innerHTML = status;
+            if (detailEl && detail) detailEl.innerHTML = detail;
+            if (countEl && total > 0) countEl.innerHTML = `${current} / ${total}`;
+        },
+        hide: () => {
+            if (activeProgress) {
+                // Animasi fade out
+                activeProgress.style.animation = 'slideOutRight 0.3s ease-in forwards';
+                setTimeout(() => {
+                    if (activeProgress) {
+                        activeProgress.remove();
+                        activeProgress = null;
+                    }
+                }, 300);
+            }
+        },
+        setTotal: (newTotal) => {
+            const countEl = document.getElementById('floatingProgressCount');
+            if (countEl) countEl.innerHTML = `0 / ${newTotal}`;
+        }
+    };
+}
+
+// Tambahkan animasi keluar
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
 // ========== TARGET & KPI VARIABLES ==========
 let targetData = {
     agent: 0,
@@ -5772,46 +5865,14 @@ async function setupAgentImport() {
         btn.textContent = '⏳ Memproses...';
         btn.disabled = true;
         
-        // Buat container progress
-        let progressContainer = document.getElementById('importProgressContainer');
-        if (!progressContainer) {
-            progressContainer = document.createElement('div');
-            progressContainer.id = 'importProgressContainer';
-            progressContainer.className = 'progress-container';
-            progressContainer.innerHTML = `
-                <div class="progress-bar-wrapper">
-                    <div class="progress-bar-track">
-                        <div class="progress-bar-fill-custom" id="importProgressFill"></div>
-                    </div>
-                    <div class="progress-text" id="importProgressText">0%</div>
-                </div>
-                <div class="progress-detail">
-                    <span id="importProgressStatus">📊 Memulai import...</span>
-                    <span id="importProgressCount">0 / 0 data</span>
-                </div>
-            `;
-            fileInput.parentNode.appendChild(progressContainer);
-        }
-        progressContainer.style.display = 'block';
-        
-        const updateProgress = (percent, status, current = 0, total = 0) => {
-            const fillEl = document.getElementById('importProgressFill');
-            const textEl = document.getElementById('importProgressText');
-            const statusEl = document.getElementById('importProgressStatus');
-            const countEl = document.getElementById('importProgressCount');
-            
-            if (fillEl) fillEl.style.width = `${percent}%`;
-            if (textEl) textEl.innerHTML = `${percent}%`;
-            if (statusEl) statusEl.innerHTML = status;
-            if (countEl && total > 0) countEl.innerHTML = `${current} / ${total} data`;
-        };
-        
-        updateProgress(0, '📖 Membaca file Excel...', 0, 0);
+        // ========== GUNAKAN FLOATING PROGRESS ==========
+        const progress = showFloatingProgress('📥 Import Data Agent', 0);
+        progress.update(0, '📥 Import Data', 'Membaca file Excel...');
         
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
-                updateProgress(5, '📊 Memproses file Excel...', 0, 0);
+                progress.update(5, '📥 Import Data', 'Memproses file Excel...');
                 
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
@@ -5820,10 +5881,11 @@ async function setupAgentImport() {
                 
                 if (!rawJson || rawJson.length < 4) {
                     showNotifTop('❌ File Excel kosong atau format tidak sesuai!', true);
+                    progress.hide();
                     return;
                 }
                 
-                updateProgress(10, '📦 Memuat data produk...', 0, 0);
+                progress.update(10, '📥 Import Data', 'Memuat data produk...');
                 await new Promise(resolve => setTimeout(resolve, 10));
                 
                 const produkMap = await getProdukMapCached();
@@ -5833,7 +5895,7 @@ async function setupAgentImport() {
                 const headerRow2 = rawJson[1] || [];
                 const headerRow3 = rawJson[2] || [];
                 
-                // Deteksi kolom standar (sama seperti sebelumnya)
+                // Deteksi kolom standar
                 let agentIdCol = -1, namaCol = -1, hpCol = -1, apkCol = -1;
                 let agentTypeCol = -1, pemilikCol = -1, alamatCol = -1;
                 let emailCol = -1, tlpCol = -1, noRekeningCol = -1;
@@ -5863,10 +5925,11 @@ async function setupAgentImport() {
                 
                 if (agentIdCol === -1) {
                     showNotifTop('❌ Kolom "AGENT_ID" tidak ditemukan!', true);
+                    progress.hide();
                     return;
                 }
                 
-                updateProgress(15, '🔍 Memeriksa duplikat data...', 0, 0);
+                progress.update(15, '📥 Import Data', 'Memeriksa duplikat data...');
                 
                 // Ambil semua agent_id yang sudah ada
                 const allExistingAgents = await db.collection('db_agent').get();
@@ -5878,8 +5941,9 @@ async function setupAgentImport() {
                 
                 const dataRows = rawJson.slice(3);
                 const totalRows = dataRows.length;
+                progress.setTotal(totalRows);
                 
-                updateProgress(20, `📋 Memproses ${totalRows} baris data...`, 0, totalRows);
+                progress.update(20, '📥 Import Data', `Memproses ${totalRows} baris data...`);
                 
                 // Deteksi kolom produk
                 const produkColumnMap = new Map();
@@ -5922,7 +5986,7 @@ async function setupAgentImport() {
                     // Update progress setiap 50 baris
                     if (i % 50 === 0 || i === dataRows.length - 1) {
                         const percent = 20 + Math.floor((i / totalRows) * 70);
-                        updateProgress(percent, `📝 Memproses data...`, i + 1, totalRows);
+                        progress.update(percent, '📥 Import Data', `Memproses data...`, i + 1, totalRows);
                         await new Promise(resolve => setTimeout(resolve, 5));
                     }
                     
@@ -5966,7 +6030,7 @@ async function setupAgentImport() {
                             produk: []
                         };
                         
-                                                // Proses produk - Kumpulkan nilai per produk
+                        // Proses produk (sama seperti sebelumnya)
                         const produkValues = new Map();
                         for (const [colIndex, prodInfo] of produkColumnMap.entries()) {
                             if (colIndex < row.length) {
@@ -5985,45 +6049,19 @@ async function setupAgentImport() {
                             }
                         }
                         
-                        // ========== PROSES PRODUK DENGAN PEncocokan YANG LEBIH BAIK ==========
-                        function matchProductName(excelName, dbProdukList) {
-                            const excelNameLower = excelName.toLowerCase().trim();
-                            let cleanExcelName = excelNameLower
-                                .replace(/berdasarkan admin/gi, '')
-                                .replace(/berdasarkan/gi, '')
-                                .replace(/admin/gi, '')
-                                .replace(/\s+/g, ' ')
-                                .trim();
-                            cleanExcelName = cleanExcelName.replace(/[^a-z0-9]/g, '');
-                            
-                            for (const dbProduk of dbProdukList) {
-                                let dbNameLower = dbProduk.nama.toLowerCase();
-                                let cleanDbName = dbNameLower.replace(/[^a-z0-9]/g, '');
-                                
-                                if (cleanDbName === cleanExcelName) return dbProduk;
-                                if (cleanExcelName.includes(cleanDbName) || cleanDbName.includes(cleanExcelName)) return dbProduk;
-                                
-                                if (cleanExcelName.includes('pln') && cleanDbName.includes('pln')) {
-                                    if ((cleanExcelName.includes('prepaid') && cleanDbName.includes('prepaid')) ||
-                                        (cleanExcelName.includes('postpaid') && cleanDbName.includes('postpaid')) ||
-                                        (cleanExcelName.includes('nontaglis') && cleanDbName.includes('nontaglis'))) {
-                                        return dbProduk;
-                                    }
-                                }
-                                
-                                const excelNoSpace = cleanExcelName.replace(/[_\s]/g, '');
-                                const dbNoSpace = cleanDbName.replace(/[_\s]/g, '');
-                                if (excelNoSpace === dbNoSpace) return dbProduk;
-                            }
-                            return null;
-                        }
-                        
                         const produkListData = [];
                         const produkMapArray = Array.from(produkMap.values());
                         
                         for (const [produkNama, values] of produkValues.entries()) {
-                            let foundProduk = matchProductName(produkNama, produkMapArray);
-                            
+                            let foundProduk = null;
+                            const searchKey = produkNama.toLowerCase();
+                            for (const dbProduk of produkMapArray) {
+                                const dbKey = dbProduk.nama.toLowerCase();
+                                if (dbKey.includes(searchKey) || searchKey.includes(dbKey)) {
+                                    foundProduk = dbProduk;
+                                    break;
+                                }
+                            }
                             if (foundProduk) {
                                 produkListData.push({
                                     produk_id: foundProduk.id,
@@ -6035,27 +6073,6 @@ async function setupAgentImport() {
                                     qty: 1,
                                     added_at: new Date().toISOString()
                                 });
-                            } else {
-                                const simpleName = produkNama.toLowerCase()
-                                    .replace(/berdasarkan admin/gi, '')
-                                    .replace(/berdasarkan/gi, '')
-                                    .trim();
-                                for (const dbProduk of produkMapArray) {
-                                    if (dbProduk.nama.toLowerCase().includes(simpleName) || 
-                                        simpleName.includes(dbProduk.nama.toLowerCase())) {
-                                        produkListData.push({
-                                            produk_id: dbProduk.id,
-                                            nama_produk: dbProduk.nama,
-                                            profit: values.profit || 0,
-                                            fee_upline: values.fee_upline || 0,
-                                            fee_agent: values.fee_agent || 0,
-                                            admin: values.admin || 0,
-                                            qty: 1,
-                                            added_at: new Date().toISOString()
-                                        });
-                                        break;
-                                    }
-                                }
                             }
                         }
                         agentData.produk = produkListData;
@@ -6078,18 +6095,21 @@ async function setupAgentImport() {
                 
                 if (operationCount > 0) batches.push(currentBatch);
                 
-                updateProgress(92, '💾 Menyimpan data ke database...', success, totalRows);
+                progress.update(92, '📥 Import Data', 'Menyimpan data ke database...', success, totalRows);
                 
                 let batchIndex = 0;
                 for (const batch of batches) {
                     batchIndex++;
-                    updateProgress(92 + Math.floor((batchIndex / batches.length) * 8), 
-                        `💾 Menyimpan batch ${batchIndex}/${batches.length}...`, success, totalRows);
+                    progress.update(92 + Math.floor((batchIndex / batches.length) * 8), 
+                        '📥 Import Data', `Menyimpan batch ${batchIndex}/${batches.length}...`, success, totalRows);
                     await batch.commit();
                     await new Promise(resolve => setTimeout(resolve, 50));
                 }
                 
-                updateProgress(100, '✅ Import selesai!', success, totalRows);
+                progress.update(100, '✅ Import Selesai', `Berhasil: ${success}, Duplikat: ${duplicate}, Gagal: ${failed}`, success, totalRows);
+                
+                // Sembunyikan setelah 3 detik
+                setTimeout(() => progress.hide(), 3000);
                 
                 let resultMsg = `✅ Import selesai!\n📊 Total data: ${totalRows}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
                 if (errors.length > 0 && errors.length <= 5) {
@@ -6103,15 +6123,10 @@ async function setupAgentImport() {
                 fileInput.value = '';
                 produkMapCache = null;
                 
-                // Sembunyikan progress setelah 3 detik
-                setTimeout(() => {
-                    if (progressContainer) progressContainer.style.display = 'none';
-                }, 3000);
-                
             } catch (err) {
                 console.error('Import error:', err);
                 showNotifTop('❌ Gagal memproses file: ' + err.message, true);
-                if (progressContainer) progressContainer.style.display = 'none';
+                if (progress) progress.hide();
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
@@ -6122,7 +6137,7 @@ async function setupAgentImport() {
             showNotifTop('❌ Gagal membaca file', true);
             btn.textContent = originalText;
             btn.disabled = false;
-            if (progressContainer) progressContainer.style.display = 'none';
+            if (progress) progress.hide();
         };
         
         reader.readAsArrayBuffer(file);
