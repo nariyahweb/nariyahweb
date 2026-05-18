@@ -3288,29 +3288,16 @@ window.saveToClosingNow = async function(id) {
 window.showConvertToCustomerModal = async function(prospekId) {
     const doc = await db.collection('prospek').doc(prospekId).get();
     const data = doc.data();
-    if (!data.negosiasi_data || !data.negosiasi_data.is_complete) {
-        showNotif('⚠️ Data prospek belum lengkap, isi kuesioner Negosiasi dulu!', true);
-        openProspekNegosiasiModal(prospekId);
-        return;
-    }
+    
+    // HAPUS PENGECEKAN NEGOSIASI - LANGSUNG BUKA POPUP
+    // Customer tidak perlu isi kuesioner Negosiasi dulu
     
     const today = new Date();
     const nextMonth = new Date(today);
     nextMonth.setMonth(today.getMonth() + 1);
     const followupDate = nextMonth.toISOString().split('T')[0];
     
-    // Cek duplikat untuk customer baru
-    const cleanHp = data.hp;
-    const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer('', cleanHp);
-    
-    if (duplicateAgent || duplicateHp) {
-        let msg = '⚠️ Tidak dapat menambahkan customer karena:\n';
-        if (duplicateAgent) msg += `- ID Agent sudah terdaftar oleh ${duplicateAgent.owner}\n`;
-        if (duplicateHp) msg += `- Nomor WhatsApp sudah terdaftar oleh ${duplicateHp.owner}\n`;
-        showNotif(msg, true);
-        return;
-    }
-    
+    // Tampilkan popup input data customer
     showInputDialog(
         '📋 Lengkapi Data Customer',
         `Data prospek "${escapeHtml(data.nama)}" akan dipindahkan ke Followup Agen.\n\nSilakan lengkapi data berikut:`,
@@ -3320,20 +3307,20 @@ window.showConvertToCustomerModal = async function(prospekId) {
         ],
         async (values) => {
             if (!values.inputAgentId || !values.inputAplikasi) {
-                showNotif('⚠️ ID Agent dan Aplikasi wajib diisi!', true);
+                showNotifTop('⚠️ ID Agent dan Aplikasi wajib diisi!', true);
                 return;
             }
             
-            // Cek duplikat lagi setelah input ID Agent
-            const cleanHpFinal = data.hp;
-            const { duplicateAgent: dupAgent, duplicateHp: dupHp } = await checkDuplicateCustomer(values.inputAgentId, cleanHpFinal);
+            // Cek duplikat
+            const cleanHp = data.hp;
+            const { duplicateAgent: dupAgent, duplicateHp: dupHp } = await checkDuplicateCustomer(values.inputAgentId, cleanHp);
             
             if (dupAgent) {
-                showNotif(`⚠️ ID Agent "${values.inputAgentId}" sudah terdaftar oleh ${dupAgent.owner}!`, true);
+                showNotifTop(`⚠️ ID Agent "${values.inputAgentId}" sudah terdaftar oleh ${dupAgent.owner}!`, true);
                 return;
             }
             if (dupHp) {
-                showNotif(`⚠️ Nomor WhatsApp "${cleanHpFinal}" sudah terdaftar oleh ${dupHp.owner}!`, true);
+                showNotifTop(`⚠️ Nomor WhatsApp "${cleanHp}" sudah terdaftar oleh ${dupHp.owner}!`, true);
                 return;
             }
             
@@ -3348,12 +3335,12 @@ window.showConvertToCustomerModal = async function(prospekId) {
                 `⚠️ Proses ini TIDAK BISA dibatalkan dan data akan DIHAPUS dari Prospek Agen!`,
                 async () => {
                     try {
-                        showNotif('⏳ Memproses pemindahan data...');
+                        showNotifTop('⏳ Memproses pemindahan data...');
                         
                         await db.collection('db_commitment').add({
                             nama: data.nama,
                             hp: data.hp,
-                            negosiasi_data: data.negosiasi_data,
+                            negosiasi_data: data.negosiasi_data || null,
                             agent_id: values.inputAgentId,
                             aplikasi: values.inputAplikasi,
                             committed_at: new Date().toISOString(),
@@ -3378,13 +3365,13 @@ window.showConvertToCustomerModal = async function(prospekId) {
                         
                         await db.collection('prospek').doc(prospekId).delete();
                         
-                        showNotif('✅ Berhasil! Customer telah ditambahkan ke Followup Agen dan disimpan ke DB Commitment');
+                        showNotifTop('✅ Berhasil! Customer telah ditambahkan ke Followup Agen dan disimpan ke DB Commitment');
                         closeModal('detailModal');
                         closeModal('convertModal');
                         loadAllData();
                         updateAllBadges();
                     } catch(error) {
-                        showNotif('❌ Gagal: ' + error.message, true);
+                        showNotifTop('❌ Gagal: ' + error.message, true);
                         console.error(error);
                     }
                 }
