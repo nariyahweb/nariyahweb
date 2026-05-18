@@ -1664,11 +1664,19 @@ function renderProdukList() {
 }
 
 window.deleteProduk = async function(id) {
-    if (!confirm('Yakin hapus produk ini?')) return;
+    if (!confirm('Yakin hapus produk ini? Produk yang sudah terpakai di agent akan kehilangan referensi!')) return;
+    
     try {
         await db.collection('produk').doc(id).delete();
-        showNotifTop('🗑️ Produk dihapus');
-        await loadProduk();
+        
+        // Hapus dari array lokal
+        const index = produkData.findIndex(p => p.id === id);
+        if (index !== -1) produkData.splice(index, 1);
+        
+        // Render ulang
+        renderProdukList();
+        
+        showNotifTop('🗑️ Produk berhasil dihapus');
     } catch(e) {
         showNotifTop('❌ Gagal hapus: ' + e.message, true);
     }
@@ -2584,29 +2592,40 @@ window.updateCustomerStatus = async function(id, newStatus) {
     }
 };
 
-window.deleteCustomer = async function(id) { 
-    if (confirm('Yakin hapus customer ini?')) { 
-        await db.collection('customers').doc(id).delete(); 
-        closeModal('detailModal'); 
-        showNotif('Data dihapus'); 
-        updateAllBadges();
+window.deleteCustomer = async function(id) {
+    if (!confirm('Yakin hapus customer ini? Data akan dihapus permanen!')) return;
+    
+    try {
+        await db.collection('customers').doc(id).delete();
+        closeModal('detailModal');
+        showNotifTop('🗑️ Data customer berhasil dihapus');
+        
+        // Refresh data
         setTimeout(() => {
             loadAllData();
+            updateAllBadges();
         }, 300);
-    } 
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
+    }
 };
 
-window.deleteProspek = async function(id) { 
-    if (confirm('Yakin hapus prospek ini?')) { 
-        await db.collection('prospek').doc(id).delete(); 
-        closeModal('detailModal'); 
-        showNotif('Data dihapus'); 
-        updateAllBadges();
-        // Refresh data setelah hapus
+window.deleteProspek = async function(id) {
+    if (!confirm('Yakin hapus prospek ini? Data akan dihapus permanen!')) return;
+    
+    try {
+        await db.collection('prospek').doc(id).delete();
+        closeModal('detailModal');
+        showNotifTop('🗑️ Data prospek berhasil dihapus');
+        
+        // Refresh data
         setTimeout(() => {
             loadAllData();
+            updateAllBadges();
         }, 300);
-    } 
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
+    }
 };
 
 // ========== FOLLOWUP CONFIRMATION ==========
@@ -4164,43 +4183,139 @@ function attachCheckboxEvents(selector, map, selectAllId) {
     }
 }
 
+// Hapus item dari DB Closing
 window.deleteDBItem = async function(type, id) {
-    if (!confirm('Yakin hapus data ini?')) return;
+    if (!confirm('Yakin hapus data ini? Data akan dihapus permanen!')) return;
+    
+    let collectionName = '';
+    let mapRef = null;
+    
+    switch(type) {
+        case 'closing':
+            collectionName = 'db_closing';
+            mapRef = selectedClosingIds;
+            break;
+        case 'tidak':
+            collectionName = 'db_tidak_tertarik';
+            mapRef = selectedTidakIds;
+            break;
+        case 'nomor_salah':
+            collectionName = 'nomor_salah';
+            mapRef = selectedNomorSalahIds;
+            break;
+        case 'db_commitment':
+            collectionName = 'db_commitment';
+            mapRef = selectedCommitmentIds;
+            break;
+        default:
+            showNotifTop('❌ Tipe tidak dikenal', true);
+            return;
+    }
+    
     try {
-        if (type === 'closing') await db.collection('db_closing').doc(id).delete();
-        else if (type === 'tidak') await db.collection('db_tidak_tertarik').doc(id).delete();
-        else if (type === 'nomor_salah') await db.collection('nomor_salah').doc(id).delete();
-        else if (type === 'db_commitment') await db.collection('db_commitment').doc(id).delete();
-        showNotif('Data berhasil dihapus');
-    } catch(e) { showNotif('Gagal hapus: ' + e.message, true); }
+        await db.collection(collectionName).doc(id).delete();
+        
+        // Hapus dari Map selected
+        if (mapRef) mapRef.delete(id);
+        
+        showNotifTop('🗑️ Data berhasil dihapus');
+        
+        // Refresh tampilan sesuai tipe
+        if (type === 'closing') loadDBClosing();
+        else if (type === 'tidak') loadDBTidak();
+        else if (type === 'nomor_salah') loadDBNomorSalah();
+        else if (type === 'db_commitment') loadDBCommitment();
+        
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
+    }
 };
 
+// Hapus multiple closing
 window.deleteSelectedClosing = async function() {
     const selectedIds = Array.from(selectedClosingIds.keys());
-    if (selectedIds.length === 0) { showNotif('Tidak ada data yang dipilih', true); return; }
-    if (confirm(`Hapus ${selectedIds.length} data closing yang dipilih?`)) {
-        try { const batch = db.batch(); selectedIds.forEach(id => batch.delete(db.collection('db_closing').doc(id))); await batch.commit(); selectedClosingIds.clear(); showNotif(`${selectedIds.length} data closing berhasil dihapus`); } catch(e) { showNotif('Gagal hapus: ' + e.message, true); }
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data closing yang dipilih? Data akan dihapus permanen!`)) return;
+    
+    try {
+        for (const id of selectedIds) {
+            await db.collection('db_closing').doc(id).delete();
+            selectedClosingIds.delete(id);
+        }
+        showNotifTop(`✅ ${selectedIds.length} data closing berhasil dihapus`);
+        loadDBClosing();
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
     }
 };
+
+// Hapus multiple tidak tertarik
 window.deleteSelectedTidak = async function() {
     const selectedIds = Array.from(selectedTidakIds.keys());
-    if (selectedIds.length === 0) { showNotif('Tidak ada data yang dipilih', true); return; }
-    if (confirm(`Hapus ${selectedIds.length} data tidak tertarik yang dipilih?`)) {
-        try { const batch = db.batch(); selectedIds.forEach(id => batch.delete(db.collection('db_tidak_tertarik').doc(id))); await batch.commit(); selectedTidakIds.clear(); showNotif(`${selectedIds.length} data tidak tertarik berhasil dihapus`); } catch(e) { showNotif('Gagal hapus: ' + e.message, true); }
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data tidak tertarik yang dipilih? Data akan dihapus permanen!`)) return;
+    
+    try {
+        for (const id of selectedIds) {
+            await db.collection('db_tidak_tertarik').doc(id).delete();
+            selectedTidakIds.delete(id);
+        }
+        showNotifTop(`✅ ${selectedIds.length} data tidak tertarik berhasil dihapus`);
+        loadDBTidak();
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
     }
 };
+
+// Hapus multiple nomor salah
 window.deleteSelectedNomorSalah = async function() {
     const selectedIds = Array.from(selectedNomorSalahIds.keys());
-    if (selectedIds.length === 0) { showNotif('Tidak ada data yang dipilih', true); return; }
-    if (confirm(`Hapus ${selectedIds.length} data nomor salah yang dipilih?`)) {
-        try { const batch = db.batch(); selectedIds.forEach(id => batch.delete(db.collection('nomor_salah').doc(id))); await batch.commit(); selectedNomorSalahIds.clear(); showNotif(`${selectedIds.length} data berhasil dihapus`); } catch(e) { showNotif('Gagal hapus: ' + e.message, true); }
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data nomor salah yang dipilih? Data akan dihapus permanen!`)) return;
+    
+    try {
+        for (const id of selectedIds) {
+            await db.collection('nomor_salah').doc(id).delete();
+            selectedNomorSalahIds.delete(id);
+        }
+        showNotifTop(`✅ ${selectedIds.length} data nomor salah berhasil dihapus`);
+        loadDBNomorSalah();
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
     }
 };
+
+// Hapus multiple commitment
 window.deleteSelectedCommitment = async function() {
     const selectedIds = Array.from(selectedCommitmentIds.keys());
-    if (selectedIds.length === 0) { showNotif('Tidak ada data yang dipilih', true); return; }
-    if (confirm(`Hapus ${selectedIds.length} data komitmen yang dipilih?`)) {
-        try { const batch = db.batch(); selectedIds.forEach(id => batch.delete(db.collection('db_commitment').doc(id))); await batch.commit(); selectedCommitmentIds.clear(); showNotif(`${selectedIds.length} data berhasil dihapus`); } catch(e) { showNotif('Gagal hapus: ' + e.message, true); }
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data komitmen yang dipilih? Data akan dihapus permanen!`)) return;
+    
+    try {
+        for (const id of selectedIds) {
+            await db.collection('db_commitment').doc(id).delete();
+            selectedCommitmentIds.delete(id);
+        }
+        showNotifTop(`✅ ${selectedIds.length} data komitmen berhasil dihapus`);
+        loadDBCommitment();
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
     }
 };
 
@@ -5013,30 +5128,68 @@ async function moveAgentToFollowup(agentId) {
     );
 }
 
-async function deleteAgentItem(id) {
-    if (!confirm('Yakin hapus data agent ini?')) return;
-    await db.collection('db_agent').doc(id).delete();
-    selectedAgentIds.delete(id);
-    showNotifTop('🗑️ Data agent dihapus');
-    loadDatabaseAgent();
-}
+// Hapus single agent
+window.deleteAgentItem = async function(id) {
+    if (!confirm('Yakin hapus data agent ini? Data akan dihapus permanen!')) return;
+    
+    try {
+        await db.collection('db_agent').doc(id).delete();
+        
+        // Hapus dari Map selectedAgentIds
+        selectedAgentIds.delete(id);
+        
+        // Hapus dari array lokal agentsData
+        const index = agentsData.findIndex(item => item.id === id);
+        if (index !== -1) {
+            agentsData.splice(index, 1);
+        }
+        
+        // Hapus dari filtered data
+        const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
+        if (filteredIndex !== -1) {
+            agentsFilteredData.splice(filteredIndex, 1);
+        }
+        
+        // Render ulang daftar
+        renderAgentList(agentsData);
+        
+        showNotifTop('🗑️ Data agent berhasil dihapus');
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
+    }
+};
 
-async function deleteSelectedAgent() {
-    // Gunakan agentsFilteredData untuk hapus massal berdasarkan filter
+// Hapus multiple agent yang dipilih
+window.deleteSelectedAgent = async function() {
     const selectedIds = Array.from(selectedAgentIds.keys());
     if (selectedIds.length === 0) {
-        showNotifTop('Tidak ada data yang dipilih', true);
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
         return;
     }
-    if (confirm(`Hapus ${selectedIds.length} data agent yang dipilih?`)) {
-        const batch = db.batch();
-        selectedIds.forEach(id => batch.delete(db.collection('db_agent').doc(id)));
-        await batch.commit();
-        selectedAgentIds.clear();
-        showNotifTop(`${selectedIds.length} data agent berhasil dihapus`);
-        loadDatabaseAgent();
+    
+    if (!confirm(`Hapus ${selectedIds.length} data agent yang dipilih? Data akan dihapus permanen!`)) return;
+    
+    try {
+        // Hapus satu per satu (Firestore batch terbatas 500 operasi)
+        for (const id of selectedIds) {
+            await db.collection('db_agent').doc(id).delete();
+            selectedAgentIds.delete(id);
+            
+            // Hapus dari array lokal
+            const index = agentsData.findIndex(item => item.id === id);
+            if (index !== -1) agentsData.splice(index, 1);
+            
+            const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
+            if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
+        }
+        
+        // Render ulang
+        renderAgentList(agentsData);
+        showNotifTop(`✅ ${selectedIds.length} data agent berhasil dihapus`);
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
     }
-}
+};
 
 // ========== FUNGSI AGENT DETAIL LENGKAP ==========
 async function saveAgentDetail() {
