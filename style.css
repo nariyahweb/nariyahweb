@@ -2867,6 +2867,500 @@ body.dark-mode .kanban-board .kanban-column[data-status="Tertarik"] .column-head
     color: #34d399 !important;
 }
 
+/* ========== PERBAIKAN DARK MODE - SEMUA POPUP & MODAL ========== */
+
+/* Modal Negosiasi (Kuesioner) - Dark Mode */
+body.dark-mode #prospekNegosiasiModal {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode #prospekNegosiasiModal .form-group label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .form-group input,
+body.dark-mode #prospekNegosiasiModal .form-group select,
+body.dark-mode #prospekNegosiasiModal .form-group textarea {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .form-group input:focus,
+body.dark-mode #prospekNegosiasiModal .form-group select:focus,
+body.dark-mode #prospekNegosiasiModal .form-group textarea:focus {
+    border-color: #818cf8 !important;
+    background: #1e293b !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .input-icon span {
+    color: #64748b !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons .btn-primary:hover {
+    background: #4338ca !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons .btn-success {
+    background: #059669 !important;
+    color: white !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons .btn-success:hover {
+    background: #047857 !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons .btn-danger {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons .btn-danger:hover {
+    background: #b91c1c !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons .btn-outline {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #prospekNegosiasiModal .modal-buttons .btn-outline:hover {
+    background: #475569 !important;
+}
+
+/* Modal Followup Confirm - Dark Mode */
+body.dark-mode #followupConfirmModal {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode #followupConfirmModal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #followupConfirmModal .modal-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #followupConfirmModal .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode #followupConfirmModal .form-group label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #followupConfirmModal .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #followupConfirmModal .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+body.dark-mode #followupConfirmModal .modal-buttons .btn-danger {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+/* Modal Pending - Dark Mode */
+body.dark-mode #pendingModal {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode #pendingModal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #pendingModal .modal-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #pendingModal .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode #pendingModal .pending-item {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+body.dark-mode #pendingModal .pending-item input[type="text"] {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #pendingModal .pending-item input[type="text"]:focus {
+    border-color: #818cf8 !important;
+}
+
+body.dark-mode #pendingModal .delete-pending-item {
+    color: #f87171 !important;
+}
+
+body.dark-mode #pendingModal .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #pendingModal .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+body.dark-mode #pendingModal .modal-buttons .btn-success {
+    background: #059669 !important;
+    color: white !important;
+}
+
+body.dark-mode #pendingModal .modal-buttons .btn-outline {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Modal Convert - Dark Mode */
+body.dark-mode #convertModal {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode #convertModal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #convertModal .modal-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #convertModal .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode #convertModal .form-group label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #convertModal .form-group input {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #convertModal .form-group input:focus {
+    border-color: #818cf8 !important;
+}
+
+body.dark-mode #convertModal .form-group small {
+    color: #94a3b8 !important;
+}
+
+body.dark-mode #convertModal .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #convertModal .modal-buttons .confirm-convert-btn,
+body.dark-mode #convertModal .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+/* Modal Edit Deadline - Dark Mode */
+body.dark-mode #editDeadlineModal {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode #editDeadlineModal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #editDeadlineModal .modal-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #editDeadlineModal .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode #editDeadlineModal label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #editDeadlineModal input {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #editDeadlineModal input:focus {
+    border-color: #818cf8 !important;
+}
+
+body.dark-mode #editDeadlineModal #deadlineWarning {
+    background: #451a03 !important;
+}
+
+body.dark-mode #editDeadlineModal #deadlineWarning p {
+    color: #fbbf24 !important;
+}
+
+body.dark-mode #editDeadlineModal .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #editDeadlineModal .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+/* Modal Customer & Prospek - Dark Mode */
+body.dark-mode #customerModal,
+body.dark-mode #prospekModal {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode #customerModal .modal-content,
+body.dark-mode #prospekModal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #customerModal .modal-content h3,
+body.dark-mode #prospekModal .modal-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #customerModal .modal-subtitle,
+body.dark-mode #prospekModal .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode #customerModal .form-group label,
+body.dark-mode #prospekModal .form-group label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #customerModal .form-group input,
+body.dark-mode #prospekModal .form-group input,
+body.dark-mode #customerModal .form-group select,
+body.dark-mode #prospekModal .form-group select {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #customerModal .form-group input:focus,
+body.dark-mode #prospekModal .form-group input:focus,
+body.dark-mode #customerModal .form-group select:focus,
+body.dark-mode #prospekModal .form-group select:focus {
+    border-color: #818cf8 !important;
+}
+
+body.dark-mode #customerModal .phone-prefix,
+body.dark-mode #prospekModal .phone-prefix {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #customerModal .modal-buttons button,
+body.dark-mode #prospekModal .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #customerModal .modal-buttons .btn-primary,
+body.dark-mode #prospekModal .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+/* Modal Add CS - Dark Mode */
+body.dark-mode #addCsModal {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode #addCsModal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #addCsModal .modal-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #addCsModal .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode #addCsModal .form-group label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #addCsModal .form-group input {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #addCsModal .form-group input:focus {
+    border-color: #818cf8 !important;
+}
+
+body.dark-mode #addCsModal .phone-prefix {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #addCsModal .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #addCsModal .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+/* Modal Reminder & Pesan - Dark Mode */
+body.dark-mode #reminderModal,
+body.dark-mode #pesanModal {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.dark-mode #reminderModal .modal-content,
+body.dark-mode #pesanModal .modal-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode #reminderModal .modal-content h3,
+body.dark-mode #pesanModal .modal-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #reminderModal .modal-subtitle,
+body.dark-mode #pesanModal .modal-subtitle {
+    color: #94a3b8 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode #reminderModal .form-group label,
+body.dark-mode #pesanModal .form-group label {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #reminderModal .form-group input,
+body.dark-mode #pesanModal .form-group input,
+body.dark-mode #reminderModal .form-group select,
+body.dark-mode #pesanModal .form-group select,
+body.dark-mode #reminderModal .form-group textarea,
+body.dark-mode #pesanModal .form-group textarea {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #reminderModal .form-group input:focus,
+body.dark-mode #pesanModal .form-group input:focus,
+body.dark-mode #reminderModal .form-group select:focus,
+body.dark-mode #pesanModal .form-group select:focus,
+body.dark-mode #reminderModal .form-group textarea:focus,
+body.dark-mode #pesanModal .form-group textarea:focus {
+    border-color: #818cf8 !important;
+}
+
+body.dark-mode #reminderModal .modal-buttons button,
+body.dark-mode #pesanModal .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode #reminderModal .modal-buttons .btn-primary,
+body.dark-mode #pesanModal .modal-buttons .btn-primary {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+/* Confirm Dialog - Dark Mode */
+body.dark-mode .confirm-dialog-overlay {
+    background: rgba(0, 0, 0, 0.95) !important;
+}
+
+body.dark-mode .confirm-dialog-content {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+}
+
+body.dark-mode .confirm-dialog-content h3 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-subtitle {
+    color: #cbd5e1 !important;
+    border-bottom-color: #334155;
+}
+
+body.dark-mode .confirm-dialog-content p {
+    color: #fca5a5 !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-buttons button {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-buttons #confirmYesBtn {
+    background: #dc2626 !important;
+    color: white !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-buttons #confirmNoBtn {
+    background: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .confirm-dialog-content .modal-buttons #confirmNoBtn:hover {
+    background: #475569 !important;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 1024px) {
     .stats-grid {
