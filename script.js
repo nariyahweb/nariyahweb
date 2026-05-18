@@ -9,7 +9,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// 🔥 TAMBAHKAN INI - Nonaktifkan cache offline
+// variabel global
 db.settings({
     persistence: false
 });
@@ -30,6 +30,7 @@ let currentEditTarifId = null;
 let customersData = [];
 let prospekData = [];
 let selectedAgentIds = new Map();
+let selectedProdukIds = new Map();
 let agentsData = [];
 let agentsFilteredData = [];
 let produkData = [];
@@ -1368,6 +1369,52 @@ if (selectAllAgentBtn) {
     });
 }
 
+    // Tombol select all produk
+const selectAllProdukBtn = document.getElementById('selectAllProduk');
+if (selectAllProdukBtn) {
+    const newSelectAllBtn = selectAllProdukBtn.cloneNode(true);
+    selectAllProdukBtn.parentNode.replaceChild(newSelectAllBtn, selectAllProdukBtn);
+    
+    newSelectAllBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const searchKeyword = document.getElementById('searchProdukInput')?.value.toLowerCase() || '';
+        let filteredProduk = produkData;
+        if (searchKeyword) {
+            filteredProduk = produkData.filter(p => 
+                p.nama.toLowerCase().includes(searchKeyword) ||
+                (p.jenis_produk === 'beradmin' ? 'beradmin' : 'tanpa_admin').includes(searchKeyword)
+            );
+        }
+        
+        if (filteredProduk.length === 0) {
+            showNotifTop('⚠️ Tidak ada produk yang ditampilkan', true);
+            return;
+        }
+        
+        // Cek apakah semua sudah tercentang
+        const allChecked = filteredProduk.every(item => selectedProdukIds.get(item.id) === true);
+        
+        // Toggle semua
+        filteredProduk.forEach(item => {
+            if (allChecked) {
+                selectedProdukIds.delete(item.id);
+            } else {
+                selectedProdukIds.set(item.id, true);
+            }
+        });
+        
+        renderProdukList();
+    });
+}
+
+// Tombol hapus selected produk
+const deleteSelectedProdukBtn = document.getElementById('deleteSelectedProduk');
+if (deleteSelectedProdukBtn) {
+    deleteSelectedProdukBtn.addEventListener('click', deleteSelectedProduk);
+}
+
     // ========== TOGGLE PASSWORD ==========
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const loginPassword = document.getElementById('loginPassword');
@@ -1725,8 +1772,10 @@ function renderProdukList() {
     
     container.innerHTML = filteredProduk.map(item => {
         const isAdminBased = item.jenis_produk === 'beradmin';
+        const isChecked = selectedProdukIds.get(item.id) === true;
         return `
         <div class="db-item produk-item" data-id="${item.id}" style="cursor: pointer;">
+            <input type="checkbox" class="db-item-checkbox-produk" data-id="${item.id}" style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;" ${isChecked ? 'checked' : ''}>
             <div class="db-item-info">
                 <h4>📦 ${escapeHtml(item.nama)}</h4>
                 <p>
@@ -1738,27 +1787,69 @@ function renderProdukList() {
                 <small>${escapeHtml(item.keterangan || '')}</small>
             </div>
             <div class="db-item-actions">
+                <button class="db-item-edit" onclick="event.stopPropagation(); editProduk('${item.id}')">✏️ Edit</button>
                 <button class="db-item-delete" onclick="event.stopPropagation(); deleteProduk('${item.id}')">🗑️ Hapus</button>
             </div>
         </div>
     `}).join('');
     
-    // Event listener untuk klik pada item produk (edit)
+    // Event listener untuk checkbox produk
+    document.querySelectorAll('#produkList .db-item-checkbox-produk').forEach(cb => {
+        cb.removeEventListener('change', handleProdukCheckboxChange);
+        cb.addEventListener('change', handleProdukCheckboxChange);
+        function handleProdukCheckboxChange(e) {
+            e.stopPropagation();
+            const id = cb.dataset.id;
+            if (cb.checked) {
+                selectedProdukIds.set(id, true);
+            } else {
+                selectedProdukIds.delete(id);
+            }
+            updateSelectAllProdukButton();
+        }
+    });
+    
+    // Event listener untuk klik pada item (selain checkbox)
     document.querySelectorAll('#produkList .produk-item').forEach(el => {
         el.removeEventListener('click', handleProdukClick);
         el.addEventListener('click', handleProdukClick);
         function handleProdukClick(e) {
-            // Jangan trigger jika klik tombol hapus
+            // Jangan trigger jika klik pada checkbox, edit, atau delete
+            if (e.target.type === 'checkbox') return;
+            if (e.target.classList.contains('db-item-edit')) return;
             if (e.target.classList.contains('db-item-delete')) return;
             const id = el.dataset.id;
             editProduk(id);
         }
     });
+    
+    updateSelectAllProdukButton();
 }
 
-// Hapus multiple produk
-let selectedProdukIds = new Map();
+// Fungsi update tombol pilih semua produk
+function updateSelectAllProdukButton() {
+    const btn = document.getElementById('selectAllProduk');
+    if (!btn) return;
+    
+    const searchKeyword = document.getElementById('searchProdukInput')?.value.toLowerCase() || '';
+    let filteredProduk = produkData;
+    if (searchKeyword) {
+        filteredProduk = produkData.filter(p => 
+            p.nama.toLowerCase().includes(searchKeyword) ||
+            (p.jenis_produk === 'beradmin' ? 'beradmin' : 'tanpa_admin').includes(searchKeyword)
+        );
+    }
+    
+    if (filteredProduk.length === 0) {
+        btn.textContent = '✅ Pilih Semua';
+        return;
+    }
+    
+    const allChecked = filteredProduk.every(item => selectedProdukIds.get(item.id) === true);
+    btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+}
 
+// Fungsi hapus multiple produk
 window.deleteSelectedProduk = async function() {
     const selectedIds = Array.from(selectedProdukIds.keys());
     if (selectedIds.length === 0) {
@@ -1768,31 +1859,56 @@ window.deleteSelectedProduk = async function() {
     
     if (!confirm(`Hapus ${selectedIds.length} produk yang dipilih? Produk yang sudah terpakai di agent akan kehilangan referensi!`)) return;
     
-    showNotifTop(`⏳ Menghapus ${selectedIds.length} produk...`);
+    const progress = showFloatingProgress('🗑️ Menghapus Produk', selectedIds.length);
+    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus produk...');
     
     try {
-        const deletePromises = selectedIds.map(id => 
-            db.collection('produk').doc(id).delete()
-        );
-        await Promise.all(deletePromises);
+        let deleted = 0;
+        const BATCH_SIZE = 100;
         
-        // Hapus dari array lokal
-        for (const id of selectedIds) {
-            selectedProdukIds.delete(id);
-            const index = produkData.findIndex(p => p.id === id);
-            if (index !== -1) produkData.splice(index, 1);
+        for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
+            const batch = db.batch();
+            const chunk = selectedIds.slice(i, i + BATCH_SIZE);
+            
+            for (const id of chunk) {
+                const ref = db.collection('produk').doc(id);
+                batch.delete(ref);
+            }
+            
+            await batch.commit();
+            deleted += chunk.length;
+            
+            // Hapus dari array lokal
+            for (const id of chunk) {
+                selectedProdukIds.delete(id);
+                const index = produkData.findIndex(p => p.id === id);
+                if (index !== -1) produkData.splice(index, 1);
+            }
+            
+            const percent = Math.floor((deleted / selectedIds.length) * 100);
+            progress.update(percent, '🗑️ Menghapus', `Menghapus produk...`, deleted, selectedIds.length);
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
         
         renderProdukList();
+        progress.update(100, '✅ Selesai', `Berhasil menghapus ${selectedIds.length} produk`, selectedIds.length, selectedIds.length);
         showNotifTop(`✅ ${selectedIds.length} produk berhasil dihapus`);
+        
+        setTimeout(() => progress.hide(), 2000);
+        
     } catch(e) {
-        showNotifTop('❌ Gagal hapus: ' + e.message, true);
+        console.error('Error delete selected:', e);
+        showNotifTop('❌ Gagal menghapus: ' + e.message, true);
+        progress.hide();
     }
 };
 
-// Hapus single produk - versi cepat
+// Hapus single produk dengan floating progress
 window.deleteProduk = async function(id) {
     if (!confirm('Yakin hapus produk ini? Produk yang sudah terpakai di agent akan kehilangan referensi!')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Produk', 1);
+    progress.update(50, '🗑️ Menghapus', 'Menghapus produk...', 0, 1);
     
     try {
         await db.collection('produk').doc(id).delete();
@@ -1801,10 +1917,17 @@ window.deleteProduk = async function(id) {
         const index = produkData.findIndex(p => p.id === id);
         if (index !== -1) produkData.splice(index, 1);
         
+        // Hapus dari selected map
+        selectedProdukIds.delete(id);
+        
         renderProdukList();
+        progress.update(100, '✅ Selesai', 'Produk berhasil dihapus', 1, 1);
         showNotifTop('🗑️ Produk berhasil dihapus');
+        
+        setTimeout(() => progress.hide(), 2000);
     } catch(e) {
         showNotifTop('❌ Gagal hapus: ' + e.message, true);
+        progress.hide();
     }
 };
 
@@ -6330,7 +6453,8 @@ async function downloadAgentExample() {
             'apk': 'GNP'
         };
         
-        // Buat kolom untuk setiap produk dengan format: profit_{nama_produk}, fee_upline_{nama_produk}, fee_agent_{nama_produk}
+        // Buat kolom untuk setiap produk dengan format: profit_{nama_produk}, fee_upline_{nama_produk}
+        // 🔥 HAPUS kolom fee_agent karena akan dihitung otomatis
         const produkColumns = {};
         for (const produk of produkList) {
             // Bersihkan nama produk untuk dijadikan nama kolom
@@ -6341,7 +6465,7 @@ async function downloadAgentExample() {
             
             produkColumns[`profit_${cleanNama}`] = 0;
             produkColumns[`fee_upline_${cleanNama}`] = 0;
-            produkColumns[`fee_agent_${cleanNama}`] = 0;
+            // 🔥 TIDAK ADA kolom fee_agent
         }
         
         // Tambahkan beberapa contoh nilai untuk produk pertama
@@ -6352,7 +6476,7 @@ async function downloadAgentExample() {
                 .toLowerCase();
             produkColumns[`profit_${firstProductClean}`] = 5000;
             produkColumns[`fee_upline_${firstProductClean}`] = 1000;
-            produkColumns[`fee_agent_${firstProductClean}`] = 4000;
+            // 🔥 fee agent TIDAK perlu diisi
         }
         
         if (produkList.length > 1) {
@@ -6362,7 +6486,7 @@ async function downloadAgentExample() {
                 .toLowerCase();
             produkColumns[`profit_${secondProductClean}`] = 3000;
             produkColumns[`fee_upline_${secondProductClean}`] = 500;
-            produkColumns[`fee_agent_${secondProductClean}`] = 2500;
+            // 🔥 fee agent TIDAK perlu diisi
         }
         
         // Gabungkan data
@@ -6389,9 +6513,8 @@ async function downloadAgentExample() {
             { wch: 10 }  // apk
         ];
         
-        // Tambahkan lebar untuk kolom produk
+        // Tambahkan lebar untuk kolom produk (2 kolom per produk: profit, fee_upline)
         for (const produk of produkList) {
-            ws['!cols'].push({ wch: 15 });
             ws['!cols'].push({ wch: 15 });
             ws['!cols'].push({ wch: 15 });
         }
@@ -6401,7 +6524,7 @@ async function downloadAgentExample() {
         XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
         XLSX.writeFile(wb, `contoh_database_agent_${new Date().toISOString().split('T')[0]}.xlsx`);
         
-        showNotifTop('📋 Contoh file Excel berhasil diunduh dengan daftar produk terbaru');
+        showNotifTop('📋 Contoh file Excel berhasil diunduh (Fee Agent akan dihitung otomatis)');
         
     } catch (error) {
         console.error('Error download contoh:', error);
