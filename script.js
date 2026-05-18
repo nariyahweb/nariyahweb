@@ -5578,16 +5578,19 @@ function addOrUpdateProductWithAdminAndFee(produkId, admin, feeUpline) {
     }
 }
 
-// ========== FUNGSI IMPORT DATABASE AGENT (DENGAN PENYESUAIAN NAMA PRODUK) ==========
-async function getProdukMap() {
-    // Ambil semua produk dari database
+// ========== FUNGSI IMPORT DATABASE AGENT (OPTIMASI UNTUK RIBUAN DATA) ==========
+let produkMapCache = null; // Cache untuk data produk
+
+async function getProdukMapCached() {
+    if (produkMapCache) return produkMapCache;
+    
     const produkSnapshot = await db.collection('produk').get();
-    const produkMap = new Map(); // key: nama_produk (lowercase), value: { id, nama, jenis_produk, admin_default, cid_based }
+    produkMapCache = new Map();
     
     produkSnapshot.forEach(doc => {
         const data = doc.data();
         const namaLower = data.nama.toLowerCase().trim();
-        produkMap.set(namaLower, {
+        produkMapCache.set(namaLower, {
             id: doc.id,
             nama: data.nama,
             jenis_produk: data.jenis_produk || 'tanpa_admin',
@@ -5598,15 +5601,14 @@ async function getProdukMap() {
         });
     });
     
-    return produkMap;
+    return produkMapCache;
 }
 
-function setupAgentImport() {
+async function setupAgentImport() {
     const importBtn = document.getElementById('importAgentExcelBtn');
     const fileInput = document.getElementById('agentExcelFile');
     if (!importBtn || !fileInput) return;
     
-    // Hapus event listener lama
     const newImportBtn = importBtn.cloneNode(true);
     importBtn.parentNode.replaceChild(newImportBtn, importBtn);
     
@@ -5621,6 +5623,17 @@ function setupAgentImport() {
         btn.textContent = '⏳ Memproses...';
         btn.disabled = true;
         
+        // Tampilkan progress
+        let progressDiv = document.getElementById('importProgress');
+        if (!progressDiv) {
+            progressDiv = document.createElement('div');
+            progressDiv.id = 'importProgress';
+            progressDiv.style.cssText = 'margin-top: 16px; padding: 12px; background: #eef2ff; border-radius: 12px; display: none;';
+            fileInput.parentNode.appendChild(progressDiv);
+        }
+        progressDiv.style.display = 'block';
+        progressDiv.innerHTML = '📊 Memproses file Excel... 0%';
+        
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
@@ -5634,53 +5647,45 @@ function setupAgentImport() {
                     return;
                 }
                 
-                // Ambil data produk dari database
-                const produkMap = await getProdukMap();
+                progressDiv.innerHTML = `📊 Memuat data produk... 10%`;
+                await new Promise(resolve => setTimeout(resolve, 10));
+                
+                // AMBIL DATA PRODUK SEKALI SAJA (CACHE)
+                const produkMap = await getProdukMapCached();
                 const produkList = Array.from(produkMap.keys());
                 
-                // Deteksi kolom yang ada di file Excel
+                // Deteksi kolom di file Excel
                 const firstRow = json[0];
                 const columnNames = Object.keys(firstRow);
                 
-                // Mapping kolom standar
+                // Mapping kolom standar (sama seperti sebelumnya)
                 const columnMap = {
-                    agent_id: null,
-                    nama: null,
-                    hp: null,
-                    apk: null,
-                    agent_type: null,
-                    pemilik: null,
-                    alamat: null,
-                    email: null,
-                    tlp: null,
-                    no_rekening: null,
-                    atas_nama: null,
-                    jenis_bank: null,
-                    no_ktp: null,
-                    cid: null,
-                    upline: null
+                    agent_id: null, nama: null, hp: null, apk: null,
+                    agent_type: null, pemilik: null, alamat: null,
+                    email: null, tlp: null, no_rekening: null,
+                    atas_nama: null, jenis_bank: null, no_ktp: null,
+                    cid: null, upline: null
                 };
                 
-                // Mapping untuk kolom standar
+                // Mapping kolom (sama seperti sebelumnya)
                 const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
-                const possibleNama = ['nama', 'Nama', 'name', 'Name', 'customer_name', 'CustomerName'];
-                const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
-                const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app'];
-                const possibleAgentType = ['agent_type', 'Agent_Type', 'type', 'Type', 'class', 'Class', 'tipe'];
+                const possibleNama = ['nama', 'Nama', 'name', 'Name'];
+                const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP'];
+                const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi'];
+                const possibleAgentType = ['agent_type', 'Agent_Type', 'type', 'Type', 'class', 'Class'];
                 const possiblePemilik = ['pemilik', 'Pemilik', 'owner', 'Owner'];
                 const possibleAlamat = ['alamat', 'Alamat', 'address', 'Address'];
-                const possibleEmail = ['email', 'Email', 'mail', 'Mail'];
-                const possibleTlp = ['tlp', 'Tlp', 'telepon', 'Telepon', 'phone_number'];
-                const possibleNoRekening = ['no_rekening', 'NoRekening', 'rekening', 'Rekening', 'norek'];
-                const possibleAtasNama = ['atas_nama', 'AtasNama', 'an', 'An'];
+                const possibleEmail = ['email', 'Email'];
+                const possibleTlp = ['tlp', 'Tlp', 'telepon', 'Telepon'];
+                const possibleNoRekening = ['no_rekening', 'NoRekening', 'rekening', 'Rekening'];
+                const possibleAtasNama = ['atas_nama', 'AtasNama', 'an'];
                 const possibleJenisBank = ['jenis_bank', 'JenisBank', 'bank', 'Bank'];
-                const possibleNoKtp = ['no_ktp', 'NoKtp', 'ktp', 'Ktp', 'nik'];
+                const possibleNoKtp = ['no_ktp', 'NoKtp', 'ktp', 'nik'];
                 const possibleCid = ['cid', 'Cid', 'CID'];
-                const possibleUpline = ['upline', 'Upline', 'atasan', 'Atasan'];
+                const possibleUpline = ['upline', 'Upline', 'atasan'];
                 
                 for (const col of columnNames) {
                     const colLower = col.toLowerCase();
-                    
                     if (possibleAgentId.some(p => p.toLowerCase() === colLower)) columnMap.agent_id = col;
                     if (possibleNama.some(p => p.toLowerCase() === colLower)) columnMap.nama = col;
                     if (possibleHp.some(p => p.toLowerCase() === colLower)) columnMap.hp = col;
@@ -5698,23 +5703,34 @@ function setupAgentImport() {
                     if (possibleUpline.some(p => p.toLowerCase() === colLower)) columnMap.upline = col;
                 }
                 
-                // Validasi kolom wajib
                 if (!columnMap.agent_id) {
-                    showNotifTop('❌ Kolom "agent_id" (ID Agent) tidak ditemukan dalam file Excel!', true);
-                    btn.textContent = originalText;
-                    btn.disabled = false;
+                    showNotifTop('❌ Kolom "agent_id" tidak ditemukan!', true);
                     return;
                 }
                 
-                // Mapping untuk kolom produk (profit, fee_upline, fee_agent)
+                progressDiv.innerHTML = `📊 Memeriksa duplikat... 20%`;
+                await new Promise(resolve => setTimeout(resolve, 10));
+                
+                // ========== OPTIMASI: Ambil semua agent_id yang sudah ada SEKALIGUS ==========
+                const allExistingAgents = await db.collection('db_agent').get();
+                const existingAgentIds = new Set();
+                allExistingAgents.forEach(doc => {
+                    const data = doc.data();
+                    if (data.agent_id) {
+                        existingAgentIds.add(data.agent_id);
+                    }
+                });
+                
+                progressDiv.innerHTML = `📊 Memproses ${json.length} baris data... 30%`;
+                await new Promise(resolve => setTimeout(resolve, 10));
+                
+                // Mapping untuk kolom produk
                 const profitColumns = [];
                 const feeUplineColumns = [];
                 const feeAgentColumns = [];
                 
                 for (const col of columnNames) {
                     const colLower = col.toLowerCase();
-                    
-                    // Cek apakah kolom mengandung nama produk untuk profit
                     for (const produkNama of produkList) {
                         const produkKey = produkNama.toLowerCase();
                         if (colLower.includes(produkKey) && colLower.includes('profit')) {
@@ -5729,30 +5745,45 @@ function setupAgentImport() {
                     }
                 }
                 
-                let success = 0, failed = 0;
+                // ========== OPTIMASI: Siapkan batch untuk write ==========
+                const BATCH_SIZE = 500; // Firestore batch maksimal 500 operasi
+                let batches = [];
+                let currentBatch = db.batch();
+                let operationCount = 0;
+                
+                let success = 0, failed = 0, duplicate = 0;
                 const errors = [];
-                const duplicates = [];
                 
                 for (let i = 0; i < json.length; i++) {
                     const row = json[i];
+                    
+                    // Update progress setiap 100 baris
+                    if (i % 100 === 0) {
+                        const percent = 30 + Math.floor((i / json.length) * 60);
+                        progressDiv.innerHTML = `📊 Memproses data... ${percent}% (${i}/${json.length})`;
+                        await new Promise(resolve => setTimeout(resolve, 5));
+                    }
+                    
                     try {
                         const agentId = row[columnMap.agent_id]?.toString().trim().toUpperCase();
                         
                         if (!agentId) {
                             failed++;
-                            errors.push(`Baris ke-${i + 2}: ID Agent wajib diisi`);
+                            errors.push(`Baris ${i + 2}: ID Agent kosong`);
                             continue;
                         }
                         
-                        // Cek duplikat agent_id
-                        const existing = await db.collection('db_agent').where('agent_id', '==', agentId).get();
-                        if (!existing.empty) {
-                            duplicates.push(`ID Agent ${agentId} sudah terdaftar`);
-                            failed++;
+                        // CEK DUPLIKAT PAKAI SET (Cepat)
+                        if (existingAgentIds.has(agentId)) {
+                            duplicate++;
                             continue;
                         }
+                        
+                        // Tandai sebagai sudah ada (untuk baris berikutnya dalam import yang sama)
+                        existingAgentIds.add(agentId);
                         
                         // Data dasar agent
+                        const agentRef = db.collection('db_agent').doc(); // Buat reference
                         const agentData = {
                             agent_id: agentId,
                             nama: row[columnMap.nama]?.toString().trim() || agentId,
@@ -5775,28 +5806,17 @@ function setupAgentImport() {
                             produk: []
                         };
                         
-                        // Proses data produk dari kolom
+                        // Proses data produk (sama seperti sebelumnya)
                         const produkListData = [];
-                        
-                        // Mapping produk berdasarkan profit columns
                         for (const profitCol of profitColumns) {
                             const profitValue = parseFloat(row[profitCol.col]) || 0;
                             if (profitValue > 0) {
                                 const produkInfo = produkMap.get(profitCol.produkNama.toLowerCase());
                                 if (produkInfo) {
-                                    // Cari fee_upline dan fee_agent yang sesuai
-                                    let feeUpline = 0;
-                                    let feeAgent = 0;
-                                    
                                     const feeUplineCol = feeUplineColumns.find(f => f.produkNama === profitCol.produkNama);
-                                    if (feeUplineCol) {
-                                        feeUpline = parseFloat(row[feeUplineCol.col]) || 0;
-                                    }
-                                    
+                                    const feeUpline = feeUplineCol ? (parseFloat(row[feeUplineCol.col]) || 0) : 0;
                                     const feeAgentCol = feeAgentColumns.find(f => f.produkNama === profitCol.produkNama);
-                                    if (feeAgentCol) {
-                                        feeAgent = parseFloat(row[feeAgentCol.col]) || 0;
-                                    }
+                                    const feeAgent = feeAgentCol ? (parseFloat(row[feeAgentCol.col]) || 0) : 0;
                                     
                                     produkListData.push({
                                         produk_id: produkInfo.id,
@@ -5812,67 +5832,48 @@ function setupAgentImport() {
                             }
                         }
                         
-                        // Jika tidak ada produk dari kolom profit, cek dari kolom fee_upline
-                        if (produkListData.length === 0) {
-                            for (const feeCol of feeUplineColumns) {
-                                const feeValue = parseFloat(row[feeCol.col]) || 0;
-                                if (feeValue > 0) {
-                                    const produkInfo = produkMap.get(feeCol.produkNama.toLowerCase());
-                                    if (produkInfo) {
-                                        produkListData.push({
-                                            produk_id: produkInfo.id,
-                                            nama_produk: produkInfo.nama,
-                                            profit: 0,
-                                            fee_upline: feeValue,
-                                            fee_agent: 0,
-                                            admin: produkInfo.jenis_produk === 'beradmin' ? feeValue : 0,
-                                            qty: 1,
-                                            added_at: new Date().toISOString()
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Jika masih tidak ada, cek dari kolom fee_agent
-                        if (produkListData.length === 0) {
-                            for (const feeCol of feeAgentColumns) {
-                                const feeValue = parseFloat(row[feeCol.col]) || 0;
-                                if (feeValue > 0) {
-                                    const produkInfo = produkMap.get(feeCol.produkNama.toLowerCase());
-                                    if (produkInfo) {
-                                        produkListData.push({
-                                            produk_id: produkInfo.id,
-                                            nama_produk: produkInfo.nama,
-                                            profit: 0,
-                                            fee_upline: 0,
-                                            fee_agent: feeValue,
-                                            admin: produkInfo.jenis_produk === 'beradmin' ? feeValue : 0,
-                                            qty: 1,
-                                            added_at: new Date().toISOString()
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                        
                         agentData.produk = produkListData;
                         
-                        await db.collection('db_agent').add(agentData);
+                        // Tambahkan ke batch
+                        currentBatch.set(agentRef, agentData);
+                        operationCount++;
                         success++;
+                        
+                        // Jika batch penuh, simpan dan buat batch baru
+                        if (operationCount >= BATCH_SIZE) {
+                            batches.push(currentBatch);
+                            currentBatch = db.batch();
+                            operationCount = 0;
+                        }
                         
                     } catch (rowError) {
                         failed++;
-                        errors.push(`Baris ke-${i + 2}: ${rowError.message}`);
+                        errors.push(`Baris ${i + 2}: ${rowError.message}`);
                     }
                 }
                 
-                let resultMsg = `✅ Import selesai! Berhasil: ${success}, Gagal: ${failed}`;
-                if (duplicates.length > 0 && duplicates.length <= 5) {
-                    resultMsg += `\n\n⏭ Data duplikat dilewati:\n${duplicates.join('\n')}`;
-                } else if (duplicates.length > 5) {
-                    resultMsg += `\n\n⏭ ${duplicates.length} data duplikat dilewati`;
+                // Simpan batch terakhir jika masih ada
+                if (operationCount > 0) {
+                    batches.push(currentBatch);
                 }
+                
+                progressDiv.innerHTML = `📊 Menyimpan data ke database... 90%`;
+                await new Promise(resolve => setTimeout(resolve, 10));
+                
+                // ========== EKSEKUSI SEMUA BATCH SECARA SEQUENTIAL ==========
+                let batchIndex = 0;
+                for (const batch of batches) {
+                    batchIndex++;
+                    progressDiv.innerHTML = `📊 Menyimpan batch ${batchIndex}/${batches.length}... 90%`;
+                    await batch.commit();
+                    // Delay kecil agar tidak overload
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                progressDiv.innerHTML = `📊 Selesai! 100%`;
+                
+                let resultMsg = `✅ Import selesai!\n📊 Total data: ${json.length}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
+                
                 if (errors.length > 0 && errors.length <= 5) {
                     resultMsg += `\n\n❌ Error:\n${errors.join('\n')}`;
                 } else if (errors.length > 5) {
@@ -5883,12 +5884,18 @@ function setupAgentImport() {
                 await loadDatabaseAgent();
                 fileInput.value = '';
                 
+                // Reset cache produk setelah import (optional)
+                produkMapCache = null;
+                
             } catch (err) {
                 console.error('Import error:', err);
                 showNotifTop('❌ Gagal memproses file: ' + err.message, true);
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
+                setTimeout(() => {
+                    if (progressDiv) progressDiv.style.display = 'none';
+                }, 3000);
             }
         };
         
