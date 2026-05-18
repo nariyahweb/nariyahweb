@@ -1663,6 +1663,41 @@ function renderProdukList() {
     });
 }
 
+// Hapus multiple produk
+let selectedProdukIds = new Map();
+
+window.deleteSelectedProduk = async function() {
+    const selectedIds = Array.from(selectedProdukIds.keys());
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada produk yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} produk yang dipilih? Produk yang sudah terpakai di agent akan kehilangan referensi!`)) return;
+    
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} produk...`);
+    
+    try {
+        const deletePromises = selectedIds.map(id => 
+            db.collection('produk').doc(id).delete()
+        );
+        await Promise.all(deletePromises);
+        
+        // Hapus dari array lokal
+        for (const id of selectedIds) {
+            selectedProdukIds.delete(id);
+            const index = produkData.findIndex(p => p.id === id);
+            if (index !== -1) produkData.splice(index, 1);
+        }
+        
+        renderProdukList();
+        showNotifTop(`✅ ${selectedIds.length} produk berhasil dihapus`);
+    } catch(e) {
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
+    }
+};
+
+// Hapus single produk - versi cepat
 window.deleteProduk = async function(id) {
     if (!confirm('Yakin hapus produk ini? Produk yang sudah terpakai di agent akan kehilangan referensi!')) return;
     
@@ -1673,9 +1708,7 @@ window.deleteProduk = async function(id) {
         const index = produkData.findIndex(p => p.id === id);
         if (index !== -1) produkData.splice(index, 1);
         
-        // Render ulang
         renderProdukList();
-        
         showNotifTop('🗑️ Produk berhasil dihapus');
     } catch(e) {
         showNotifTop('❌ Gagal hapus: ' + e.message, true);
@@ -4231,7 +4264,7 @@ window.deleteDBItem = async function(type, id) {
     }
 };
 
-// Hapus multiple closing
+// Hapus multiple closing - CEPAT dengan Promise.all
 window.deleteSelectedClosing = async function() {
     const selectedIds = Array.from(selectedClosingIds.keys());
     if (selectedIds.length === 0) {
@@ -4241,11 +4274,19 @@ window.deleteSelectedClosing = async function() {
     
     if (!confirm(`Hapus ${selectedIds.length} data closing yang dipilih? Data akan dihapus permanen!`)) return;
     
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} data closing...`);
+    
     try {
+        const deletePromises = selectedIds.map(id => 
+            db.collection('db_closing').doc(id).delete()
+        );
+        await Promise.all(deletePromises);
+        
+        // Hapus dari Map
         for (const id of selectedIds) {
-            await db.collection('db_closing').doc(id).delete();
             selectedClosingIds.delete(id);
         }
+        
         showNotifTop(`✅ ${selectedIds.length} data closing berhasil dihapus`);
         loadDBClosing();
     } catch(e) {
@@ -4253,7 +4294,7 @@ window.deleteSelectedClosing = async function() {
     }
 };
 
-// Hapus multiple tidak tertarik
+// Hapus multiple tidak tertarik - CEPAT
 window.deleteSelectedTidak = async function() {
     const selectedIds = Array.from(selectedTidakIds.keys());
     if (selectedIds.length === 0) {
@@ -4263,11 +4304,18 @@ window.deleteSelectedTidak = async function() {
     
     if (!confirm(`Hapus ${selectedIds.length} data tidak tertarik yang dipilih? Data akan dihapus permanen!`)) return;
     
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} data tidak tertarik...`);
+    
     try {
+        const deletePromises = selectedIds.map(id => 
+            db.collection('db_tidak_tertarik').doc(id).delete()
+        );
+        await Promise.all(deletePromises);
+        
         for (const id of selectedIds) {
-            await db.collection('db_tidak_tertarik').doc(id).delete();
             selectedTidakIds.delete(id);
         }
+        
         showNotifTop(`✅ ${selectedIds.length} data tidak tertarik berhasil dihapus`);
         loadDBTidak();
     } catch(e) {
@@ -4275,7 +4323,7 @@ window.deleteSelectedTidak = async function() {
     }
 };
 
-// Hapus multiple nomor salah
+// Hapus multiple nomor salah - CEPAT
 window.deleteSelectedNomorSalah = async function() {
     const selectedIds = Array.from(selectedNomorSalahIds.keys());
     if (selectedIds.length === 0) {
@@ -4285,11 +4333,18 @@ window.deleteSelectedNomorSalah = async function() {
     
     if (!confirm(`Hapus ${selectedIds.length} data nomor salah yang dipilih? Data akan dihapus permanen!`)) return;
     
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} data nomor salah...`);
+    
     try {
+        const deletePromises = selectedIds.map(id => 
+            db.collection('nomor_salah').doc(id).delete()
+        );
+        await Promise.all(deletePromises);
+        
         for (const id of selectedIds) {
-            await db.collection('nomor_salah').doc(id).delete();
             selectedNomorSalahIds.delete(id);
         }
+        
         showNotifTop(`✅ ${selectedIds.length} data nomor salah berhasil dihapus`);
         loadDBNomorSalah();
     } catch(e) {
@@ -4297,7 +4352,7 @@ window.deleteSelectedNomorSalah = async function() {
     }
 };
 
-// Hapus multiple commitment
+// Hapus multiple commitment - CEPAT
 window.deleteSelectedCommitment = async function() {
     const selectedIds = Array.from(selectedCommitmentIds.keys());
     if (selectedIds.length === 0) {
@@ -4307,11 +4362,18 @@ window.deleteSelectedCommitment = async function() {
     
     if (!confirm(`Hapus ${selectedIds.length} data komitmen yang dipilih? Data akan dihapus permanen!`)) return;
     
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} data komitmen...`);
+    
     try {
+        const deletePromises = selectedIds.map(id => 
+            db.collection('db_commitment').doc(id).delete()
+        );
+        await Promise.all(deletePromises);
+        
         for (const id of selectedIds) {
-            await db.collection('db_commitment').doc(id).delete();
             selectedCommitmentIds.delete(id);
         }
+        
         showNotifTop(`✅ ${selectedIds.length} data komitmen berhasil dihapus`);
         loadDBCommitment();
     } catch(e) {
@@ -5128,38 +5190,7 @@ async function moveAgentToFollowup(agentId) {
     );
 }
 
-// Hapus single agent
-window.deleteAgentItem = async function(id) {
-    if (!confirm('Yakin hapus data agent ini? Data akan dihapus permanen!')) return;
-    
-    try {
-        await db.collection('db_agent').doc(id).delete();
-        
-        // Hapus dari Map selectedAgentIds
-        selectedAgentIds.delete(id);
-        
-        // Hapus dari array lokal agentsData
-        const index = agentsData.findIndex(item => item.id === id);
-        if (index !== -1) {
-            agentsData.splice(index, 1);
-        }
-        
-        // Hapus dari filtered data
-        const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
-        if (filteredIndex !== -1) {
-            agentsFilteredData.splice(filteredIndex, 1);
-        }
-        
-        // Render ulang daftar
-        renderAgentList(agentsData);
-        
-        showNotifTop('🗑️ Data agent berhasil dihapus');
-    } catch(e) {
-        showNotifTop('❌ Gagal hapus: ' + e.message, true);
-    }
-};
-
-// Hapus multiple agent yang dipilih
+// Hapus multiple agent yang dipilih - VERSI CEPAT dengan Promise.all
 window.deleteSelectedAgent = async function() {
     const selectedIds = Array.from(selectedAgentIds.keys());
     if (selectedIds.length === 0) {
@@ -5169,16 +5200,26 @@ window.deleteSelectedAgent = async function() {
     
     if (!confirm(`Hapus ${selectedIds.length} data agent yang dipilih? Data akan dihapus permanen!`)) return;
     
+    // Tampilkan loading
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} data agent...`);
+    
     try {
-        // Hapus satu per satu (Firestore batch terbatas 500 operasi)
+        // Gunakan Promise.all untuk eksekusi paralel (lebih cepat)
+        const deletePromises = selectedIds.map(id => 
+            db.collection('db_agent').doc(id).delete()
+        );
+        
+        await Promise.all(deletePromises);
+        
+        // Hapus dari Map dan array lokal
         for (const id of selectedIds) {
-            await db.collection('db_agent').doc(id).delete();
             selectedAgentIds.delete(id);
             
-            // Hapus dari array lokal
+            // Hapus dari agentsData
             const index = agentsData.findIndex(item => item.id === id);
             if (index !== -1) agentsData.splice(index, 1);
             
+            // Hapus dari agentsFilteredData
             const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
             if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
         }
@@ -5186,8 +5227,88 @@ window.deleteSelectedAgent = async function() {
         // Render ulang
         renderAgentList(agentsData);
         showNotifTop(`✅ ${selectedIds.length} data agent berhasil dihapus`);
+        
+    } catch(e) {
+        console.error('Error delete selected:', e);
+        showNotifTop('❌ Gagal menghapus: ' + e.message, true);
+    }
+};
+
+// Hapus single agent - VERSI CEPAT
+window.deleteAgentItem = async function(id) {
+    if (!confirm('Yakin hapus data agent ini? Data akan dihapus permanen!')) return;
+    
+    try {
+        await db.collection('db_agent').doc(id).delete();
+        
+        // Hapus dari Map
+        selectedAgentIds.delete(id);
+        
+        // Hapus dari agentsData
+        const index = agentsData.findIndex(item => item.id === id);
+        if (index !== -1) agentsData.splice(index, 1);
+        
+        // Hapus dari agentsFilteredData
+        const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
+        if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
+        
+        // Render ulang
+        renderAgentList(agentsData);
+        
+        showNotifTop('🗑️ Data agent berhasil dihapus');
     } catch(e) {
         showNotifTop('❌ Gagal hapus: ' + e.message, true);
+    }
+};
+
+// Hapus multiple agent dengan BATCH (untuk data sangat banyak)
+window.deleteSelectedAgentBatch = async function() {
+    const selectedIds = Array.from(selectedAgentIds.keys());
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data agent yang dipilih? Data akan dihapus permanen!`)) return;
+    
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} data agent...`);
+    
+    try {
+        // Split menjadi beberapa batch (maks 500 operasi per batch)
+        const BATCH_SIZE = 450; // 450 untuk aman
+        const batches = [];
+        
+        for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
+            const batch = db.batch();
+            const chunk = selectedIds.slice(i, i + BATCH_SIZE);
+            
+            for (const id of chunk) {
+                const ref = db.collection('db_agent').doc(id);
+                batch.delete(ref);
+            }
+            
+            batches.push(batch.commit());
+        }
+        
+        await Promise.all(batches);
+        
+        // Hapus dari Map dan array lokal
+        for (const id of selectedIds) {
+            selectedAgentIds.delete(id);
+            
+            const index = agentsData.findIndex(item => item.id === id);
+            if (index !== -1) agentsData.splice(index, 1);
+            
+            const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
+            if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
+        }
+        
+        renderAgentList(agentsData);
+        showNotifTop(`✅ ${selectedIds.length} data agent berhasil dihapus`);
+        
+    } catch(e) {
+        console.error('Error delete selected batch:', e);
+        showNotifTop('❌ Gagal menghapus: ' + e.message, true);
     }
 };
 
