@@ -5955,24 +5955,50 @@ async function setupAgentImport() {
         btn.textContent = '⏳ Memproses...';
         btn.disabled = true;
         
-        let progressDiv = document.getElementById('importProgress');
-        if (!progressDiv) {
-            progressDiv = document.createElement('div');
-            progressDiv.id = 'importProgress';
-            progressDiv.style.cssText = 'margin-top: 16px; padding: 12px; background: #eef2ff; border-radius: 12px; display: none;';
-            fileInput.parentNode.appendChild(progressDiv);
+        // Buat container progress
+        let progressContainer = document.getElementById('importProgressContainer');
+        if (!progressContainer) {
+            progressContainer = document.createElement('div');
+            progressContainer.id = 'importProgressContainer';
+            progressContainer.className = 'progress-container';
+            progressContainer.innerHTML = `
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill-custom" id="importProgressFill"></div>
+                    </div>
+                    <div class="progress-text" id="importProgressText">0%</div>
+                </div>
+                <div class="progress-detail">
+                    <span id="importProgressStatus">📊 Memulai import...</span>
+                    <span id="importProgressCount">0 / 0 data</span>
+                </div>
+            `;
+            fileInput.parentNode.appendChild(progressContainer);
         }
-        progressDiv.style.display = 'block';
-        progressDiv.innerHTML = '📊 Membaca file Excel... 0%';
+        progressContainer.style.display = 'block';
+        
+        const updateProgress = (percent, status, current = 0, total = 0) => {
+            const fillEl = document.getElementById('importProgressFill');
+            const textEl = document.getElementById('importProgressText');
+            const statusEl = document.getElementById('importProgressStatus');
+            const countEl = document.getElementById('importProgressCount');
+            
+            if (fillEl) fillEl.style.width = `${percent}%`;
+            if (textEl) textEl.innerHTML = `${percent}%`;
+            if (statusEl) statusEl.innerHTML = status;
+            if (countEl && total > 0) countEl.innerHTML = `${current} / ${total} data`;
+        };
+        
+        updateProgress(0, '📖 Membaca file Excel...', 0, 0);
         
         const reader = new FileReader();
         reader.onload = async (event) => {
             try {
+                updateProgress(5, '📊 Memproses file Excel...', 0, 0);
+                
                 const data = new Uint8Array(event.target.result);
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                
-                // ========== CARA BARU: Konversi ke JSON dengan header otomatis ==========
                 const rawJson = XLSX.utils.sheet_to_json(sheet, { defval: "", header: 1 });
                 
                 if (!rawJson || rawJson.length < 4) {
@@ -5980,115 +6006,73 @@ async function setupAgentImport() {
                     return;
                 }
                 
-                progressDiv.innerHTML = `📊 Memuat data produk... 10%`;
+                updateProgress(10, '📦 Memuat data produk...', 0, 0);
                 await new Promise(resolve => setTimeout(resolve, 10));
                 
-                // Ambil data produk dari database
                 const produkMap = await getProdukMapCached();
                 
-                // ========== BACA HEADER ==========
-                const headerRow1 = rawJson[0] || []; // Baris 1: Nama produk utama
-                const headerRow2 = rawJson[1] || []; // Baris 2: Sub-header (POSTPAID, PREPAID, NONTAGLIS, profit, fee_upline)
-                const headerRow3 = rawJson[2] || []; // Baris 3: Sub-sub header (mungkin)
+                // Deteksi header (sama seperti sebelumnya)
+                const headerRow1 = rawJson[0] || [];
+                const headerRow2 = rawJson[1] || [];
+                const headerRow3 = rawJson[2] || [];
                 
-                console.log('Header Row 1:', headerRow1.slice(0, 20));
-                console.log('Header Row 2:', headerRow2.slice(0, 20));
+                // Deteksi kolom standar (sama seperti sebelumnya)
+                let agentIdCol = -1, namaCol = -1, hpCol = -1, apkCol = -1;
+                let agentTypeCol = -1, pemilikCol = -1, alamatCol = -1;
+                let emailCol = -1, tlpCol = -1, noRekeningCol = -1;
+                let atasNamaCol = -1, jenisBankCol = -1, noKtpCol = -1, cidCol = -1, uplineCol = -1;
                 
-                // ========== DETEKSI KOLOM STANDAR ==========
-                // Cari index untuk kolom standar
-                let agentIdCol = -1;
-                let namaCol = -1;
-                let hpCol = -1;
-                let apkCol = -1;
-                let agentTypeCol = -1;
-                let pemilikCol = -1;
-                let alamatCol = -1;
-                let emailCol = -1;
-                let tlpCol = -1;
-                let noRekeningCol = -1;
-                let atasNamaCol = -1;
-                let jenisBankCol = -1;
-                let noKtpCol = -1;
-                let cidCol = -1;
-                let uplineCol = -1;
-                
-                // Cari di baris 1, 2, dan 3
                 for (let i = 0; i < headerRow1.length; i++) {
                     const val1 = String(headerRow1[i] || '').toUpperCase();
                     const val2 = String(headerRow2[i] || '').toUpperCase();
                     const val3 = String(headerRow3[i] || '').toUpperCase();
                     
-                    if (val1 === 'AGENT_ID' || val2 === 'AGENT_ID' || val3 === 'AGENT_ID' || 
-                        val1 === 'ID AGENT' || val2 === 'ID AGENT' || val1 === 'AGENTID') {
-                        agentIdCol = i;
-                    }
-                    if (val1 === 'NAMA' || val2 === 'NAMA' || val3 === 'NAMA' || 
-                        val1 === 'NAMA AGENT' || val2 === 'NAMA AGENT') {
-                        namaCol = i;
-                    }
-                    if (val1 === 'HP' || val2 === 'HP' || val3 === 'HP' || 
-                        val1 === 'NOMOR HP' || val2 === 'NOMOR HP' || val1 === 'WHATSAPP') {
-                        hpCol = i;
-                    }
-                    if (val1 === 'APK' || val2 === 'APK' || val3 === 'APK' || 
-                        val1 === 'APLIKASI' || val2 === 'APLIKASI') {
-                        apkCol = i;
-                    }
-                    if (val1 === 'AGENT_TYPE' || val2 === 'AGENT_TYPE' || val3 === 'AGENT_TYPE' ||
-                        val1 === 'TYPE' || val2 === 'TYPE' || val1 === 'CLASS') {
-                        agentTypeCol = i;
-                    }
-                    if (val1 === 'PEMILIK' || val2 === 'PEMILIK' || val3 === 'PEMILIK') {
-                        pemilikCol = i;
-                    }
-                    if (val1 === 'ALAMAT' || val2 === 'ALAMAT' || val3 === 'ALAMAT') {
-                        alamatCol = i;
-                    }
-                    if (val1 === 'EMAIL' || val2 === 'EMAIL' || val3 === 'EMAIL') {
-                        emailCol = i;
-                    }
-                    if (val1 === 'TLP' || val2 === 'TLP' || val3 === 'TLP' || val1 === 'TELEPON') {
-                        tlpCol = i;
-                    }
-                    if (val1 === 'NO_REKENING' || val2 === 'NO_REKENING' || val1 === 'REKENING') {
-                        noRekeningCol = i;
-                    }
-                    if (val1 === 'ATAS_NAMA' || val2 === 'ATAS_NAMA' || val1 === 'AN') {
-                        atasNamaCol = i;
-                    }
-                    if (val1 === 'JENIS_BANK' || val2 === 'JENIS_BANK' || val1 === 'BANK') {
-                        jenisBankCol = i;
-                    }
-                    if (val1 === 'NO_KTP' || val2 === 'NO_KTP' || val1 === 'KTP' || val1 === 'NIK') {
-                        noKtpCol = i;
-                    }
-                    if (val1 === 'CID' || val2 === 'CID' || val3 === 'CID') {
-                        cidCol = i;
-                    }
-                    if (val1 === 'UPLINE' || val2 === 'UPLINE' || val1 === 'ATASAN') {
-                        uplineCol = i;
-                    }
+                    if (val1 === 'AGENT_ID' || val2 === 'AGENT_ID' || val3 === 'AGENT_ID') agentIdCol = i;
+                    if (val1 === 'NAMA' || val2 === 'NAMA' || val3 === 'NAMA') namaCol = i;
+                    if (val1 === 'HP' || val2 === 'HP' || val3 === 'HP') hpCol = i;
+                    if (val1 === 'APK' || val2 === 'APK' || val3 === 'APK') apkCol = i;
+                    if (val1 === 'AGENT_TYPE' || val2 === 'AGENT_TYPE') agentTypeCol = i;
+                    if (val1 === 'PEMILIK' || val2 === 'PEMILIK') pemilikCol = i;
+                    if (val1 === 'ALAMAT' || val2 === 'ALAMAT') alamatCol = i;
+                    if (val1 === 'EMAIL' || val2 === 'EMAIL') emailCol = i;
+                    if (val1 === 'TLP' || val2 === 'TLP') tlpCol = i;
+                    if (val1 === 'NO_REKENING' || val2 === 'NO_REKENING') noRekeningCol = i;
+                    if (val1 === 'ATAS_NAMA' || val2 === 'ATAS_NAMA') atasNamaCol = i;
+                    if (val1 === 'JENIS_BANK' || val2 === 'JENIS_BANK') jenisBankCol = i;
+                    if (val1 === 'NO_KTP' || val2 === 'NO_KTP') noKtpCol = i;
+                    if (val1 === 'CID' || val2 === 'CID') cidCol = i;
+                    if (val1 === 'UPLINE' || val2 === 'UPLINE') uplineCol = i;
                 }
                 
-                // ========== DETEKSI KOLOM PRODUK ==========
-                // Cari pola: produk di baris 1, profit/fee_upline di baris 2 atau 3
-                const produkColumnMap = new Map(); // key: index kolom, value: { produkNama, type }
+                if (agentIdCol === -1) {
+                    showNotifTop('❌ Kolom "AGENT_ID" tidak ditemukan!', true);
+                    return;
+                }
                 
+                updateProgress(15, '🔍 Memeriksa duplikat data...', 0, 0);
+                
+                // Ambil semua agent_id yang sudah ada
+                const allExistingAgents = await db.collection('db_agent').get();
+                const existingAgentIds = new Set();
+                allExistingAgents.forEach(doc => {
+                    const data = doc.data();
+                    if (data.agent_id) existingAgentIds.add(data.agent_id);
+                });
+                
+                const dataRows = rawJson.slice(3);
+                const totalRows = dataRows.length;
+                
+                updateProgress(20, `📋 Memproses ${totalRows} baris data...`, 0, totalRows);
+                
+                // Deteksi kolom produk
+                const produkColumnMap = new Map();
                 for (let i = 0; i < headerRow1.length; i++) {
                     const produkNameRaw = headerRow1[i];
                     if (!produkNameRaw) continue;
                     
                     const produkName = String(produkNameRaw).trim().toUpperCase();
-                    const subHeader1 = headerRow2[i] ? String(headerRow2[i]).trim().toUpperCase() : '';
-                    const subHeader2 = headerRow3[i] ? String(headerRow3[i]).trim().toUpperCase() : '';
+                    if (i === agentIdCol || i === namaCol || i === hpCol) continue;
                     
-                    // Skip kolom standar
-                    if (i === agentIdCol || i === namaCol || i === hpCol || i === apkCol ||
-                        i === agentTypeCol || i === pemilikCol || i === alamatCol) {
-                        continue;
-                    }
-                    
-                    // Cek apakah ini adalah nama produk (bukan angka dan tidak terlalu panjang)
                     const isProdukName = produkName.length > 0 && produkName.length < 30 && 
                                         isNaN(produkName) && 
                                         !produkName.includes('PROFIT') && 
@@ -6096,55 +6080,18 @@ async function setupAgentImport() {
                                         !produkName.includes('ADMIN');
                     
                     if (isProdukName) {
-                        // Tentukan tipe berdasarkan sub-header
-                        let type = 'profit'; // default
-                        if (subHeader1 === 'PROFIT' || subHeader2 === 'PROFIT' || 
-                            subHeader1.includes('PROFIT') || subHeader2.includes('PROFIT')) {
-                            type = 'profit';
-                        } else if (subHeader1 === 'FEE UPLINE' || subHeader2 === 'FEE UPLINE' ||
-                                   subHeader1.includes('FEE UPLINE') || subHeader2.includes('FEE UPLINE')) {
-                            type = 'fee_upline';
-                        } else if (subHeader1 === 'FEE AGENT' || subHeader2 === 'FEE AGENT' ||
-                                   subHeader1.includes('FEE AGENT') || subHeader2.includes('FEE AGENT')) {
-                            type = 'fee_agent';
-                        } else if (subHeader1 === 'ADMIN' || subHeader2 === 'ADMIN') {
-                            type = 'admin';
-                        }
+                        const subHeader = (headerRow2[i] || '').toUpperCase();
+                        let type = 'profit';
+                        if (subHeader === 'PROFIT' || subHeader.includes('PROFIT')) type = 'profit';
+                        else if (subHeader === 'FEE UPLINE' || subHeader.includes('FEE UPLINE')) type = 'fee_upline';
+                        else if (subHeader === 'FEE AGENT' || subHeader.includes('FEE AGENT')) type = 'fee_agent';
+                        else if (subHeader === 'ADMIN' || subHeader.includes('ADMIN')) type = 'admin';
                         
-                        produkColumnMap.set(i, {
-                            produkNama: produkName,
-                            type: type
-                        });
+                        produkColumnMap.set(i, { produkNama: produkName, type: type });
                     }
                 }
                 
-                console.log('Produk columns found:', produkColumnMap.size);
-                
-                // ========== BACA DATA DARI BARIS 4 KE BAWAH ==========
-                const dataRows = rawJson.slice(3); // Mulai dari baris 4 (index 3)
-                
-                if (dataRows.length === 0) {
-                    showNotifTop('❌ Tidak ada data yang ditemukan!', true);
-                    return;
-                }
-                
-                progressDiv.innerHTML = `📊 Memeriksa duplikat... 20%`;
-                await new Promise(resolve => setTimeout(resolve, 10));
-                
-                // Ambil semua agent_id yang sudah ada
-                const allExistingAgents = await db.collection('db_agent').get();
-                const existingAgentIds = new Set();
-                allExistingAgents.forEach(doc => {
-                    const data = doc.data();
-                    if (data.agent_id) {
-                        existingAgentIds.add(data.agent_id);
-                    }
-                });
-                
-                progressDiv.innerHTML = `📊 Memproses ${dataRows.length} baris data... 30%`;
-                await new Promise(resolve => setTimeout(resolve, 10));
-                
-                const BATCH_SIZE = 500;
+                const BATCH_SIZE = 450;
                 let batches = [];
                 let currentBatch = db.batch();
                 let operationCount = 0;
@@ -6155,20 +6102,15 @@ async function setupAgentImport() {
                     const row = dataRows[i];
                     if (!row || row.length === 0) continue;
                     
-                    if (i % 100 === 0) {
-                        const percent = 30 + Math.floor((i / dataRows.length) * 60);
-                        progressDiv.innerHTML = `📊 Memproses data... ${percent}% (${i}/${dataRows.length})`;
+                    // Update progress setiap 50 baris
+                    if (i % 50 === 0 || i === dataRows.length - 1) {
+                        const percent = 20 + Math.floor((i / totalRows) * 70);
+                        updateProgress(percent, `📝 Memproses data...`, i + 1, totalRows);
                         await new Promise(resolve => setTimeout(resolve, 5));
                     }
                     
                     try {
-                        // Ambil ID Agent
                         let agentId = agentIdCol !== -1 ? (row[agentIdCol] || '') : '';
-                        if (!agentId && namaCol !== -1) {
-                            // Jika tidak ada ID Agent, coba gunakan nama sebagai ID sementara
-                            agentId = row[namaCol] || '';
-                        }
-                        
                         if (!agentId) {
                             failed++;
                             errors.push(`Baris ${i + 4}: ID Agent kosong`);
@@ -6184,7 +6126,6 @@ async function setupAgentImport() {
                         
                         existingAgentIds.add(agentId);
                         
-                        // Data dasar agent
                         const agentRef = db.collection('db_agent').doc();
                         const agentData = {
                             agent_id: agentId,
@@ -6208,10 +6149,8 @@ async function setupAgentImport() {
                             produk: []
                         };
                         
-                        // ========== PROSES DATA PRODUK ==========
-                        // Kelompokkan nilai per produk
-                        const produkValues = new Map(); // key: nama produk, value: { profit, fee_upline, fee_agent, admin }
-                        
+                        // Proses produk
+                        const produkValues = new Map();
                         for (const [colIndex, prodInfo] of produkColumnMap.entries()) {
                             if (colIndex < row.length) {
                                 let value = row[colIndex];
@@ -6219,12 +6158,7 @@ async function setupAgentImport() {
                                     const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, '')) || 0;
                                     if (numValue !== 0) {
                                         if (!produkValues.has(prodInfo.produkNama)) {
-                                            produkValues.set(prodInfo.produkNama, {
-                                                profit: 0,
-                                                fee_upline: 0,
-                                                fee_agent: 0,
-                                                admin: 0
-                                            });
+                                            produkValues.set(prodInfo.produkNama, { profit: 0, fee_upline: 0, fee_agent: 0, admin: 0 });
                                         }
                                         const current = produkValues.get(prodInfo.produkNama);
                                         current[prodInfo.type] = numValue;
@@ -6234,22 +6168,16 @@ async function setupAgentImport() {
                             }
                         }
                         
-                        // Konversi ke array produk dengan mencocokkan ke database
                         const produkListData = [];
                         for (const [produkNama, values] of produkValues.entries()) {
-                            // Cari produk di database
                             let foundProduk = null;
                             const searchKey = produkNama.toLowerCase();
-                            const searchKeyClean = searchKey.replace(/[^a-z]/g, '');
-                            
                             for (const [dbKey, dbInfo] of produkMap.entries()) {
-                                if (dbKey.includes(searchKey) || searchKey.includes(dbKey) ||
-                                    dbKey.includes(searchKeyClean) || searchKeyClean.includes(dbKey)) {
+                                if (dbKey.includes(searchKey) || searchKey.includes(dbKey)) {
                                     foundProduk = dbInfo;
                                     break;
                                 }
                             }
-                            
                             if (foundProduk) {
                                 produkListData.push({
                                     produk_id: foundProduk.id,
@@ -6261,11 +6189,8 @@ async function setupAgentImport() {
                                     qty: 1,
                                     added_at: new Date().toISOString()
                                 });
-                            } else {
-                                console.log(`Produk tidak ditemukan di database: ${produkNama}`);
                             }
                         }
-                        
                         agentData.produk = produkListData;
                         
                         currentBatch.set(agentRef, agentData);
@@ -6284,45 +6209,45 @@ async function setupAgentImport() {
                     }
                 }
                 
-                if (operationCount > 0) {
-                    batches.push(currentBatch);
-                }
+                if (operationCount > 0) batches.push(currentBatch);
                 
-                progressDiv.innerHTML = `📊 Menyimpan data ke database... 90%`;
-                await new Promise(resolve => setTimeout(resolve, 10));
+                updateProgress(92, '💾 Menyimpan data ke database...', success, totalRows);
                 
                 let batchIndex = 0;
                 for (const batch of batches) {
                     batchIndex++;
-                    progressDiv.innerHTML = `📊 Menyimpan batch ${batchIndex}/${batches.length}... 90%`;
+                    updateProgress(92 + Math.floor((batchIndex / batches.length) * 8), 
+                        `💾 Menyimpan batch ${batchIndex}/${batches.length}...`, success, totalRows);
                     await batch.commit();
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
                 
-                progressDiv.innerHTML = `📊 Selesai! 100%`;
+                updateProgress(100, '✅ Import selesai!', success, totalRows);
                 
-                let resultMsg = `✅ Import selesai!\n📊 Total data: ${dataRows.length}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
-                
+                let resultMsg = `✅ Import selesai!\n📊 Total data: ${totalRows}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
                 if (errors.length > 0 && errors.length <= 5) {
                     resultMsg += `\n\n❌ Error:\n${errors.join('\n')}`;
                 } else if (errors.length > 5) {
-                    resultMsg += `\n\n❌ ${errors.length} error terjadi. Periksa format data Anda.`;
+                    resultMsg += `\n\n❌ ${errors.length} error terjadi.`;
                 }
-                
                 alert(resultMsg);
+                
                 await loadDatabaseAgent();
                 fileInput.value = '';
                 produkMapCache = null;
                 
+                // Sembunyikan progress setelah 3 detik
+                setTimeout(() => {
+                    if (progressContainer) progressContainer.style.display = 'none';
+                }, 3000);
+                
             } catch (err) {
                 console.error('Import error:', err);
                 showNotifTop('❌ Gagal memproses file: ' + err.message, true);
+                if (progressContainer) progressContainer.style.display = 'none';
             } finally {
                 btn.textContent = originalText;
                 btn.disabled = false;
-                setTimeout(() => {
-                    if (progressDiv) progressDiv.style.display = 'none';
-                }, 3000);
             }
         };
         
@@ -6330,11 +6255,122 @@ async function setupAgentImport() {
             showNotifTop('❌ Gagal membaca file', true);
             btn.textContent = originalText;
             btn.disabled = false;
+            if (progressContainer) progressContainer.style.display = 'none';
         };
         
         reader.readAsArrayBuffer(file);
     };
 }
+
+// Progress bar container untuk delete
+let deleteProgressContainer = null;
+
+function showDeleteProgress(total, status) {
+    if (!deleteProgressContainer) {
+        deleteProgressContainer = document.createElement('div');
+        deleteProgressContainer.id = 'deleteProgressContainer';
+        deleteProgressContainer.className = 'progress-container';
+        deleteProgressContainer.style.position = 'fixed';
+        deleteProgressContainer.style.bottom = '20px';
+        deleteProgressContainer.style.right = '20px';
+        deleteProgressContainer.style.left = 'auto';
+        deleteProgressContainer.style.top = 'auto';
+        deleteProgressContainer.style.width = '300px';
+        deleteProgressContainer.style.zIndex = '999999';
+        deleteProgressContainer.style.background = '#1e293b';
+        deleteProgressContainer.style.border = '1px solid #334155';
+        document.body.appendChild(deleteProgressContainer);
+    }
+    
+    deleteProgressContainer.innerHTML = `
+        <div class="progress-bar-wrapper">
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill-custom" id="deleteProgressFill" style="width: 0%"></div>
+            </div>
+            <div class="progress-text" id="deleteProgressText">0%</div>
+        </div>
+        <div class="progress-detail">
+            <span id="deleteProgressStatus">${status}</span>
+            <span id="deleteProgressCount">0 / ${total} data</span>
+        </div>
+    `;
+    deleteProgressContainer.style.display = 'block';
+    
+    return {
+        update: (percent, current, statusText) => {
+            const fillEl = document.getElementById('deleteProgressFill');
+            const textEl = document.getElementById('deleteProgressText');
+            const statusEl = document.getElementById('deleteProgressStatus');
+            const countEl = document.getElementById('deleteProgressCount');
+            if (fillEl) fillEl.style.width = `${percent}%`;
+            if (textEl) textEl.innerHTML = `${percent}%`;
+            if (statusEl) statusEl.innerHTML = statusText || status;
+            if (countEl) countEl.innerHTML = `${current} / ${total} data`;
+        },
+        hide: () => {
+            if (deleteProgressContainer) {
+                setTimeout(() => {
+                    if (deleteProgressContainer) deleteProgressContainer.style.display = 'none';
+                }, 2000);
+            }
+        }
+    };
+}
+
+// Hapus multiple agent dengan progress bar
+window.deleteSelectedAgent = async function() {
+    const selectedIds = Array.from(selectedAgentIds.keys());
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data agent yang dipilih? Data akan dihapus permanen!`)) return;
+    
+    const progress = showDeleteProgress(selectedIds.length, '🗑️ Menghapus data agent...');
+    
+    try {
+        let deleted = 0;
+        const BATCH_SIZE = 100;
+        
+        for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
+            const batch = db.batch();
+            const chunk = selectedIds.slice(i, i + BATCH_SIZE);
+            
+            for (const id of chunk) {
+                const ref = db.collection('db_agent').doc(id);
+                batch.delete(ref);
+            }
+            
+            await batch.commit();
+            deleted += chunk.length;
+            
+            const percent = Math.floor((deleted / selectedIds.length) * 100);
+            progress.update(percent, deleted, `🗑️ Menghapus data...`);
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        // Hapus dari Map dan array lokal
+        for (const id of selectedIds) {
+            selectedAgentIds.delete(id);
+            const index = agentsData.findIndex(item => item.id === id);
+            if (index !== -1) agentsData.splice(index, 1);
+            const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
+            if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
+        }
+        
+        renderAgentList(agentsData);
+        progress.update(100, selectedIds.length, '✅ Selesai!');
+        showNotifTop(`✅ ${selectedIds.length} data agent berhasil dihapus`);
+        
+        setTimeout(() => progress.hide(), 2000);
+        
+    } catch(e) {
+        console.error('Error delete selected:', e);
+        showNotifTop('❌ Gagal menghapus: ' + e.message, true);
+        progress.hide();
+    }
+};
 
 // Fungsi format nomor HP
 function formatPhoneNumber(value) {
