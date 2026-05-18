@@ -5865,7 +5865,7 @@ async function setupAgentImport() {
         btn.textContent = '⏳ Memproses...';
         btn.disabled = true;
         
-        // ========== GUNAKAN FLOATING PROGRESS ==========
+        // ========== GUNAKAN FLOATING PROGRESS (SAMA SEPERTI HAPUS) ==========
         const progress = showFloatingProgress('📥 Import Data Agent', 0);
         progress.update(0, '📥 Import Data', 'Membaca file Excel...');
         
@@ -5890,7 +5890,7 @@ async function setupAgentImport() {
                 
                 const produkMap = await getProdukMapCached();
                 
-                // Deteksi header (sama seperti sebelumnya)
+                // Deteksi header
                 const headerRow1 = rawJson[0] || [];
                 const headerRow2 = rawJson[1] || [];
                 const headerRow3 = rawJson[2] || [];
@@ -5986,7 +5986,7 @@ async function setupAgentImport() {
                     // Update progress setiap 50 baris
                     if (i % 50 === 0 || i === dataRows.length - 1) {
                         const percent = 20 + Math.floor((i / totalRows) * 70);
-                        progress.update(percent, '📥 Import Data', `Memproses data...`, i + 1, totalRows);
+                        progress.update(percent, '📥 Import Data', `Memproses data... (${i + 1}/${totalRows})`, i + 1, totalRows);
                         await new Promise(resolve => setTimeout(resolve, 5));
                     }
                     
@@ -6030,7 +6030,7 @@ async function setupAgentImport() {
                             produk: []
                         };
                         
-                        // Proses produk (sama seperti sebelumnya)
+                        // Proses produk
                         const produkValues = new Map();
                         for (const [colIndex, prodInfo] of produkColumnMap.entries()) {
                             if (colIndex < row.length) {
@@ -6108,8 +6108,8 @@ async function setupAgentImport() {
                 
                 progress.update(100, '✅ Import Selesai', `Berhasil: ${success}, Duplikat: ${duplicate}, Gagal: ${failed}`, success, totalRows);
                 
-                // Sembunyikan setelah 3 detik
-                setTimeout(() => progress.hide(), 3000);
+                // Sembunyikan setelah 2 detik
+                setTimeout(() => progress.hide(), 2000);
                 
                 let resultMsg = `✅ Import selesai!\n📊 Total data: ${totalRows}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
                 if (errors.length > 0 && errors.length <= 5) {
