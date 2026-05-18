@@ -86,7 +86,7 @@ function showFloatingProgress(title, total = 0) {
     }
     
     return {
-        update: (percent, status, detail, current = 0, total = 0) => {
+        update: (percent, status, detail, current = 0, totalCount = 0) => {
             const fillEl = document.getElementById('floatingProgressFill');
             const textEl = document.getElementById('floatingProgressText');
             const statusEl = document.getElementById('progressStatusText');
@@ -97,7 +97,7 @@ function showFloatingProgress(title, total = 0) {
             if (textEl) textEl.innerHTML = `${Math.floor(percent)}%`;
             if (statusEl && status) statusEl.innerHTML = status;
             if (detailEl && detail) detailEl.innerHTML = detail;
-            if (countEl && total > 0) countEl.innerHTML = `${current} / ${total}`;
+            if (countEl && totalCount > 0) countEl.innerHTML = `${current} / ${totalCount}`;
         },
         hide: () => {
             if (activeProgress) {
@@ -5435,36 +5435,50 @@ window.deleteSelectedAgent = async function() {
             await batch.commit();
             deleted += chunk.length;
             
+            // Hapus dari Map dan array lokal
+            for (const id of chunk) {
+                selectedAgentIds.delete(id);
+                const index = agentsData.findIndex(item => item.id === id);
+                if (index !== -1) agentsData.splice(index, 1);
+                const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
+                if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
+            }
+            
             const percent = Math.floor((deleted / selectedIds.length) * 100);
             progress.update(percent, '🗑️ Menghapus', `Menghapus data...`, deleted, selectedIds.length);
+            
+            // Delay kecil agar UI tidak freeze
             await new Promise(resolve => setTimeout(resolve, 50));
         }
         
-        // Hapus dari Map dan array lokal
-        for (const id of selectedIds) {
-            selectedAgentIds.delete(id);
-            const index = agentsData.findIndex(item => item.id === id);
-            if (index !== -1) agentsData.splice(index, 1);
-            const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
-            if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
-        }
-        
+        // Render ulang setelah semua terhapus
         renderAgentList(agentsData);
+        
         progress.update(100, '✅ Selesai', `Berhasil menghapus ${selectedIds.length} data`, selectedIds.length, selectedIds.length);
         showNotifTop(`✅ ${selectedIds.length} data agent berhasil dihapus`);
         
-        setTimeout(() => progress.hide(), 2000);
+        // Pastikan progress hilang setelah 2 detik
+        setTimeout(() => {
+            if (progress && progress.hide) {
+                progress.hide();
+            }
+        }, 2000);
         
     } catch(e) {
         console.error('Error delete selected:', e);
         showNotifTop('❌ Gagal menghapus: ' + e.message, true);
-        progress.hide();
+        if (progress && progress.hide) {
+            progress.hide();
+        }
     }
 };
 
 // Hapus single agent - VERSI CEPAT
 window.deleteAgentItem = async function(id) {
     if (!confirm('Yakin hapus data agent ini? Data akan dihapus permanen!')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Data Agent', 1);
+    progress.update(50, '🗑️ Menghapus', 'Menghapus data agent...', 0, 1);
     
     try {
         await db.collection('db_agent').doc(id).delete();
@@ -5483,9 +5497,21 @@ window.deleteAgentItem = async function(id) {
         // Render ulang
         renderAgentList(agentsData);
         
+        progress.update(100, '✅ Selesai', 'Data agent berhasil dihapus', 1, 1);
         showNotifTop('🗑️ Data agent berhasil dihapus');
+        
+        setTimeout(() => {
+            if (progress && progress.hide) {
+                progress.hide();
+            }
+        }, 1500);
+        
     } catch(e) {
+        console.error('Error delete single:', e);
         showNotifTop('❌ Gagal hapus: ' + e.message, true);
+        if (progress && progress.hide) {
+            progress.hide();
+        }
     }
 };
 
@@ -6290,7 +6316,11 @@ async function setupAgentImport() {
                 
                 progress.update(100, '✅ Import Selesai', `Berhasil: ${success}, Duplikat: ${duplicate}, Gagal: ${failed}`, success, totalRows);
                 
-                setTimeout(() => progress.hide(), 2000);
+                setTimeout(() => {
+                if (progress && progress.hide) {
+                progress.hide();
+                }
+                }, 2000);
                 
                 let resultMsg = `✅ Import selesai!\n📊 Total data: ${totalRows}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
                 if (errors.length > 0 && errors.length <= 5) {
