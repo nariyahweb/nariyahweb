@@ -1460,6 +1460,11 @@ if (deleteSelectedProdukBtn) {
         deleteSelectedAgentBtn.addEventListener('click', deleteSelectedAgent);
     }
 
+    const deleteSelectedAgentSafeBtn = document.getElementById('deleteSelectedAgentSafe');
+    if (deleteSelectedAgentSafeBtn) {
+        deleteSelectedAgentSafeBtn.addEventListener('click', deleteSelectedAgentSafe);
+    }
+
     const exportAgentExcelBtn = document.getElementById('exportAgentExcelBtn');
     if (exportAgentExcelBtn) {
         exportAgentExcelBtn.addEventListener('click', exportAgentToExcel);
@@ -5285,7 +5290,7 @@ function renderAgentList(items) {
         filtered = filtered.filter(item => item.apk && item.apk !== '-');
     }
     
-    agentsFilteredData = filtered;
+        agentsFilteredData = filtered;
     
     // Update filtered count
     const filteredCountSpan = document.getElementById('agentFilteredCount');
@@ -5296,9 +5301,29 @@ function renderAgentList(items) {
         return;
     }
     
+    // 🔥 BATASI DATA YANG DI-RENDER (max 200 untuk performa)
+    const MAX_RENDER = 200;
+    let renderData = filtered;
+    let truncated = false;
+    
+    if (filtered.length > MAX_RENDER) {
+        renderData = filtered.slice(0, MAX_RENDER);
+        truncated = true;
+        // Tampilkan peringatan di konsol
+        console.warn(`⚠️ Menampilkan ${MAX_RENDER} dari ${filtered.length} data. Gunakan filter untuk menyaring.`);
+    }
+    
     // RENDER HTML - AMAN DENGAN String()
     let html = '';
-    for (const item of filtered) {
+    
+    // 🔥 TAMBAHKAN PESAN TRUNCATED JIKA DATA TERLALU BANYAK
+    if (truncated) {
+        html += `<div style="background: #fef3c7; padding: 8px 12px; border-radius: 8px; margin-bottom: 16px; color: #d97706; font-size: 12px; text-align: center;">
+            ⚠️ Menampilkan ${MAX_RENDER} dari ${filtered.length} data. Gunakan filter untuk menyaring data.
+        </div>`;
+    }
+    
+    for (const item of renderData) {
         const isChecked = selectedAgentIds.get(item.id) === true;
         html += `
             <div class="db-item-agent" data-id="${item.id}">
@@ -5406,7 +5431,7 @@ async function moveAgentToFollowup(agentId) {
     );
 }
 
-// Hapus multiple agent dengan floating progress
+// Hapus multiple agent dengan CHUNKING yang lebih baik dan resumable
 window.deleteSelectedAgent = async function() {
     const selectedIds = Array.from(selectedAgentIds.keys());
     if (selectedIds.length === 0) {
@@ -5414,55 +5439,81 @@ window.deleteSelectedAgent = async function() {
         return;
     }
     
-    if (!confirm(`Hapus ${selectedIds.length} data agent yang dipilih? Data akan dihapus permanen!`)) return;
+    if (!confirm(`Hapus ${selectedIds.length} data agent yang dipilih?\n\nProses akan berjalan di background.`)) return;
     
     const progress = showFloatingProgress('🗑️ Menghapus Data Agent', selectedIds.length);
     progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus data...');
     
-    try {
-        let deleted = 0;
-        const BATCH_SIZE = 100;
+    let deleted = 0;
+    let failed = 0;
+    const failedIds = [];
+    
+    // 🔥 PROSES 10 DATA PER BATCH (BUKAN 100)
+    const BATCH_SIZE = 10;
+    
+    for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = selectedIds.slice(i, i + BATCH_SIZE);
         
-        for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
-            const batch = db.batch();
-            const chunk = selectedIds.slice(i, i + BATCH_SIZE);
-            
-            for (const id of chunk) {
-                const ref = db.collection('db_agent').doc(id);
-                batch.delete(ref);
-            }
-            
+        for (const id of chunk) {
+            const ref = db.collection('db_agent').doc(id);
+            batch.delete(ref);
+        }
+        
+        try {
             await batch.commit();
             deleted += chunk.length;
             
-            // Hapus dari Map dan array lokal
+            // Hapus dari array lokal
             for (const id of chunk) {
                 selectedAgentIds.delete(id);
                 const index = agentsData.findIndex(item => item.id === id);
                 if (index !== -1) agentsData.splice(index, 1);
-                const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
-                if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
             }
             
-            const percent = Math.floor((deleted / selectedIds.length) * 100);
-            progress.update(percent, '🗑️ Menghapus', `Menghapus data...`, deleted, selectedIds.length);
-            
-            // Delay kecil agar UI tidak freeze
-            await new Promise(resolve => setTimeout(resolve, 50));
+        } catch(e) {
+            console.error(`Batch ${i/BATCH_SIZE + 1} gagal:`, e);
+            failed += chunk.length;
+            failedIds.push(...chunk);
         }
         
-        // Render ulang setelah semua terhapus
-        renderAgentList(agentsData);
+        const percent = Math.floor(((deleted + failed) / selectedIds.length) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted + failed}/${selectedIds.length})`, deleted + failed, selectedIds.length);
         
-        progress.update(100, '✅ Selesai', `Berhasil menghapus ${selectedIds.length} data`, selectedIds.length, selectedIds.length);
-        showNotifTop(`✅ ${selectedIds.length} data agent berhasil dihapus`);
+        // 🔥 DELAY 500ms AGAR TIDAK KENA QUOTA
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    // Jika ada yang gagal, coba ulang satu per satu
+    if (failedIds.length > 0) {
+        progress.update(95, '🗑️ Menghapus', `Mencoba ulang ${failedIds.length} data yang gagal...`);
         
-        // Pastikan progress hilang setelah 2 detik
-        setTimeout(() => {
-            if (progress && progress.hide) {
-                progress.hide();
+        for (const id of failedIds) {
+            try {
+                await db.collection('db_agent').doc(id).delete();
+                deleted++;
+                failed--;
+                selectedAgentIds.delete(id);
+                
+                const index = agentsData.findIndex(item => item.id === id);
+                if (index !== -1) agentsData.splice(index, 1);
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch(e) {
+                console.error(`Gagal hapus ${id}:`, e);
             }
-        }, 2000);
+        }
+    }
+    
+    renderAgentList(agentsData);
+    
+    progress.update(100, '✅ Selesai', `Berhasil: ${deleted}, Gagal: ${failed}`, selectedIds.length, selectedIds.length);
+    showNotifTop(`✅ ${deleted} data agent berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
+    
+    setTimeout(() => {
+        if (progress && progress.hide) progress.hide();
+    }, 3000);
+};
         
     } catch(e) {
         console.error('Error delete selected:', e);
@@ -5473,7 +5524,7 @@ window.deleteSelectedAgent = async function() {
     }
 };
 
-// Hapus single agent - VERSI CEPAT
+// Hapus single agent - dengan delay untuk stabilitas
 window.deleteAgentItem = async function(id) {
     if (!confirm('Yakin hapus data agent ini? Data akan dihapus permanen!')) return;
     
@@ -5499,6 +5550,9 @@ window.deleteAgentItem = async function(id) {
         
         progress.update(100, '✅ Selesai', 'Data agent berhasil dihapus', 1, 1);
         showNotifTop('🗑️ Data agent berhasil dihapus');
+        
+        // 🔥 TAMBAHKAN DELAY SEBELUM HIDE
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         setTimeout(() => {
             if (progress && progress.hide) {
@@ -5564,6 +5618,61 @@ window.deleteSelectedAgentBatch = async function() {
         console.error('Error delete selected batch:', e);
         showNotifTop('❌ Gagal menghapus: ' + e.message, true);
     }
+};
+
+// Fungsi hapus dengan interval (lebih lambat tapi pasti berhasil)
+window.deleteSelectedAgentSafe = async function() {
+    const selectedIds = Array.from(selectedAgentIds.keys());
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data agent satu per satu?\n\nProses akan lebih lambat tapi pasti berhasil.\n\nKlik OK untuk melanjutkan.`)) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Data Agent (Mode Aman)', selectedIds.length);
+    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus data...');
+    
+    let deleted = 0;
+    let failed = 0;
+    
+    for (let i = 0; i < selectedIds.length; i++) {
+        const id = selectedIds[i];
+        
+        try {
+            await db.collection('db_agent').doc(id).delete();
+            deleted++;
+            
+            // Hapus dari array lokal
+            selectedAgentIds.delete(id);
+            const index = agentsData.findIndex(item => item.id === id);
+            if (index !== -1) agentsData.splice(index, 1);
+            
+        } catch(e) {
+            failed++;
+            console.error(`Gagal hapus ${id}:`, e);
+        }
+        
+        const percent = Math.floor(((deleted + failed) / selectedIds.length) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted + failed}/${selectedIds.length})`, deleted + failed, selectedIds.length);
+        
+        // Update UI setiap 10 data
+        if ((i + 1) % 10 === 0) {
+            renderAgentList(agentsData);
+        }
+        
+        // 🔥 DELAY 200ms PER DATA
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    renderAgentList(agentsData);
+    
+    progress.update(100, '✅ Selesai', `Berhasil: ${deleted}, Gagal: ${failed}`, selectedIds.length, selectedIds.length);
+    showNotifTop(`✅ ${deleted} data agent berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
+    
+    setTimeout(() => {
+        if (progress && progress.hide) progress.hide();
+    }, 3000);
 };
 
 // ========== FUNGSI AGENT DETAIL LENGKAP ==========
@@ -6156,7 +6265,7 @@ async function setupAgentImport() {
                 
                 console.log('Produk column map:', Array.from(produkColumnMap.keys()));
                 
-                const BATCH_SIZE = 450;
+                const BATCH_SIZE = 10;
                 let batches = [];
                 let currentBatch = db.batch();
                 let operationCount = 0;
@@ -6289,10 +6398,14 @@ async function setupAgentImport() {
                         operationCount++;
                         success++;
                         
-                        if (operationCount >= BATCH_SIZE) {
+                            if (operationCount >= BATCH_SIZE) {
+                            await currentBatch.commit();
                             batches.push(currentBatch);
                             currentBatch = db.batch();
                             operationCount = 0;
+                            
+                            // 🔥 DELAY 300ms AGAR TIDAK KENA QUOTA
+                            await new Promise(resolve => setTimeout(resolve, 300));
                         }
                         
                     } catch (rowError) {
@@ -6301,7 +6414,15 @@ async function setupAgentImport() {
                     }
                 }
                 
-                if (operationCount > 0) batches.push(currentBatch);
+                if (operationCount > 0) {
+                    await currentBatch.commit();
+                    batches.push(currentBatch);
+                }
+                
+                // 🔥 DELAY AKHIR 1 DETIK
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                progress.update(92, '📥 Import Data', 'Menyimpan data ke database...', success, totalRows);
                 
                 progress.update(92, '📥 Import Data', 'Menyimpan data ke database...', success, totalRows);
                 
