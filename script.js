@@ -6988,10 +6988,24 @@ async function setupAgentImport() {
           produkMap.set(namaClean, data);
         });
 
-        // Header baris 1,2,3
-        const headerRow1 = rawJson[0] || [];
-        const headerRow2 = rawJson[1] || [];
-        const headerRow3 = rawJson[2] || [];
+        // Header baris 1,2,3 - tapi fleksibel untuk 1 baris header
+const headerRow1 = rawJson[0] || [];
+const headerRow2 = rawJson[1] || [];
+const headerRow3 = rawJson[2] || [];
+
+// Cek apakah hanya ada 1 baris header (data langsung di baris 1)
+const isSingleHeader = headerRow2.length === 0 || 
+                       (headerRow2.length === 1 && (headerRow2[0] === undefined || headerRow2[0] === ''));
+const isTripleHeader = headerRow1.length > 0 && headerRow2.length > 0 && headerRow3.length > 0;
+
+let startDataRow = 1; // default mulai baris 1 (data)
+
+if (isTripleHeader) {
+    startDataRow = 3; // 3 baris header, data mulai baris 3
+    console.log('Detected 3-row header format');
+} else {
+    console.log('Detected 1-row header format');
+}
 
         // Deteksi kolom standar
         let agentIdCol = -1,
@@ -7048,7 +7062,7 @@ async function setupAgentImport() {
           if (data.agent_id) existingAgentIds.add(data.agent_id);
         });
 
-        const dataRows = rawJson.slice(3);
+        const dataRows = rawJson.slice(startDataRow);
         const totalRows = dataRows.length;
         progress.setTotal(totalRows);
 
