@@ -230,20 +230,34 @@ function formatRupiah(angka) {
     return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
+// ========== PERBAIKAN FUNGSI showModal ==========
 function showModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
+        modal.style.visibility = 'visible';
         document.body.classList.add('modal-open');
         document.body.style.overflow = 'hidden';
     }
 }
 
+// ========== PERBAIKAN FUNGSI CLOSE MODAL ==========
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        // Hapus style inline yang mungkin ditambahkan
+        modal.removeAttribute('style');
+    }
+    // Pastikan scroll body kembali normal
     document.body.style.overflow = '';
+    document.body.style.position = '';
     document.body.classList.remove('modal-open');
+    
+    // Hapus backdrop blur jika ada
+    const backdrops = document.querySelectorAll('.modal-backdrop, .modal-overlay');
+    backdrops.forEach(backdrop => backdrop.remove());
 }
 
 function setupModalClickOutside(modalId) {
@@ -1270,22 +1284,79 @@ function lanjutKeDihubungi(id) {
 // ==================== FOLLOWUP & PENDING ====================
 function openFollowupConfirm(id) {
     currentPendingId = id;
+    const modal = document.getElementById('followupConfirmModal');
+    if (!modal) return;
+    
     document.getElementById('followup_terkirim').checked = false;
     document.getElementById('followup_dibalas').checked = false;
-    document.getElementById('followupConfirmYes').disabled = true;
-    document.getElementById('followupConfirmModal').style.display = 'flex';
-    const cb1 = document.getElementById('followup_terkirim');
-    const cb2 = document.getElementById('followup_dibalas');
     const yesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
-    const updateYesBtn = () => { yesBtn.disabled = !(cb1.checked && cb2.checked); };
+    
+    if (yesBtn) yesBtn.disabled = true;
+    
+    const cb1 = document.getElementById('followup_terkirim');
+    const cb2 = document.getElementById('followup_dibalas');
+    
+    const updateYesBtn = () => {
+        if (yesBtn) yesBtn.disabled = !(cb1.checked && cb2.checked);
+    };
+    
     cb1.onchange = updateYesBtn;
     cb2.onchange = updateYesBtn;
-    updateYesBtn();
-    const newYesBtn = yesBtn.cloneNode(true);
-    yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
-    newYesBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); if (newYesBtn.disabled) { showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true); return; } (async () => { const doc = await db.collection('customers').doc(id).get(); const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1); await db.collection('customers').doc(id).update({ followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, status: 'pending', tanggal: newDeadline }); closeModal('followupConfirmModal'); showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`); loadAllData(); closeModal('detailModal'); })(); };
-    noBtn.onclick = async () => { const doc = await db.collection('customers').doc(id).get(); if (doc.exists) { showConfirmDialog('Pindahkan ke Database Nomor Salah?', `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`, async () => { await db.collection('nomor_salah').add({ ...doc.data(), alasan: 'Nomor tidak bisa dihubungi / tidak aktif', deleted_at: new Date().toISOString(), user_id: doc.data().user_id }); await db.collection('customers').doc(id).delete(); showNotifTop('📵 Data dipindahkan ke Database Nomor Salah'); closeModal('followupConfirmModal'); closeModal('detailModal'); loadAllData(); }); } };
+    
+    // Clone dan replace button YES
+    if (yesBtn) {
+        const newYesBtn = yesBtn.cloneNode(true);
+        yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+        newYesBtn.onclick = async (e) => {
+            e.preventDefault();
+            if (newYesBtn.disabled) {
+                showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
+                return;
+            }
+            const doc = await db.collection('customers').doc(id).get();
+            const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
+            await db.collection('customers').doc(id).update({ 
+                followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, 
+                status: 'pending',
+                tanggal: newDeadline
+            });
+            closeModal('followupConfirmModal');
+            showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
+            loadAllData();
+            closeModal('detailModal');
+        };
+    }
+    
+    // Clone dan replace button NO
+    if (noBtn) {
+        const newNoBtn = noBtn.cloneNode(true);
+        noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+        newNoBtn.onclick = async () => {
+            const doc = await db.collection('customers').doc(id).get();
+            if (doc.exists) {
+                showConfirmDialog(
+                    'Pindahkan ke Database Nomor Salah?',
+                    `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`,
+                    async () => {
+                        await db.collection('nomor_salah').add({ 
+                            ...doc.data(), 
+                            alasan: 'Nomor tidak bisa dihubungi / tidak aktif', 
+                            deleted_at: new Date().toISOString(), 
+                            user_id: doc.data().user_id 
+                        });
+                        await db.collection('customers').doc(id).delete();
+                        showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
+                        closeModal('followupConfirmModal');
+                        closeModal('detailModal');
+                        loadAllData();
+                    }
+                );
+            }
+        };
+    }
+    
+    modal.style.display = 'flex';
 }
 
 function openPendingModal(id) {
@@ -1317,15 +1388,84 @@ function renderPendingModal() {
 
 function updatePendingButtons() {
     const allFilledAndChecked = pendingItems.length > 0 && pendingItems.every(item => item.checked === true && item.text.trim() !== '');
+    
+    // Tombol Finish
     const finishBtn = document.getElementById('pendingFinishBtn');
     if (finishBtn) {
-        if (allFilledAndChecked) { finishBtn.disabled = false; const newFinishBtn = finishBtn.cloneNode(true); finishBtn.parentNode.replaceChild(newFinishBtn, finishBtn); newFinishBtn.onclick = async () => { await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems }); await window.confirmClosing(currentPendingId); closeModal('pendingModal'); }; }
-        else { finishBtn.disabled = true; finishBtn.onclick = () => { let pesan = pendingItems.length === 0 ? '⚠️ Tambahkan minimal satu balasan terlebih dahulu!' : '⚠️ Harap isi dan centang SEMUA balasan sebelum lanjut ke Closing!'; showNotifTop(pesan, true); }; }
+        const newFinishBtn = finishBtn.cloneNode(true);
+        finishBtn.parentNode.replaceChild(newFinishBtn, finishBtn);
+        if (allFilledAndChecked) {
+            newFinishBtn.disabled = false;
+            newFinishBtn.onclick = async () => {
+                try {
+                    await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems });
+                    await window.confirmClosing(currentPendingId);
+                    closeModal('pendingModal');  // ← PASTIKAN INI DIPANGGIL
+                } catch(e) {
+                    showNotifTop('❌ Gagal: ' + e.message, true);
+                }
+            };
+        } else {
+            newFinishBtn.disabled = true;
+            newFinishBtn.onclick = () => {
+                let pesan = pendingItems.length === 0 
+                    ? '⚠️ Tambahkan minimal satu balasan terlebih dahulu!'
+                    : '⚠️ Harap isi dan centang SEMUA balasan sebelum lanjut ke Closing!';
+                showNotifTop(pesan, true);
+            };
+        }
     }
+    
+    // Tombol Save
     const saveBtn = document.getElementById('pendingSaveBtn');
-    if (saveBtn) { const newSaveBtn = saveBtn.cloneNode(true); saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn); newSaveBtn.onclick = async () => { const doc = await db.collection('customers').doc(currentPendingId).get(); const oldPendingData = doc.data().pending_data || []; let hasChanges = false; if (pendingItems.length !== oldPendingData.length) hasChanges = true; else { for (let i = 0; i < pendingItems.length; i++) { const newItem = pendingItems[i]; const oldItem = oldPendingData[i] || {}; if (newItem.text !== oldItem.text || newItem.checked !== oldItem.checked) { hasChanges = true; break; } } } const hasAnyData = pendingItems.some(item => item.text && item.text.trim() !== ''); if (!hasAnyData) { showNotifTop('⚠️ Minimal isi satu balasan sebelum menyimpan!', true); return; } if (!hasChanges) { showNotifTop('⚠️ Tidak ada perubahan data! Silakan ubah data terlebih dahulu sebelum menyimpan.', true); return; } const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 3); await db.collection('customers').doc(currentPendingId).update({ pending_data: pendingItems, tanggal: newDeadline }); showNotifTop(`💾 Data pending berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`); closeModal('pendingModal'); loadAllData(); }; }
+    if (saveBtn) {
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        newSaveBtn.onclick = async () => {
+            const doc = await db.collection('customers').doc(currentPendingId).get();
+            const oldPendingData = doc.data().pending_data || [];
+            let hasChanges = false;
+            if (pendingItems.length !== oldPendingData.length) {
+                hasChanges = true;
+            } else {
+                for (let i = 0; i < pendingItems.length; i++) {
+                    const newItem = pendingItems[i];
+                    const oldItem = oldPendingData[i] || {};
+                    if (newItem.text !== oldItem.text || newItem.checked !== oldItem.checked) {
+                        hasChanges = true;
+                        break;
+                    }
+                }
+            }
+            const hasAnyData = pendingItems.some(item => item.text && item.text.trim() !== '');
+            if (!hasAnyData) {
+                showNotifTop('⚠️ Minimal isi satu balasan sebelum menyimpan!', true);
+                return;
+            }
+            if (!hasChanges) {
+                showNotifTop('⚠️ Tidak ada perubahan data! Silakan ubah data terlebih dahulu sebelum menyimpan.', true);
+                return;
+            }
+            const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 3);
+            await db.collection('customers').doc(currentPendingId).update({ 
+                pending_data: pendingItems,
+                tanggal: newDeadline
+            });
+            showNotifTop(`💾 Data pending berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`);
+            closeModal('pendingModal');  // ← PASTIKAN INI DIPANGGIL
+            loadAllData();
+        };
+    }
+    
+    // Tombol Cancel
     const cancelBtn = document.getElementById('pendingCancelBtn');
-    if (cancelBtn) { const newCancelBtn = cancelBtn.cloneNode(true); cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn); newCancelBtn.onclick = () => { closeModal('pendingModal'); }; }
+    if (cancelBtn) {
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        newCancelBtn.onclick = () => {
+            closeModal('pendingModal');  // ← PASTIKAN INI DIPANGGIL
+        };
+    }
 }
 
 function openProspekDihubungiConfirm(id) {
@@ -1984,18 +2124,55 @@ downloadExampleBtn.onclick = () => downloadAgentExample();
 const actionsDiv = document.querySelector('#dbAgentPage .db-actions');
 if (actionsDiv) actionsDiv.appendChild(downloadExampleBtn);
 
-// ==================== EVENT LISTENER PRODUK ====================
-document.getElementById('addProdukBtn')?.addEventListener('click', () => { currentEditProdukId = null; document.getElementById('produkMasterNama').value = ''; document.getElementById('produkMasterHpp').value = ''; document.getElementById('produkMasterHargaJual').value = ''; document.getElementById('produkMasterKeterangan').value = ''; document.getElementById('produkMasterTitle').innerText = '🏷️ Tambah Produk'; document.getElementById('produkMasterModal').style.display = 'flex'; });
-document.getElementById('saveProdukMasterBtn')?.addEventListener('click', async () => { const nama = document.getElementById('produkMasterNama').value; const hpp = document.getElementById('produkMasterHpp').value; const keterangan = document.getElementById('produkMasterKeterangan').value; const jenisProduk = document.getElementById('produkMasterJenis').value; let hargaJual = 0, adminDefault = 0, cidBased = 'no'; if (jenisProduk === 'tanpa_admin') hargaJual = document.getElementById('produkMasterHargaJual').value; else { adminDefault = document.getElementById('produkMasterAdminDefault').value; cidBased = document.getElementById('produkMasterCidBased').value; } await saveProduk(nama, hpp, hargaJual, keterangan, adminDefault, jenisProduk, cidBased, currentEditProdukId); closeModal('produkMasterModal'); });
-document.getElementById('cancelProdukMasterBtn')?.addEventListener('click', () => { closeModal('produkMasterModal'); currentEditProdukId = null; document.getElementById('produkMasterNama').value = ''; document.getElementById('produkMasterHpp').value = ''; document.getElementById('produkMasterKeterangan').value = ''; document.getElementById('produkMasterJenis').value = 'tanpa_admin'; document.getElementById('produkMasterHargaJual').value = ''; document.getElementById('produkMasterAdminDefault').value = ''; document.getElementById('produkMasterCidBased').value = 'no'; toggleProdukJenisFields('tanpa_admin'); });
-document.getElementById('addAgentProductBtn')?.addEventListener('click', openAddProductModal);
-document.getElementById('saveAgentDetailBtn')?.addEventListener('click', saveAgentDetail);
-document.getElementById('closeAgentDetailBtn')?.addEventListener('click', () => closeModal('agentDetailModal'));
-document.getElementById('saveProductBtn')?.addEventListener('click', saveAgentProduct);
-document.getElementById('cancelProductBtn')?.addEventListener('click', () => closeModal('productModal'));
-document.getElementById('manageTarifAdminBtn')?.addEventListener('click', () => { loadTarifAdmin(); document.getElementById('tarifAdminModal').style.display = 'flex'; });
-document.getElementById('closeTarifAdminModal')?.addEventListener('click', () => { setupModalClickOutside('tarifAdminModal'); closeModal('tarifAdminModal'); });
-document.getElementById('refreshProdukBtn')?.addEventListener('click', () => { loadProduk(); if (currentAgentIdForProduct) renderAgentProducts(); showNotifTop('🔄 Daftar produk direfresh'); });
+// ========== EVENT LISTENER PRODUK (HANYA SEKALI) ==========
+document.addEventListener('DOMContentLoaded', function() {
+    // Produk Master Modal
+    const addProdukBtn = document.getElementById('addProdukBtn');
+    if (addProdukBtn) {
+        const newBtn = addProdukBtn.cloneNode(true);
+        addProdukBtn.parentNode.replaceChild(newBtn, addProdukBtn);
+        newBtn.addEventListener('click', () => {
+            currentEditProdukId = null;
+            document.getElementById('produkMasterNama').value = '';
+            document.getElementById('produkMasterHpp').value = '';
+            document.getElementById('produkMasterHargaJual').value = '';
+            document.getElementById('produkMasterKeterangan').value = '';
+            document.getElementById('produkMasterTitle').innerText = '🏷️ Tambah Produk';
+            document.getElementById('produkMasterModal').style.display = 'flex';
+        });
+    }
+    
+    const saveProdukBtn = document.getElementById('saveProdukMasterBtn');
+    if (saveProdukBtn) {
+        const newBtn = saveProdukBtn.cloneNode(true);
+        saveProdukBtn.parentNode.replaceChild(newBtn, saveProdukBtn);
+        newBtn.addEventListener('click', async () => {
+            const nama = document.getElementById('produkMasterNama').value;
+            const hpp = document.getElementById('produkMasterHpp').value;
+            const keterangan = document.getElementById('produkMasterKeterangan').value;
+            const jenisProduk = document.getElementById('produkMasterJenis').value;
+            let hargaJual = 0, adminDefault = 0, cidBased = 'no';
+            if (jenisProduk === 'tanpa_admin') {
+                hargaJual = document.getElementById('produkMasterHargaJual').value;
+            } else {
+                adminDefault = document.getElementById('produkMasterAdminDefault').value;
+                cidBased = document.getElementById('produkMasterCidBased').value;
+            }
+            await saveProduk(nama, hpp, hargaJual, keterangan, adminDefault, jenisProduk, cidBased, currentEditProdukId);
+            closeModal('produkMasterModal');
+        });
+    }
+    
+    const cancelProdukBtn = document.getElementById('cancelProdukMasterBtn');
+    if (cancelProdukBtn) {
+        const newBtn = cancelProdukBtn.cloneNode(true);
+        cancelProdukBtn.parentNode.replaceChild(newBtn, cancelProdukBtn);
+        newBtn.addEventListener('click', () => {
+            closeModal('produkMasterModal');
+            currentEditProdukId = null;
+        });
+    }
+});
 
 // ==================== TARGET KPI EVENT LISTENERS ====================
 const saveTargetBtn = document.getElementById('saveTargetBtn');
