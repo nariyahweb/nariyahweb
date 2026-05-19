@@ -20,6 +20,32 @@ const DB_CONFIG = {
 
 const LIMIT_DATA = DB_CONFIG.MAX_QUERY_LIMIT;
 
+// ========== ANTI QUOTA EXCEEDED ==========
+// Delay utility untuk menghindari rate limit
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Wrapper untuk operasi Firestore dengan retry
+async function firestoreWithRetry(operation, maxRetries = 3, initialDelay = 1000) {
+  let lastError;
+  let delayMs = initialDelay;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (error.code === 'resource-exhausted') {
+        console.warn(`Quota exceeded, retry ${i + 1}/${maxRetries} after ${delayMs}ms`);
+        await delay(delayMs);
+        delayMs *= 2; // Exponential backoff
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw lastError;
+}
+
 // variabel global
 db.settings({
   persistence: false
@@ -3118,99 +3144,165 @@ window.deleteProspek = async function(id) {
 
 // ========== FOLLOWUP CONFIRMATION ==========
 function openFollowupConfirm(id) {
+  console.log('openFollowupConfirm dipanggil untuk ID:', id);
   currentPendingId = id;
   
-  // Reset checkbox values
-  document.getElementById('followup_terkirim').checked = false;
-  document.getElementById('followup_dibalas').checked = false;
-  
-  // Ambil referensi tombol YES
-  const yesBtn = document.getElementById('followupConfirmYes');
+  // Reset checkbox values dengan aman
   const cb1 = document.getElementById('followup_terkirim');
   const cb2 = document.getElementById('followup_dibalas');
+  const yesBtn = document.getElementById('followupConfirmYes');
+  const noBtn = document.getElementById('followupConfirmNo');
+  
+  if (!cb1 || !cb2 || !yesBtn || !noBtn) {
+    console.error('Elemen modal tidak ditemukan!');
+    return;
+  }
+  
+  // Reset checkbox
+  cb1.checked = false;
+  cb2.checked = false;
   
   // Fungsi untuk update status tombol
   const updateYesBtn = () => {
     const isChecked = cb1.checked && cb2.checked;
     yesBtn.disabled = !isChecked;
-    console.log('Update yesBtn.disabled:', yesBtn.disabled);
+    console.log('Checkbox status - terkirim:', cb1.checked, 'dibalas:', cb2.checked, 'disabled:', yesBtn.disabled);
   };
   
-  // Hapus event listener lama (jika ada) dan pasang baru
-  const handleCheckboxChange = () => updateYesBtn();
+  // Hapus semua event listener lama dengan cara membuat elemen baru
+  // Ini adalah cara paling aman untuk menghindari event listener ganda
   
-  cb1.removeEventListener('change', handleCheckboxChange);
-  cb2.removeEventListener('change', handleCheckboxChange);
-  cb1.addEventListener('change', handleCheckboxChange);
-  cb2.addEventListener('change', handleCheckboxChange);
+  // Clone dan replace checkbox 1
+  const newCb1 = cb1.cloneNode(true);
+  cb1.parentNode.replaceChild(newCb1, cb1);
+  
+  // Clone dan replace checkbox 2
+  const newCb2 = cb2.cloneNode(true);
+  cb2.parentNode.replaceChild(newCb2, cb2);
+  
+  // Clone dan replace tombol YES
+  const newYesBtn = yesBtn.cloneNode(true);
+  yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+  
+  // Clone dan replace tombol NO
+  const newNoBtn = noBtn.cloneNode(true);
+  noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+  
+  // Ambil referensi baru
+  const finalCb1 = document.getElementById('followup_terkirim');
+  const finalCb2 = document.getElementById('followup_dibalas');
+  const finalYesBtn = document.getElementById('followupConfirmYes');
+  const finalNoBtn = document.getElementById('followupConfirmNo');
+  
+  // Pasang event listener untuk checkbox
+  finalCb1.addEventListener('change', updateYesBtn);
+  finalCb2.addEventListener('change', updateYesBtn);
   
   // Inisialisasi awal
   updateYesBtn();
   
-  // Hapus event listener lama dari yesBtn (jika ada)
-  const newYesBtn = yesBtn.cloneNode(true);
-  yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
-  
-  // Pasang event listener baru untuk tombol YES (tanpa membuat baru setiap kali)
-  newYesBtn.onclick = (e) => {
+  // Tombol YES - Lanjut ke Pending
+  finalYesBtn.onclick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log('Tombol YES diklik, disabled:', finalYesBtn.disabled);
     
-    // Cek ulang disabled status
-    if (newYesBtn.disabled) {
+    if (finalYesBtn.disabled) {
       showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
       return;
     }
     
+    // Nonaktifkan tombol sementara untuk mencegah double click
+    finalYesBtn.disabled = true;
+    finalYesBtn.textContent = '⏳ Memproses...';
+    
     (async () => {
-      const doc = await db.collection('customers').doc(id).get();
-      const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
-      await db.collection('customers').doc(id).update({
-        followup_data: {
-          terkirim: true,
-          dibalas: true,
-          timestamp: new Date().toISOString()
-        },
-        status: 'pending',
-        tanggal: newDeadline
-      });
-      closeModal('followupConfirmModal');
-      showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
-      loadAllData();
-      closeModal('detailModal');
+      try {
+        const doc = await db.collection('customers').doc(id).get();
+        if (!doc.exists) {
+          showNotifTop('❌ Data customer tidak ditemukan!', true);
+          finalYesBtn.disabled = false;
+          finalYesBtn.textContent = '✅ Lanjut ke Pending';
+          return;
+        }
+        
+        const currentDeadline = doc.data().tanggal || getTodayDate();
+        const newDeadline = addDaysToDate(currentDeadline, 1);
+        
+        await db.collection('customers').doc(id).update({
+          followup_data: {
+            terkirim: true,
+            dibalas: true,
+            timestamp: new Date().toISOString()
+          },
+          status: 'pending',
+          tanggal: newDeadline
+        });
+        
+        closeModal('followupConfirmModal');
+        showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
+        await loadAllData();
+        closeModal('detailModal');
+      } catch (error) {
+        console.error('Error update customer:', error);
+        showNotifTop('❌ Gagal: ' + error.message, true);
+        finalYesBtn.disabled = false;
+        finalYesBtn.textContent = '✅ Lanjut ke Pending';
+      }
     })();
   };
   
-  // Tombol NO tetap sama
-  const noBtn = document.getElementById('followupConfirmNo');
-  const newNoBtn = noBtn.cloneNode(true);
-  noBtn.parentNode.replaceChild(newNoBtn, noBtn);
-  
-  newNoBtn.onclick = async () => {
-    const doc = await db.collection('customers').doc(id).get();
-    if (doc.exists) {
-      showConfirmDialog(
-        'Pindahkan ke Database Nomor Salah?',
-        `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`,
-        async () => {
-          await db.collection('nomor_salah').add({
-            ...doc.data(),
-            alasan: 'Nomor tidak bisa dihubungi / tidak aktif',
-            deleted_at: new Date().toISOString(),
-            user_id: doc.data().user_id
-          });
-          await db.collection('customers').doc(id).delete();
-          showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
-          closeModal('followupConfirmModal');
-          closeModal('detailModal');
-          loadAllData();
-        }
-      );
+  // Tombol NO - Pindah ke Nomor Salah
+  finalNoBtn.onclick = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    finalNoBtn.disabled = true;
+    finalNoBtn.textContent = '⏳ Memproses...';
+    
+    try {
+      const doc = await db.collection('customers').doc(id).get();
+      if (doc.exists) {
+        showConfirmDialog(
+          'Pindahkan ke Database Nomor Salah?',
+          `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`,
+          async () => {
+            try {
+              await db.collection('nomor_salah').add({
+                ...doc.data(),
+                alasan: 'Nomor tidak bisa dihubungi / tidak aktif',
+                deleted_at: new Date().toISOString(),
+                user_id: doc.data().user_id
+              });
+              await db.collection('customers').doc(id).delete();
+              showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
+              closeModal('followupConfirmModal');
+              closeModal('detailModal');
+              await loadAllData();
+            } catch (err) {
+              showNotifTop('❌ Gagal: ' + err.message, true);
+            }
+            finalNoBtn.disabled = false;
+            finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
+          },
+          () => {
+            finalNoBtn.disabled = false;
+            finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
+          }
+        );
+      }
+    } catch (error) {
+      showNotifTop('❌ Gagal: ' + error.message, true);
+      finalNoBtn.disabled = false;
+      finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
     }
   };
   
   // Tampilkan modal
-  document.getElementById('followupConfirmModal').style.display = 'flex';
+  const modal = document.getElementById('followupConfirmModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
 }
 
 // ========== PENDING MODAL ==========
