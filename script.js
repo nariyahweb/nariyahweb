@@ -1652,6 +1652,12 @@ if (addMonthlyTargetBtn) {
     });
 }
 
+document.getElementById('loadAllAgentBtn')?.addEventListener('click', async () => {
+    showNotifTop('⏳ Memuat semua data agent...');
+    await loadDatabaseAgent();
+    showNotifTop(`✅ ${agentsData.length} data agent dimuat`);
+});
+
 // ========== EVENT LISTENER CARD TRANSAKSI (SEMUA CS BISA KLIK) ==========
 const targetTransaksiCard = document.getElementById('targetTransaksiCard');
 if (targetTransaksiCard) {
@@ -5176,33 +5182,33 @@ async function loadDatabaseAgent() {
         query = query.where('user_id', '==', currentUser.uid);
     }
     
-    query.onSnapshot(async snap => {
-        const items = [];
-        for (const doc of snap.docs) {
-            const d = doc.data();
-            let ownerName = '';
-            if (isOwner && d.user_id !== currentUser.uid) {
-                const userDoc = await db.collection('users').doc(d.user_id).get();
-                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
-            }
-            items.push({
-                id: doc.id,
-                nama: d.nama + ownerName,
-                hp: d.hp || '',
-                agent_id: d.agent_id || '-',
-                agent_type: d.agent_type || '-',
-                apk: d.apk || '',
-                createdAt: d.created_at,
-                checked: selectedAgentIds.get(doc.id) || false,
-                // 🔥 TAMBAHKAN FIELD BARU DI SINI 🔥
-                upline: d.upline || '',
-                cid: d.cid || '',
-                jenis_bank: d.jenis_bank || ''
-            });
+    // 🔥 TAMBAHKAN INI - Ambil semua data tanpa limit
+    const snapshot = await query.get();  // Bukan onSnapshot
+    
+    const items = [];
+    for (const doc of snapshot.docs) {
+        const d = doc.data();
+        let ownerName = '';
+        if (isOwner && d.user_id !== currentUser.uid) {
+            const userDoc = await db.collection('users').doc(d.user_id).get();
+            ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
         }
-        agentsData = items;
-        renderAgentList(items);
-    });
+        items.push({
+            id: doc.id,
+            nama: d.nama + ownerName,
+            hp: d.hp || '',
+            agent_id: d.agent_id || '-',
+            agent_type: d.agent_type || '-',
+            apk: d.apk || '',
+            createdAt: d.created_at,
+            checked: selectedAgentIds.get(doc.id) || false,
+            upline: d.upline || '',
+            cid: d.cid || '',
+            jenis_bank: d.jenis_bank || ''
+        });
+    }
+    agentsData = items;
+    renderAgentList(items);
 }
 
 function renderAgentList(items) {
