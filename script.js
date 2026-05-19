@@ -230,8 +230,33 @@ function formatRupiah(angka) {
     return 'Rp ' + angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-// ========== PERBAIKAN FUNGSI showModal ==========
+// ========== FUNGSI CLOSE MODAL YANG LEBIH ROBUST ==========
+function closeModal(modalId) {
+    console.log('Closing modal:', modalId);
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        modal.style.visibility = 'hidden';
+        
+        // Hapus backdrop jika ada
+        const backdrop = modal.querySelector('.modal-backdrop');
+        if (backdrop) backdrop.remove();
+    }
+    
+    // Reset body scroll
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.classList.remove('modal-open');
+    
+    // Hapus semua backdrop blur yang mungkin tertinggal
+    const overlays = document.querySelectorAll('.modal-overlay, .confirm-dialog-overlay');
+    overlays.forEach(overlay => overlay.remove());
+}
+
+// ========== FUNGSI TAMPIL MODAL ==========
 function showModal(modalId) {
+    console.log('Showing modal:', modalId);
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
@@ -239,33 +264,6 @@ function showModal(modalId) {
         document.body.classList.add('modal-open');
         document.body.style.overflow = 'hidden';
     }
-}
-
-// ========== PERBAIKAN FUNGSI CLOSE MODAL ==========
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-        modal.style.visibility = 'hidden';
-        // Hapus style inline yang mungkin ditambahkan
-        modal.removeAttribute('style');
-    }
-    // Pastikan scroll body kembali normal
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.classList.remove('modal-open');
-    
-    // Hapus backdrop blur jika ada
-    const backdrops = document.querySelectorAll('.modal-backdrop, .modal-overlay');
-    backdrops.forEach(backdrop => backdrop.remove());
-}
-
-function setupModalClickOutside(modalId) {
-    const modal = document.getElementById(modalId);
-    if (!modal) return;
-    modal.removeEventListener('click', modal._clickOutsideHandler);
-    modal._clickOutsideHandler = function(e) { if (e.target === modal) closeModal(modalId); };
-    modal.addEventListener('click', modal._clickOutsideHandler);
 }
 
 // ==================== TARGET & KPI FUNCTIONS ====================
@@ -1287,10 +1285,13 @@ function openFollowupConfirm(id) {
     const modal = document.getElementById('followupConfirmModal');
     if (!modal) return;
     
+    // Reset form
     document.getElementById('followup_terkirim').checked = false;
     document.getElementById('followup_dibalas').checked = false;
+    
     const yesBtn = document.getElementById('followupConfirmYes');
     const noBtn = document.getElementById('followupConfirmNo');
+    const cancelBtn = document.getElementById('followupConfirmCancel');
     
     if (yesBtn) yesBtn.disabled = true;
     
@@ -1304,55 +1305,88 @@ function openFollowupConfirm(id) {
     cb1.onchange = updateYesBtn;
     cb2.onchange = updateYesBtn;
     
-    // Clone dan replace button YES
+    // Tombol YES
     if (yesBtn) {
         const newYesBtn = yesBtn.cloneNode(true);
         yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
         newYesBtn.onclick = async (e) => {
             e.preventDefault();
             if (newYesBtn.disabled) {
-                showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
+                showNotifTop('⚠️ Harap centang kedua opsi terlebih dahulu!', true);
                 return;
             }
-            const doc = await db.collection('customers').doc(id).get();
-            const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
-            await db.collection('customers').doc(id).update({ 
-                followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, 
-                status: 'pending',
-                tanggal: newDeadline
-            });
-            closeModal('followupConfirmModal');
-            showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
-            loadAllData();
-            closeModal('detailModal');
+            
+            try {
+                const doc = await db.collection('customers').doc(id).get();
+                const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
+                await db.collection('customers').doc(id).update({ 
+                    followup_data: { terkirim: true, dibalas: true, timestamp: new Date().toISOString() }, 
+                    status: 'pending',
+                    tanggal: newDeadline
+                });
+                
+                // 🔥 TUTUP MODAL
+                closeModal('followupConfirmModal');
+                closeModal('detailModal');
+                
+                showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
+                
+                setTimeout(() => {
+                    loadAllData();
+                }, 500);
+                
+            } catch(error) {
+                console.error('Error:', error);
+                showNotifTop('❌ Gagal: ' + error.message, true);
+            }
         };
     }
     
-    // Clone dan replace button NO
+    // Tombol NO
     if (noBtn) {
         const newNoBtn = noBtn.cloneNode(true);
         noBtn.parentNode.replaceChild(newNoBtn, noBtn);
         newNoBtn.onclick = async () => {
-            const doc = await db.collection('customers').doc(id).get();
-            if (doc.exists) {
-                showConfirmDialog(
-                    'Pindahkan ke Database Nomor Salah?',
-                    `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`,
-                    async () => {
-                        await db.collection('nomor_salah').add({ 
-                            ...doc.data(), 
-                            alasan: 'Nomor tidak bisa dihubungi / tidak aktif', 
-                            deleted_at: new Date().toISOString(), 
-                            user_id: doc.data().user_id 
-                        });
-                        await db.collection('customers').doc(id).delete();
-                        showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
-                        closeModal('followupConfirmModal');
-                        closeModal('detailModal');
-                        loadAllData();
-                    }
-                );
+            try {
+                const doc = await db.collection('customers').doc(id).get();
+                if (doc.exists) {
+                    showConfirmDialog(
+                        'Pindahkan ke Database Nomor Salah?',
+                        `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`,
+                        async () => {
+                            await db.collection('nomor_salah').add({ 
+                                ...doc.data(), 
+                                alasan: 'Nomor tidak bisa dihubungi / tidak aktif', 
+                                deleted_at: new Date().toISOString(), 
+                                user_id: doc.data().user_id 
+                            });
+                            await db.collection('customers').doc(id).delete();
+                            
+                            // 🔥 TUTUP MODAL
+                            closeModal('followupConfirmModal');
+                            closeModal('detailModal');
+                            
+                            showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
+                            
+                            setTimeout(() => {
+                                loadAllData();
+                            }, 500);
+                        }
+                    );
+                }
+            } catch(error) {
+                console.error('Error:', error);
+                showNotifTop('❌ Gagal: ' + error.message, true);
             }
+        };
+    }
+    
+    // Tombol CANCEL
+    if (cancelBtn) {
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        newCancelBtn.onclick = () => {
+            closeModal('followupConfirmModal');
         };
     }
     
@@ -1416,15 +1450,23 @@ function updatePendingButtons() {
         }
     }
     
-    // Tombol Save
-    const saveBtn = document.getElementById('pendingSaveBtn');
-    if (saveBtn) {
-        const newSaveBtn = saveBtn.cloneNode(true);
-        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-        newSaveBtn.onclick = async () => {
+    // Tombol Save - PERBAIKI INI
+const saveBtn = document.getElementById('pendingSaveBtn');
+if (saveBtn) {
+    const newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+    newSaveBtn.onclick = async () => {
+        try {
             const doc = await db.collection('customers').doc(currentPendingId).get();
+            if (!doc.exists) {
+                showNotifTop('⚠️ Data tidak ditemukan!', true);
+                closeModal('pendingModal');
+                return;
+            }
+            
             const oldPendingData = doc.data().pending_data || [];
             let hasChanges = false;
+            
             if (pendingItems.length !== oldPendingData.length) {
                 hasChanges = true;
             } else {
@@ -1437,25 +1479,40 @@ function updatePendingButtons() {
                     }
                 }
             }
+            
             const hasAnyData = pendingItems.some(item => item.text && item.text.trim() !== '');
             if (!hasAnyData) {
                 showNotifTop('⚠️ Minimal isi satu balasan sebelum menyimpan!', true);
                 return;
             }
+            
             if (!hasChanges) {
                 showNotifTop('⚠️ Tidak ada perubahan data! Silakan ubah data terlebih dahulu sebelum menyimpan.', true);
                 return;
             }
+            
             const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 3);
             await db.collection('customers').doc(currentPendingId).update({ 
                 pending_data: pendingItems,
                 tanggal: newDeadline
             });
+            
             showNotifTop(`💾 Data pending berhasil disimpan. Deadline +3 hari menjadi ${newDeadline}`);
-            closeModal('pendingModal');  // ← PASTIKAN INI DIPANGGIL
-            loadAllData();
-        };
-    }
+            
+            // 🔥 TUTUP MODAL DULU
+            closeModal('pendingModal');
+            
+            // 🔥 DELAY SEBENTAR SEBELUM LOAD DATA
+            setTimeout(() => {
+                loadAllData();
+            }, 500);
+            
+        } catch(error) {
+            console.error('Error saving pending:', error);
+            showNotifTop('❌ Gagal menyimpan: ' + error.message, true);
+        }
+    };
+}
     
     // Tombol Cancel
     const cancelBtn = document.getElementById('pendingCancelBtn');
@@ -1911,16 +1968,45 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
     chartProspek = new Chart(ctx, { type: 'doughnut', data: { labels: ['Baru', 'Dihubungi', 'Negosiasi', 'Tertarik'], datasets: [{ data: dataArr, backgroundColor: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'], borderWidth: 0, hoverOffset: 15, cutout: '65%' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', padding: 12, font: { size: 11 }, generateLabels: function(chart) { const data = chart.data; const dataset = data.datasets[0]; const total = dataset.data.reduce((a, b) => a + b, 0); return data.labels.map((label, i) => ({ text: `${label}: ${dataset.data[i]} (${total > 0 ? ((dataset.data[i] / total) * 100).toFixed(1) : 0}%)`, fillStyle: dataset.backgroundColor[i], strokeStyle: dataset.backgroundColor[i], lineWidth: 0, hidden: false, index: i })); } } }, tooltip: { callbacks: { label: function(context) { const label = context.label || ''; const value = context.raw || 0; const total = context.dataset.data.reduce((a, b) => a + b, 0); return `${label}: ${value} (${total > 0 ? ((value / total) * 100).toFixed(1) : 0}%)`; } } } } } });
 }
 
-// ==================== LOAD ALL DATA ====================
+// ========== OPTIMASI LOAD ALL DATA ==========
+let loadAllDataTimeout = null;
+
 function loadAllData() {
     if (!currentUser) return;
+    
+    // Hapus timeout sebelumnya
+    if (loadAllDataTimeout) clearTimeout(loadAllDataTimeout);
+    
+    // Delay 1 detik untuk menghindari terlalu banyak request
+    loadAllDataTimeout = setTimeout(() => {
+        console.log('loadAllData dijalankan setelah delay');
+        actuallyLoadAllData();
+    }, 1000);
+}
+
+function actuallyLoadAllData() {
     const today = getTodayDate();
     const isOwner = currentUserRole === 'owner';
+    
     let customersQuery = db.collection('customers');
     let prospekQuery = db.collection('prospek');
-    if (!isOwner) { customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid); prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid); }
-    customersQuery.onSnapshot(async snap => { let total = 0, closing = 0, pending = 0, followup = 0; const lists = { baru: [], followup: [], pending: [], closing: [] }; customersData = []; for (const doc of snap.docs) { const d = doc.data(); let ownerName = ''; if (isOwner && d.user_id !== currentUser.uid) { const userDoc = await db.collection('users').doc(d.user_id).get(); ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : ''; } const itemData = { id: doc.id, agent_id: d.agent_id, nama: d.nama + ownerName, hp: d.hp, tanggal: d.tanggal, status: d.status, ownerId: d.user_id }; customersData.push({ id: doc.id, ...d, displayName: d.nama + ownerName }); total++; if (d.status === 'closing') closing++; else if (d.status === 'pending') pending++; else if (d.status === 'followup') followup++; else lists.baru.push(itemData); if (d.status === 'followup') lists.followup.push(itemData); if (d.status === 'pending') lists.pending.push(itemData); if (d.status === 'closing') lists.closing.push(itemData); } for (let status in lists) lists[status].sort((a,b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31')); document.getElementById('countBaru').innerText = total - (closing + pending + followup); document.getElementById('countFollowup').innerText = followup; document.getElementById('countPending').innerText = pending; document.getElementById('countClosing').innerText = closing; document.getElementById('totalData').innerText = total; document.getElementById('closingTotal').innerText = closing; document.getElementById('activeProspek').innerText = total - closing; document.getElementById('rateClosing').innerText = total ? Math.round((closing/total)*100)+'%' : '0%'; for (let status in lists) { const container = document.getElementById(status + 'List'); if (container) { container.innerHTML = lists[status].map(item => { const isOverdue = item.tanggal && item.tanggal < today; const isToday = item.tanggal === today; let deadlineClass = ''; if (isOverdue) deadlineClass = 'deadline-overdue'; else if (isToday) deadlineClass = 'deadline-today'; return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}" data-deadline="${item.tanggal || ''}"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`; }).join(''); container.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id); }); }); } } updateChartCustomer(total, closing, pending, followup); updateAllBadges(); renderFullFollowupKanban(); });
-    prospekQuery.onSnapshot(async snap => { let baru = 0, dihubungi = 0, negosiasi = 0, tertarik = 0; const lists = { prospekBaru: [], prospekDihubungi: [], prospekNegosiasi: [], prospekTertarik: [] }; prospekData = []; for (const doc of snap.docs) { const d = doc.data(); let ownerName = ''; if (isOwner && d.user_id !== currentUser.uid) { const userDoc = await db.collection('users').doc(d.user_id).get(); ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : ''; } const st = d.status || 'Baru'; const deadline = d.deadline || ''; const itemData = { id: doc.id, nama: d.nama + ownerName, hp: d.hp, status: st, deadline: deadline, ownerId: d.user_id }; prospekData.push({ id: doc.id, ...d, displayName: d.nama + ownerName }); if (st === 'Baru') { baru++; lists.prospekBaru.push(itemData); } else if (st === 'Dihubungi') { dihubungi++; lists.prospekDihubungi.push(itemData); } else if (st === 'Negosiasi') { negosiasi++; lists.prospekNegosiasi.push(itemData); } else if (st === 'Tertarik') { tertarik++; lists.prospekTertarik.push(itemData); } else { tertarik++; lists.prospekTertarik.push(itemData); } } for (let col in lists) lists[col].sort((a,b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31')); document.getElementById('countProspekBaru').innerText = baru; document.getElementById('countDihubungi').innerText = dihubungi; document.getElementById('countNegosiasi').innerText = negosiasi; document.getElementById('countTertarik').innerText = tertarik; for (let col in lists) { const container = document.getElementById(col + 'List'); if (container) { container.innerHTML = lists[col].map(item => { const isOverdue = item.deadline && item.deadline < today; const isToday = item.deadline === today; let deadlineClass = ''; if (isOverdue) deadlineClass = 'deadline-overdue'; else if (isToday) deadlineClass = 'deadline-today'; return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${item.status}" data-deadline="${item.deadline || ''}"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`; }).join(''); container.querySelectorAll('.card-item').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id); }); }); } } updateChartProspek(baru, dihubungi, negosiasi, tertarik); updateAllBadges(); renderFullProspekKanban(); });
+    
+    if (!isOwner) {
+        customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid);
+        prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid);
+    }
+    
+    customersQuery.get().then(async snap => {
+        // ... kode yang sama
+    }).catch(err => {
+        console.error('Error loading customers:', err);
+    });
+    
+    prospekQuery.get().then(async snap => {
+        // ... kode yang sama
+    }).catch(err => {
+        console.error('Error loading prospek:', err);
+    });
 }
 
 // ==================== REMINDER, PESAN, BROADCAST ====================
