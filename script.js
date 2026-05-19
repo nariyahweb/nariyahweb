@@ -5431,7 +5431,7 @@ async function moveAgentToFollowup(agentId) {
     );
 }
 
-// Hapus multiple agent dengan CHUNKING yang lebih baik dan resumable
+// ========== HAPUS MULTIPLE AGENT (DELETE SELECTED) ==========
 window.deleteSelectedAgent = async function() {
     const selectedIds = Array.from(selectedAgentIds.keys());
     if (selectedIds.length === 0) {
@@ -5448,7 +5448,6 @@ window.deleteSelectedAgent = async function() {
     let failed = 0;
     const failedIds = [];
     
-    // 🔥 PROSES 10 DATA PER BATCH (BUKAN 100)
     const BATCH_SIZE = 10;
     
     for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
@@ -5464,7 +5463,6 @@ window.deleteSelectedAgent = async function() {
             await batch.commit();
             deleted += chunk.length;
             
-            // Hapus dari array lokal
             for (const id of chunk) {
                 selectedAgentIds.delete(id);
                 const index = agentsData.findIndex(item => item.id === id);
@@ -5480,7 +5478,6 @@ window.deleteSelectedAgent = async function() {
         const percent = Math.floor(((deleted + failed) / selectedIds.length) * 100);
         progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted + failed}/${selectedIds.length})`, deleted + failed, selectedIds.length);
         
-        // 🔥 DELAY 500ms AGAR TIDAK KENA QUOTA
         await new Promise(resolve => setTimeout(resolve, 500));
     }
     
