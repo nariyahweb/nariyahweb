@@ -2888,19 +2888,24 @@ if (saveCustomerBtn) {
     if (!tanggal) tanggal = getTodayDate();
     let cleanHp = '+62' + hp;
 
-    db.collection('customers').add({
-        agent_id: agentId,
-        nama: nama,
-        hp: cleanHp,
-        apk: apk,
-        agent_type: agentType,
-        tanggal: tanggal,
-        status: 'baru',
-        user_id: currentUser.uid,
-        created_at: new Date().toISOString(),
-        followup_data: null,
-        pending_data: []
-      })
+    // Di saveCustomerBtn
+db.collection('customers').add({
+    agent_id: agentId,
+    nama: nama,
+    hp: cleanHp,
+    apk: apk,
+    agent_type: agentType,
+    tanggal: tanggal,
+    status: 'baru',
+    progres_transaksi: {
+        items: [],
+        total_tercapai: 0
+    },
+    user_id: currentUser.uid,
+    created_at: new Date().toISOString(),
+    followup_data: null,
+    pending_data: []
+})
       .then(() => {
         closeModal('customerModal');
         document.getElementById('customerId').value = '';
@@ -3036,6 +3041,11 @@ function closeModal(modalId) {
 function openDetailCustomer(id) {
   db.collection('customers').doc(id).get().then(async doc => {
     const d = doc.data();
+    
+    // 🔥 TAMBAHKAN INI - Ambil data progres
+    const progresData = d.progres_transaksi || { items: [], total_tercapai: 0 };
+    const totalTercapai = progresData.total_tercapai || 0;
+    
     // Cek pemilik data (untuk owner, tampilkan siapa pemiliknya)
     let ownerInfo = '';
     if (currentUserRole === 'owner' && d.user_id !== currentUser.uid) {
@@ -3055,10 +3065,12 @@ function openDetailCustomer(id) {
     } else if (d.status === 'closing') {
       actionButtons = `<button class="btn-success" onclick="saveToClosingNow('${id}')">💾 Simpan ke DB Closing</button>`;
     }
+    
     let followupInfo = '';
     if (d.followup_data) {
       followupInfo = `<div class="detail-info-item"><div class="detail-info-icon">✅</div><div class="detail-info-content"><label>Follow Up</label><div class="value">Terkirim: ${d.followup_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.followup_data.dibalas ? 'Ya' : 'Tidak'}</div></div></div>`;
     }
+    
     let pendingInfo = '';
     if (d.pending_data && d.pending_data.length > 0) {
       const completedCount = d.pending_data.filter(item => item.checked === true && item.text?.trim() !== '').length;
@@ -3069,24 +3081,85 @@ function openDetailCustomer(id) {
     const deadlineDisplay = d.tanggal || '-';
     const editBtn = `<button class="edit-deadline-btn" onclick="openEditDeadlineModal('${id}','customer','${d.tanggal || ''}')" title="Edit deadline">✏️</button>`;
 
+    // 🔥 MODIFIKASI detailContent - TAMBAHKAN BAGIAN PROGRES
     document.getElementById('detailContent').innerHTML = `
-            <div class="detail-header"><div class="detail-avatar">${statusIcon}</div><h3>${escapeHtml(d.nama)}</h3><div class="detail-status">${getStatusBadge(d.status)}</div></div>
-            <div class="detail-body">
-                <div class="detail-info">
-                    ${ownerInfo}
-                    <div class="detail-info-item"><div class="detail-info-icon">🆔</div><div class="detail-info-content"><label>ID Agent</label><div class="value">${escapeHtml(d.agent_id || '-')}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">🏷️</div><div class="detail-info-content"><label>Type/Class</label><div class="value">${escapeHtml(d.agent_type || '-')}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Aplikasi</label><div class="value">${escapeHtml(d.apk || '-')}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                    <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Deadline</label><div class="value">${deadlineDisplay} ${editBtn}</div></div></div>
-                    ${followupInfo}
-                    ${pendingInfo}
-                    <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Status</label><div class="value">${d.status === 'followup' ? 'Follow Up' : d.status === 'baru' ? 'Baru' : d.status}</div></div></div>
-                </div>
-                <div class="detail-actions"><button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>${actionButtons}</div>
+      <div class="detail-header">
+        <div class="detail-avatar">${statusIcon}</div>
+        <h3>${escapeHtml(d.nama)}</h3>
+        <div class="detail-status">${getStatusBadge(d.status)}</div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-info">
+          ${ownerInfo}
+          <div class="detail-info-item">
+            <div class="detail-info-icon">🆔</div>
+            <div class="detail-info-content">
+              <label>ID Agent</label>
+              <div class="value">${escapeHtml(d.agent_id || '-')}</div>
             </div>
-            <div class="detail-footer"><button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button><button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button></div>
-        `;
+          </div>
+          <div class="detail-info-item">
+            <div class="detail-info-icon">🏷️</div>
+            <div class="detail-info-content">
+              <label>Type/Class</label>
+              <div class="value">${escapeHtml(d.agent_type || '-')}</div>
+            </div>
+          </div>
+          <div class="detail-info-item">
+            <div class="detail-info-icon">📱</div>
+            <div class="detail-info-content">
+              <label>Aplikasi</label>
+              <div class="value">${escapeHtml(d.apk || '-')}</div>
+            </div>
+          </div>
+          <div class="detail-info-item">
+            <div class="detail-info-icon">📱</div>
+            <div class="detail-info-content">
+              <label>Nomor WhatsApp</label>
+              <div class="value">${escapeHtml(d.hp)}</div>
+            </div>
+          </div>
+          <div class="detail-info-item">
+            <div class="detail-info-icon">📅</div>
+            <div class="detail-info-content">
+              <label>Deadline</label>
+              <div class="value">${deadlineDisplay} ${editBtn}</div>
+            </div>
+          </div>
+          
+          <!-- 🔥 TAMBAHKAN BAGIAN PROGRES DISINI -->
+          <div class="detail-info-item">
+            <div class="detail-info-icon">🎯</div>
+            <div class="detail-info-content">
+              <label>Total Transaksi Tercapai</label>
+              <div class="value" style="color: ${totalTercapai >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700;">
+                ${totalTercapai > 0 ? '+' : ''}${totalTercapai.toLocaleString()} unit
+              </div>
+            </div>
+          </div>
+          <!-- SAMPAI SINI -->
+          
+          ${followupInfo}
+          ${pendingInfo}
+          <div class="detail-info-item">
+            <div class="detail-info-icon">📌</div>
+            <div class="detail-info-content">
+              <label>Status</label>
+              <div class="value">${d.status === 'followup' ? 'Follow Up' : d.status === 'baru' ? 'Baru' : d.status}</div>
+            </div>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
+          <button class="btn-primary" onclick="openTambahProgres('${id}')">📊 Tambah Progres</button>
+          ${actionButtons}
+        </div>
+      </div>
+      <div class="detail-footer">
+        <button class="btn-outline" onclick="closeModal('detailModal')">❌ Tutup</button>
+        <button class="btn-danger" onclick="deleteCustomer('${id}')">🗑️ Hapus</button>
+      </div>
+    `;
     showModal('detailModal');
   });
 }
@@ -5159,22 +5232,38 @@ document.getElementById('deleteSelectedCommitment')?.addEventListener('click', d
 
 // ========== CHARTS ==========
 function updateChartCustomer(total, closing, pending, followup) {
-  const ctx = document.getElementById('chartCustomer');
-  if (!ctx) return;
-  if (chartCustomer) chartCustomer.destroy();
-  const baru = total - (closing + pending + followup);
-  chartCustomer = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
-      datasets: [{
-        data: [closing, pending, followup, baru],
-        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
-        borderWidth: 0,
-        hoverOffset: 15,
-        cutout: '65%'
-      }]
-    },
+    const ctx = document.getElementById('chartCustomer');
+    if (!ctx) return;
+    if (chartCustomer) chartCustomer.destroy();
+    const baru = total - (closing + pending + followup);
+    
+    // Hitung total transaksi tercapai
+    let totalTercapai = 0;
+    customersData.forEach(customer => {
+        const progres = customer.progres_transaksi;
+        if (progres && progres.total_tercapai !== undefined) {
+            totalTercapai += progres.total_tercapai;
+        }
+    });
+    
+    // Update title chart dengan total tercapai
+    const chartTitle = document.querySelector('#chartCustomer h3');
+    if (chartTitle) {
+        chartTitle.innerHTML = `📊 Followup Agen | 🎯 Total Tercapai: ${totalTercapai.toLocaleString()} unit`;
+    }
+    
+    chartCustomer = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
+            datasets: [{
+                data: [closing, pending, followup, baru],
+                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
+                borderWidth: 0,
+                hoverOffset: 15,
+                cutout: '65%'
+            }]
+        },
     options: {
       responsive: true,
       maintainAspectRatio: true,
@@ -5284,6 +5373,92 @@ function updateChartProspek(baru, dihubungi, negosiasi, tertarik) {
       }
     }
   });
+}
+
+function openTambahProgres(customerId) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px;">
+            <h3>📊 Tambah Progres Transaksi</h3>
+            <div class="modal-subtitle">Catat perubahan jumlah transaksi customer</div>
+            <div style="padding: 0 20px;">
+                <div class="form-group">
+                    <label>Jenis Perubahan <span class="required">*</span></label>
+                    <select id="progresJenis" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+                        <option value="naik">📈 Naik (Transaksi bertambah)</option>
+                        <option value="turun">📉 Turun (Transaksi berkurang)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Perubahan <span class="required">*</span></label>
+                    <input type="number" id="progresJumlah" placeholder="Contoh: 25" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+                    <small>Jumlah kenaikan/turunan transaksi (dalam unit, selalu positif)</small>
+                </div>
+                <div class="form-group">
+                    <label>Keterangan</label>
+                    <textarea id="progresKeterangan" rows="2" placeholder="Contoh: Penambahan outlet baru" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="simpanProgresBtn" class="btn-primary">💾 Simpan Progres</button>
+                <button id="batalProgresBtn" class="btn-outline">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const simpanBtn = modal.querySelector('#simpanProgresBtn');
+    const batalBtn = modal.querySelector('#batalProgresBtn');
+    
+    simpanBtn.onclick = async () => {
+        const jenis = modal.querySelector('#progresJenis').value;
+        const jumlah = parseInt(modal.querySelector('#progresJumlah').value) || 0;
+        const keterangan = modal.querySelector('#progresKeterangan').value;
+        
+        if (jumlah <= 0) {
+            showNotifTop('⚠️ Masukkan jumlah perubahan yang valid (minimal 1 unit)!', true);
+            return;
+        }
+        
+        const doc = await db.collection('customers').doc(customerId).get();
+        const currentData = doc.data();
+        const progresData = currentData.progres_transaksi || { items: [], total_tercapai: 0 };
+        
+        // Hitung total tercapai baru
+        let perubahan = jenis === 'naik' ? jumlah : -jumlah;
+        const newTotalTercapai = (progresData.total_tercapai || 0) + perubahan;
+        
+        const newItem = {
+            tanggal: getTodayDate(),
+            jenis: jenis,
+            jumlah: jumlah,
+            keterangan: keterangan,
+            created_at: new Date().toISOString()
+        };
+        
+        await db.collection('customers').doc(customerId).update({
+            progres_transaksi: {
+                items: [...(progresData.items || []), newItem],
+                total_tercapai: newTotalTercapai
+            },
+            updated_at: new Date().toISOString()
+        });
+        
+        showNotifTop(`✅ Progres berhasil ditambahkan! Total transaksi tercapai: ${newTotalTercapai > 0 ? '+' : ''}${newTotalTercapai} unit`);
+        modal.remove();
+        
+        // Refresh data dan update target
+        await loadAllData();
+        await updateTargetDisplay();
+        closeModal('detailModal');
+    };
+    
+    batalBtn.onclick = () => modal.remove();
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
 }
 
 // ========== LOAD ALL DATA ==========
@@ -7672,6 +7847,80 @@ function downloadProdukExample() {
   XLSX.writeFile(wb, 'contoh_produk.xlsx');
 }
 
+// Hitung total transaksi tercapai dari semua customer
+async function hitungTotalTransaksiTercapai() {
+    if (!currentUser) return 0;
+    
+    let query = db.collection('customers');
+    if (currentUserRole !== 'owner') {
+        query = query.where('user_id', '==', currentUser.uid);
+    }
+    
+    const snapshot = await query.get();
+    let totalTercapai = 0;
+    
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const progres = data.progres_transaksi;
+        if (progres && progres.total_tercapai !== undefined) {
+            totalTercapai += progres.total_tercapai;
+        }
+    });
+    
+    return totalTercapai;
+}
+
+// Update target display dengan total transaksi tercapai
+async function updateTargetDisplay() {
+    console.log('updateTargetDisplay dipanggil, targetData:', targetData);
+    
+    const currentAgent = agentsData.filter(a => a.agent_type === 'AGENT').length;
+    const currentKoor = agentsData.filter(a => a.agent_type === 'Koordinator Wilayah (KORWIL)' || a.agent_type === 'SUB KORWIL').length;
+    const currentCA = agentsData.filter(a => a.agent_type === 'CollectingAgent (CA)' || a.agent_type === 'SUB CA').length;
+    
+    // 🔥 HITUNG TOTAL TRANSAKSI TERCAPAI DARI PROGRES CUSTOMER
+    let currentTransaksi = 0;
+    
+    // Hitung dari progres customer
+    let query = db.collection('customers');
+    if (currentUserRole !== 'owner') {
+        query = query.where('user_id', '==', currentUser.uid);
+    }
+    const customerSnapshot = await query.get();
+    customerSnapshot.forEach(doc => {
+        const data = doc.data();
+        const progres = data.progres_transaksi;
+        if (progres && progres.total_tercapai !== undefined) {
+            currentTransaksi += progres.total_tercapai;
+        }
+    });
+    
+    // Simpan ke global
+    window.totalTransaksiGlobal = currentTransaksi;
+    
+    console.log('Pencapaian:', {
+        currentAgent,
+        currentKoor,
+        currentCA,
+        currentTransaksi
+    });
+    
+    // Update UI
+    const targetTransaksiEl = document.getElementById('targetTransaksiValue');
+    if (targetTransaksiEl) targetTransaksiEl.innerText = (targetData.transaksi || 0).toLocaleString('id-ID');
+    
+    const reachedTransaksiEl = document.getElementById('targetTransaksiReached');
+    if (reachedTransaksiEl) reachedTransaksiEl.innerText = currentTransaksi.toLocaleString('id-ID');
+    
+    const transaksiPercent = targetData.transaksi ? Math.min((currentTransaksi / targetData.transaksi) * 100, 100) : 0;
+    const progressTransaksi = document.getElementById('targetTransaksiProgress');
+    if (progressTransaksi) progressTransaksi.style.width = transaksiPercent + '%';
+    
+    // Update chart
+    updateTargetChart([agentPercent, koorPercent, caPercent, transaksiPercent]);
+    updateTrendChart();
+}
+
 // Event listener untuk produk
 document.getElementById('exportProdukExcelBtn')?.addEventListener('click', exportProdukToExcel);
 setupProdukImport();
@@ -7735,8 +7984,18 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
       const duplicates = [];
       const firstRow = json[0];
       const columnMap = {};
+      // 🔥 TAMBAHKAN SETELAH columnMap selesai (sekitar baris 7580)
+// Deteksi kolom progres untuk customer
+let progresJenisCol = null;
+let progresJumlahCol = null;
+let progresKeteranganCol = null;
 
-      if (importType === 'customer') {
+if (importType === 'customer') {
+    for (let key in firstRow) {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey === 'progres_jenis' || lowerKey === 'jenis_progres') progresJenisCol = key;
+        if (lowerKey === 'progres_jumlah' || lowerKey === 'jumlah_progres') progresJumlahCol = key;
+        if (lowerKey === 'progres_keterangan' || lowerKey === 'keterangan_progres') progresKeteranganCol = key;
         const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
         const possibleNama = ['nama', 'Nama', 'name', 'Name', 'customer_name', 'CustomerName'];
         const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
@@ -7781,6 +8040,32 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           let hp = row[columnMap.hp];
           let apk = columnMap.apk ? row[columnMap.apk] : null;
           let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
+
+          let progresJenis = '';
+        let progresJumlah = 0;
+        let progresKeterangan = '';
+        
+        if (progresJenisCol && row[progresJenisCol]) {
+            const jenisInput = String(row[progresJenisCol]).toLowerCase();
+            if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+') {
+                progresJenis = 'naik';
+            } else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-') {
+                progresJenis = 'turun';
+            }
+        }
+        
+        if (progresJumlahCol && row[progresJumlahCol]) {
+            progresJumlah = parseInt(String(row[progresJumlahCol]).replace(/[^0-9]/g, '')) || 0;
+        }
+        
+        if (progresKeteranganCol && row[progresKeteranganCol]) {
+            progresKeterangan = String(row[progresKeteranganCol]).trim();
+        }
+        
+        // Hitung total tercapai
+        let totalTercapai = 0;
+        if (progresJenis === 'naik') totalTercapai = progresJumlah;
+        else if (progresJenis === 'turun') totalTercapai = -progresJumlah;
 
           if (!nama || !hp) {
             failed++;
@@ -7834,19 +8119,33 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           if (deadline && isNaN(new Date(deadline).getTime())) formattedDeadline = getTodayDate();
 
           if (importType === 'customer') {
-            await db.collection('customers').add({
-              agent_id: agentId.toString().trim().toUpperCase(),
-              nama: nama.toString().trim(),
-              hp: cleanHp,
-              apk: apk.toString().trim(),
-              tanggal: formattedDeadline,
-              status: 'baru',
-              user_id: currentUser.uid,
-              created_at: new Date().toISOString(),
-              followup_data: null,
-              pending_data: []
-            });
-          } else {
+    // Buat progres item hanya jika ada data progres
+    const progresItem = (progresJenis && progresJumlah > 0) ? {
+        tanggal: formattedDeadline,
+        jenis: progresJenis,
+        jumlah: progresJumlah,
+        keterangan: progresKeterangan,
+        created_at: new Date().toISOString()
+    } : null;
+    
+    await db.collection('customers').add({
+        agent_id: agentId.toString().trim().toUpperCase(),
+        nama: nama.toString().trim(),
+        hp: cleanHp,
+        apk: apk.toString().trim(),
+        tanggal: formattedDeadline,
+        status: 'baru',
+        progres_transaksi: {
+            items: progresItem ? [progresItem] : [],
+            total_tercapai: totalTercapai
+        },
+        user_id: currentUser.uid,
+        created_at: new Date().toISOString(),
+        followup_data: null,
+        pending_data: []
+    });
+}
+          else {
             await db.collection('prospek').add({
               nama: nama.toString().trim(),
               hp: cleanHp,
@@ -7891,17 +8190,29 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
 });
 
 document.getElementById('downloadCustomerExample')?.addEventListener('click', () => {
-  const data = [{
-    agent_id: 'AG-001',
-    nama: 'Budi Santoso',
-    hp: '6281234567890',
-    apk: 'GNP',
-    deadline: getTodayDate()
-  }];
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Customer');
-  XLSX.writeFile(wb, 'contoh_customer.xlsx');
+    const data = [{
+        agent_id: 'AG-001',
+        nama: 'Budi Santoso',
+        hp: '6281234567890',
+        apk: 'GNP',
+        deadline: getTodayDate(),
+        progres_jenis: 'naik',
+        progres_jumlah: 25,
+        progres_keterangan: 'Penambahan outlet baru'
+    }, {
+        agent_id: 'AG-002',
+        nama: 'Siti Aminah',
+        hp: '6281234567891',
+        apk: 'BSB',
+        deadline: getTodayDate(),
+        progres_jenis: 'turun',
+        progres_jumlah: 8,
+        progres_keterangan: 'Penurunan order'
+    }];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Customer');
+    XLSX.writeFile(wb, 'contoh_customer.xlsx');
 });
 document.getElementById('downloadProspekExample')?.addEventListener('click', () => {
   const data = [{
