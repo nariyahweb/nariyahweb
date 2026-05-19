@@ -18,6 +18,8 @@ const DB_CONFIG = {
   SEARCH_LIMIT: 50         // Maksimal hasil pencarian
 };
 
+const LIMIT_DATA = DB_CONFIG.MAX_QUERY_LIMIT;
+
 // variabel global
 db.settings({
   persistence: false
@@ -4056,66 +4058,84 @@ async function performSearch() {
     return;
   }
 
+  const searchCustomer = document.getElementById('searchCustomer')?.checked || false;
+  const searchProspek = document.getElementById('searchProspek')?.checked || false;
+  const searchClosing = document.getElementById('searchClosing')?.checked || false;
+  const searchTidak = document.getElementById('searchTidak')?.checked || false;
+  const searchNomorSalah = document.getElementById('searchNomorSalah')?.checked || false;
+  const searchCommitment = document.getElementById('searchCommitment')?.checked || false;
+
   const results = [];
   const today = getTodayDate();
+  const SEARCH_LIMIT = DB_CONFIG.SEARCH_LIMIT || 50;
+
+  // Helper untuk delay
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Buat query berdasarkan role
+  let customersQuery, prospekQuery, closingQuery, tidakQuery, nomorSalahQuery, commitmentQuery;
   
-  // 🔥 PERBAIKAN: Batasi hasil pencarian
-  const SEARCH_LIMIT = 50;
-  
-  // Fungsi helper untuk query dengan delay
-  const searchCollection = async (query, type, badgeClass, badgeName, getDetail) => {
-    const limitedQuery = query.limit(SEARCH_LIMIT);
-    const snapshot = await limitedQuery.get();
-    
+  if (currentUserRole === 'owner') {
+    customersQuery = db.collection('customers');
+    prospekQuery = db.collection('prospek');
+    closingQuery = db.collection('db_closing');
+    tidakQuery = db.collection('db_tidak_tertarik');
+    nomorSalahQuery = db.collection('nomor_salah');
+    commitmentQuery = db.collection('db_commitment');
+  } else {
+    customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid);
+    prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid);
+    closingQuery = db.collection('db_closing').where('user_id', '==', currentUser.uid);
+    tidakQuery = db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid);
+    nomorSalahQuery = db.collection('nomor_salah').where('user_id', '==', currentUser.uid);
+    commitmentQuery = db.collection('db_commitment').where('user_id', '==', currentUser.uid);
+  }
+
+  // Search Customers
+  if (searchCustomer) {
+    const snapshot = await customersQuery.limit(SEARCH_LIMIT).get();
     for (const doc of snapshot.docs) {
       const data = doc.data();
-      const searchText = `${data.nama || ''} ${data.hp || ''} ${data.agent_id || ''}`.toLowerCase();
+      const searchText = `${data.agent_id || ''} ${data.nama || ''} ${data.hp || ''}`.toLowerCase();
       if (searchText.includes(keyword)) {
         results.push({
           id: doc.id,
-          type: type,
+          type: 'customer',
           title: data.nama,
           subtitle: data.hp,
-          detail: getDetail(data),
-          badge: badgeName,
-          badgeClass: badgeClass
+          detail: `ID: ${data.agent_id || '-'} | Deadline: ${data.tanggal || '-'}`,
+          badge: 'Followup Agen',
+          badgeClass: 'badge-customer'
         });
       }
     }
-    
-    // 🔥 PERBAIKAN: Delay antar collection
-    await new Promise(resolve => setTimeout(resolve, 100));
-  };
+    await delay(100);
+  }
 
+  // Search Prospek
   if (searchProspek) {
-    const snapshot = await prospekQuery.get();
+    const snapshot = await prospekQuery.limit(SEARCH_LIMIT).get();
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
       if (searchText.includes(keyword)) {
-        let ownerName = '';
-        if (currentUserRole === 'owner' && data.user_id !== currentUser.uid) {
-          const userDoc = await db.collection('users').doc(data.user_id).get();
-          ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
-        }
-        const isOverdue = data.deadline && data.deadline < today;
         results.push({
           id: doc.id,
           type: 'prospek',
-          title: data.nama + ownerName,
+          title: data.nama,
           subtitle: data.hp,
           detail: `Status: ${data.status || 'Baru'} | Deadline: ${data.deadline || '-'}`,
-          deadline: data.deadline,
-          isOverdue: isOverdue,
           badge: 'Prospek Agen',
           badgeClass: 'badge-prospek'
         });
       }
     }
+    await delay(100);
   }
 
+  // Search Closing
   if (searchClosing) {
-    const snapshot = await closingQuery.get();
+    const snapshot = await closingQuery.limit(SEARCH_LIMIT).get();
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
@@ -4125,16 +4145,18 @@ async function performSearch() {
           type: 'closing',
           title: data.nama,
           subtitle: data.hp,
-          detail: `Closing: ${new Date(data.closing_date).toLocaleDateString('id-ID')}`,
+          detail: `Closing: ${data.closing_date ? new Date(data.closing_date).toLocaleDateString('id-ID') : '-'}`,
           badge: 'DB Closing',
           badgeClass: 'badge-closing'
         });
       }
     }
+    await delay(100);
   }
 
+  // Search Tidak Tertarik
   if (searchTidak) {
-    const snapshot = await tidakQuery.get();
+    const snapshot = await tidakQuery.limit(SEARCH_LIMIT).get();
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
@@ -4144,16 +4166,18 @@ async function performSearch() {
           type: 'tidak',
           title: data.nama,
           subtitle: data.hp,
-          detail: `Tanggal: ${new Date(data.tanggal).toLocaleDateString('id-ID')} | Alasan: ${data.alasan || 'Tidak tertarik'}`,
+          detail: `Tanggal: ${data.tanggal ? new Date(data.tanggal).toLocaleDateString('id-ID') : '-'}`,
           badge: 'DB Tidak Tertarik',
           badgeClass: 'badge-tidak'
         });
       }
     }
+    await delay(100);
   }
 
+  // Search Nomor Salah
   if (searchNomorSalah) {
-    const snapshot = await nomorSalahQuery.get();
+    const snapshot = await nomorSalahQuery.limit(SEARCH_LIMIT).get();
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
@@ -4163,16 +4187,18 @@ async function performSearch() {
           type: 'nomor_salah',
           title: data.nama,
           subtitle: data.hp,
-          detail: `Tanggal: ${new Date(data.deleted_at).toLocaleDateString('id-ID')} | Alasan: ${data.alasan || 'Nomor salah'}`,
+          detail: `Alasan: ${data.alasan || '-'}`,
           badge: 'DB Nomor Salah',
           badgeClass: 'badge-nomor-salah'
         });
       }
     }
+    await delay(100);
   }
 
+  // Search Commitment
   if (searchCommitment) {
-    const snapshot = await commitmentQuery.get();
+    const snapshot = await commitmentQuery.limit(SEARCH_LIMIT).get();
     for (const doc of snapshot.docs) {
       const data = doc.data();
       const searchText = `${data.nama || ''} ${data.hp || ''}`.toLowerCase();
@@ -4182,46 +4208,43 @@ async function performSearch() {
           type: 'commitment',
           title: data.nama,
           subtitle: data.hp,
-          detail: `Komitmen: ${new Date(data.committed_at).toLocaleDateString('id-ID')} | Agent: ${data.agent_id || '-'}`,
+          detail: `Agent: ${data.agent_id || '-'}`,
           badge: 'DB Commitment',
           badgeClass: 'badge-commitment'
         });
       }
     }
+    await delay(100);
   }
 
+  // Tampilkan hasil
   const resultsContainer = document.getElementById('searchResults');
+  if (!resultsContainer) return;
+
   if (results.length === 0) {
     resultsContainer.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">🔍 Tidak ada data yang ditemukan</p>';
     return;
   }
 
-  results.sort((a, b) => {
-    if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
-    if (a.deadline) return -1;
-    if (b.deadline) return 1;
-    return 0;
-  });
+  resultsContainer.innerHTML = results.map(result => `
+    <div class="search-result-item" data-id="${result.id}" data-type="${result.type}">
+      <div class="search-result-info">
+        <h4>${escapeHtml(result.title)}</h4>
+        <p>${escapeHtml(result.subtitle)}</p>
+        <small>${escapeHtml(result.detail)}</small>
+      </div>
+      <span class="search-result-badge ${result.badgeClass}">${result.badge}</span>
+    </div>
+  `).join('');
 
-  resultsContainer.innerHTML = results.map(result => {
-    const deadlineClass = result.isOverdue ? 'deadline-overdue' : (result.deadline === today ? 'deadline-today' : '');
-    return `
-            <div class="search-result-item ${deadlineClass}" data-id="${result.id}" data-type="${result.type}">
-                <div class="search-result-info">
-                    <h4>${escapeHtml(result.title)}</h4>
-                    <p>${escapeHtml(result.subtitle)}</p>
-                    <small>${escapeHtml(result.detail)}</small>
-                </div>
-                <span class="search-result-badge ${result.badgeClass}">${result.badge}</span>
-            </div>
-        `;
-  }).join('');
-
+  // Event listener untuk hasil pencarian
   document.querySelectorAll('.search-result-item').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.id;
       const type = el.dataset.type;
-      openSearchResultDetail(id, type);
+      if (type === 'customer') openDetailCustomer(id);
+      else if (type === 'prospek') openDetailProspek(id);
+      else openDBDetailModal(id, type);
     });
   });
 }
@@ -5161,13 +5184,18 @@ function loadAllData() {
   let customersQuery = db.collection('customers');
   let prospekQuery = db.collection('prospek');
 
-  if (!isOwner) {
-    customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid);
-    prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid);
-    .limit(LIMIT_DATA); // ← TAMBAHKAN LIMIT
-  } else {
-    prospekQuery = db.collection('prospek').limit(LIMIT_DATA); // ← TAMBAHKAN LIMIT
-  }
+  // KODE YANG BENAR:
+// 🔥 TAMBAHKAN INI DULU di bagian atas file (setelah DB_CONFIG)
+const LIMIT_DATA = DB_CONFIG.MAX_QUERY_LIMIT || 500;
+
+// Kemudian di dalam loadAllData(), ganti dengan:
+if (!isOwner) {
+    customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid).limit(LIMIT_DATA);
+    prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid).limit(LIMIT_DATA);
+} else {
+    customersQuery = db.collection('customers').limit(LIMIT_DATA);
+    prospekQuery = db.collection('prospek').limit(LIMIT_DATA);
+}
 
   customersQuery.onSnapshot(async snap => {
     let total = 0,
