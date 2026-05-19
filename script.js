@@ -3147,35 +3147,31 @@ function openFollowupConfirm(id) {
   console.log('openFollowupConfirm dipanggil untuk ID:', id);
   currentPendingId = id;
   
-  // Ambil elemen modal
   const modal = document.getElementById('followupConfirmModal');
   if (!modal) {
     console.error('Modal followupConfirmModal tidak ditemukan!');
     return;
   }
   
-  // Ambil elemen checkbox dan tombol dari DOM (langsung, tanpa clone dulu)
   const cb1 = document.getElementById('followup_terkirim');
   const cb2 = document.getElementById('followup_dibalas');
   const yesBtn = document.getElementById('followupConfirmYes');
   const noBtn = document.getElementById('followupConfirmNo');
   
   if (!cb1 || !cb2 || !yesBtn || !noBtn) {
-    console.error('Elemen checkbox atau tombol tidak ditemukan!', {cb1, cb2, yesBtn, noBtn});
+    console.error('Elemen tidak ditemukan!');
     return;
   }
   
   // Reset checkbox
   cb1.checked = false;
   cb2.checked = false;
-  
-  // Reset tombol YES
   yesBtn.disabled = true;
   yesBtn.textContent = '✅ Lanjut ke Pending';
   noBtn.disabled = false;
   noBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
   
-  // Hapus semua event listener lama dengan replace (cara paling bersih)
+  // Hapus event listener lama dengan replace
   const newCb1 = cb1.cloneNode(true);
   const newCb2 = cb2.cloneNode(true);
   const newYesBtn = yesBtn.cloneNode(true);
@@ -3186,22 +3182,31 @@ function openFollowupConfirm(id) {
   yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
   noBtn.parentNode.replaceChild(newNoBtn, noBtn);
   
-  // Ambil referensi baru
   const finalCb1 = document.getElementById('followup_terkirim');
   const finalCb2 = document.getElementById('followup_dibalas');
   const finalYesBtn = document.getElementById('followupConfirmYes');
   const finalNoBtn = document.getElementById('followupConfirmNo');
   
-  // Fungsi untuk update tombol YES
   function updateYesButton() {
     const isChecked = finalCb1.checked && finalCb2.checked;
     finalYesBtn.disabled = !isChecked;
     console.log('Checkbox status - terkirim:', finalCb1.checked, 'dibalas:', finalCb2.checked, 'disabled:', finalYesBtn.disabled);
   }
   
-  // Pasang event listener langsung dengan onclick (bukan addEventListener)
   finalCb1.onclick = updateYesButton;
   finalCb2.onclick = updateYesButton;
+  
+  // Fungsi untuk menutup modal dengan aman
+  function safeCloseModal() {
+    try {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
+      console.log('Modal followupConfirmModal ditutup');
+    } catch(e) {
+      console.error('Error closing modal:', e);
+    }
+  }
   
   // Tombol YES
   finalYesBtn.onclick = function() {
@@ -3212,44 +3217,49 @@ function openFollowupConfirm(id) {
       return;
     }
     
-    // Nonaktifkan tombol
     finalYesBtn.disabled = true;
     finalYesBtn.textContent = '⏳ Memproses...';
     finalNoBtn.disabled = true;
     
-    db.collection('customers').doc(id).get().then(doc => {
-      if (!doc.exists) {
-        showNotifTop('❌ Data customer tidak ditemukan!', true);
-        finalYesBtn.disabled = false;
-        finalYesBtn.textContent = '✅ Lanjut ke Pending';
-        finalNoBtn.disabled = false;
-        return;
-      }
-      
-      const currentDeadline = doc.data().tanggal || getTodayDate();
-      const newDeadline = addDaysToDate(currentDeadline, 1);
-      
-      return db.collection('customers').doc(id).update({
-        followup_data: {
-          terkirim: true,
-          dibalas: true,
-          timestamp: new Date().toISOString()
-        },
-        status: 'pending',
-        tanggal: newDeadline
-      }).then(() => {
-        closeModal('followupConfirmModal');
-        showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
-        loadAllData();
-        closeModal('detailModal');
-      });
-    }).catch(error => {
-      console.error('Error update customer:', error);
-      showNotifTop('❌ Gagal: ' + error.message, true);
-      finalYesBtn.disabled = false;
-      finalYesBtn.textContent = '✅ Lanjut ke Pending';
-      finalNoBtn.disabled = false;
-    });
+    // Gunakan timeout untuk memberi waktu UI update
+    setTimeout(() => {
+      db.collection('customers').doc(id).get()
+        .then(doc => {
+          if (!doc.exists) {
+            throw new Error('Data customer tidak ditemukan');
+          }
+          
+          const currentDeadline = doc.data().tanggal || getTodayDate();
+          const newDeadline = addDaysToDate(currentDeadline, 1);
+          
+          return db.collection('customers').doc(id).update({
+            followup_data: {
+              terkirim: true,
+              dibalas: true,
+              timestamp: new Date().toISOString()
+            },
+            status: 'pending',
+            tanggal: newDeadline
+          }).then(() => {
+            // Tutup modal TERLEBIH DAHULU sebelum notifikasi
+            safeCloseModal();
+            showNotifTop(`✅ Customer dipindahkan ke Pending. Deadline +1 hari menjadi ${newDeadline}`);
+            
+            // Refresh data dengan delay untuk menghindari race condition
+            setTimeout(() => {
+              loadAllData();
+              closeModal('detailModal');
+            }, 500);
+          });
+        })
+        .catch(error => {
+          console.error('Error update customer:', error);
+          showNotifTop('❌ Gagal: ' + error.message, true);
+          finalYesBtn.disabled = false;
+          finalYesBtn.textContent = '✅ Lanjut ke Pending';
+          finalNoBtn.disabled = false;
+        });
+    }, 50);
   };
   
   // Tombol NO
@@ -3260,56 +3270,57 @@ function openFollowupConfirm(id) {
     finalNoBtn.textContent = '⏳ Memproses...';
     finalYesBtn.disabled = true;
     
-    db.collection('customers').doc(id).get().then(doc => {
-      if (!doc.exists) {
-        showNotifTop('❌ Data customer tidak ditemukan!', true);
-        finalNoBtn.disabled = false;
-        finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
-        finalYesBtn.disabled = false;
-        return;
-      }
-      
-      showConfirmDialog(
-        'Pindahkan ke Database Nomor Salah?',
-        `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`,
-        () => {
-          db.collection('nomor_salah').add({
-            ...doc.data(),
-            alasan: 'Nomor tidak bisa dihubungi / tidak aktif',
-            deleted_at: new Date().toISOString(),
-            user_id: doc.data().user_id
-          }).then(() => {
-            return db.collection('customers').doc(id).delete();
-          }).then(() => {
-            showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
-            closeModal('followupConfirmModal');
-            closeModal('detailModal');
-            loadAllData();
-          }).catch(err => {
-            showNotifTop('❌ Gagal: ' + err.message, true);
-            finalNoBtn.disabled = false;
-            finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
-            finalYesBtn.disabled = false;
-          });
-        },
-        () => {
-          // Batal
+    setTimeout(() => {
+      db.collection('customers').doc(id).get()
+        .then(doc => {
+          if (!doc.exists) {
+            throw new Error('Data customer tidak ditemukan');
+          }
+          
+          showConfirmDialog(
+            'Pindahkan ke Database Nomor Salah?',
+            `Apakah Anda yakin nomor "${escapeHtml(doc.data().hp)}" milik "${escapeHtml(doc.data().nama)}" tidak dapat dihubungi?`,
+            () => {
+              db.collection('nomor_salah').add({
+                ...doc.data(),
+                alasan: 'Nomor tidak bisa dihubungi / tidak aktif',
+                deleted_at: new Date().toISOString(),
+                user_id: doc.data().user_id
+              })
+              .then(() => db.collection('customers').doc(id).delete())
+              .then(() => {
+                safeCloseModal();
+                showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
+                setTimeout(() => {
+                  closeModal('detailModal');
+                  loadAllData();
+                }, 500);
+              })
+              .catch(err => {
+                showNotifTop('❌ Gagal: ' + err.message, true);
+                finalNoBtn.disabled = false;
+                finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
+                finalYesBtn.disabled = false;
+              });
+            },
+            () => {
+              finalNoBtn.disabled = false;
+              finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
+              finalYesBtn.disabled = false;
+              updateYesButton();
+            }
+          );
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          showNotifTop('❌ Gagal: ' + error.message, true);
           finalNoBtn.disabled = false;
           finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
           finalYesBtn.disabled = false;
-          updateYesButton();
-        }
-      );
-    }).catch(error => {
-      console.error('Error:', error);
-      showNotifTop('❌ Gagal: ' + error.message, true);
-      finalNoBtn.disabled = false;
-      finalNoBtn.textContent = '📵 Nomor salah/Tidak bisa dihubungi';
-      finalYesBtn.disabled = false;
-    });
+        });
+    }, 50);
   };
   
-  // Tampilkan modal
   modal.style.display = 'flex';
 }
 
@@ -5286,7 +5297,7 @@ function loadAllData() {
 
   // KODE YANG BENAR:
 // 🔥 TAMBAHKAN INI DULU di bagian atas file (setelah DB_CONFIG)
-const LIMIT_DATA = DB_CONFIG.MAX_QUERY_LIMIT || 500;
+const LIMIT_DATA = DB_CONFIG.MAX_QUERY_LIMIT || 100;
 
 // Kemudian di dalam loadAllData(), ganti dengan:
 if (!isOwner) {
