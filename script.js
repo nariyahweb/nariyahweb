@@ -7960,17 +7960,15 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
   importBtn.textContent = '⏳ Memproses...';
   importBtn.disabled = true;
   const reader = new FileReader();
+  
   reader.onload = async function(e) {
     try {
       const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, {
-        type: 'array'
-      });
+      const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(worksheet, {
-        defval: ""
-      });
+      const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      
       if (!json || json.length === 0) {
         showNotif('File Excel kosong!', true);
         importBtn.textContent = originalText;
@@ -7978,29 +7976,20 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
         return;
       }
 
-      let success = 0,
-        failed = 0;
+      let success = 0, failed = 0;
       const errors = [];
       const duplicates = [];
       const firstRow = json[0];
       const columnMap = {};
-      // 🔥 TAMBAHKAN SETELAH columnMap selesai (sekitar baris 7580)
-// Deteksi kolom progres untuk customer
-let progresJenisCol = null;
-let progresJumlahCol = null;
-let progresKeteranganCol = null;
-
-if (importType === 'customer') {
-    for (let key in firstRow) {
-        const lowerKey = key.toLowerCase();
-        if (lowerKey === 'progres_jenis' || lowerKey === 'jenis_progres') progresJenisCol = key;
-        if (lowerKey === 'progres_jumlah' || lowerKey === 'jumlah_progres') progresJumlahCol = key;
-        if (lowerKey === 'progres_keterangan' || lowerKey === 'keterangan_progres') progresKeteranganCol = key;
+      
+      // 🔥 DETEKSI KOLOM STANDAR
+      if (importType === 'customer') {
         const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
         const possibleNama = ['nama', 'Nama', 'name', 'Name', 'customer_name', 'CustomerName'];
         const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
         const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app'];
         const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
+        
         for (let key in firstRow) {
           const lowerKey = key.toLowerCase();
           if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
@@ -8009,6 +7998,7 @@ if (importType === 'customer') {
           if (possibleApk.some(p => p.toLowerCase() === lowerKey)) columnMap.apk = key;
           if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
         }
+        
         if (!columnMap.agentId || !columnMap.nama || !columnMap.hp || !columnMap.apk) {
           showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: agent_id, nama, hp, apk, deadline (opsional)', true);
           importBtn.textContent = originalText;
@@ -8019,12 +8009,14 @@ if (importType === 'customer') {
         const possibleNama = ['nama', 'Nama', 'name', 'Name', 'prospek_name', 'ProspekName'];
         const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
         const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
+        
         for (let key in firstRow) {
           const lowerKey = key.toLowerCase();
           if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
           if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
           if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
         }
+        
         if (!columnMap.nama || !columnMap.hp) {
           showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: nama, hp, deadline (opsional)', true);
           importBtn.textContent = originalText;
@@ -8032,7 +8024,22 @@ if (importType === 'customer') {
           return;
         }
       }
-
+      
+      // 🔥 DETEKSI KOLOM PROGRES (HANYA UNTUK CUSTOMER)
+      let progresJenisCol = null;
+      let progresJumlahCol = null;
+      let progresKeteranganCol = null;
+      
+      if (importType === 'customer') {
+        for (let key in firstRow) {
+          const lowerKey = key.toLowerCase();
+          if (lowerKey === 'progres_jenis' || lowerKey === 'jenis_progres') progresJenisCol = key;
+          if (lowerKey === 'progres_jumlah' || lowerKey === 'jumlah_progres') progresJumlahCol = key;
+          if (lowerKey === 'progres_keterangan' || lowerKey === 'keterangan_progres') progresKeteranganCol = key;
+        }
+      }
+      
+      // 🔥 LOOP DATA
       for (let row of json) {
         try {
           let agentId = columnMap.agentId ? row[columnMap.agentId] : null;
@@ -8040,44 +8047,47 @@ if (importType === 'customer') {
           let hp = row[columnMap.hp];
           let apk = columnMap.apk ? row[columnMap.apk] : null;
           let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
-
+          
+          // Ambil nilai progres
           let progresJenis = '';
-        let progresJumlah = 0;
-        let progresKeterangan = '';
-        
-        if (progresJenisCol && row[progresJenisCol]) {
+          let progresJumlah = 0;
+          let progresKeterangan = '';
+          let totalTercapai = 0;
+          
+          if (progresJenisCol && row[progresJenisCol]) {
             const jenisInput = String(row[progresJenisCol]).toLowerCase();
             if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+') {
-                progresJenis = 'naik';
+              progresJenis = 'naik';
             } else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-') {
-                progresJenis = 'turun';
+              progresJenis = 'turun';
             }
-        }
-        
-        if (progresJumlahCol && row[progresJumlahCol]) {
+          }
+          
+          if (progresJumlahCol && row[progresJumlahCol]) {
             progresJumlah = parseInt(String(row[progresJumlahCol]).replace(/[^0-9]/g, '')) || 0;
-        }
-        
-        if (progresKeteranganCol && row[progresKeteranganCol]) {
+          }
+          
+          if (progresKeteranganCol && row[progresKeteranganCol]) {
             progresKeterangan = String(row[progresKeteranganCol]).trim();
-        }
-        
-        // Hitung total tercapai
-        let totalTercapai = 0;
-        if (progresJenis === 'naik') totalTercapai = progresJumlah;
-        else if (progresJenis === 'turun') totalTercapai = -progresJumlah;
-
+          }
+          
+          if (progresJenis === 'naik') totalTercapai = progresJumlah;
+          else if (progresJenis === 'turun') totalTercapai = -progresJumlah;
+          
+          // Validasi data
           if (!nama || !hp) {
             failed++;
             errors.push(`Baris ke-${json.indexOf(row)+2}: Nama atau HP kosong`);
             continue;
           }
+          
           if (importType === 'customer' && (!agentId || !apk)) {
             failed++;
             errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent atau Aplikasi kosong`);
             continue;
           }
-
+          
+          // Format HP
           let cleanHp = hp.toString().trim();
           cleanHp = cleanHp.replace(/[^\d+]/g, '');
           if (!cleanHp.startsWith('+')) {
@@ -8086,14 +8096,11 @@ if (importType === 'customer') {
             else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
             else cleanHp = '+' + cleanHp.replace(/^\+/, '');
           }
-
+          
           // Cek duplikat
           let isDuplicate = false;
           if (importType === 'customer') {
-            const {
-              duplicateAgent,
-              duplicateHp
-            } = await checkDuplicateCustomer(agentId, cleanHp);
+            const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
             if (duplicateAgent) {
               duplicates.push(`ID Agent ${agentId} sudah terdaftar oleh ${duplicateAgent.owner}`);
               isDuplicate = true;
@@ -8109,43 +8116,42 @@ if (importType === 'customer') {
               isDuplicate = true;
             }
           }
-
+          
           if (isDuplicate) {
             failed++;
             continue;
           }
-
+          
           let formattedDeadline = deadline ? new Date(deadline).toISOString().split('T')[0] : getTodayDate();
           if (deadline && isNaN(new Date(deadline).getTime())) formattedDeadline = getTodayDate();
-
+          
+          // 🔥 SIMPAN KE DATABASE
           if (importType === 'customer') {
-    // Buat progres item hanya jika ada data progres
-    const progresItem = (progresJenis && progresJumlah > 0) ? {
-        tanggal: formattedDeadline,
-        jenis: progresJenis,
-        jumlah: progresJumlah,
-        keterangan: progresKeterangan,
-        created_at: new Date().toISOString()
-    } : null;
-    
-    await db.collection('customers').add({
-        agent_id: agentId.toString().trim().toUpperCase(),
-        nama: nama.toString().trim(),
-        hp: cleanHp,
-        apk: apk.toString().trim(),
-        tanggal: formattedDeadline,
-        status: 'baru',
-        progres_transaksi: {
-            items: progresItem ? [progresItem] : [],
-            total_tercapai: totalTercapai
-        },
-        user_id: currentUser.uid,
-        created_at: new Date().toISOString(),
-        followup_data: null,
-        pending_data: []
-    });
-}
-          else {
+            const progresItem = (progresJenis && progresJumlah > 0) ? {
+              tanggal: formattedDeadline,
+              jenis: progresJenis,
+              jumlah: progresJumlah,
+              keterangan: progresKeterangan,
+              created_at: new Date().toISOString()
+            } : null;
+            
+            await db.collection('customers').add({
+              agent_id: agentId.toString().trim().toUpperCase(),
+              nama: nama.toString().trim(),
+              hp: cleanHp,
+              apk: apk.toString().trim(),
+              tanggal: formattedDeadline,
+              status: 'baru',
+              progres_transaksi: {
+                items: progresItem ? [progresItem] : [],
+                total_tercapai: totalTercapai
+              },
+              user_id: currentUser.uid,
+              created_at: new Date().toISOString(),
+              followup_data: null,
+              pending_data: []
+            });
+          } else {
             await db.collection('prospek').add({
               nama: nama.toString().trim(),
               hp: cleanHp,
@@ -8158,21 +8164,29 @@ if (importType === 'customer') {
             });
           }
           success++;
+          
         } catch (rowError) {
           failed++;
           errors.push(`Baris ke-${json.indexOf(row)+2}: ${rowError.message}`);
         }
       }
-
+      
       let resultMsg = `✅ Selesai!\nBerhasil: ${success}\nGagal: ${failed}`;
-      if (duplicates.length > 0) resultMsg += `\n\n⏭ Data duplikat dilewati:\n${duplicates.slice(0,5).join('\n')}${duplicates.length>5?`\n... dan ${duplicates.length-5} lainnya`:''}`;
-      if (errors.length > 0 && errors.length <= 5) resultMsg += `\n\nDetail error:\n${errors.join('\n')}`;
-      else if (errors.length > 5) resultMsg += `\n\n${errors.length} error terjadi. Periksa format data Anda.`;
+      if (duplicates.length > 0) {
+        resultMsg += `\n\n⏭ Data duplikat dilewati:\n${duplicates.slice(0,5).join('\n')}${duplicates.length > 5 ? `\n... dan ${duplicates.length-5} lainnya` : ''}`;
+      }
+      if (errors.length > 0 && errors.length <= 5) {
+        resultMsg += `\n\nDetail error:\n${errors.join('\n')}`;
+      } else if (errors.length > 5) {
+        resultMsg += `\n\n${errors.length} error terjadi. Periksa format data Anda.`;
+      }
       alert(resultMsg);
+      
       excelFileInput.value = '';
       document.getElementById('fileInfo').innerHTML = '';
       updateAllBadges();
       loadAllData();
+      
     } catch (error) {
       console.error('Import error:', error);
       showNotif('❌ Gagal memproses file: ' + error.message, true);
@@ -8181,11 +8195,13 @@ if (importType === 'customer') {
       importBtn.disabled = false;
     }
   };
+  
   reader.onerror = function() {
     showNotif('❌ Gagal membaca file', true);
     importBtn.textContent = originalText;
     importBtn.disabled = false;
   };
+  
   reader.readAsArrayBuffer(file);
 });
 
