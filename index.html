@@ -628,8 +628,26 @@
 
 <div class="modal" id="convertModal"><div class="modal-content"><h3>🔄 Jadikan Customer (Followup Agen)</h3><div class="modal-subtitle">Isi data untuk memindahkan ke Followup Agen</div><div class="form-group"><label for="convertAgentId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="convertAgentId" placeholder="Contoh: AG-001"></div><small>ID unik untuk agent terdaftar</small></div><div class="form-group"><label for="convertFollowupDate">Tanggal Followup <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="convertFollowupDate"></div><small>Otomatis +1 bulan dari sekarang</small></div><div class="modal-buttons"><button id="confirmConvertBtn" class="confirm-convert-btn">✅ Konfirmasi Pindah</button><button id="cancelConvertBtn" class="closeModalBtn" data-modal="convertModal">❌ Batal</button></div></div></div>
 
-<div class="modal" id="followupConfirmModal"><div class="modal-content"><h3>✅ Konfirmasi Follow Up</h3><div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div><div class="form-group"><label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label></div><div class="form-group"><label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label></div><div class="modal-buttons"><button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button><button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button><button class="closeModalBtn" data-modal="followupConfirmModal">Batal</button></div></div></div>
-
+<div class="modal" id="followupConfirmModal">
+    <div class="modal-content">
+        <h3>✅ Konfirmasi Follow Up</h3>
+        <div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div>
+        <div style="padding: 0 20px;">
+            <div class="form-group">
+                <label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label>
+            </div>
+            <div class="form-group">
+                <label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button>
+            <button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button>
+            <button class="closeModalBtn btn-outline" data-modal="followupConfirmModal">Batal</button>
+        </div>
+    </div>
+</div>
+    
 <div class="modal" id="pendingModal"><div class="modal-content"><h3>📝 Catatan Pending</h3><div class="modal-subtitle">Catat setiap balasan/respon dari customer</div><div id="pendingItemsContainer" style="max-height: 300px; overflow-y: auto; padding: 0 20px;"></div><button id="addPendingItemBtn" class="add-btn" style="margin: 10px 20px; width: calc(100% - 40px);">+ Tambah Balasan</button><div class="modal-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;"><button id="pendingFinishBtn" class="btn-success" style="flex: 1;" disabled>✅ Selesai & Lanjut ke Closing</button><button id="pendingSaveBtn" class="btn-primary" style="flex: 1;">💾 Simpan</button><button id="pendingCancelBtn" class="btn-outline" style="flex: 1;">Batal</button></div></div></div>
 
 <div class="modal" id="addCsModal"><div class="modal-content"><h3>➕ Tambah CS Agent</h3><div class="modal-subtitle">Buat akun untuk CS Agent baru</div><div class="form-group"><label for="csEmail">Email <span class="required">*</span></label><input type="email" id="csEmail" placeholder="cs@example.com" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPassword">Password <span class="required">*</span></label><input type="password" id="csPassword" placeholder="******" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csName">Nama Lengkap <span class="required">*</span></label><input type="text" id="csName" placeholder="Nama CS" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="csPhone" placeholder="81234567890" style="flex:1"></div></div><div class="modal-buttons"><button id="saveCsBtn" class="btn-primary">Simpan</button><button class="closeModalBtn" data-modal="addCsModal">Batal</button></div></div></div>
