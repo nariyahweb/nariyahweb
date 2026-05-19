@@ -9,7 +9,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// variabel global
+// 🔥 TAMBAHKAN INI - Nonaktifkan cache offline
 db.settings({
     persistence: false
 });
@@ -30,7 +30,6 @@ let currentEditTarifId = null;
 let customersData = [];
 let prospekData = [];
 let selectedAgentIds = new Map();
-let selectedProdukIds = new Map();
 let agentsData = [];
 let agentsFilteredData = [];
 let produkData = [];
@@ -86,7 +85,7 @@ function showFloatingProgress(title, total = 0) {
     }
     
     return {
-        update: (percent, status, detail, current = 0, totalCount = 0) => {
+        update: (percent, status, detail, current = 0, total = 0) => {
             const fillEl = document.getElementById('floatingProgressFill');
             const textEl = document.getElementById('floatingProgressText');
             const statusEl = document.getElementById('progressStatusText');
@@ -97,7 +96,7 @@ function showFloatingProgress(title, total = 0) {
             if (textEl) textEl.innerHTML = `${Math.floor(percent)}%`;
             if (statusEl && status) statusEl.innerHTML = status;
             if (detailEl && detail) detailEl.innerHTML = detail;
-            if (countEl && totalCount > 0) countEl.innerHTML = `${current} / ${totalCount}`;
+            if (countEl && total > 0) countEl.innerHTML = `${current} / ${total}`;
         },
         hide: () => {
             if (activeProgress) {
@@ -1369,52 +1368,6 @@ if (selectAllAgentBtn) {
     });
 }
 
-    // Tombol select all produk
-const selectAllProdukBtn = document.getElementById('selectAllProduk');
-if (selectAllProdukBtn) {
-    const newSelectAllBtn = selectAllProdukBtn.cloneNode(true);
-    selectAllProdukBtn.parentNode.replaceChild(newSelectAllBtn, selectAllProdukBtn);
-    
-    newSelectAllBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const searchKeyword = document.getElementById('searchProdukInput')?.value.toLowerCase() || '';
-        let filteredProduk = produkData;
-        if (searchKeyword) {
-            filteredProduk = produkData.filter(p => 
-                p.nama.toLowerCase().includes(searchKeyword) ||
-                (p.jenis_produk === 'beradmin' ? 'beradmin' : 'tanpa_admin').includes(searchKeyword)
-            );
-        }
-        
-        if (filteredProduk.length === 0) {
-            showNotifTop('⚠️ Tidak ada produk yang ditampilkan', true);
-            return;
-        }
-        
-        // Cek apakah semua sudah tercentang
-        const allChecked = filteredProduk.every(item => selectedProdukIds.get(item.id) === true);
-        
-        // Toggle semua
-        filteredProduk.forEach(item => {
-            if (allChecked) {
-                selectedProdukIds.delete(item.id);
-            } else {
-                selectedProdukIds.set(item.id, true);
-            }
-        });
-        
-        renderProdukList();
-    });
-}
-
-// Tombol hapus selected produk
-const deleteSelectedProdukBtn = document.getElementById('deleteSelectedProduk');
-if (deleteSelectedProdukBtn) {
-    deleteSelectedProdukBtn.addEventListener('click', deleteSelectedProduk);
-}
-
     // ========== TOGGLE PASSWORD ==========
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const loginPassword = document.getElementById('loginPassword');
@@ -1772,10 +1725,8 @@ function renderProdukList() {
     
     container.innerHTML = filteredProduk.map(item => {
         const isAdminBased = item.jenis_produk === 'beradmin';
-        const isChecked = selectedProdukIds.get(item.id) === true;
         return `
         <div class="db-item produk-item" data-id="${item.id}" style="cursor: pointer;">
-            <input type="checkbox" class="db-item-checkbox-produk" data-id="${item.id}" style="margin-right: 12px; width: 18px; height: 18px; cursor: pointer;" ${isChecked ? 'checked' : ''}>
             <div class="db-item-info">
                 <h4>📦 ${escapeHtml(item.nama)}</h4>
                 <p>
@@ -1787,69 +1738,27 @@ function renderProdukList() {
                 <small>${escapeHtml(item.keterangan || '')}</small>
             </div>
             <div class="db-item-actions">
-                <button class="db-item-edit" onclick="event.stopPropagation(); editProduk('${item.id}')">✏️ Edit</button>
                 <button class="db-item-delete" onclick="event.stopPropagation(); deleteProduk('${item.id}')">🗑️ Hapus</button>
             </div>
         </div>
     `}).join('');
     
-    // Event listener untuk checkbox produk
-    document.querySelectorAll('#produkList .db-item-checkbox-produk').forEach(cb => {
-        cb.removeEventListener('change', handleProdukCheckboxChange);
-        cb.addEventListener('change', handleProdukCheckboxChange);
-        function handleProdukCheckboxChange(e) {
-            e.stopPropagation();
-            const id = cb.dataset.id;
-            if (cb.checked) {
-                selectedProdukIds.set(id, true);
-            } else {
-                selectedProdukIds.delete(id);
-            }
-            updateSelectAllProdukButton();
-        }
-    });
-    
-    // Event listener untuk klik pada item (selain checkbox)
+    // Event listener untuk klik pada item produk (edit)
     document.querySelectorAll('#produkList .produk-item').forEach(el => {
         el.removeEventListener('click', handleProdukClick);
         el.addEventListener('click', handleProdukClick);
         function handleProdukClick(e) {
-            // Jangan trigger jika klik pada checkbox, edit, atau delete
-            if (e.target.type === 'checkbox') return;
-            if (e.target.classList.contains('db-item-edit')) return;
+            // Jangan trigger jika klik tombol hapus
             if (e.target.classList.contains('db-item-delete')) return;
             const id = el.dataset.id;
             editProduk(id);
         }
     });
-    
-    updateSelectAllProdukButton();
 }
 
-// Fungsi update tombol pilih semua produk
-function updateSelectAllProdukButton() {
-    const btn = document.getElementById('selectAllProduk');
-    if (!btn) return;
-    
-    const searchKeyword = document.getElementById('searchProdukInput')?.value.toLowerCase() || '';
-    let filteredProduk = produkData;
-    if (searchKeyword) {
-        filteredProduk = produkData.filter(p => 
-            p.nama.toLowerCase().includes(searchKeyword) ||
-            (p.jenis_produk === 'beradmin' ? 'beradmin' : 'tanpa_admin').includes(searchKeyword)
-        );
-    }
-    
-    if (filteredProduk.length === 0) {
-        btn.textContent = '✅ Pilih Semua';
-        return;
-    }
-    
-    const allChecked = filteredProduk.every(item => selectedProdukIds.get(item.id) === true);
-    btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
-}
+// Hapus multiple produk
+let selectedProdukIds = new Map();
 
-// Fungsi hapus multiple produk
 window.deleteSelectedProduk = async function() {
     const selectedIds = Array.from(selectedProdukIds.keys());
     if (selectedIds.length === 0) {
@@ -1859,56 +1768,31 @@ window.deleteSelectedProduk = async function() {
     
     if (!confirm(`Hapus ${selectedIds.length} produk yang dipilih? Produk yang sudah terpakai di agent akan kehilangan referensi!`)) return;
     
-    const progress = showFloatingProgress('🗑️ Menghapus Produk', selectedIds.length);
-    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus produk...');
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} produk...`);
     
     try {
-        let deleted = 0;
-        const BATCH_SIZE = 100;
+        const deletePromises = selectedIds.map(id => 
+            db.collection('produk').doc(id).delete()
+        );
+        await Promise.all(deletePromises);
         
-        for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
-            const batch = db.batch();
-            const chunk = selectedIds.slice(i, i + BATCH_SIZE);
-            
-            for (const id of chunk) {
-                const ref = db.collection('produk').doc(id);
-                batch.delete(ref);
-            }
-            
-            await batch.commit();
-            deleted += chunk.length;
-            
-            // Hapus dari array lokal
-            for (const id of chunk) {
-                selectedProdukIds.delete(id);
-                const index = produkData.findIndex(p => p.id === id);
-                if (index !== -1) produkData.splice(index, 1);
-            }
-            
-            const percent = Math.floor((deleted / selectedIds.length) * 100);
-            progress.update(percent, '🗑️ Menghapus', `Menghapus produk...`, deleted, selectedIds.length);
-            await new Promise(resolve => setTimeout(resolve, 50));
+        // Hapus dari array lokal
+        for (const id of selectedIds) {
+            selectedProdukIds.delete(id);
+            const index = produkData.findIndex(p => p.id === id);
+            if (index !== -1) produkData.splice(index, 1);
         }
         
         renderProdukList();
-        progress.update(100, '✅ Selesai', `Berhasil menghapus ${selectedIds.length} produk`, selectedIds.length, selectedIds.length);
         showNotifTop(`✅ ${selectedIds.length} produk berhasil dihapus`);
-        
-        setTimeout(() => progress.hide(), 2000);
-        
     } catch(e) {
-        console.error('Error delete selected:', e);
-        showNotifTop('❌ Gagal menghapus: ' + e.message, true);
-        progress.hide();
+        showNotifTop('❌ Gagal hapus: ' + e.message, true);
     }
 };
 
-// Hapus single produk dengan floating progress
+// Hapus single produk - versi cepat
 window.deleteProduk = async function(id) {
     if (!confirm('Yakin hapus produk ini? Produk yang sudah terpakai di agent akan kehilangan referensi!')) return;
-    
-    const progress = showFloatingProgress('🗑️ Menghapus Produk', 1);
-    progress.update(50, '🗑️ Menghapus', 'Menghapus produk...', 0, 1);
     
     try {
         await db.collection('produk').doc(id).delete();
@@ -1917,17 +1801,10 @@ window.deleteProduk = async function(id) {
         const index = produkData.findIndex(p => p.id === id);
         if (index !== -1) produkData.splice(index, 1);
         
-        // Hapus dari selected map
-        selectedProdukIds.delete(id);
-        
         renderProdukList();
-        progress.update(100, '✅ Selesai', 'Produk berhasil dihapus', 1, 1);
         showNotifTop('🗑️ Produk berhasil dihapus');
-        
-        setTimeout(() => progress.hide(), 2000);
     } catch(e) {
         showNotifTop('❌ Gagal hapus: ' + e.message, true);
-        progress.hide();
     }
 };
 
@@ -5406,7 +5283,7 @@ async function moveAgentToFollowup(agentId) {
     );
 }
 
-// Hapus multiple agent dengan floating progress
+// Hapus multiple agent yang dipilih - VERSI CEPAT dengan Promise.all
 window.deleteSelectedAgent = async function() {
     const selectedIds = Array.from(selectedAgentIds.keys());
     if (selectedIds.length === 0) {
@@ -5416,69 +5293,43 @@ window.deleteSelectedAgent = async function() {
     
     if (!confirm(`Hapus ${selectedIds.length} data agent yang dipilih? Data akan dihapus permanen!`)) return;
     
-    const progress = showFloatingProgress('🗑️ Menghapus Data Agent', selectedIds.length);
-    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus data...');
+    // Tampilkan loading
+    showNotifTop(`⏳ Menghapus ${selectedIds.length} data agent...`);
     
     try {
-        let deleted = 0;
-        const BATCH_SIZE = 100;
+        // Gunakan Promise.all untuk eksekusi paralel (lebih cepat)
+        const deletePromises = selectedIds.map(id => 
+            db.collection('db_agent').doc(id).delete()
+        );
         
-        for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
-            const batch = db.batch();
-            const chunk = selectedIds.slice(i, i + BATCH_SIZE);
+        await Promise.all(deletePromises);
+        
+        // Hapus dari Map dan array lokal
+        for (const id of selectedIds) {
+            selectedAgentIds.delete(id);
             
-            for (const id of chunk) {
-                const ref = db.collection('db_agent').doc(id);
-                batch.delete(ref);
-            }
+            // Hapus dari agentsData
+            const index = agentsData.findIndex(item => item.id === id);
+            if (index !== -1) agentsData.splice(index, 1);
             
-            await batch.commit();
-            deleted += chunk.length;
-            
-            // Hapus dari Map dan array lokal
-            for (const id of chunk) {
-                selectedAgentIds.delete(id);
-                const index = agentsData.findIndex(item => item.id === id);
-                if (index !== -1) agentsData.splice(index, 1);
-                const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
-                if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
-            }
-            
-            const percent = Math.floor((deleted / selectedIds.length) * 100);
-            progress.update(percent, '🗑️ Menghapus', `Menghapus data...`, deleted, selectedIds.length);
-            
-            // Delay kecil agar UI tidak freeze
-            await new Promise(resolve => setTimeout(resolve, 50));
+            // Hapus dari agentsFilteredData
+            const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
+            if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
         }
         
-        // Render ulang setelah semua terhapus
+        // Render ulang
         renderAgentList(agentsData);
-        
-        progress.update(100, '✅ Selesai', `Berhasil menghapus ${selectedIds.length} data`, selectedIds.length, selectedIds.length);
         showNotifTop(`✅ ${selectedIds.length} data agent berhasil dihapus`);
-        
-        // Pastikan progress hilang setelah 2 detik
-        setTimeout(() => {
-            if (progress && progress.hide) {
-                progress.hide();
-            }
-        }, 2000);
         
     } catch(e) {
         console.error('Error delete selected:', e);
         showNotifTop('❌ Gagal menghapus: ' + e.message, true);
-        if (progress && progress.hide) {
-            progress.hide();
-        }
     }
 };
 
 // Hapus single agent - VERSI CEPAT
 window.deleteAgentItem = async function(id) {
     if (!confirm('Yakin hapus data agent ini? Data akan dihapus permanen!')) return;
-    
-    const progress = showFloatingProgress('🗑️ Menghapus Data Agent', 1);
-    progress.update(50, '🗑️ Menghapus', 'Menghapus data agent...', 0, 1);
     
     try {
         await db.collection('db_agent').doc(id).delete();
@@ -5497,21 +5348,9 @@ window.deleteAgentItem = async function(id) {
         // Render ulang
         renderAgentList(agentsData);
         
-        progress.update(100, '✅ Selesai', 'Data agent berhasil dihapus', 1, 1);
         showNotifTop('🗑️ Data agent berhasil dihapus');
-        
-        setTimeout(() => {
-            if (progress && progress.hide) {
-                progress.hide();
-            }
-        }, 1500);
-        
     } catch(e) {
-        console.error('Error delete single:', e);
         showNotifTop('❌ Gagal hapus: ' + e.message, true);
-        if (progress && progress.hide) {
-            progress.hide();
-        }
     }
 };
 
@@ -6026,6 +5865,7 @@ async function setupAgentImport() {
         btn.textContent = '⏳ Memproses...';
         btn.disabled = true;
         
+        // ========== GUNAKAN FLOATING PROGRESS (SAMA SEPERTI HAPUS) ==========
         const progress = showFloatingProgress('📥 Import Data Agent', 0);
         progress.update(0, '📥 Import Data', 'Membaca file Excel...');
         
@@ -6046,22 +5886,11 @@ async function setupAgentImport() {
                 }
                 
                 progress.update(10, '📥 Import Data', 'Memuat data produk...');
+                await new Promise(resolve => setTimeout(resolve, 10));
                 
-                // Load data produk dari database
-                const produkSnapshot = await db.collection('produk').get();
-                const produkMap = new Map();
-                const produkList = [];
+                const produkMap = await getProdukMapCached();
                 
-                produkSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    produkList.push({ id: doc.id, nama: data.nama, jenis: data.jenis_produk });
-                    const namaLower = data.nama.toLowerCase().trim();
-                    const namaClean = namaLower.replace(/[^a-z0-9]/g, '');
-                    produkMap.set(namaLower, data);
-                    produkMap.set(namaClean, data);
-                });
-                
-                // Header baris 1,2,3
+                // Deteksi header
                 const headerRow1 = rawJson[0] || [];
                 const headerRow2 = rawJson[1] || [];
                 const headerRow3 = rawJson[2] || [];
@@ -6116,45 +5945,32 @@ async function setupAgentImport() {
                 
                 progress.update(20, '📥 Import Data', `Memproses ${totalRows} baris data...`);
                 
-                // ========== DETEKSI KOLOM PRODUK ==========
-                // Mapping: nama_produk -> { colProfit, colFeeUpline }
+                // Deteksi kolom produk
                 const produkColumnMap = new Map();
-                
                 for (let i = 0; i < headerRow1.length; i++) {
-                    const colName = String(headerRow1[i] || '').trim().toLowerCase();
+                    const produkNameRaw = headerRow1[i];
+                    if (!produkNameRaw) continue;
                     
-                    // Skip kolom standar
-                    if (i === agentIdCol || i === namaCol || i === hpCol || i === apkCol ||
-                        i === agentTypeCol || i === pemilikCol || i === alamatCol ||
-                        i === emailCol || i === tlpCol || i === noRekeningCol ||
-                        i === atasNamaCol || i === jenisBankCol || i === noKtpCol ||
-                        i === cidCol || i === uplineCol) {
-                        continue;
-                    }
+                    const produkName = String(produkNameRaw).trim().toUpperCase();
+                    if (i === agentIdCol || i === namaCol || i === hpCol) continue;
                     
-                    // Cek apakah kolom adalah profit_xxx atau fee_upline_xxx
-                    if (colName.startsWith('profit_')) {
-                        const produkNama = colName.replace('profit_', '').replace(/_/g, ' ');
-                        if (!produkColumnMap.has(produkNama)) {
-                            produkColumnMap.set(produkNama, { profitCol: i, feeCol: -1 });
-                        } else {
-                            const existing = produkColumnMap.get(produkNama);
-                            existing.profitCol = i;
-                            produkColumnMap.set(produkNama, existing);
-                        }
-                    } else if (colName.startsWith('fee_upline_')) {
-                        const produkNama = colName.replace('fee_upline_', '').replace(/_/g, ' ');
-                        if (!produkColumnMap.has(produkNama)) {
-                            produkColumnMap.set(produkNama, { profitCol: -1, feeCol: i });
-                        } else {
-                            const existing = produkColumnMap.get(produkNama);
-                            existing.feeCol = i;
-                            produkColumnMap.set(produkNama, existing);
-                        }
+                    const isProdukName = produkName.length > 0 && produkName.length < 30 && 
+                                        isNaN(produkName) && 
+                                        !produkName.includes('PROFIT') && 
+                                        !produkName.includes('FEE') &&
+                                        !produkName.includes('ADMIN');
+                    
+                    if (isProdukName) {
+                        const subHeader = (headerRow2[i] || '').toUpperCase();
+                        let type = 'profit';
+                        if (subHeader === 'PROFIT' || subHeader.includes('PROFIT')) type = 'profit';
+                        else if (subHeader === 'FEE UPLINE' || subHeader.includes('FEE UPLINE')) type = 'fee_upline';
+                        else if (subHeader === 'FEE AGENT' || subHeader.includes('FEE AGENT')) type = 'fee_agent';
+                        else if (subHeader === 'ADMIN' || subHeader.includes('ADMIN')) type = 'admin';
+                        
+                        produkColumnMap.set(i, { produkNama: produkName, type: type });
                     }
                 }
-                
-                console.log('Produk column map:', Array.from(produkColumnMap.keys()));
                 
                 const BATCH_SIZE = 450;
                 let batches = [];
@@ -6167,6 +5983,7 @@ async function setupAgentImport() {
                     const row = dataRows[i];
                     if (!row || row.length === 0) continue;
                     
+                    // Update progress setiap 50 baris
                     if (i % 50 === 0 || i === dataRows.length - 1) {
                         const percent = 20 + Math.floor((i / totalRows) * 70);
                         progress.update(percent, '📥 Import Data', `Memproses data... (${i + 1}/${totalRows})`, i + 1, totalRows);
@@ -6213,77 +6030,52 @@ async function setupAgentImport() {
                             produk: []
                         };
                         
-                        // ========== PROSES PRODUK ==========
-                        const produkListData = [];
+                        // Proses produk
+                        const produkValues = new Map();
+                        for (const [colIndex, prodInfo] of produkColumnMap.entries()) {
+                            if (colIndex < row.length) {
+                                let value = row[colIndex];
+                                if (value !== undefined && value !== null && value !== '') {
+                                    const numValue = parseFloat(String(value).replace(/[^0-9.-]/g, '')) || 0;
+                                    if (numValue !== 0) {
+                                        if (!produkValues.has(prodInfo.produkNama)) {
+                                            produkValues.set(prodInfo.produkNama, { profit: 0, fee_upline: 0, fee_agent: 0, admin: 0 });
+                                        }
+                                        const current = produkValues.get(prodInfo.produkNama);
+                                        current[prodInfo.type] = numValue;
+                                        produkValues.set(prodInfo.produkNama, current);
+                                    }
+                                }
+                            }
+                        }
                         
-                        for (const [produkNama, cols] of produkColumnMap.entries()) {
-                            // Cari produk di database
+                        const produkListData = [];
+                        const produkMapArray = Array.from(produkMap.values());
+                        
+                        for (const [produkNama, values] of produkValues.entries()) {
                             let foundProduk = null;
-                            const searchNama = produkNama.toLowerCase().trim();
-                            
-                            for (const p of produkList) {
-                                const pNamaLower = p.nama.toLowerCase();
-                                const pNamaClean = pNamaLower.replace(/[^a-z0-9]/g, '');
-                                const searchClean = searchNama.replace(/[^a-z0-9]/g, '');
-                                
-                                if (pNamaLower === searchNama || 
-                                    pNamaClean === searchClean ||
-                                    pNamaLower.includes(searchNama) || 
-                                    searchNama.includes(pNamaLower)) {
-                                    foundProduk = p;
+                            const searchKey = produkNama.toLowerCase();
+                            for (const dbProduk of produkMapArray) {
+                                const dbKey = dbProduk.nama.toLowerCase();
+                                if (dbKey.includes(searchKey) || searchKey.includes(dbKey)) {
+                                    foundProduk = dbProduk;
                                     break;
                                 }
                             }
-                            
-                            if (!foundProduk) {
-                                console.log(`Produk tidak ditemukan: ${produkNama}`);
-                                continue;
+                            if (foundProduk) {
+                                produkListData.push({
+                                    produk_id: foundProduk.id,
+                                    nama_produk: foundProduk.nama,
+                                    profit: values.profit || 0,
+                                    fee_upline: values.fee_upline || 0,
+                                    fee_agent: values.fee_agent || 0,
+                                    admin: values.admin || 0,
+                                    qty: 1,
+                                    added_at: new Date().toISOString()
+                                });
                             }
-                            
-                            // Ambil nilai profit dan fee upline dari Excel
-                            let profit = 0;
-                            let feeUpline = 0;
-                            
-                            if (cols.profitCol !== -1 && cols.profitCol < row.length) {
-                                let val = row[cols.profitCol];
-                                if (val !== undefined && val !== null && val !== '') {
-                                    profit = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.-]/g, '')) || 0;
-                                }
-                            }
-                            
-                            if (cols.feeCol !== -1 && cols.feeCol < row.length) {
-                                let val = row[cols.feeCol];
-                                if (val !== undefined && val !== null && val !== '') {
-                                    feeUpline = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.-]/g, '')) || 0;
-                                }
-                            }
-                            
-                            console.log(`Produk: ${produkNama}, Profit: ${profit}, Fee Upline: ${feeUpline}`);
-                            
-                            // Hitung admin (jika diperlukan)
-                            let admin = 0;
-                            let feeAgent = 0;
-                            
-                            if (foundProduk.jenis === 'beradmin') {
-                                // Untuk produk beradmin, admin bisa didapat dari tarif_admin
-                                // Atau bisa dihitung dari profit + fee_upline + fee_agent
-                                feeAgent = profit + feeUpline; // Sementara, nanti bisa dihitung ulang
-                            }
-                            
-                            produkListData.push({
-                                produk_id: foundProduk.id,
-                                nama_produk: foundProduk.nama,
-                                profit: profit,
-                                fee_upline: feeUpline,
-                                fee_agent: feeAgent,
-                                admin: admin,
-                                qty: 1,
-                                added_at: new Date().toISOString()
-                            });
                         }
-                        
                         agentData.produk = produkListData;
-                        console.log(`Agent ${agentId} memiliki ${produkListData.length} produk`);
                         
                         currentBatch.set(agentRef, agentData);
                         operationCount++;
@@ -6316,11 +6108,8 @@ async function setupAgentImport() {
                 
                 progress.update(100, '✅ Import Selesai', `Berhasil: ${success}, Duplikat: ${duplicate}, Gagal: ${failed}`, success, totalRows);
                 
-                setTimeout(() => {
-                if (progress && progress.hide) {
-                progress.hide();
-                }
-                }, 2000);
+                // Sembunyikan setelah 2 detik
+                setTimeout(() => progress.hide(), 2000);
                 
                 let resultMsg = `✅ Import selesai!\n📊 Total data: ${totalRows}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
                 if (errors.length > 0 && errors.length <= 5) {
@@ -6332,6 +6121,7 @@ async function setupAgentImport() {
                 
                 await loadDatabaseAgent();
                 fileInput.value = '';
+                produkMapCache = null;
                 
             } catch (err) {
                 console.error('Import error:', err);
@@ -6409,6 +6199,61 @@ function showDeleteProgress(total, status) {
     };
 }
 
+// Hapus multiple agent dengan progress bar
+window.deleteSelectedAgent = async function() {
+    const selectedIds = Array.from(selectedAgentIds.keys());
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data agent yang dipilih? Data akan dihapus permanen!`)) return;
+    
+    const progress = showDeleteProgress(selectedIds.length, '🗑️ Menghapus data agent...');
+    
+    try {
+        let deleted = 0;
+        const BATCH_SIZE = 100;
+        
+        for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
+            const batch = db.batch();
+            const chunk = selectedIds.slice(i, i + BATCH_SIZE);
+            
+            for (const id of chunk) {
+                const ref = db.collection('db_agent').doc(id);
+                batch.delete(ref);
+            }
+            
+            await batch.commit();
+            deleted += chunk.length;
+            
+            const percent = Math.floor((deleted / selectedIds.length) * 100);
+            progress.update(percent, deleted, `🗑️ Menghapus data...`);
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        
+        // Hapus dari Map dan array lokal
+        for (const id of selectedIds) {
+            selectedAgentIds.delete(id);
+            const index = agentsData.findIndex(item => item.id === id);
+            if (index !== -1) agentsData.splice(index, 1);
+            const filteredIndex = agentsFilteredData.findIndex(item => item.id === id);
+            if (filteredIndex !== -1) agentsFilteredData.splice(filteredIndex, 1);
+        }
+        
+        renderAgentList(agentsData);
+        progress.update(100, selectedIds.length, '✅ Selesai!');
+        showNotifTop(`✅ ${selectedIds.length} data agent berhasil dihapus`);
+        
+        setTimeout(() => progress.hide(), 2000);
+        
+    } catch(e) {
+        console.error('Error delete selected:', e);
+        showNotifTop('❌ Gagal menghapus: ' + e.message, true);
+        progress.hide();
+    }
+};
+
 // Fungsi format nomor HP
 function formatPhoneNumber(value) {
     if (!value) return '';
@@ -6458,8 +6303,7 @@ async function downloadAgentExample() {
             'apk': 'GNP'
         };
         
-        // Buat kolom untuk setiap produk dengan format: profit_{nama_produk}, fee_upline_{nama_produk}
-        // 🔥 HAPUS kolom fee_agent karena akan dihitung otomatis
+        // Buat kolom untuk setiap produk dengan format: profit_{nama_produk}, fee_upline_{nama_produk}, fee_agent_{nama_produk}
         const produkColumns = {};
         for (const produk of produkList) {
             // Bersihkan nama produk untuk dijadikan nama kolom
@@ -6470,7 +6314,7 @@ async function downloadAgentExample() {
             
             produkColumns[`profit_${cleanNama}`] = 0;
             produkColumns[`fee_upline_${cleanNama}`] = 0;
-            // 🔥 TIDAK ADA kolom fee_agent
+            produkColumns[`fee_agent_${cleanNama}`] = 0;
         }
         
         // Tambahkan beberapa contoh nilai untuk produk pertama
@@ -6481,7 +6325,7 @@ async function downloadAgentExample() {
                 .toLowerCase();
             produkColumns[`profit_${firstProductClean}`] = 5000;
             produkColumns[`fee_upline_${firstProductClean}`] = 1000;
-            // 🔥 fee agent TIDAK perlu diisi
+            produkColumns[`fee_agent_${firstProductClean}`] = 4000;
         }
         
         if (produkList.length > 1) {
@@ -6491,7 +6335,7 @@ async function downloadAgentExample() {
                 .toLowerCase();
             produkColumns[`profit_${secondProductClean}`] = 3000;
             produkColumns[`fee_upline_${secondProductClean}`] = 500;
-            // 🔥 fee agent TIDAK perlu diisi
+            produkColumns[`fee_agent_${secondProductClean}`] = 2500;
         }
         
         // Gabungkan data
@@ -6518,8 +6362,9 @@ async function downloadAgentExample() {
             { wch: 10 }  // apk
         ];
         
-        // Tambahkan lebar untuk kolom produk (2 kolom per produk: profit, fee_upline)
+        // Tambahkan lebar untuk kolom produk
         for (const produk of produkList) {
+            ws['!cols'].push({ wch: 15 });
             ws['!cols'].push({ wch: 15 });
             ws['!cols'].push({ wch: 15 });
         }
@@ -6529,7 +6374,7 @@ async function downloadAgentExample() {
         XLSX.utils.book_append_sheet(wb, ws, 'Database Agent');
         XLSX.writeFile(wb, `contoh_database_agent_${new Date().toISOString().split('T')[0]}.xlsx`);
         
-        showNotifTop('📋 Contoh file Excel berhasil diunduh (Fee Agent akan dihitung otomatis)');
+        showNotifTop('📋 Contoh file Excel berhasil diunduh dengan daftar produk terbaru');
         
     } catch (error) {
         console.error('Error download contoh:', error);
@@ -6678,53 +6523,6 @@ window.saveAgentProduct = async function() {
     renderAgentProducts();
     closeModal('productModal');
 };
-
-// ========== FUNGSI Pencocokan Nama Produk ==========
-function matchProductName(excelName, dbProdukList) {
-    const excelNameLower = excelName.toLowerCase().trim();
-    
-    // Bersihkan nama Excel dari kata tambahan
-    let cleanExcelName = excelNameLower
-        .replace(/berdasarkan admin/gi, '')
-        .replace(/berdasarkan/gi, '')
-        .replace(/admin/gi, '')
-        .replace(/_/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    
-    // Hapus kata "pln" untuk sementara
-    const excelWithoutPln = cleanExcelName.replace(/pln/g, '').trim();
-    const cleanForMatch = excelWithoutPln.replace(/[^a-z0-9]/g, '');
-    
-    for (const dbProduk of dbProdukList) {
-        let dbNameLower = dbProduk.nama.toLowerCase();
-        let cleanDbName = dbNameLower.replace(/[^a-z0-9]/g, '');
-        
-        // Cocokkan persis setelah dibersihkan
-        if (cleanForMatch === cleanDbName) {
-            return dbProduk;
-        }
-        
-        // Salah satu mengandung yang lain
-        if (cleanForMatch.includes(cleanDbName) || cleanDbName.includes(cleanForMatch)) {
-            return dbProduk;
-        }
-        
-        // Cocokkan dengan nama asli (tanpa dibersihkan)
-        if (excelNameLower.includes(dbNameLower) || dbNameLower.includes(excelNameLower)) {
-            return dbProduk;
-        }
-        
-        // 🔥 TAMBAHAN: Cocokkan dengan menghilangkan spasi dan underscore
-        const excelNoSpace = excelNameLower.replace(/[_\s]/g, '');
-        const dbNoSpace = dbNameLower.replace(/[_\s]/g, '');
-        if (excelNoSpace === dbNoSpace) {
-            return dbProduk;
-        }
-    }
-    
-    return null;
-}
 
 // Event listener untuk auto-fill harga
 document.getElementById('productSelect')?.addEventListener('change', function() {
