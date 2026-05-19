@@ -9,6 +9,15 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// ========== PERFORMANCE CONFIGURATION ==========
+const DB_CONFIG = {
+  MAX_BATCH_SIZE: 15,      // Maksimal operasi per batch
+  MAX_QUERY_LIMIT: 500,    // Maksimal data per query
+  DELETE_DELAY_MS: 500,    // Delay antar delete (ms)
+  IMPORT_DELAY_MS: 500,    // Delay antar batch import (ms)
+  SEARCH_LIMIT: 50         // Maksimal hasil pencarian
+};
+
 // variabel global
 db.settings({
   persistence: false
@@ -143,6 +152,16 @@ let targetData = {
   monthlyTargets: [] // [{ month: '2024-01', target: 10000000 }]
 };
 let targetChart = null;
+
+// Fungsi untuk menampilkan peringatan jika data terlalu banyak
+function checkDataSize(snapshot, collectionName) {
+  if (snapshot.size > 500) {
+    console.warn(`⚠️ Collection ${collectionName} memiliki ${snapshot.size} data. Pertimbangkan untuk menggunakan filter.`);
+    showNotifTop(`⚠️ Data ${collectionName} sangat banyak (${snapshot.size}). Gunakan filter untuk performa lebih baik.`, true);
+    return true;
+  }
+  return false;
+}
 
 // ========== HELPER FUNCTIONS ==========
 function showNotif(msg, isError = false) {
@@ -1858,7 +1877,9 @@ if (currentUser) {
 // ========== MANAJEMEN PRODUK MASTER ==========
 async function loadProduk() {
   if (!currentUser) return;
-  const snapshot = await db.collection('produk').get();
+  
+  // 🔥 PERBAIKAN: Batasi jumlah produk
+  const snapshot = await db.collection('produk').limit(200).get();
   produkData = [];
   snapshot.forEach(doc => {
     produkData.push({
@@ -1867,7 +1888,7 @@ async function loadProduk() {
     });
   });
   renderProdukList();
-  updateProductSelect(); // Update dropdown di agent detail
+  updateProductSelect();
 }
 
 function renderProdukList() {
@@ -1990,7 +2011,7 @@ window.deleteSelectedProduk = async function() {
 
   try {
     let deleted = 0;
-    const BATCH_SIZE = 100;
+    const BATCH_SIZE = 10;
 
     for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
       const batch = db.batch();
@@ -2155,7 +2176,10 @@ async function loadTarifAdmin() {
   if (!isOwner) {
     query = query.where('user_id', '==', currentUser.uid);
   }
-
+  
+  // 🔥 PERBAIKAN: Tambah limit
+  query = query.limit(500);
+  
   const snapshot = await query.get();
   tarifAdminData = [];
   snapshot.forEach(doc => {
@@ -3093,39 +3117,49 @@ window.deleteProspek = async function(id) {
 // ========== FOLLOWUP CONFIRMATION ==========
 function openFollowupConfirm(id) {
   currentPendingId = id;
+  
+  // Reset checkbox values
   document.getElementById('followup_terkirim').checked = false;
   document.getElementById('followup_dibalas').checked = false;
-  document.getElementById('followupConfirmYes').disabled = true;
-  document.getElementById('followupConfirmModal').style.display = 'flex';
-
+  
+  // Ambil referensi tombol YES
+  const yesBtn = document.getElementById('followupConfirmYes');
   const cb1 = document.getElementById('followup_terkirim');
   const cb2 = document.getElementById('followup_dibalas');
-  const yesBtn = document.getElementById('followupConfirmYes');
-  const noBtn = document.getElementById('followupConfirmNo');
-
+  
   // Fungsi untuk update status tombol
   const updateYesBtn = () => {
     const isChecked = cb1.checked && cb2.checked;
     yesBtn.disabled = !isChecked;
-    console.log('Update yesBtn.disabled:', yesBtn.disabled); // Debug
+    console.log('Update yesBtn.disabled:', yesBtn.disabled);
   };
-
-  cb1.onchange = updateYesBtn;
-  cb2.onchange = updateYesBtn;
+  
+  // Hapus event listener lama (jika ada) dan pasang baru
+  const handleCheckboxChange = () => updateYesBtn();
+  
+  cb1.removeEventListener('change', handleCheckboxChange);
+  cb2.removeEventListener('change', handleCheckboxChange);
+  cb1.addEventListener('change', handleCheckboxChange);
+  cb2.addEventListener('change', handleCheckboxChange);
+  
+  // Inisialisasi awal
   updateYesBtn();
-
-  // Hapus event listener lama dengan clone
+  
+  // Hapus event listener lama dari yesBtn (jika ada)
   const newYesBtn = yesBtn.cloneNode(true);
   yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
-
+  
+  // Pasang event listener baru untuk tombol YES (tanpa membuat baru setiap kali)
   newYesBtn.onclick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Tombol YES diklik, disabled:', newYesBtn.disabled);
+    
+    // Cek ulang disabled status
     if (newYesBtn.disabled) {
       showNotifTop('⚠️ Harap centang "pesan terkirim" DAN "sudah dibalas" terlebih dahulu!', true);
       return;
     }
+    
     (async () => {
       const doc = await db.collection('customers').doc(id).get();
       const newDeadline = addDaysToDate(doc.data().tanggal || getTodayDate(), 1);
@@ -3144,8 +3178,13 @@ function openFollowupConfirm(id) {
       closeModal('detailModal');
     })();
   };
-
-  noBtn.onclick = async () => {
+  
+  // Tombol NO tetap sama
+  const noBtn = document.getElementById('followupConfirmNo');
+  const newNoBtn = noBtn.cloneNode(true);
+  noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+  
+  newNoBtn.onclick = async () => {
     const doc = await db.collection('customers').doc(id).get();
     if (doc.exists) {
       showConfirmDialog(
@@ -3167,6 +3206,9 @@ function openFollowupConfirm(id) {
       );
     }
   };
+  
+  // Tampilkan modal
+  document.getElementById('followupConfirmModal').style.display = 'flex';
 }
 
 // ========== PENDING MODAL ==========
@@ -4014,60 +4056,36 @@ async function performSearch() {
     return;
   }
 
-  const searchCustomer = document.getElementById('searchCustomer').checked;
-  const searchProspek = document.getElementById('searchProspek').checked;
-  const searchClosing = document.getElementById('searchClosing').checked;
-  const searchTidak = document.getElementById('searchTidak').checked;
-  const searchNomorSalah = document.getElementById('searchNomorSalah').checked;
-  const searchCommitment = document.getElementById('searchCommitment').checked;
-
   const results = [];
   const today = getTodayDate();
-
-  let customersQuery, prospekQuery, closingQuery, tidakQuery, nomorSalahQuery, commitmentQuery;
-
-  if (currentUserRole === 'owner') {
-    customersQuery = db.collection('customers');
-    prospekQuery = db.collection('prospek');
-    closingQuery = db.collection('db_closing');
-    tidakQuery = db.collection('db_tidak_tertarik');
-    nomorSalahQuery = db.collection('nomor_salah');
-    commitmentQuery = db.collection('db_commitment');
-  } else {
-    customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid);
-    prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid);
-    closingQuery = db.collection('db_closing').where('user_id', '==', currentUser.uid);
-    tidakQuery = db.collection('db_tidak_tertarik').where('user_id', '==', currentUser.uid);
-    nomorSalahQuery = db.collection('nomor_salah').where('user_id', '==', currentUser.uid);
-    commitmentQuery = db.collection('db_commitment').where('user_id', '==', currentUser.uid);
-  }
-
-  if (searchCustomer) {
-    const snapshot = await customersQuery.get();
+  
+  // 🔥 PERBAIKAN: Batasi hasil pencarian
+  const SEARCH_LIMIT = 50;
+  
+  // Fungsi helper untuk query dengan delay
+  const searchCollection = async (query, type, badgeClass, badgeName, getDetail) => {
+    const limitedQuery = query.limit(SEARCH_LIMIT);
+    const snapshot = await limitedQuery.get();
+    
     for (const doc of snapshot.docs) {
       const data = doc.data();
-      const searchText = `${data.agent_id || ''} ${data.nama || ''} ${data.hp || ''}`.toLowerCase();
+      const searchText = `${data.nama || ''} ${data.hp || ''} ${data.agent_id || ''}`.toLowerCase();
       if (searchText.includes(keyword)) {
-        let ownerName = '';
-        if (currentUserRole === 'owner' && data.user_id !== currentUser.uid) {
-          const userDoc = await db.collection('users').doc(data.user_id).get();
-          ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
-        }
-        const isOverdue = data.tanggal && data.tanggal < today;
         results.push({
           id: doc.id,
-          type: 'customer',
-          title: data.nama + ownerName,
-          subtitle: `ID: ${data.agent_id || '-'} | ${data.hp}`,
-          detail: `Status: ${data.status === 'followup' ? 'Follow Up' : data.status === 'baru' ? 'Baru' : data.status} | Deadline: ${data.tanggal || '-'}`,
-          deadline: data.tanggal,
-          isOverdue: isOverdue,
-          badge: 'Followup Agen',
-          badgeClass: 'badge-customer'
+          type: type,
+          title: data.nama,
+          subtitle: data.hp,
+          detail: getDetail(data),
+          badge: badgeName,
+          badgeClass: badgeClass
         });
       }
     }
-  }
+    
+    // 🔥 PERBAIKAN: Delay antar collection
+    await new Promise(resolve => setTimeout(resolve, 100));
+  };
 
   if (searchProspek) {
     const snapshot = await prospekQuery.get();
@@ -5146,6 +5164,9 @@ function loadAllData() {
   if (!isOwner) {
     customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid);
     prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid);
+    .limit(LIMIT_DATA); // ← TAMBAHKAN LIMIT
+  } else {
+    prospekQuery = db.collection('prospek').limit(LIMIT_DATA); // ← TAMBAHKAN LIMIT
   }
 
   customersQuery.onSnapshot(async snap => {
@@ -5595,8 +5616,11 @@ async function loadNumbers() {
       }
       let query = db.collection(collection);
       if (currentUserRole !== 'owner') query = query.where('user_id', '==', currentUser.uid);
-      if (statusValues && statusValues.length > 0 && statusField) {
-        query = query.where(statusField, 'in', statusValues);
+      
+      // 🔥 PERBAIKAN: Batasi jumlah data yang diambil
+      query = query.limit(1000); // Maksimal 1000 nomor per broadcast
+      
+      if (statusValues && statusValues.length > 0 && statusField) {        query = query.where(statusField, 'in', statusValues);
       }
       const snapshot = await query.get();
       snapshot.forEach(doc => {
@@ -5821,9 +5845,11 @@ async function loadDatabaseAgent() {
   if (!isOwner) {
     query = query.where('user_id', '==', currentUser.uid);
   }
-
-  // 🔥 TAMBAHKAN INI - Ambil semua data tanpa limit
-  const snapshot = await query.get(); // Bukan onSnapshot
+  
+  // 🔥 PERBAIKAN: Tambah limit dan orderBy
+  query = query.orderBy('created_at', 'desc').limit(500); // ← TAMBAHKAN INI
+  
+  const snapshot = await query.get();
 
   const items = [];
   for (const doc of snapshot.docs) {
@@ -6261,7 +6287,8 @@ window.deleteSelectedAgentBatch = async function() {
   }
 };
 
-// Fungsi hapus dengan interval (lebih lambat tapi pasti berhasil)
+// Ubah window.deleteSelectedAgentSafe menjadi default (ganti yang lama)
+
 window.deleteSelectedAgentSafe = async function() {
   const selectedIds = Array.from(selectedAgentIds.keys());
   if (selectedIds.length === 0) {
@@ -6277,15 +6304,15 @@ window.deleteSelectedAgentSafe = async function() {
   let deleted = 0;
   let failed = 0;
 
+  // 🔥 PERBAIKAN: Delay antar delete lebih lama
   for (let i = 0; i < selectedIds.length; i++) {
     const id = selectedIds[i];
 
     try {
       await db.collection('db_agent').doc(id).delete();
       deleted++;
-
-      // Hapus dari array lokal
       selectedAgentIds.delete(id);
+      
       const index = agentsData.findIndex(item => item.id === id);
       if (index !== -1) agentsData.splice(index, 1);
 
@@ -6302,12 +6329,11 @@ window.deleteSelectedAgentSafe = async function() {
       renderAgentList(agentsData);
     }
 
-    // 🔥 DELAY 200ms PER DATA
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // 🔥 PERBAIKAN: Delay 500ms (dari 200ms)
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   renderAgentList(agentsData);
-
   progress.update(100, '✅ Selesai', `Berhasil: ${deleted}, Gagal: ${failed}`, selectedIds.length, selectedIds.length);
   showNotifTop(`✅ ${deleted} data agent berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
 
@@ -6315,6 +6341,9 @@ window.deleteSelectedAgentSafe = async function() {
     if (progress && progress.hide) progress.hide();
   }, 3000);
 };
+
+// Jadikan deleteSelectedAgentSafe sebagai default
+window.deleteSelectedAgent = window.deleteSelectedAgentSafe;
 
 // ========== FUNGSI AGENT DETAIL LENGKAP ==========
 async function saveAgentDetail() {
@@ -7074,7 +7103,7 @@ async function setupAgentImport() {
               operationCount = 0;
 
               // 🔥 DELAY 300ms AGAR TIDAK KENA QUOTA
-              await new Promise(resolve => setTimeout(resolve, 300));
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
 
           } catch (rowError) {
