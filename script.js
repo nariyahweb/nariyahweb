@@ -5448,6 +5448,7 @@ window.deleteSelectedAgent = async function() {
     let failed = 0;
     const failedIds = [];
     
+    // Proses 10 data per batch
     const BATCH_SIZE = 10;
     
     for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
@@ -5463,12 +5464,12 @@ window.deleteSelectedAgent = async function() {
             await batch.commit();
             deleted += chunk.length;
             
+            // Hapus dari array lokal
             for (const id of chunk) {
                 selectedAgentIds.delete(id);
                 const index = agentsData.findIndex(item => item.id === id);
                 if (index !== -1) agentsData.splice(index, 1);
             }
-            
         } catch(e) {
             console.error(`Batch ${i/BATCH_SIZE + 1} gagal:`, e);
             failed += chunk.length;
@@ -5478,6 +5479,7 @@ window.deleteSelectedAgent = async function() {
         const percent = Math.floor(((deleted + failed) / selectedIds.length) * 100);
         progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted + failed}/${selectedIds.length})`, deleted + failed, selectedIds.length);
         
+        // Delay agar tidak kena quota
         await new Promise(resolve => setTimeout(resolve, 500));
     }
     
@@ -5510,15 +5512,6 @@ window.deleteSelectedAgent = async function() {
     setTimeout(() => {
         if (progress && progress.hide) progress.hide();
     }, 3000);
-};
-        
-    } catch(e) {
-        console.error('Error delete selected:', e);
-        showNotifTop('❌ Gagal menghapus: ' + e.message, true);
-        if (progress && progress.hide) {
-            progress.hide();
-        }
-    }
 };
 
 // Hapus single agent - dengan delay untuk stabilitas
