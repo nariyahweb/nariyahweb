@@ -2599,7 +2599,7 @@ body.dark-mode .progress-status {
 #pendingModal,
 #followupConfirmModal,
 #prospekNegosiasiModal {
-    pointer-events: none;
+    pointer-events: auto;
 }
 
 #pendingModal .modal-content,
