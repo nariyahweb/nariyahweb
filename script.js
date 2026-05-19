@@ -6953,358 +6953,164 @@ async function setupAgentImport() {
         progress.update(5, '📥 Import Data', 'Memproses file Excel...');
 
         const data = new Uint8Array(event.target.result);
-        const workbook = XLSX.read(data, {
-          type: 'array'
-        });
+        const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rawJson = XLSX.utils.sheet_to_json(sheet, {
-          defval: "",
-          header: 1
-        });
-
-        if (!rawJson || rawJson.length < 4) {
-          showNotifTop('❌ File Excel kosong atau format tidak sesuai!', true);
+        
+        // 🔥 PERBAIKAN: Gunakan header: 1 untuk membaca baris pertama sebagai header
+        const json = XLSX.utils.sheet_to_json(sheet, { defval: "", header: 1 });
+        
+        if (!json || json.length === 0) {
+          showNotifTop('❌ File Excel kosong!', true);
           progress.hide();
           return;
         }
 
-        progress.update(10, '📥 Import Data', 'Memuat data produk...');
+        // 🔥 DEBUG: Log struktur file
+        console.log('=== DEBUG IMPORT ===');
+        console.log('Total baris:', json.length);
+        console.log('Baris 0 (header/data):', json[0]);
+        console.log('Baris 1:', json[1]);
 
-        // Load data produk dari database
-        const produkSnapshot = await db.collection('produk').get();
-        const produkMap = new Map();
-        const produkList = [];
-
-        produkSnapshot.forEach(doc => {
-          const data = doc.data();
-          produkList.push({
-            id: doc.id,
-            nama: data.nama,
-            jenis: data.jenis_produk
-          });
-          const namaLower = data.nama.toLowerCase().trim();
-          const namaClean = namaLower.replace(/[^a-z0-9]/g, '');
-          produkMap.set(namaLower, data);
-          produkMap.set(namaClean, data);
-        });
-
-        // Header baris 1,2,3 - tapi fleksibel untuk 1 baris header
-const headerRow1 = rawJson[0] || [];
-const headerRow2 = rawJson[1] || [];
-const headerRow3 = rawJson[2] || [];
-
-// Cek apakah hanya ada 1 baris header (data langsung di baris 1)
-const isSingleHeader = headerRow2.length === 0 || 
-                       (headerRow2.length === 1 && (headerRow2[0] === undefined || headerRow2[0] === ''));
-const isTripleHeader = headerRow1.length > 0 && headerRow2.length > 0 && headerRow3.length > 0;
-
-let startDataRow = 1; // default mulai baris 1 (data)
-
-if (isTripleHeader) {
-    startDataRow = 3; // 3 baris header, data mulai baris 3
-    console.log('Detected 3-row header format');
-} else {
-    console.log('Detected 1-row header format');
-}
-
-        // Deteksi kolom standar
-        let agentIdCol = -1,
-          namaCol = -1,
-          hpCol = -1,
-          apkCol = -1;
-        let agentTypeCol = -1,
-          pemilikCol = -1,
-          alamatCol = -1;
-        let emailCol = -1,
-          tlpCol = -1,
-          noRekeningCol = -1;
-        let atasNamaCol = -1,
-          jenisBankCol = -1,
-          noKtpCol = -1,
-          cidCol = -1,
-          uplineCol = -1;
-
-        for (let i = 0; i < headerRow1.length; i++) {
-          const val1 = String(headerRow1[i] || '').toUpperCase();
-          const val2 = String(headerRow2[i] || '').toUpperCase();
-          const val3 = String(headerRow3[i] || '').toUpperCase();
-
-          if (val1 === 'AGENT_ID' || val2 === 'AGENT_ID' || val3 === 'AGENT_ID') agentIdCol = i;
-          if (val1 === 'NAMA' || val2 === 'NAMA' || val3 === 'NAMA') namaCol = i;
-          if (val1 === 'HP' || val2 === 'HP' || val3 === 'HP') hpCol = i;
-          if (val1 === 'APK' || val2 === 'APK' || val3 === 'APK') apkCol = i;
-          if (val1 === 'AGENT_TYPE' || val2 === 'AGENT_TYPE') agentTypeCol = i;
-          if (val1 === 'PEMILIK' || val2 === 'PEMILIK') pemilikCol = i;
-          if (val1 === 'ALAMAT' || val2 === 'ALAMAT') alamatCol = i;
-          if (val1 === 'EMAIL' || val2 === 'EMAIL') emailCol = i;
-          if (val1 === 'TLP' || val2 === 'TLP') tlpCol = i;
-          if (val1 === 'NO_REKENING' || val2 === 'NO_REKENING') noRekeningCol = i;
-          if (val1 === 'ATAS_NAMA' || val2 === 'ATAS_NAMA') atasNamaCol = i;
-          if (val1 === 'JENIS_BANK' || val2 === 'JENIS_BANK') jenisBankCol = i;
-          if (val1 === 'NO_KTP' || val2 === 'NO_KTP') noKtpCol = i;
-          if (val1 === 'CID' || val2 === 'CID') cidCol = i;
-          if (val1 === 'UPLINE' || val2 === 'UPLINE') uplineCol = i;
+        // Ambil baris pertama sebagai header
+        const headers = json[0] || [];
+        console.log('Headers ditemukan:', headers);
+        
+        // Cari kolom yang wajib ada
+        let agentIdCol = -1, namaCol = -1, hpCol = -1;
+        
+        for (let i = 0; i < headers.length; i++) {
+          const header = String(headers[i] || '').toLowerCase().trim();
+          if (header === 'agent_id' || header.includes('agent')) agentIdCol = i;
+          if (header === 'nama' || header === 'name') namaCol = i;
+          if (header === 'hp' || header === 'phone' || header === 'no_hp') hpCol = i;
         }
-
-        if (agentIdCol === -1) {
-          showNotifTop('❌ Kolom "AGENT_ID" tidak ditemukan!', true);
+        
+        console.log('Kolom terdeteksi - agent_id:', agentIdCol, 'nama:', namaCol, 'hp:', hpCol);
+        
+        // Validasi kolom wajib
+        if (agentIdCol === -1 || namaCol === -1 || hpCol === -1) {
+          showNotifTop('❌ Format Excel tidak sesuai! Kolom wajib: agent_id, nama, hp', true);
+          console.error('Kolom tidak lengkap - agent_id:', agentIdCol, 'nama:', namaCol, 'hp:', hpCol);
           progress.hide();
           return;
         }
-
-        progress.update(15, '📥 Import Data', 'Memeriksa duplikat data...');
-
-        // Ambil semua agent_id yang sudah ada
+        
+        // Data dimulai dari baris 1 (setelah header)
+        const dataRows = json.slice(1);
+        console.log('Jumlah data row:', dataRows.length);
+        
+        if (dataRows.length === 0) {
+          showNotifTop('❌ Tidak ada data untuk diimport!', true);
+          progress.hide();
+          return;
+        }
+        
+        progress.update(10, '📥 Import Data', `Memproses ${dataRows.length} baris data...`);
+        progress.setTotal(dataRows.length);
+        
+        // Ambil agent_id yang sudah ada untuk cek duplikat
         const allExistingAgents = await db.collection('db_agent').get();
         const existingAgentIds = new Set();
         allExistingAgents.forEach(doc => {
           const data = doc.data();
           if (data.agent_id) existingAgentIds.add(data.agent_id);
         });
-
-        const dataRows = rawJson.slice(startDataRow);
-        const totalRows = dataRows.length;
-        progress.setTotal(totalRows);
-
-        progress.update(20, '📥 Import Data', `Memproses ${totalRows} baris data...`);
-
-        // ========== DETEKSI KOLOM PRODUK ==========
-        // Mapping: nama_produk -> { colProfit, colFeeUpline }
-        const produkColumnMap = new Map();
-
-        for (let i = 0; i < headerRow1.length; i++) {
-          const colName = String(headerRow1[i] || '').trim().toLowerCase();
-
-          // Skip kolom standar
-          if (i === agentIdCol || i === namaCol || i === hpCol || i === apkCol ||
-            i === agentTypeCol || i === pemilikCol || i === alamatCol ||
-            i === emailCol || i === tlpCol || i === noRekeningCol ||
-            i === atasNamaCol || i === jenisBankCol || i === noKtpCol ||
-            i === cidCol || i === uplineCol) {
-            continue;
-          }
-
-          // Cek apakah kolom adalah profit_xxx atau fee_upline_xxx
-          if (colName.startsWith('profit_')) {
-            const produkNama = colName.replace('profit_', '').replace(/_/g, ' ');
-            if (!produkColumnMap.has(produkNama)) {
-              produkColumnMap.set(produkNama, {
-                profitCol: i,
-                feeCol: -1
-              });
-            } else {
-              const existing = produkColumnMap.get(produkNama);
-              existing.profitCol = i;
-              produkColumnMap.set(produkNama, existing);
-            }
-          } else if (colName.startsWith('fee_upline_')) {
-            const produkNama = colName.replace('fee_upline_', '').replace(/_/g, ' ');
-            if (!produkColumnMap.has(produkNama)) {
-              produkColumnMap.set(produkNama, {
-                profitCol: -1,
-                feeCol: i
-              });
-            } else {
-              const existing = produkColumnMap.get(produkNama);
-              existing.feeCol = i;
-              produkColumnMap.set(produkNama, existing);
-            }
-          }
-        }
-
-        console.log('Produk column map:', Array.from(produkColumnMap.keys()));
-
-        const BATCH_SIZE = 10;
-        let batches = [];
-        let currentBatch = db.batch();
-        let operationCount = 0;
-        let success = 0,
-          failed = 0,
-          duplicate = 0;
+        
+        let success = 0, duplicate = 0, failed = 0;
         const errors = [];
-
+        
+        // Proses setiap baris
         for (let i = 0; i < dataRows.length; i++) {
           const row = dataRows[i];
           if (!row || row.length === 0) continue;
-
-          if (i % 50 === 0 || i === dataRows.length - 1) {
-            const percent = 20 + Math.floor((i / totalRows) * 70);
-            progress.update(percent, '📥 Import Data', `Memproses data... (${i + 1}/${totalRows})`, i + 1, totalRows);
-            await new Promise(resolve => setTimeout(resolve, 5));
+          
+          // Update progress setiap 10 baris
+          if (i % 10 === 0) {
+            const percent = 10 + Math.floor((i / dataRows.length) * 80);
+            progress.update(percent, '📥 Import Data', `Memproses... (${i + 1}/${dataRows.length})`, i + 1, dataRows.length);
+            await new Promise(resolve => setTimeout(resolve, 10));
           }
-
+          
           try {
-            let agentId = agentIdCol !== -1 ? (row[agentIdCol] || '') : '';
-            if (!agentId) {
+            let agentId = row[agentIdCol];
+            let nama = row[namaCol];
+            let hp = row[hpCol];
+            
+            if (!agentId || !nama || !hp) {
               failed++;
-              errors.push(`Baris ${i + 4}: ID Agent kosong`);
+              errors.push(`Baris ${i + 2}: Data tidak lengkap (Agent ID/Nama/HP kosong)`);
               continue;
             }
-
+            
             agentId = String(agentId).trim().toUpperCase();
-
+            nama = String(nama).trim();
+            
+            // Format HP
+            let cleanHp = String(hp).replace(/[^\d+]/g, '');
+            if (!cleanHp.startsWith('+')) {
+              cleanHp = cleanHp.replace(/^0+/, '');
+              if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
+              else cleanHp = '+62' + cleanHp;
+            }
+            
+            // Cek duplikat
             if (existingAgentIds.has(agentId)) {
               duplicate++;
               continue;
             }
-
+            
             existingAgentIds.add(agentId);
-
-            const agentRef = db.collection('db_agent').doc();
-            const agentData = {
+            
+            // Simpan ke database
+            await db.collection('db_agent').add({
               agent_id: agentId,
-              nama: namaCol !== -1 ? (String(row[namaCol] || '').trim() || agentId) : agentId,
-              hp: hpCol !== -1 ? formatPhoneNumber(row[hpCol] || '') : '',
-              apk: apkCol !== -1 ? String(row[apkCol] || '').trim() : '',
-              agent_type: agentTypeCol !== -1 ? String(row[agentTypeCol] || '').trim() : '',
-              pemilik: pemilikCol !== -1 ? String(row[pemilikCol] || '').trim() : '',
-              alamat: alamatCol !== -1 ? String(row[alamatCol] || '').trim() : '',
-              email: emailCol !== -1 ? String(row[emailCol] || '').trim() : '',
-              tlp: tlpCol !== -1 ? String(row[tlpCol] || '').trim() : '',
-              no_rekening: noRekeningCol !== -1 ? String(row[noRekeningCol] || '').trim() : '',
-              atas_nama: atasNamaCol !== -1 ? String(row[atasNamaCol] || '').trim() : '',
-              jenis_bank: jenisBankCol !== -1 ? String(row[jenisBankCol] || '').trim() : '',
-              no_ktp: noKtpCol !== -1 ? String(row[noKtpCol] || '').trim() : '',
-              cid: cidCol !== -1 ? String(row[cidCol] || '').trim() : '',
-              upline: uplineCol !== -1 ? String(row[uplineCol] || '').trim() : '',
+              nama: nama,
+              hp: cleanHp,
               user_id: currentUser.uid,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
+              agent_type: '',
+              pemilik: '',
+              alamat: '',
+              email: '',
+              tlp: '',
+              upline: '',
+              no_rekening: '',
+              atas_nama: '',
+              jenis_bank: '',
+              no_ktp: '',
+              cid: '',
+              apk: '',
               produk: []
-            };
-
-            // ========== PROSES PRODUK ==========
-            const produkListData = [];
-
-            for (const [produkNama, cols] of produkColumnMap.entries()) {
-              // Cari produk di database
-              let foundProduk = null;
-              const searchNama = produkNama.toLowerCase().trim();
-
-              for (const p of produkList) {
-                const pNamaLower = p.nama.toLowerCase();
-                const pNamaClean = pNamaLower.replace(/[^a-z0-9]/g, '');
-                const searchClean = searchNama.replace(/[^a-z0-9]/g, '');
-
-                if (pNamaLower === searchNama ||
-                  pNamaClean === searchClean ||
-                  pNamaLower.includes(searchNama) ||
-                  searchNama.includes(pNamaLower)) {
-                  foundProduk = p;
-                  break;
-                }
-              }
-
-              if (!foundProduk) {
-                console.log(`Produk tidak ditemukan: ${produkNama}`);
-                continue;
-              }
-
-              // Ambil nilai profit dan fee upline dari Excel
-              let profit = 0;
-              let feeUpline = 0;
-
-              if (cols.profitCol !== -1 && cols.profitCol < row.length) {
-                let val = row[cols.profitCol];
-                if (val !== undefined && val !== null && val !== '') {
-                  profit = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.-]/g, '')) || 0;
-                }
-              }
-
-              if (cols.feeCol !== -1 && cols.feeCol < row.length) {
-                let val = row[cols.feeCol];
-                if (val !== undefined && val !== null && val !== '') {
-                  feeUpline = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.-]/g, '')) || 0;
-                }
-              }
-
-              console.log(`Produk: ${produkNama}, Profit: ${profit}, Fee Upline: ${feeUpline}`);
-
-              // Hitung admin (jika diperlukan)
-              let admin = 0;
-              let feeAgent = 0;
-
-              if (foundProduk.jenis === 'beradmin') {
-                // Untuk produk beradmin, admin bisa didapat dari tarif_admin
-                // Atau bisa dihitung dari profit + fee_upline + fee_agent
-                feeAgent = profit + feeUpline; // Sementara, nanti bisa dihitung ulang
-              }
-
-              produkListData.push({
-                produk_id: foundProduk.id,
-                nama_produk: foundProduk.nama,
-                profit: profit,
-                fee_upline: feeUpline,
-                fee_agent: feeAgent,
-                admin: admin,
-                qty: 1,
-                added_at: new Date().toISOString()
-              });
-            }
-
-            agentData.produk = produkListData;
-            console.log(`Agent ${agentId} memiliki ${produkListData.length} produk`);
-
-            currentBatch.set(agentRef, agentData);
-            operationCount++;
+            });
+            
             success++;
-
-            if (operationCount >= BATCH_SIZE) {
-              await currentBatch.commit();
-              batches.push(currentBatch);
-              currentBatch = db.batch();
-              operationCount = 0;
-
-              // 🔥 DELAY 300ms AGAR TIDAK KENA QUOTA
-              await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
+            
+            // Delay kecil agar tidak kena quota
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
           } catch (rowError) {
             failed++;
-            errors.push(`Baris ${i + 4}: ${rowError.message}`);
+            errors.push(`Baris ${i + 2}: ${rowError.message}`);
+            console.error('Error baris:', rowError);
           }
         }
-
-        if (operationCount > 0) {
-          await currentBatch.commit();
-          batches.push(currentBatch);
-        }
-
-        // 🔥 DELAY AKHIR 1 DETIK
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        progress.update(92, '📥 Import Data', 'Menyimpan data ke database...', success, totalRows);
-
-        progress.update(92, '📥 Import Data', 'Menyimpan data ke database...', success, totalRows);
-
-        let batchIndex = 0;
-        for (const batch of batches) {
-          batchIndex++;
-          progress.update(92 + Math.floor((batchIndex / batches.length) * 8),
-            '📥 Import Data', `Menyimpan batch ${batchIndex}/${batches.length}...`, success, totalRows);
-          await batch.commit();
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-
-        progress.update(100, '✅ Import Selesai', `Berhasil: ${success}, Duplikat: ${duplicate}, Gagal: ${failed}`, success, totalRows);
-
-        setTimeout(() => {
-          if (progress && progress.hide) {
-            progress.hide();
-          }
-        }, 2000);
-
-        let resultMsg = `✅ Import selesai!\n📊 Total data: ${totalRows}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
+        
+        progress.update(100, '✅ Import Selesai', `Berhasil: ${success}, Duplikat: ${duplicate}, Gagal: ${failed}`, success, dataRows.length);
+        
+        let resultMsg = `✅ Import selesai!\n📊 Total data: ${dataRows.length}\n✅ Berhasil: ${success}\n⏭ Duplikat: ${duplicate}\n❌ Gagal: ${failed}`;
         if (errors.length > 0 && errors.length <= 5) {
           resultMsg += `\n\n❌ Error:\n${errors.join('\n')}`;
         } else if (errors.length > 5) {
           resultMsg += `\n\n❌ ${errors.length} error terjadi.`;
         }
         alert(resultMsg);
-
+        
         await loadDatabaseAgent();
         fileInput.value = '';
-
+        
+        setTimeout(() => progress.hide(), 3000);
+        
       } catch (err) {
         console.error('Import error:', err);
         showNotifTop('❌ Gagal memproses file: ' + err.message, true);
@@ -7314,14 +7120,14 @@ if (isTripleHeader) {
         btn.disabled = false;
       }
     };
-
+    
     reader.onerror = () => {
       showNotifTop('❌ Gagal membaca file', true);
       btn.textContent = originalText;
       btn.disabled = false;
       if (progress) progress.hide();
     };
-
+    
     reader.readAsArrayBuffer(file);
   };
 }
