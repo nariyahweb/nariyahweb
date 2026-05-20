@@ -8639,86 +8639,72 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
         
         try {
           let agentId = columnMap.agentId ? row[columnMap.agentId] : null;
-          let nama = row[columnMap.nama];
-          let hp = row[columnMap.hp];
-          let uplineName = columnMap.uplineName ? row[columnMap.uplineName] : '';
-          let uplinePhone = columnMap.uplinePhone ? row[columnMap.uplinePhone] : '';
-          let apk = columnMap.apk ? row[columnMap.apk] : null;
-          let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
-          
-          // Ambil nilai progres
-          let progresJenis = '';
+let nama = row[columnMap.nama];
+let hp = row[columnMap.hp];
+let uplineName = columnMap.uplineName ? row[columnMap.uplineName] : '';
+let uplinePhone = columnMap.uplinePhone ? row[columnMap.uplinePhone] : '';
+let apk = columnMap.apk ? row[columnMap.apk] : null;
+let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
+
+// 🔥 DEKLARASI VARIABEL (HANYA SEKALI)
+let progresJenis = '';
 let progresJumlah = 0;
 let progresKeterangan = '';
 let totalTercapai = 0;
 
+// 🔥 PARSING PROGRES JENIS
 if (progresJenisCol && row[progresJenisCol] !== undefined && row[progresJenisCol] !== null && row[progresJenisCol] !== '') {
     const jenisInput = String(row[progresJenisCol]).toLowerCase().trim();
     
-    // 🔥 PERBAIKAN: Deteksi lebih fleksibel
     if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+' || jenisInput === 'increase') {
         progresJenis = 'naik';
     } 
     else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-' || jenisInput === 'decrease') {
         progresJenis = 'turun';
     }
-    else if (jenisInput === 'normal' && progresJumlah < 0) {
-        // Jika 'normal' tapi nilai negatif, tetap dianggap turun
-        progresJenis = 'turun';
-    }
     else {
-        // Jika tidak dikenali, tetap simpan sebagai string asli
         progresJenis = jenisInput;
     }
 }
-          
-// 🔥 PERBAIKAN PARSING - BACA NILAI ASLI DENGAN LEBIH BAIK
-let progresJumlah = 0;
+
+// 🔥 PARSING PROGRES JUMLAH (TANPA REDECLARATION!)
 if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== null && row[progresJumlahCol] !== '') {
     const rawValue = row[progresJumlahCol];
     
     if (typeof rawValue === 'number') {
-        // Jika sudah berupa number, langsung gunakan
-        progresJumlah = rawValue;
+        progresJumlah = rawValue;  // ← LANGSUNG ASSIGN
     } else {
         const rawString = String(rawValue).trim();
-        // Regex yang lebih baik untuk menangkap angka negatif
         const matches = rawString.match(/-?\d+/);
         if (matches) {
-            progresJumlah = parseInt(matches[0], 10);
+            progresJumlah = parseInt(matches[0], 10);  // ← LANGSUNG ASSIGN
         }
     }
-    
-    console.log(`Debug - raw: ${rawValue}, parsed: ${progresJumlah}`);
 }
-          
-          if (progresKeteranganCol && row[progresKeteranganCol]) {
-            progresKeterangan = String(row[progresKeteranganCol]).trim();
-          }
-          
+
+// 🔥 PARSING PROGRES KETERANGAN
+if (progresKeteranganCol && row[progresKeteranganCol]) {
+    progresKeterangan = String(row[progresKeteranganCol]).trim();
+}
+
 // 🔥 FILTER DATA BERDASARKAN TURUN TRANSAKSI
 if (importType === 'customer') {
-    // Ambil nilai absolut dengan benar
-    let nilaiAbsolut = Math.abs(progresJumlah);
-    
-    // 🔥 PERBAIKAN: Cek progres_jenis (case insensitive)
-    const jenisLower = (progresJenis || '').toLowerCase();
-    
-    if (jenisLower === 'turun') {
-        // Data dengan status 'turun' diproses
-        totalTercapai = -nilaiAbsolut;
+    // Gunakan nilai numerik yang sudah diparsing
+    if (progresJumlah < 0) {
+        // Nilai negatif = turun
+        totalTercapai = progresJumlah;
+        progresJenis = 'turun';
     } 
-    // 🔥 TAMBAHAN: Jika 'normal' atau kosong tapi nilai negatif, tetap dianggap turun
-    else if ((jenisLower === 'normal' || jenisLower === '') && progresJumlah < 0) {
-        console.log(`Baris: Deteksi otomatis turun dari nilai negatif: ${progresJumlah}`);
-        totalTercapai = progresJumlah; // Simpan nilai negatif asli
-        progresJenis = 'turun'; // Ubah jenis untuk dicatat
+    else if (progresJenis === 'turun' && progresJumlah > 0) {
+        // Jika jenis 'turun' tapi nilai positif, tetap dianggap turun dengan nilai negatif
+        totalTercapai = -Math.abs(progresJumlah);
     }
     else {
         skipped++;
         continue;
     }
 }
+
 
           // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
           
