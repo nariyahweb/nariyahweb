@@ -7717,6 +7717,7 @@ async function setupAgentImport() {
     progress.update(0, '📥 Import Data', 'Membaca file Excel...');
 
     const reader = new FileReader();
+    
     reader.onload = async (event) => {
       try {
         progress.update(5, '📥 Import Data', 'Memproses file Excel...');
@@ -7725,7 +7726,6 @@ async function setupAgentImport() {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         
-        // 🔥 PERBAIKAN: Gunakan header: 1 untuk membaca baris pertama sebagai header
         const json = XLSX.utils.sheet_to_json(sheet, { defval: "", header: 1 });
         
         if (!json || json.length === 0) {
@@ -7734,17 +7734,8 @@ async function setupAgentImport() {
           return;
         }
 
-        // 🔥 DEBUG: Log struktur file
-        console.log('=== DEBUG IMPORT ===');
-        console.log('Total baris:', json.length);
-        console.log('Baris 0 (header/data):', json[0]);
-        console.log('Baris 1:', json[1]);
-
-        // Ambil baris pertama sebagai header
         const headers = json[0] || [];
-        console.log('Headers ditemukan:', headers);
         
-        // Cari kolom yang wajib ada
         let agentIdCol = -1, namaCol = -1, hpCol = -1;
         
         for (let i = 0; i < headers.length; i++) {
@@ -7754,19 +7745,13 @@ async function setupAgentImport() {
           if (header === 'hp' || header === 'phone' || header === 'no_hp') hpCol = i;
         }
         
-        console.log('Kolom terdeteksi - agent_id:', agentIdCol, 'nama:', namaCol, 'hp:', hpCol);
-        
-        // Validasi kolom wajib
         if (agentIdCol === -1 || namaCol === -1 || hpCol === -1) {
           showNotifTop('❌ Format Excel tidak sesuai! Kolom wajib: agent_id, nama, hp', true);
-          console.error('Kolom tidak lengkap - agent_id:', agentIdCol, 'nama:', namaCol, 'hp:', hpCol);
           progress.hide();
           return;
         }
         
-        // Data dimulai dari baris 1 (setelah header)
         const dataRows = json.slice(1);
-        console.log('Jumlah data row:', dataRows.length);
         
         if (dataRows.length === 0) {
           showNotifTop('❌ Tidak ada data untuk diimport!', true);
@@ -7777,7 +7762,6 @@ async function setupAgentImport() {
         progress.update(10, '📥 Import Data', `Memproses ${dataRows.length} baris data...`);
         progress.setTotal(dataRows.length);
         
-        // Ambil agent_id yang sudah ada untuk cek duplikat
         const allExistingAgents = await db.collection('db_agent').get();
         const existingAgentIds = new Set();
         allExistingAgents.forEach(doc => {
@@ -7788,12 +7772,10 @@ async function setupAgentImport() {
         let success = 0, duplicate = 0, failed = 0;
         const errors = [];
         
-        // Proses setiap baris
         for (let i = 0; i < dataRows.length; i++) {
           const row = dataRows[i];
           if (!row || row.length === 0) continue;
           
-          // Update progress setiap 10 baris
           if (i % 10 === 0) {
             const percent = 10 + Math.floor((i / dataRows.length) * 80);
             progress.update(percent, '📥 Import Data', `Memproses... (${i + 1}/${dataRows.length})`, i + 1, dataRows.length);
@@ -7814,7 +7796,6 @@ async function setupAgentImport() {
             agentId = String(agentId).trim().toUpperCase();
             nama = String(nama).trim();
             
-            // Format HP
             let cleanHp = String(hp).replace(/[^\d+]/g, '');
             if (!cleanHp.startsWith('+')) {
               cleanHp = cleanHp.replace(/^0+/, '');
@@ -7822,7 +7803,6 @@ async function setupAgentImport() {
               else cleanHp = '+62' + cleanHp;
             }
             
-            // Cek duplikat
             if (existingAgentIds.has(agentId)) {
               duplicate++;
               continue;
@@ -7830,7 +7810,6 @@ async function setupAgentImport() {
             
             existingAgentIds.add(agentId);
             
-            // Simpan ke database
             await db.collection('db_agent').add({
               agent_id: agentId,
               nama: nama,
@@ -7854,14 +7833,11 @@ async function setupAgentImport() {
             });
             
             success++;
-            
-            // Delay kecil agar tidak kena quota
             await new Promise(resolve => setTimeout(resolve, 50));
             
           } catch (rowError) {
             failed++;
             errors.push(`Baris ${i + 2}: ${rowError.message}`);
-            console.error('Error baris:', rowError);
           }
         }
         
@@ -8653,17 +8629,6 @@ if (importType === 'customer') {
         if (nilaiMutlak > 100) {
             // Data lolos filter - lanjutkan import
             totalTercapai = -nilaiMutlak;
-        } else {
-            // Nilai <= 100 - skip
-            skipped++;
-            continue;
-        }
-    } else {
-        // Data dengan progres_jenis = 'naik' atau kosong - skip
-        skipped++;
-        continue;
-    }
-}
             // Nilai turun > 100 - LANJUTKAN PROSES
             totalTercapai = -progresJumlah;
           } else if (importType === 'customer' && (progresJenis === 'naik' || progresJenis === '')) {
@@ -8681,9 +8646,12 @@ if (importType === 'customer') {
             skipped++;
             continue;
           }
-          
-          if (progresJenis === 'naik') totalTercapai = progresJumlah;
-          else if (progresJenis === 'turun') totalTercapai = -progresJumlah;
+      } else {
+            // Nilai <= 100 - skip
+            skipped++;
+            continue;
+    }
+}
 
           // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
           
