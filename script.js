@@ -8554,9 +8554,6 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
 
           // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
 
-          // Variabel untuk menyimpan data customer saat memilih nomor
-let currentPilihNomorCustomerId = null;
-
 // ========== LETAKKAN FUNGSI INI DI LEVEL GLOBAL (TIDAK DI DALAM FUNGSI LAIN) ==========
 
 let currentPilihNomorCustomerId = null;
