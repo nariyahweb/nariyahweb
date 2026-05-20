@@ -77,6 +77,9 @@ let currentAgentProducts = [];
 let trendChart = null;
 let currentTransaksiId = null; // Untuk edit transaksi
 let transaksiList = []; // Menyimpan daftar transaksi
+let transaksiList = []; // Menyimpan daftar transaksi
+let selectedFullFollowupIds = new Map();  // 🔥 TAMBAHKAN
+let selectedFullProspekIds = new Map();   // 🔥 TAMBAHKAN
 
 // ========== FLOATING PROGRESS UNIVERSAL ==========
 let activeProgress = null;
@@ -808,6 +811,30 @@ function showInputTransaksiModal() {
 function showTransaksiListModal() {
   renderTransaksiListGlobal();
   document.getElementById('transaksiListModal').style.display = 'flex';
+}
+
+// Update total transaksi dari semua customer
+async function updateTotalTransaksiDariCustomer() {
+    let query = db.collection('customers');
+    if (currentUserRole !== 'owner') {
+        query = query.where('user_id', '==', currentUser.uid);
+    }
+    
+    const snapshot = await query.get();
+    let totalTransaksi = 0;
+    
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const progres = data.progres_transaksi;
+        if (progres && progres.total_tercapai !== undefined) {
+            totalTransaksi += progres.total_tercapai;
+        }
+    });
+    
+    window.totalTransaksiGlobal = totalTransaksi;
+    await updateTargetDisplay();
+    
+    return totalTransaksi;
 }
 
 // ========== FUNGSI VALIDASI DUPLIKAT ==========
@@ -2480,7 +2507,9 @@ auth.onAuthStateChanged(async user => {
     }
 
     await updateAllBadges();
+    initFullModeSelection();  // 🔥 TAMBAHKAN
     loadAllData();
+    await updateTotalTransaksiDariCustomer();
     loadReminders();
     loadPesan();
     loadDBClosing();
@@ -3234,7 +3263,7 @@ const targetName = getTargetName(d);
             <div class="detail-info-content">
               <label>Total Transaksi Tercapai</label>
               <div class="value" style="color: ${totalTercapai >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700;">
-                ${totalTercapai > 0 ? '+' : ''}${totalTercapai.toLocaleString()} unit
+                ${totalTercapai > 0 ? '+' : ''}${totalTercapai.toLocaleString()} Transaksi
               </div>
             </div>
           </div>
@@ -4671,14 +4700,234 @@ function renderFullFollowupKanban() {
 
   const baruContainer = document.getElementById('fullBaruList');
   if (baruContainer) {
-    baruContainer.innerHTML = lists.baru.map(item => {
-      const isOverdue = item.tanggal && item.tanggal < today;
-      const isToday = item.tanggal === today;
-      let deadlineClass = '';
-      if (isOverdue) deadlineClass = 'deadline-overdue';
-      else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
-    }).join('');
+    const isOwner = currentUserRole === 'owner';
+const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px;">` : '';
+
+baruContainer.innerHTML = lists.baru.map(item => {
+    const isOverdue = item.tanggal && item.tanggal < today;
+    const isToday = item.tanggal === today;
+    let deadlineClass = '';
+    if (isOverdue) deadlineClass = 'deadline-overdue';
+    else if (isToday) deadlineClass = 'deadline-today';
+    const isChecked = selectedFullFollowupIds.get(item.id) === true;
+    return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
+                <div style="display: flex; align-items: center;">
+                    ${checkboxHtml}
+                    <div style="flex: 1;">
+                        <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                        <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                    </div>
+                </div>
+            </div>`;
+}).join('');
+
+    // ========== FULL MODE SELECTION (HANYA UNTUK OWNER) ==========
+function initFullModeSelection() {
+    if (currentUserRole !== 'owner') return;
+    
+    // Tampilkan tombol di Followup Full Page
+    const followupHeader = document.querySelector('#followupFullPage .fullpage-header div');
+    if (followupHeader) {
+        const selectBtn = document.getElementById('selectAllFullFollowup');
+        const deleteBtn = document.getElementById('deleteSelectedFullFollowup');
+        if (selectBtn) selectBtn.style.display = 'inline-block';
+        if (deleteBtn) deleteBtn.style.display = 'inline-block';
+        
+        if (selectBtn) {
+            selectBtn.onclick = () => toggleSelectAllFullFollowup();
+        }
+        if (deleteBtn) {
+            deleteBtn.onclick = () => deleteSelectedFullFollowup();
+        }
+    }
+    
+    // Tampilkan tombol di Prospek Full Page
+    const prospekHeader = document.querySelector('#prospekFullPage .fullpage-header div');
+    if (prospekHeader) {
+        const selectBtn = document.getElementById('selectAllFullProspek');
+        const deleteBtn = document.getElementById('deleteSelectedFullProspek');
+        if (selectBtn) selectBtn.style.display = 'inline-block';
+        if (deleteBtn) deleteBtn.style.display = 'inline-block';
+        
+        if (selectBtn) {
+            selectBtn.onclick = () => toggleSelectAllFullProspek();
+        }
+        if (deleteBtn) {
+            deleteBtn.onclick = () => deleteSelectedFullProspek();
+        }
+    }
+}
+
+function updateSelectAllFullFollowupButton() {
+    const cards = document.querySelectorAll('#fullBaruList .card-item, #fullFollowupList .card-item, #fullPendingList .card-item, #fullClosingList .card-item');
+    const allChecked = cards.length > 0 && Array.from(cards).every(card => selectedFullFollowupIds.has(card.dataset.id));
+    const btn = document.getElementById('selectAllFullFollowup');
+    if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+}
+
+function toggleSelectAllFullFollowup() {
+    const cards = document.querySelectorAll('#fullBaruList .card-item, #fullFollowupList .card-item, #fullPendingList .card-item, #fullClosingList .card-item');
+    const allChecked = cards.length > 0 && Array.from(cards).every(card => selectedFullFollowupIds.has(card.dataset.id));
+    
+    cards.forEach(card => {
+        const id = card.dataset.id;
+        const checkbox = card.querySelector('.full-item-checkbox');
+        if (checkbox) {
+            checkbox.checked = !allChecked;
+            if (!allChecked) {
+                selectedFullFollowupIds.set(id, true);
+                card.style.opacity = '0.6';
+                card.style.background = '#eef2ff';
+            } else {
+                selectedFullFollowupIds.delete(id);
+                card.style.opacity = '1';
+                card.style.background = '';
+            }
+        }
+    });
+    
+    const btn = document.getElementById('selectAllFullFollowup');
+    if (btn) btn.textContent = allChecked ? '✅ Pilih Semua' : '⬜ Batal Semua';
+}
+
+async function deleteSelectedFullFollowup() {
+    if (currentUserRole !== 'owner') {
+        showNotifTop('⚠️ Hanya Owner yang dapat menghapus massal!', true);
+        return;
+    }
+    
+    const selectedIds = Array.from(selectedFullFollowupIds.keys());
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data customer?`)) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Data', selectedIds.length);
+    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus...');
+    
+    let deleted = 0;
+    for (const id of selectedIds) {
+        try {
+            await db.collection('customers').doc(id).delete();
+            selectedFullFollowupIds.delete(id);
+            deleted++;
+            const percent = Math.floor((deleted / selectedIds.length) * 100);
+            progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
+            await delay(200);
+        } catch (e) {
+            console.error(`Gagal hapus ${id}:`, e);
+        }
+    }
+    
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, selectedIds.length);
+    showNotifTop(`✅ ${deleted} data berhasil dihapus`);
+    
+    setTimeout(() => progress.hide(), 2000);
+    
+    loadAllData();
+    renderFullFollowupKanban();
+}
+
+// Fungsi untuk Prospek Full Mode
+function updateSelectAllFullProspekButton() {
+    const cards = document.querySelectorAll('#fullProspekBaruList .card-item, #fullProspekDihubungiList .card-item, #fullProspekNegosiasiList .card-item, #fullProspekTertarikList .card-item');
+    const allChecked = cards.length > 0 && Array.from(cards).every(card => selectedFullProspekIds.has(card.dataset.id));
+    const btn = document.getElementById('selectAllFullProspek');
+    if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+}
+
+function toggleSelectAllFullProspek() {
+    const cards = document.querySelectorAll('#fullProspekBaruList .card-item, #fullProspekDihubungiList .card-item, #fullProspekNegosiasiList .card-item, #fullProspekTertarikList .card-item');
+    const allChecked = cards.length > 0 && Array.from(cards).every(card => selectedFullProspekIds.has(card.dataset.id));
+    
+    cards.forEach(card => {
+        const id = card.dataset.id;
+        const checkbox = card.querySelector('.full-item-checkbox');
+        if (checkbox) {
+            checkbox.checked = !allChecked;
+            if (!allChecked) {
+                selectedFullProspekIds.set(id, true);
+                card.style.opacity = '0.6';
+                card.style.background = '#eef2ff';
+            } else {
+                selectedFullProspekIds.delete(id);
+                card.style.opacity = '1';
+                card.style.background = '';
+            }
+        }
+    });
+    
+    const btn = document.getElementById('selectAllFullProspek');
+    if (btn) btn.textContent = allChecked ? '✅ Pilih Semua' : '⬜ Batal Semua';
+}
+
+async function deleteSelectedFullProspek() {
+    if (currentUserRole !== 'owner') {
+        showNotifTop('⚠️ Hanya Owner yang dapat menghapus massal!', true);
+        return;
+    }
+    
+    const selectedIds = Array.from(selectedFullProspekIds.keys());
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        return;
+    }
+    
+    if (!confirm(`Hapus ${selectedIds.length} data prospek?`)) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Data Prospek', selectedIds.length);
+    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus...');
+    
+    let deleted = 0;
+    for (const id of selectedIds) {
+        try {
+            await db.collection('prospek').doc(id).delete();
+            selectedFullProspekIds.delete(id);
+            deleted++;
+            const percent = Math.floor((deleted / selectedIds.length) * 100);
+            progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
+            await delay(200);
+        } catch (e) {
+            console.error(`Gagal hapus ${id}:`, e);
+        }
+    }
+    
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, selectedIds.length);
+    showNotifTop(`✅ ${deleted} data berhasil dihapus`);
+    
+    setTimeout(() => progress.hide(), 2000);
+    
+    loadAllData();
+    renderFullProspekKanban();
+}
+
+// Panggil initFullModeSelection setelah auth state (di dalam onAuthStateChanged)
+// Cari: await updateAllBadges();
+// Tambahkan setelah itu: initFullModeSelection();
+
+// Event listener untuk checkbox
+if (isOwner) {
+    document.querySelectorAll('#fullBaruList .full-item-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const id = cb.dataset.id;
+            if (cb.checked) {
+                selectedFullFollowupIds.set(id, true);
+                cb.closest('.card-item').style.opacity = '0.6';
+                cb.closest('.card-item').style.background = '#eef2ff';
+            } else {
+                selectedFullFollowupIds.delete(id);
+                cb.closest('.card-item').style.opacity = '1';
+                cb.closest('.card-item').style.background = '';
+            }
+            updateSelectAllFullFollowupButton();
+        });
+    });
+}
     baruContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
         if (!e.target.classList.contains('whatsapp-icon')) openDetailCustomer(card.dataset.id);
@@ -5350,7 +5599,7 @@ function updateChartCustomer(total, closing, pending, followup) {
     // Update title chart dengan total tercapai
     const chartTitle = document.querySelector('#chartCustomer h3');
     if (chartTitle) {
-        chartTitle.innerHTML = `📊 Followup Agen | 🎯 Total Tercapai: ${totalTercapai.toLocaleString()} unit`;
+        chartTitle.innerHTML = `📊 Followup Agen | 🎯 Total Tercapai: ${totalTercapai.toLocaleString()} Transaksi`;
     }
     
     chartCustomer = new Chart(ctx, {
@@ -5495,7 +5744,7 @@ function openTambahProgres(customerId) {
                 <div class="form-group">
                     <label>Jumlah Perubahan <span class="required">*</span></label>
                     <input type="number" id="progresJumlah" placeholder="Contoh: 25" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-                    <small>Jumlah kenaikan/turunan transaksi (dalam unit, selalu positif)</small>
+                    <small>Jumlah kenaikan/turunan transaksi (dalam Transaksi, selalu positif)</small>
                 </div>
                 <div class="form-group">
                     <label>Keterangan</label>
@@ -5519,7 +5768,7 @@ function openTambahProgres(customerId) {
         const keterangan = modal.querySelector('#progresKeterangan').value;
         
         if (jumlah <= 0) {
-            showNotifTop('⚠️ Masukkan jumlah perubahan yang valid (minimal 1 unit)!', true);
+            showNotifTop('⚠️ Masukkan jumlah perubahan yang valid (minimal 1 Transaksi)!', true);
             return;
         }
         
@@ -5547,7 +5796,7 @@ function openTambahProgres(customerId) {
             updated_at: new Date().toISOString()
         });
         
-        showNotifTop(`✅ Progres berhasil ditambahkan! Total transaksi tercapai: ${newTotalTercapai > 0 ? '+' : ''}${newTotalTercapai} unit`);
+        showNotifTop(`✅ Progres berhasil ditambahkan! Total transaksi tercapai: ${newTotalTercapai > 0 ? '+' : ''}${newTotalTercapai} Transaksi`);
         modal.remove();
         
         // Refresh data dan update target
@@ -8113,6 +8362,13 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           
           if (progresJenis === 'naik') totalTercapai = progresJumlah;
           else if (progresJenis === 'turun') totalTercapai = -progresJumlah;
+
+          // 🔥 VALIDASI MAKSIMAL PENURUNAN 100
+          if (progresJenis === 'turun' && progresJumlah > 100) {
+          showNotifTop(`⚠️ Baris ke-${json.indexOf(row)+2}: Penurunan transaksi maksimal 100!`, true);
+          failed++;
+          continue;
+          }
           
           // Validasi data
           if (!nama || !hp) {
