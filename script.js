@@ -257,6 +257,139 @@ function showNotifTop(msg, isError = false) {
   setTimeout(() => notif.remove(), 5000);
 }
 
+let currentPilihNomorCustomerId = null;
+          
+function showPilihNomor(customerId) {
+    currentPilihNomorCustomerId = customerId;
+    
+    db.collection('customers').doc(customerId).get().then(doc => {
+        if (!doc.exists) return;
+        
+        const data = doc.data();
+        const options = [];
+        
+        // Opsi 1: Nomor Agent sendiri
+        if (data.hp && data.hp.trim() !== '') {
+            options.push({
+                jenis: 'agent',
+                label: '📞 Nomor Agent (Pemilik)',
+                nama: data.nama,
+                nomor: data.hp
+            });
+        } else {
+            options.push({
+                jenis: 'agent',
+                label: '📞 Nomor Agent (Pemilik)',
+                nama: data.nama,
+                nomor: '',
+                kosong: true
+            });
+        }
+        
+        // Opsi 2: Nomor Upline (jika ada)
+        if (data.upline_phone && data.upline_phone.trim() !== '' && data.upline_phone !== '+62') {
+            options.push({
+                jenis: 'upline',
+                label: '👤 Nomor Upline (Atasan)',
+                nama: data.upline_name || 'Upline',
+                nomor: data.upline_phone
+            });
+        }
+
+        const validOptions = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
+        if (validOptions.length > 1) {
+            options.unshift({
+                jenis: 'semua',
+                label: '📢 Kirim ke SEMUA nomor',
+                nama: 'Semua nomor',
+                nomor: 'all'
+            });
+        }
+        
+        const modal = document.getElementById('pilihNomorModal');
+        const container = document.getElementById('pilihNomorOptions');
+        
+        if (options.length === 0) {
+            container.innerHTML = '<p style="color: #ef4444;">⚠️ Tidak ada nomor WhatsApp yang tersedia!</p>';
+        } else {
+            container.innerHTML = options.map(opt => `
+                <div class="pilih-nomor-option" data-nomor="${opt.nomor}" data-jenis="${opt.jenis}" style="
+                    padding: 12px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    background: ${opt.kosong ? '#fef2f2' : '#f9fafb'};
+                ">
+                    <div style="font-weight: 600; margin-bottom: 4px;">${opt.label}</div>
+                    <div style="font-size: 13px; color: #4f46e5;">${opt.nama}</div>
+                    <div style="font-size: 12px; color: #6b7280;">${opt.nomor || 'Nomor tidak tersedia'}</div>
+                    ${opt.kosong ? '<div style="font-size: 11px; color: #ef4444; margin-top: 4px;">⚠️ Nomor agent tidak tersedia</div>' : ''}
+                </div>
+            `).join('');
+            
+            document.querySelectorAll('.pilih-nomor-option').forEach(el => {
+                el.addEventListener('click', () => {
+                    const nomor = el.dataset.nomor;
+                    if (nomor && nomor !== '') {
+                        openWADirect(nomor);
+                        closeModal('pilihNomorModal');
+                    } else {
+                        showNotifTop('⚠️ Nomor WhatsApp tidak tersedia!', true);
+                    }
+                });
+            });
+        }
+        
+        modal.style.display = 'flex';
+    });
+}
+
+function openWADirect(nomor) {
+    if (!nomor) return;
+    let cleanNomor = nomor.toString().replace('+', '').replace(/^0/, '62');
+    window.open('https://wa.me/' + cleanNomor, '_blank');
+}
+
+function openWAById(customerId) {
+    showPilihNomor(customerId);
+}
+
+function openWACustomer(customerId) {
+    showPilihNomor(customerId);
+}
+
+function openWA(hp, customerData = null) {
+    if (customerData && customerData.id) {
+        showPilihNomor(customerData.id);
+    } else if (hp) {
+        openWADirect(hp);
+    }
+}
+
+function getTargetPhone(customerData) {
+    if (customerData.agent_type && 
+        customerData.agent_type !== 'AGENT' && 
+        customerData.agent_type !== '' &&
+        customerData.upline_phone && 
+        customerData.upline_phone.trim() !== '') {
+        return customerData.upline_phone;
+    }
+    return customerData.hp;
+}
+
+function getTargetName(customerData) {
+    if (customerData.agent_type && 
+        customerData.agent_type !== 'AGENT' && 
+        customerData.agent_type !== '' &&
+        customerData.upline_name && 
+        customerData.upline_name.trim() !== '') {
+        return customerData.upline_name;
+    }
+    return customerData.nama;
+}
+
+
 // ========== FUNGSI DEADLINE ==========
 function addDaysToDate(dateStr, days) {
   if (!dateStr) return new Date().toISOString().split('T')[0];
@@ -7819,20 +7952,6 @@ function showDeleteProgress(total, status) {
   };
 }
 
-// Fungsi format nomor HP
-function formatPhoneNumber(value) {
-  if (!value) return '';
-  let cleanHp = value.toString().trim();
-  cleanHp = cleanHp.replace(/[^\d+]/g, '');
-  if (!cleanHp.startsWith('+')) {
-    cleanHp = cleanHp.replace(/^0+/, '');
-    if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
-    else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
-    else cleanHp = '+' + cleanHp.replace(/^\+/, '');
-  }
-  return cleanHp;
-}
-
 // Fungsi download contoh Excel dengan nama produk dari database
 async function downloadAgentExample() {
   try {
@@ -8553,142 +8672,6 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           else if (progresJenis === 'turun') totalTercapai = -progresJumlah;
 
           // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
-
-// ========== LETAKKAN FUNGSI INI DI LEVEL GLOBAL (TIDAK DI DALAM FUNGSI LAIN) ==========
-
-let currentPilihNomorCustomerId = null;
-
-function showPilihNomor(customerId) {
-    currentPilihNomorCustomerId = customerId;
-    
-    db.collection('customers').doc(customerId).get().then(doc => {
-        if (!doc.exists) return;
-        
-        const data = doc.data();
-        const options = [];
-        
-        // Opsi 1: Nomor Agent sendiri
-        if (data.hp && data.hp.trim() !== '') {
-            options.push({
-                jenis: 'agent',
-                label: '📞 Nomor Agent (Pemilik)',
-                nama: data.nama,
-                nomor: data.hp
-            });
-        } else {
-            options.push({
-                jenis: 'agent',
-                label: '📞 Nomor Agent (Pemilik)',
-                nama: data.nama,
-                nomor: '',
-                kosong: true
-            });
-        }
-        
-        // Opsi 2: Nomor Upline (jika ada)
-        if (data.upline_phone && data.upline_phone.trim() !== '' && data.upline_phone !== '+62') {
-            options.push({
-                jenis: 'upline',
-                label: '👤 Nomor Upline (Atasan)',
-                nama: data.upline_name || 'Upline',
-                nomor: data.upline_phone
-            });
-        }
-
-        const validOptions = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
-        if (validOptions.length > 1) {
-            options.unshift({
-                jenis: 'semua',
-                label: '📢 Kirim ke SEMUA nomor',
-                nama: 'Semua nomor',
-                nomor: 'all'
-            });
-        }
-        
-        const modal = document.getElementById('pilihNomorModal');
-        const container = document.getElementById('pilihNomorOptions');
-        
-        if (options.length === 0) {
-            container.innerHTML = '<p style="color: #ef4444;">⚠️ Tidak ada nomor WhatsApp yang tersedia!</p>';
-        } else {
-            container.innerHTML = options.map(opt => `
-                <div class="pilih-nomor-option" data-nomor="${opt.nomor}" data-jenis="${opt.jenis}" style="
-                    padding: 12px;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 12px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    background: ${opt.kosong ? '#fef2f2' : '#f9fafb'};
-                ">
-                    <div style="font-weight: 600; margin-bottom: 4px;">${opt.label}</div>
-                    <div style="font-size: 13px; color: #4f46e5;">${opt.nama}</div>
-                    <div style="font-size: 12px; color: #6b7280;">${opt.nomor || 'Nomor tidak tersedia'}</div>
-                    ${opt.kosong ? '<div style="font-size: 11px; color: #ef4444; margin-top: 4px;">⚠️ Nomor agent tidak tersedia</div>' : ''}
-                </div>
-            `).join('');
-            
-            document.querySelectorAll('.pilih-nomor-option').forEach(el => {
-                el.addEventListener('click', () => {
-                    const nomor = el.dataset.nomor;
-                    if (nomor && nomor !== '') {
-                        openWADirect(nomor);
-                        closeModal('pilihNomorModal');
-                    } else {
-                        showNotifTop('⚠️ Nomor WhatsApp tidak tersedia!', true);
-                    }
-                });
-            });
-        }
-        
-        modal.style.display = 'flex';
-    });
-}
-
-function openWADirect(nomor) {
-    if (!nomor) return;
-    let cleanNomor = nomor.toString().replace('+', '').replace(/^0/, '62');
-    window.open('https://wa.me/' + cleanNomor, '_blank');
-}
-
-function openWAById(customerId) {
-    showPilihNomor(customerId);
-}
-
-function openWACustomer(customerId) {
-    showPilihNomor(customerId);
-}
-
-function openWA(hp, customerData = null) {
-    if (customerData && customerData.id) {
-        showPilihNomor(customerData.id);
-    } else if (hp) {
-        openWADirect(hp);
-    }
-}
-
-function getTargetPhone(customerData) {
-    if (customerData.agent_type && 
-        customerData.agent_type !== 'AGENT' && 
-        customerData.agent_type !== '' &&
-        customerData.upline_phone && 
-        customerData.upline_phone.trim() !== '') {
-        return customerData.upline_phone;
-    }
-    return customerData.hp;
-}
-
-function getTargetName(customerData) {
-    if (customerData.agent_type && 
-        customerData.agent_type !== 'AGENT' && 
-        customerData.agent_type !== '' &&
-        customerData.upline_name && 
-        customerData.upline_name.trim() !== '') {
-        return customerData.upline_name;
-    }
-    return customerData.nama;
-}
-
-// ========== SELESAI FUNGSI GLOBAL ==========
           
 // Validasi data dasar
 if (!nama) {
