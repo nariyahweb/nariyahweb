@@ -6063,9 +6063,9 @@ async function loadNumbers() {
 }
 
 async function sendBroadcast() {
-  const message = messageTemplate.replace(/{nama}/g, item.nama || 'Customer');
-  const messageTemplate = document.getElementById('broadcastMessage')?.value,
-    sendOneByOne = document.getElementById('sendOneByOne')?.checked;
+  const messageTemplate = document.getElementById('broadcastMessage')?.value;
+  const sendOneByOne = document.getElementById('sendOneByOne')?.checked;
+  
   if (!messageTemplate) {
     showNotif('Pesan tidak boleh kosong!', true);
     return;
@@ -6076,10 +6076,10 @@ async function sendBroadcast() {
   }
   if (!sendOneByOne) {
     for (const item of currentNumbers) {
-      const hp = typeof item === 'string' ? item : item.hp,
-        nama = typeof item === 'string' ? '' : item.nama,
-        message = messageTemplate.replace(/{nama}/g, nama || 'Customer'),
-        nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+      const hp = typeof item === 'string' ? item : item.hp;
+      const nama = typeof item === 'string' ? '' : item.nama;
+      const message = messageTemplate.replace(/{nama}/g, nama || 'Customer');
+      const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
       window.open('https://wa.me/' + nomor + '?text=' + encodeURIComponent(message), '_blank');
     }
     showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`);
@@ -8020,7 +8020,6 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
         const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan'];
         const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline'];
           
-        }
         for (let key in firstRow) {
           const lowerKey = key.toLowerCase();
           if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
