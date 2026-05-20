@@ -222,7 +222,14 @@
                 <!-- FULL PAGE FOLLOWUP AGEN -->
                 <div id="followupFullPage" class="page-content" style="display:none">
                     <div class="fullpage-kanban">
-                        <div class="fullpage-header"><h2>📋 Data Followup Agen (Full Mode)</h2><button class="add-btn" id="addCustomerFullBtn">+ Tambah Data</button></div>
+                        <div class="fullpage-header">
+    <h2>📋 Data Followup Agen (Full Mode)</h2>
+    <div style="display: flex; gap: 10px;">
+        <button class="add-btn" id="addCustomerFullBtn">+ Tambah Data</button>
+        <button class="db-select-all" id="selectAllFullFollowup" style="display: none;">✅ Pilih Semua</button>
+        <button class="db-delete-selected" id="deleteSelectedFullFollowup" style="display: none;">🗑️ Hapus Terpilih</button>
+    </div>
+</div>
                         <div class="kanban-board-full">
                             <div class="kanban-column" data-status="baru"><div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountBaru">0</span></div><div class="kanban-cards" id="fullBaruList"></div></div>
                             <div class="kanban-column" data-status="followup"><div class="column-header blue-header"><span>Follow Up</span><span class="count" id="fullCountFollowup">0</span></div><div class="kanban-cards" id="fullFollowupList"></div></div>
@@ -235,7 +242,14 @@
                 <!-- FULL PAGE PROSPEK AGEN -->
                 <div id="prospekFullPage" class="page-content" style="display:none">
                     <div class="fullpage-kanban">
-                        <div class="fullpage-header"><h2>🎯 Data Prospek Agen (Full Mode)</h2><button class="add-btn" id="addProspekFullBtn">+ Tambah Data</button></div>
+                        <div class="fullpage-header">
+    <h2>🎯 Data Prospek Agen (Full Mode)</h2>
+    <div style="display: flex; gap: 10px;">
+        <button class="add-btn" id="addProspekFullBtn">+ Tambah Data</button>
+        <button class="db-select-all" id="selectAllFullProspek" style="display: none;">✅ Pilih Semua</button>
+        <button class="db-delete-selected" id="deleteSelectedFullProspek" style="display: none;">🗑️ Hapus Terpilih</button>
+    </div>
+</div>
                         <div class="kanban-board-full">
                             <div class="kanban-column" data-status="Baru"><div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountProspekBaru">0</span></div><div class="kanban-cards" id="fullProspekBaruList"></div></div>
                             <div class="kanban-column" data-status="Dihubungi"><div class="column-header blue-header"><span>Dihubungi</span><span class="count" id="fullCountDihubungi">0</span></div><div class="kanban-cards" id="fullProspekDihubungiList"></div></div>
