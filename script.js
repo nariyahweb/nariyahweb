@@ -971,6 +971,9 @@ async function updateTotalTransaksiDariCustomer() {
 
 // ========== FUNGSI VALIDASI DUPLIKAT ==========
 async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
+  // 🔥 PERBAIKAN 1: Jika HP tidak valid (kosong, 0, '+62', '62'), SKIP CEK DUPLIKAT
+  const isHpValid = hp && hp !== '+62' && hp !== '62' && hp !== '0' && hp.trim() !== '';
+  
   let query = db.collection('customers').where('user_id', '==', currentUser.uid);
   const snapshot = await query.get();
   let duplicateAgent = null;
@@ -987,7 +990,8 @@ async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
         owner: currentUserName
       };
     }
-    if (data.hp === hp) {
+    // 🔥 PERBAIKAN 2: Cek duplikat HANYA jika HP valid
+    if (isHpValid && data.hp === hp) {
       duplicateHp = {
         id: doc.id,
         nama: data.nama,
@@ -1011,7 +1015,8 @@ async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
           owner: userName
         };
       }
-      if (data.hp === hp) {
+      // 🔥 PERBAIKAN 3: Cek duplikat HANYA jika HP valid
+      if (isHpValid && data.hp === hp) {
         const userDoc = await db.collection('users').doc(data.user_id).get();
         const userName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
         duplicateHp = {
@@ -1030,6 +1035,14 @@ async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
 }
 
 async function checkDuplicateProspek(hp, excludeId = null) {
+  // 🔥 PERBAIKAN: Jika HP tidak valid, SKIP CEK DUPLIKAT
+  const isHpValid = hp && hp !== '+62' && hp !== '62' && hp !== '0' && hp.trim() !== '';
+  
+  // Jika HP tidak valid, langsung return null (tidak ada duplikat)
+  if (!isHpValid) {
+    return null;
+  }
+  
   let query = db.collection('prospek').where('user_id', '==', currentUser.uid);
   const snapshot = await query.get();
   let duplicateHp = null;
@@ -8635,49 +8648,72 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           
           // Ambil nilai progres
           let progresJenis = '';
-          let progresJumlah = 0;
-          let progresKeterangan = '';
-          let totalTercapai = 0;
-          
-          if (progresJenisCol && row[progresJenisCol]) {
-            const jenisInput = String(row[progresJenisCol]).toLowerCase();
-            if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+') {
-              progresJenis = 'naik';
-            } else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-') {
-              progresJenis = 'turun';
-            }
-          }
-          
-          // ✅ PERBAIKAN PARSING - BACA NILAI ASLI TERMASUK TANDA NEGATIF
-let rawJumlah = '';
-if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== '') {
-    rawJumlah = String(row[progresJumlahCol]).trim();
-    // Gunakan regex yang mempertahankan tanda negatif
-    let matches = rawJumlah.match(/-?\d+/);
-    if (matches) {
-        progresJumlah = parseInt(matches[0]) || 0;
+let progresJumlah = 0;
+let progresKeterangan = '';
+let totalTercapai = 0;
+
+if (progresJenisCol && row[progresJenisCol] !== undefined && row[progresJenisCol] !== null && row[progresJenisCol] !== '') {
+    const jenisInput = String(row[progresJenisCol]).toLowerCase().trim();
+    
+    // 🔥 PERBAIKAN: Deteksi lebih fleksibel
+    if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+' || jenisInput === 'increase') {
+        progresJenis = 'naik';
+    } 
+    else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-' || jenisInput === 'decrease') {
+        progresJenis = 'turun';
     }
+    else if (jenisInput === 'normal' && progresJumlah < 0) {
+        // Jika 'normal' tapi nilai negatif, tetap dianggap turun
+        progresJenis = 'turun';
+    }
+    else {
+        // Jika tidak dikenali, tetap simpan sebagai string asli
+        progresJenis = jenisInput;
+    }
+}
+          
+// 🔥 PERBAIKAN PARSING - BACA NILAI ASLI DENGAN LEBIH BAIK
+let progresJumlah = 0;
+if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== null && row[progresJumlahCol] !== '') {
+    const rawValue = row[progresJumlahCol];
+    
+    if (typeof rawValue === 'number') {
+        // Jika sudah berupa number, langsung gunakan
+        progresJumlah = rawValue;
+    } else {
+        const rawString = String(rawValue).trim();
+        // Regex yang lebih baik untuk menangkap angka negatif
+        const matches = rawString.match(/-?\d+/);
+        if (matches) {
+            progresJumlah = parseInt(matches[0], 10);
+        }
+    }
+    
+    console.log(`Debug - raw: ${rawValue}, parsed: ${progresJumlah}`);
 }
           
           if (progresKeteranganCol && row[progresKeteranganCol]) {
             progresKeterangan = String(row[progresKeteranganCol]).trim();
           }
           
-          // 🔥 FILTER DATA BERDASARKAN TURUN TRANSAKSI
-// ✅ KODE BARU YANG BENAR
+// 🔥 FILTER DATA BERDASARKAN TURUN TRANSAKSI
 if (importType === 'customer') {
     // Ambil nilai absolut dengan benar
     let nilaiAbsolut = Math.abs(progresJumlah);
     
-    // 🔥 HANYA SATU FILTER: progres_jenis === 'turun'
-    // HAPUS pengecekan nilai > 100 atau lainnya
-    if (progresJenis === 'turun') {
-        // Semua data dengan status 'turun' langsung diproses
-        // Tidak peduli nilai progres_jumlah (kosong, 0, atau berapapun)
-        totalTercapai = -nilaiAbsolut; // Simpan sebagai negatif
-        // Lanjutkan ke proses berikutnya
+    // 🔥 PERBAIKAN: Cek progres_jenis (case insensitive)
+    const jenisLower = (progresJenis || '').toLowerCase();
+    
+    if (jenisLower === 'turun') {
+        // Data dengan status 'turun' diproses
+        totalTercapai = -nilaiAbsolut;
     } 
-    // Selain 'turun' (naik, normal, tetap, dll) - SKIP
+    // 🔥 TAMBAHAN: Jika 'normal' atau kosong tapi nilai negatif, tetap dianggap turun
+    else if ((jenisLower === 'normal' || jenisLower === '') && progresJumlah < 0) {
+        console.log(`Baris: Deteksi otomatis turun dari nilai negatif: ${progresJumlah}`);
+        totalTercapai = progresJumlah; // Simpan nilai negatif asli
+        progresJenis = 'turun'; // Ubah jenis untuk dicatat
+    }
     else {
         skipped++;
         continue;
@@ -8693,19 +8729,78 @@ if (!nama) {
     continue;
 }
 
-// HP boleh kosong atau 0 - tetap diproses
+// 🔥 PERBAIKAN: Validasi HP dengan lebih baik
 let cleanHp = '';
-if (hp && hp !== 0 && hp !== '0') {
-    cleanHp = hp.toString().trim();
-    cleanHp = cleanHp.replace(/[^\d+]/g, '');
-    if (!cleanHp.startsWith('+')) {
-        cleanHp = cleanHp.replace(/^0+/, '');
-        if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
-        else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
-        else cleanHp = '+' + cleanHp.replace(/^\+/, '');
+let isHpValid = false;
+
+// Cek apakah HP ada dan bukan 0/'0'
+const hasValidHp = hp !== undefined && hp !== null && hp !== 0 && hp !== '0' && String(hp).trim() !== '';
+
+if (hasValidHp) {
+    let rawHp = String(hp).trim();
+    // Hapus semua karakter non-digit (kecuali +)
+    let digits = rawHp.replace(/[^\d+]/g, '');
+    
+    // Jika tidak ada + di awal, format dengan +62
+    if (!digits.startsWith('+')) {
+        digits = digits.replace(/^0+/, '');
+        if (digits.startsWith('62')) {
+            cleanHp = '+' + digits;
+        } else if (digits.match(/^\d+$/)) {
+            cleanHp = '+62' + digits;
+        } else {
+            cleanHp = '+' + digits.replace(/^\+/, '');
+        }
+    } else {
+        cleanHp = digits;
+    }
+    
+    // Validasi panjang minimal nomor (8-13 digit setelah +62)
+    const numberPart = cleanHp.replace(/^\+62/, '');
+    if (numberPart.length >= 8 && numberPart.length <= 13) {
+        isHpValid = true;
+    } else {
+        // HP tidak valid panjangnya, tetap simpan tapi tanpa cek duplikat
+        console.log(`HP tidak valid panjangnya: ${cleanHp}`);
     }
 } else {
+    // HP kosong, isi dengan string kosong
     cleanHp = '';
+    console.log(`Baris ${json.indexOf(row)+2}: HP kosong, akan diimport tanpa cek duplikat`);
+}
+
+// 🔥 PERBAIKAN: Gunakan flag isHpValid untuk cek duplikat
+if (importType === 'customer' && (!agentId || !apk)) {
+    failed++;
+    errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent atau Aplikasi kosong`);
+    continue;
+}
+
+// Cek duplikat HANYA jika HP valid
+let isDuplicate = false;
+if (isHpValid) {
+    if (importType === 'customer') {
+        const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
+        if (duplicateAgent) {
+            duplicates.push(`ID Agent ${agentId} sudah terdaftar oleh ${duplicateAgent.owner}`);
+            isDuplicate = true;
+        }
+        if (duplicateHp) {
+            duplicates.push(`Nomor ${cleanHp} sudah terdaftar oleh ${duplicateHp.owner}`);
+            isDuplicate = true;
+        }
+    } else {
+        const duplicateHp = await checkDuplicateProspek(cleanHp);
+        if (duplicateHp) {
+            duplicates.push(`Nomor ${cleanHp} sudah terdaftar sebagai prospek oleh ${duplicateHp.owner}`);
+            isDuplicate = true;
+        }
+    }
+}
+
+if (isDuplicate) {
+    failed++;
+    continue;
 }
 
           if (uplinePhone) {
