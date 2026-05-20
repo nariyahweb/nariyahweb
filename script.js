@@ -3040,65 +3040,6 @@ if (saveProspekBtn) {
   });
 }
 
-// Fungsi untuk mendapatkan nomor WhatsApp yang tepat berdasarkan type/class
-function getTargetPhone(customerData) {
-    // Jika type/class bukan AGENT (CA, KORWIL, SUB CA, SUB KORWIL) dan ada upline phone
-    if (customerData.agent_type && 
-        customerData.agent_type !== 'AGENT' && 
-        customerData.agent_type !== '' &&
-        customerData.upline_phone && 
-        customerData.upline_phone.trim() !== '') {
-        return customerData.upline_phone;
-    }
-    
-    // Jika AGENT atau tidak ada upline, gunakan nomor agent sendiri
-    return customerData.hp;
-}
-
-// Fungsi untuk mendapatkan nama tujuan
-function getTargetName(customerData) {
-    if (customerData.agent_type && 
-        customerData.agent_type !== 'AGENT' && 
-        customerData.agent_type !== '' &&
-        customerData.upline_name && 
-        customerData.upline_name.trim() !== '') {
-        return customerData.upline_name;
-    }
-    return customerData.nama;
-}
-
-function openWA(hp, customerData = null) {
-    if (customerData) {
-        showPilihNomor(customerData.id || customerData);
-    } else if (hp) {
-        openWADirect(hp);
-    }
-}
-    
-    let nomor = targetPhone.toString().replace('+', '').replace(/^0/, '62');
-    window.open('https://wa.me/' + nomor, '_blank');
-}
-
-function openWACustomer(customerId) {
-    db.collection('customers').doc(customerId).get().then(doc => {
-        if (doc.exists) {
-            const data = doc.data();
-            openWA(null, data);
-        }
-    });
-}
-
-function openWAById(customerId) {
-    db.collection('customers').doc(customerId).get().then(doc => {
-        if (doc.exists) {
-            const data = doc.data();
-            const targetPhone = getTargetPhone(data);
-            let nomor = targetPhone.toString().replace('+', '').replace(/^0/, '62');
-            window.open('https://wa.me/' + nomor, '_blank');
-        }
-    });
-}
-
 // ========== DETAIL MODAL ==========
 function showModal(modalId) {
   const modal = document.getElementById(modalId);
@@ -8616,7 +8557,10 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           // Variabel untuk menyimpan data customer saat memilih nomor
 let currentPilihNomorCustomerId = null;
 
-// Fungsi untuk menampilkan pilihan nomor
+// ========== LETAKKAN FUNGSI INI DI LEVEL GLOBAL (TIDAK DI DALAM FUNGSI LAIN) ==========
+
+let currentPilihNomorCustomerId = null;
+
 function showPilihNomor(customerId) {
     currentPilihNomorCustomerId = customerId;
     
@@ -8664,7 +8608,6 @@ function showPilihNomor(customerId) {
             });
         }
         
-        // Tampilkan modal
         const modal = document.getElementById('pilihNomorModal');
         const container = document.getElementById('pilihNomorOptions');
         
@@ -8687,11 +8630,9 @@ function showPilihNomor(customerId) {
                 </div>
             `).join('');
             
-            // Event listener untuk setiap opsi
             document.querySelectorAll('.pilih-nomor-option').forEach(el => {
                 el.addEventListener('click', () => {
                     const nomor = el.dataset.nomor;
-                    const jenis = el.dataset.jenis;
                     if (nomor && nomor !== '') {
                         openWADirect(nomor);
                         closeModal('pilihNomorModal');
@@ -8706,14 +8647,12 @@ function showPilihNomor(customerId) {
     });
 }
 
-// Fungsi untuk membuka WA langsung
 function openWADirect(nomor) {
     if (!nomor) return;
     let cleanNomor = nomor.toString().replace('+', '').replace(/^0/, '62');
     window.open('https://wa.me/' + cleanNomor, '_blank');
 }
 
-// Update fungsi openWAById dan openWACustomer
 function openWAById(customerId) {
     showPilihNomor(customerId);
 }
@@ -8722,7 +8661,14 @@ function openWACustomer(customerId) {
     showPilihNomor(customerId);
 }
 
-// Fungsi untuk mendapatkan nomor WhatsApp yang tepat
+function openWA(hp, customerData = null) {
+    if (customerData && customerData.id) {
+        showPilihNomor(customerData.id);
+    } else if (hp) {
+        openWADirect(hp);
+    }
+}
+
 function getTargetPhone(customerData) {
     if (customerData.agent_type && 
         customerData.agent_type !== 'AGENT' && 
@@ -8744,8 +8690,10 @@ function getTargetName(customerData) {
     }
     return customerData.nama;
 }
+
+// ========== SELESAI FUNGSI GLOBAL ==========
           
-          // Validasi data dasar
+// Validasi data dasar
 if (!nama) {
     failed++;
     errors.push(`Baris ke-${json.indexOf(row)+2}: Nama kosong`);
@@ -8764,7 +8712,7 @@ if (hp && hp !== 0 && hp !== '0') {
         else cleanHp = '+' + cleanHp.replace(/^\+/, '');
     }
 } else {
-    cleanHp = ''; // Biarkan kosong jika tidak ada nomor
+    cleanHp = '';
 }
 
           if (uplinePhone) {
