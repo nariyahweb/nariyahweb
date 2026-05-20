@@ -8722,16 +8722,6 @@ if (hp && hp !== 0 && hp !== '0') {
             continue;
           }
           
-          // Format HP
-          let cleanHp = hp.toString().trim();
-          cleanHp = cleanHp.replace(/[^\d+]/g, '');
-          if (!cleanHp.startsWith('+')) {
-            cleanHp = cleanHp.replace(/^0+/, '');
-            if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
-            else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
-            else cleanHp = '+' + cleanHp.replace(/^\+/, '');
-          }
-          
           // Cek duplikat
           let isDuplicate = false;
           if (importType === 'customer') {
