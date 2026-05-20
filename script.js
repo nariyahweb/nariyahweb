@@ -8725,15 +8725,7 @@ if (hasValidHp) {
     cleanHp = '';
     console.log(`Baris ${json.indexOf(row)+2}: HP kosong, akan diimport tanpa cek duplikat`);
 }
-
-// 🔥 PERBAIKAN: Gunakan flag isHpValid untuk cek duplikat
-if (importType === 'customer' && (!agentId || !apk)) {
-    failed++;
-    errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent atau Aplikasi kosong`);
-    continue;
-}
-
-// ✅ PERTAHANKAN INI (sudah ada di kode Anda)
+          // ✅ PERTAHANKAN INI (sudah ada di kode Anda)
 let isDuplicate = false;
 
 if (isHpValid) {
@@ -8760,11 +8752,6 @@ if (isDuplicate) {
     failed++;
     continue;
 }
-
-          if (uplinePhone) {
-            uplinePhone = formatPhoneNumber(uplinePhone);
-          }
-          
           if (importType === 'customer' && (!agentId || !apk)) {
             failed++;
             errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent atau Aplikasi kosong`);
