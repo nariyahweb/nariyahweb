@@ -1541,6 +1541,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Event listener untuk tombol Full Mode Followup
+const selectAllFullFollowupBtn = document.getElementById('selectAllFullFollowup');
+if (selectAllFullFollowupBtn) {
+  selectAllFullFollowupBtn.onclick = () => toggleSelectAllFullFollowup();
+}
+
+const deleteSelectedFullFollowupBtn = document.getElementById('deleteSelectedFullFollowup');
+if (deleteSelectedFullFollowupBtn) {
+  deleteSelectedFullFollowupBtn.onclick = () => deleteSelectedFullFollowup();
+}
+
+// Event listener untuk tombol Full Mode Prospek
+const selectAllFullProspekBtn = document.getElementById('selectAllFullProspek');
+if (selectAllFullProspekBtn) {
+  selectAllFullProspekBtn.onclick = () => toggleSelectAllFullProspek();
+}
+
+const deleteSelectedFullProspekBtn = document.getElementById('deleteSelectedFullProspek');
+if (deleteSelectedFullProspekBtn) {
+  deleteSelectedFullProspekBtn.onclick = () => deleteSelectedFullProspek();
+}
+
   // Tombol select all produk
   const selectAllProdukBtn = document.getElementById('selectAllProduk');
   if (selectAllProdukBtn) {
@@ -4697,10 +4719,11 @@ function renderFullFollowupKanban() {
   document.getElementById('fullCountPending').innerText = lists.pending.length;
   document.getElementById('fullCountClosing').innerText = lists.closing.length;
 
- const baruContainer = document.getElementById('fullBaruList');
+  const isOwner = currentUserRole === 'owner';
+  
+  // Render kolom BARU
+  const baruContainer = document.getElementById('fullBaruList');
   if (baruContainer) {
-    const isOwner = currentUserRole === 'owner';
-    
     baruContainer.innerHTML = lists.baru.map(item => {
       const isOverdue = item.tanggal && item.tanggal < today;
       const isToday = item.tanggal === today;
@@ -4708,8 +4731,7 @@ function renderFullFollowupKanban() {
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
       const isChecked = selectedFullFollowupIds.get(item.id) === true;
-      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px;" ${isChecked ? 'checked' : ''}>` : '';
-      
+      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
       return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
                 <div style="display: flex; align-items: center;">
                     ${checkboxHtml}
@@ -4723,101 +4745,183 @@ function renderFullFollowupKanban() {
             </div>`;
     }).join('');
     
-    // Event listener untuk checkbox
     if (isOwner) {
       document.querySelectorAll('#fullBaruList .full-item-checkbox').forEach(cb => {
-        cb.addEventListener('change', (e) => {
-          e.stopPropagation();
-          const id = cb.dataset.id;
-          if (cb.checked) {
-            selectedFullFollowupIds.set(id, true);
-            cb.closest('.card-item').style.opacity = '0.6';
-            cb.closest('.card-item').style.background = '#eef2ff';
-          } else {
-            selectedFullFollowupIds.delete(id);
-            cb.closest('.card-item').style.opacity = '1';
-            cb.closest('.card-item').style.background = '';
-          }
-          updateSelectAllFullFollowupButton();
-        });
+        cb.removeEventListener('change', handleFullFollowupCheckboxChange);
+        cb.addEventListener('change', handleFullFollowupCheckboxChange);
       });
     }
   }
   
-  // ... lanjutkan untuk followupList, pendingList, closingList
+  // Render kolom FOLLOWUP
+  const followupContainer = document.getElementById('fullFollowupList');
+  if (followupContainer) {
+    followupContainer.innerHTML = lists.followup.map(item => {
+      const isOverdue = item.tanggal && item.tanggal < today;
+      const isToday = item.tanggal === today;
+      let deadlineClass = '';
+      if (isOverdue) deadlineClass = 'deadline-overdue';
+      else if (isToday) deadlineClass = 'deadline-today';
+      const isChecked = selectedFullFollowupIds.get(item.id) === true;
+      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
+                <div style="display: flex; align-items: center;">
+                    ${checkboxHtml}
+                    <div style="flex: 1;">
+                        <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                        <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+    
+    if (isOwner) {
+      document.querySelectorAll('#fullFollowupList .full-item-checkbox').forEach(cb => {
+        cb.removeEventListener('change', handleFullFollowupCheckboxChange);
+        cb.addEventListener('change', handleFullFollowupCheckboxChange);
+      });
+    }
+  }
+  
+  // Render kolom PENDING
+  const pendingContainer = document.getElementById('fullPendingList');
+  if (pendingContainer) {
+    pendingContainer.innerHTML = lists.pending.map(item => {
+      const isOverdue = item.tanggal && item.tanggal < today;
+      const isToday = item.tanggal === today;
+      let deadlineClass = '';
+      if (isOverdue) deadlineClass = 'deadline-overdue';
+      else if (isToday) deadlineClass = 'deadline-today';
+      const isChecked = selectedFullFollowupIds.get(item.id) === true;
+      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
+                <div style="display: flex; align-items: center;">
+                    ${checkboxHtml}
+                    <div style="flex: 1;">
+                        <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                        <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+    
+    if (isOwner) {
+      document.querySelectorAll('#fullPendingList .full-item-checkbox').forEach(cb => {
+        cb.removeEventListener('change', handleFullFollowupCheckboxChange);
+        cb.addEventListener('change', handleFullFollowupCheckboxChange);
+      });
+    }
+  }
+  
+  // Render kolom CLOSING
+  const closingContainer = document.getElementById('fullClosingList');
+  if (closingContainer) {
+    closingContainer.innerHTML = lists.closing.map(item => {
+      const isOverdue = item.tanggal && item.tanggal < today;
+      const isToday = item.tanggal === today;
+      let deadlineClass = '';
+      if (isOverdue) deadlineClass = 'deadline-overdue';
+      else if (isToday) deadlineClass = 'deadline-today';
+      const isChecked = selectedFullFollowupIds.get(item.id) === true;
+      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
+                <div style="display: flex; align-items: center;">
+                    ${checkboxHtml}
+                    <div style="flex: 1;">
+                        <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                        <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+    
+    if (isOwner) {
+      document.querySelectorAll('#fullClosingList .full-item-checkbox').forEach(cb => {
+        cb.removeEventListener('change', handleFullFollowupCheckboxChange);
+        cb.addEventListener('change', handleFullFollowupCheckboxChange);
+      });
+    }
+  }
 }
 
-// ========== FUNGSI FULL MODE SELECTION (DILUAR renderFullFollowupKanban) ==========
+// Handler untuk checkbox Followup Full Mode
+function handleFullFollowupCheckboxChange(e) {
+  e.stopPropagation();
+  const id = e.target.dataset.id;
+  if (e.target.checked) {
+    selectedFullFollowupIds.set(id, true);
+    e.target.closest('.card-item').style.opacity = '0.6';
+    e.target.closest('.card-item').style.background = '#eef2ff';
+  } else {
+    selectedFullFollowupIds.delete(id);
+    e.target.closest('.card-item').style.opacity = '1';
+    e.target.closest('.card-item').style.background = '';
+  }
+  updateSelectAllFullFollowupButton();
+}
+
 function updateSelectAllFullFollowupButton() {
-    const cards = document.querySelectorAll('#fullBaruList .card-item, #fullFollowupList .card-item, #fullPendingList .card-item, #fullClosingList .card-item');
-    const allChecked = cards.length > 0 && Array.from(cards).every(card => selectedFullFollowupIds.has(card.dataset.id));
-    const btn = document.getElementById('selectAllFullFollowup');
-    if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+  const cards = document.querySelectorAll('#fullBaruList .full-item-checkbox, #fullFollowupList .full-item-checkbox, #fullPendingList .full-item-checkbox, #fullClosingList .full-item-checkbox');
+  const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
+  const btn = document.getElementById('selectAllFullFollowup');
+  if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
 }
 
 function toggleSelectAllFullFollowup() {
-    const cards = document.querySelectorAll('#fullBaruList .card-item, #fullFollowupList .card-item, #fullPendingList .card-item, #fullClosingList .card-item');
-    const allChecked = cards.length > 0 && Array.from(cards).every(card => selectedFullFollowupIds.has(card.dataset.id));
-    
-    cards.forEach(card => {
-        const id = card.dataset.id;
-        const checkbox = card.querySelector('.full-item-checkbox');
-        if (checkbox) {
-            checkbox.checked = !allChecked;
-            if (!allChecked) {
-                selectedFullFollowupIds.set(id, true);
-                card.style.opacity = '0.6';
-                card.style.background = '#eef2ff';
-            } else {
-                selectedFullFollowupIds.delete(id);
-                card.style.opacity = '1';
-                card.style.background = '';
-            }
-        }
-    });
-    
-    const btn = document.getElementById('selectAllFullFollowup');
-    if (btn) btn.textContent = allChecked ? '✅ Pilih Semua' : '⬜ Batal Semua';
+  const cards = document.querySelectorAll('#fullBaruList .full-item-checkbox, #fullFollowupList .full-item-checkbox, #fullPendingList .full-item-checkbox, #fullClosingList .full-item-checkbox');
+  const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
+  
+  cards.forEach(cb => {
+    cb.checked = !allChecked;
+    const event = new Event('change', { bubbles: true });
+    cb.dispatchEvent(event);
+  });
 }
 
 async function deleteSelectedFullFollowup() {
-    if (currentUserRole !== 'owner') {
-        showNotifTop('⚠️ Hanya Owner yang dapat menghapus massal!', true);
-        return;
+  if (currentUserRole !== 'owner') {
+    showNotifTop('⚠️ Hanya Owner yang dapat menghapus massal!', true);
+    return;
+  }
+  
+  const selectedIds = Array.from(selectedFullFollowupIds.keys());
+  if (selectedIds.length === 0) {
+    showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+    return;
+  }
+  
+  if (!confirm(`Hapus ${selectedIds.length} data customer?`)) return;
+  
+  const progress = showFloatingProgress('🗑️ Menghapus Data', selectedIds.length);
+  progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus...');
+  
+  let deleted = 0;
+  for (const id of selectedIds) {
+    try {
+      await db.collection('customers').doc(id).delete();
+      selectedFullFollowupIds.delete(id);
+      deleted++;
+      const percent = Math.floor((deleted / selectedIds.length) * 100);
+      progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
+      await delay(200);
+    } catch (e) {
+      console.error(`Gagal hapus ${id}:`, e);
     }
-    
-    const selectedIds = Array.from(selectedFullFollowupIds.keys());
-    if (selectedIds.length === 0) {
-        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
-        return;
-    }
-    
-    if (!confirm(`Hapus ${selectedIds.length} data customer?`)) return;
-    
-    const progress = showFloatingProgress('🗑️ Menghapus Data', selectedIds.length);
-    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus...');
-    
-    let deleted = 0;
-    for (const id of selectedIds) {
-        try {
-            await db.collection('customers').doc(id).delete();
-            selectedFullFollowupIds.delete(id);
-            deleted++;
-            const percent = Math.floor((deleted / selectedIds.length) * 100);
-            progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
-            await delay(200);
-        } catch (e) {
-            console.error(`Gagal hapus ${id}:`, e);
-        }
-    }
-    
-    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, selectedIds.length);
-    showNotifTop(`✅ ${deleted} data berhasil dihapus`);
-    
-    setTimeout(() => progress.hide(), 2000);
-    
-    loadAllData();
-    renderFullFollowupKanban();
+  }
+  
+  progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, selectedIds.length);
+  showNotifTop(`✅ ${deleted} data berhasil dihapus`);
+  
+  setTimeout(() => progress.hide(), 2000);
+  
+  loadAllData();
+  renderFullFollowupKanban();
 }
 
 // Fungsi untuk Prospek Full Mode
@@ -5037,6 +5141,80 @@ function renderFullProspekKanban() {
       });
     });
   }
+}
+
+// Handler untuk checkbox Prospek Full Mode
+function handleFullProspekCheckboxChange(e) {
+  e.stopPropagation();
+  const id = e.target.dataset.id;
+  if (e.target.checked) {
+    selectedFullProspekIds.set(id, true);
+    e.target.closest('.card-item').style.opacity = '0.6';
+    e.target.closest('.card-item').style.background = '#eef2ff';
+  } else {
+    selectedFullProspekIds.delete(id);
+    e.target.closest('.card-item').style.opacity = '1';
+    e.target.closest('.card-item').style.background = '';
+  }
+  updateSelectAllFullProspekButton();
+}
+
+function updateSelectAllFullProspekButton() {
+  const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox, #fullProspekDihubungiList .full-item-checkbox, #fullProspekNegosiasiList .full-item-checkbox, #fullProspekTertarikList .full-item-checkbox');
+  const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
+  const btn = document.getElementById('selectAllFullProspek');
+  if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+}
+
+function toggleSelectAllFullProspek() {
+  const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox, #fullProspekDihubungiList .full-item-checkbox, #fullProspekNegosiasiList .full-item-checkbox, #fullProspekTertarikList .full-item-checkbox');
+  const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
+  
+  cards.forEach(cb => {
+    cb.checked = !allChecked;
+    const event = new Event('change', { bubbles: true });
+    cb.dispatchEvent(event);
+  });
+}
+
+async function deleteSelectedFullProspek() {
+  if (currentUserRole !== 'owner') {
+    showNotifTop('⚠️ Hanya Owner yang dapat menghapus massal!', true);
+    return;
+  }
+  
+  const selectedIds = Array.from(selectedFullProspekIds.keys());
+  if (selectedIds.length === 0) {
+    showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+    return;
+  }
+  
+  if (!confirm(`Hapus ${selectedIds.length} data prospek?`)) return;
+  
+  const progress = showFloatingProgress('🗑️ Menghapus Data Prospek', selectedIds.length);
+  progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus...');
+  
+  let deleted = 0;
+  for (const id of selectedIds) {
+    try {
+      await db.collection('prospek').doc(id).delete();
+      selectedFullProspekIds.delete(id);
+      deleted++;
+      const percent = Math.floor((deleted / selectedIds.length) * 100);
+      progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
+      await delay(200);
+    } catch (e) {
+      console.error(`Gagal hapus ${id}:`, e);
+    }
+  }
+  
+  progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, selectedIds.length);
+  showNotifTop(`✅ ${deleted} data berhasil dihapus`);
+  
+  setTimeout(() => progress.hide(), 2000);
+  
+  loadAllData();
+  renderFullProspekKanban();
 }
 
 document.getElementById('addCustomerFullBtn')?.addEventListener('click', () => {
