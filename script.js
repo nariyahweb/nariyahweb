@@ -971,32 +971,23 @@ async function updateTotalTransaksiDariCustomer() {
 
 // ========== FUNGSI VALIDASI DUPLIKAT ==========
 async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
-  // 🔥 PERUBAHAN 1: Cek apakah HP valid (bukan kosong, 0, '+62', dll)
+  // 🔥 CEK APAKAH HP VALID (bukan kosong, 0, '+62')
   const isHpValid = hp && hp !== '+62' && hp !== '62' && hp !== '0' && hp.trim() !== '';
   
   let query = db.collection('customers').where('user_id', '==', currentUser.uid);
   const snapshot = await query.get();
   let duplicateAgent = null;
   let duplicateHp = null;
-  let ownerName = currentUserName;
 
   for (const doc of snapshot.docs) {
     const data = doc.data();
     if (excludeId && doc.id === excludeId) continue;
     if (data.agent_id === agentId) {
-      duplicateAgent = {
-        id: doc.id,
-        nama: data.nama,
-        owner: currentUserName
-      };
+      duplicateAgent = { id: doc.id, nama: data.nama, owner: currentUserName };
     }
-    // 🔥 PERUBAHAN 2: Cek duplikat HP HANYA jika HP valid
+    // 🔥 HANYA CEK DUPLIKAT HP JIKA HP VALID
     if (isHpValid && data.hp === hp) {
-      duplicateHp = {
-        id: doc.id,
-        nama: data.nama,
-        owner: currentUserName
-      };
+      duplicateHp = { id: doc.id, nama: data.nama, owner: currentUserName };
     }
   }
 
@@ -1008,36 +999,24 @@ async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
       if (data.agent_id === agentId) {
         const userDoc = await db.collection('users').doc(data.user_id).get();
         const userName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
-        duplicateAgent = {
-          id: doc.id,
-          nama: data.nama,
-          owner: userName
-        };
+        duplicateAgent = { id: doc.id, nama: data.nama, owner: userName };
       }
-      // 🔥 PERUBAHAN 3: Cek duplikat HP HANYA jika HP valid
       if (isHpValid && data.hp === hp) {
         const userDoc = await db.collection('users').doc(data.user_id).get();
         const userName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
-        duplicateHp = {
-          id: doc.id,
-          nama: data.nama,
-          owner: userName
-        };
+        duplicateHp = { id: doc.id, nama: data.nama, owner: userName };
       }
     }
   }
 
-  return {
-    duplicateAgent,
-    duplicateHp
-  };
+  return { duplicateAgent, duplicateHp };
 }
 
 async function checkDuplicateProspek(hp, excludeId = null) {
-  // 🔥 PERUBAHAN 1: Cek apakah HP valid
+  // 🔥 CEK APAKAH HP VALID
   const isHpValid = hp && hp !== '+62' && hp !== '62' && hp !== '0' && hp.trim() !== '';
   
-  // 🔥 PERUBAHAN 2: Jika HP tidak valid, langsung return null
+  // 🔥 JIKA HP TIDAK VALID, LANGSUNG RETURN NULL (TIDAK DUPLIKAT)
   if (!isHpValid) {
     return null;
   }
@@ -1050,11 +1029,7 @@ async function checkDuplicateProspek(hp, excludeId = null) {
     const data = doc.data();
     if (excludeId && doc.id === excludeId) continue;
     if (data.hp === hp) {
-      duplicateHp = {
-        id: doc.id,
-        nama: data.nama,
-        owner: currentUserName
-      };
+      duplicateHp = { id: doc.id, nama: data.nama, owner: currentUserName };
     }
   }
 
@@ -1066,11 +1041,7 @@ async function checkDuplicateProspek(hp, excludeId = null) {
       if (data.hp === hp) {
         const userDoc = await db.collection('users').doc(data.user_id).get();
         const userName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
-        duplicateHp = {
-          id: doc.id,
-          nama: data.nama,
-          owner: userName
-        };
+        duplicateHp = { id: doc.id, nama: data.nama, owner: userName };
       }
     }
   }
@@ -8688,20 +8659,19 @@ if (progresKeteranganCol && row[progresKeteranganCol]) {
     progresKeterangan = String(row[progresKeteranganCol]).trim();
 }
 
-// 🔥 FILTER DATA BERDASARKAN TURUN TRANSAKSI
+// 🔥 FILTER DATA: HANYA progres_jenis === 'turun' YANG DIIMPORT
 if (importType === 'customer') {
-    // Gunakan nilai numerik yang sudah diparsing
-    if (progresJumlah < 0) {
-        // Nilai negatif = turun
-        totalTercapai = progresJumlah;
-        progresJenis = 'turun';
-    } 
-    else if (progresJenis === 'turun' && progresJumlah > 0) {
-        // Jika jenis 'turun' tapi nilai positif, tetap dianggap turun dengan nilai negatif
+    const jenisLower = (progresJenis || '').toLowerCase();
+    
+    if (jenisLower === 'turun') {
+        // Data dengan status 'turun' diproses
         totalTercapai = -Math.abs(progresJumlah);
-    }
+        console.log(`✅ Baris: Data TURUN - akan diimport`);
+    } 
     else {
+        // Selain 'turun' (normal, naik, dll) - SKIP
         skipped++;
+        console.log(`⏭️ Baris: Dilewati (progres_jenis = ${progresJenis})`);
         continue;
     }
 }
@@ -8797,31 +8767,6 @@ if (isDuplicate) {
           if (importType === 'customer' && (!agentId || !apk)) {
             failed++;
             errors.push(`Baris ke-${json.indexOf(row)+2}: ID Agent atau Aplikasi kosong`);
-            continue;
-          }
-          
-          // Cek duplikat
-          isDuplicate = false;
-          if (importType === 'customer') {
-            const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
-            if (duplicateAgent) {
-              duplicates.push(`ID Agent ${agentId} sudah terdaftar oleh ${duplicateAgent.owner}`);
-              isDuplicate = true;
-            }
-            if (duplicateHp) {
-              duplicates.push(`Nomor ${cleanHp} sudah terdaftar oleh ${duplicateHp.owner}`);
-              isDuplicate = true;
-            }
-          } else {
-            const duplicateHp = await checkDuplicateProspek(cleanHp);
-            if (duplicateHp) {
-              duplicates.push(`Nomor ${cleanHp} sudah terdaftar sebagai prospek oleh ${duplicateHp.owner}`);
-              isDuplicate = true;
-            }
-          }
-          
-          if (isDuplicate) {
-            failed++;
             continue;
           }
           
