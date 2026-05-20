@@ -3068,13 +3068,12 @@ function getTargetName(customerData) {
 }
 
 function openWA(hp, customerData = null) {
-    if (!hp) return;
-    
-    // Jika customerData ada dan perlu menggunakan upline
-    let targetPhone = hp;
     if (customerData) {
-        targetPhone = getTargetPhone(customerData);
+        showPilihNomor(customerData.id || customerData);
+    } else if (hp) {
+        openWADirect(hp);
     }
+}
     
     let nomor = targetPhone.toString().replace('+', '').replace(/^0/, '62');
     window.open('https://wa.me/' + nomor, '_blank');
@@ -5052,11 +5051,19 @@ function renderFullProspekKanban() {
       return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Baru"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
     }).join('');
     baruContainer.querySelectorAll('.card-item').forEach(card => {
-      card.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id);
-      });
-    });
-  }
+  card.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('whatsapp-icon') && 
+        !e.target.classList.contains('full-item-checkbox')) {
+      openDetailCustomer(card.dataset.id);
+    }
+  });
+});
+    // Juga pastikan checkbox tidak memicu openDetailCustomer
+document.querySelectorAll('.full-item-checkbox').forEach(cb => {
+  cb.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+});
   const dihubungiContainer = document.getElementById('fullProspekDihubungiList');
   if (dihubungiContainer) {
     dihubungiContainer.innerHTML = lists.prospekDihubungi.map(item => {
@@ -6364,13 +6371,15 @@ async function loadNumbers() {
   try {
     const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
     let numbers = [];
+    
     if (sourceType === 'custom') {
       const customText = document.getElementById('customNumbers')?.value || '';
       numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
     } else {
-      let collection = 'customers',
-        statusField = 'status',
-        statusValues = [];
+      let collection = 'customers';
+      let statusField = 'status';
+      let statusValues = [];
+      
       if (sourceType === 'prospek') {
         collection = 'prospek';
         statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value);
@@ -6384,45 +6393,89 @@ async function loadNumbers() {
         collection = 'db_tidak_tertarik';
         statusField = null;
       }
+      
       let query = db.collection(collection);
       if (currentUserRole !== 'owner') query = query.where('user_id', '==', currentUser.uid);
+      query = query.limit(1000);
       
-      // 🔥 PERBAIKAN: Batasi jumlah data yang diambil
-      query = query.limit(1000); // Maksimal 1000 nomor per broadcast
-      
-      if (statusValues && statusValues.length > 0 && statusField) {        query = query.where(statusField, 'in', statusValues);
+      if (statusValues && statusValues.length > 0 && statusField) {
+        query = query.where(statusField, 'in', statusValues);
       }
+      
       const snapshot = await query.get();
       snapshot.forEach(doc => {
-    const data = doc.data();
-    const targetPhone = getTargetPhone(data);
-    const targetName = getTargetName(data);
-    numbers.push({
-        hp: targetPhone,
-        nama: targetName,
-        original_hp: data.hp,
-        original_nama: data.nama
-    });
-});
+        const data = doc.data();
+        
+        // 🔥 TAMBAHKAN OPSI NOMOR AGENT DAN UPLINE
+        const phoneOptions = [];
+        
+        // Nomor Agent
+        if (data.hp && data.hp.trim() !== '') {
+          phoneOptions.push({
+            jenis: 'agent',
+            label: 'Agent',
+            nama: data.nama,
+            hp: data.hp
+          });
+        }
+        
+        // Nomor Upline (jika ada)
+        if (data.upline_phone && data.upline_phone.trim() !== '' && data.upline_phone !== '+62') {
+          phoneOptions.push({
+            jenis: 'upline',
+            label: 'Upline',
+            nama: data.upline_name || 'Upline',
+            hp: data.upline_phone
+          });
+        }
+        
+        // Simpan semua opsi
+        numbers.push({
+          id: doc.id,
+          nama_agent: data.nama,
+          options: phoneOptions,
+          has_multiple: phoneOptions.length > 1
+        });
+      });
     }
+    
     currentNumbers = numbers;
     const selectedCountSpan = document.getElementById('selectedCount');
     if (selectedCountSpan) selectedCountSpan.innerText = numbers.length;
+    
     const listDiv = document.getElementById('selectedNumbersList');
     if (!listDiv) return;
+    
     if (numbers.length === 0) {
       listDiv.innerHTML = '<p style="color:#9ca3af;">Tidak ada nomor yang dipilih</p>';
-    } else if (typeof numbers[0] === 'string') {
-      listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n)}</div>`).join('');
     } else {
-      listDiv.innerHTML = numbers.map(n => `<div class="number-item">${escapeHtml(n.nama)} - ${escapeHtml(n.hp)}</div>`).join('');
+      listDiv.innerHTML = numbers.map(item => {
+        if (item.has_multiple) {
+          // Tampilkan dengan checkbox pilihan
+          return `
+            <div class="number-item broadcast-item" data-id="${item.id}" style="border-bottom: 1px solid #e5e7eb; padding: 8px 0;">
+              <div style="font-weight: 600;">${escapeHtml(item.nama_agent)}</div>
+              <div style="display: flex; gap: 16px; margin-top: 6px;">
+                ${item.options.map(opt => `
+                  <label style="display: flex; align-items: center; gap: 4px; font-size: 11px;">
+                    <input type="checkbox" class="broadcast-phone-option" data-id="${item.id}" data-jenis="${opt.jenis}" data-nomor="${opt.hp}" data-nama="${escapeHtml(opt.nama)}">
+                    ${opt.jenis === 'agent' ? '📞 Agent' : '👤 Upline'} (${opt.nama})
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        } else if (item.options.length === 1) {
+          return `<div class="number-item">${escapeHtml(item.nama_agent)} - ${escapeHtml(item.options[0].hp)}</div>`;
+        }
+        return '';
+      }).join('');
     }
   } catch (e) {
     console.error('Error loadNumbers:', e);
     showNotifTop('❌ Gagal memuat nomor: ' + e.message, true);
   }
 }
-
 async function sendBroadcast() {
   const messageTemplate = document.getElementById('broadcastMessage')?.value;
   const sendOneByOne = document.getElementById('sendOneByOne')?.checked;
@@ -8559,13 +8612,137 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           else if (progresJenis === 'turun') totalTercapai = -progresJumlah;
 
           // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
+
+          // Variabel untuk menyimpan data customer saat memilih nomor
+let currentPilihNomorCustomerId = null;
+
+// Fungsi untuk menampilkan pilihan nomor
+function showPilihNomor(customerId) {
+    currentPilihNomorCustomerId = customerId;
+    
+    db.collection('customers').doc(customerId).get().then(doc => {
+        if (!doc.exists) return;
+        
+        const data = doc.data();
+        const options = [];
+        
+        // Opsi 1: Nomor Agent sendiri
+        if (data.hp && data.hp.trim() !== '') {
+            options.push({
+                jenis: 'agent',
+                label: '📞 Nomor Agent (Pemilik)',
+                nama: data.nama,
+                nomor: data.hp
+            });
+        } else {
+            options.push({
+                jenis: 'agent',
+                label: '📞 Nomor Agent (Pemilik)',
+                nama: data.nama,
+                nomor: '',
+                kosong: true
+            });
+        }
+        
+        // Opsi 2: Nomor Upline (jika ada)
+        if (data.upline_phone && data.upline_phone.trim() !== '' && data.upline_phone !== '+62') {
+            options.push({
+                jenis: 'upline',
+                label: '👤 Nomor Upline (Atasan)',
+                nama: data.upline_name || 'Upline',
+                nomor: data.upline_phone
+            });
+        }
+
+      const validOptions = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
+        if (validOptions.length > 1) {
+            options.unshift({
+                jenis: 'semua',
+                label: '📢 Kirim ke SEMUA nomor',
+                nama: 'Semua nomor',
+                nomor: 'all'
+            });
+        }
+        
+        // Tampilkan modal
+        const modal = document.getElementById('pilihNomorModal');
+        const container = document.getElementById('pilihNomorOptions');
+        
+        if (options.length === 0) {
+            container.innerHTML = '<p style="color: #ef4444;">⚠️ Tidak ada nomor WhatsApp yang tersedia!</p>';
+        } else {
+            container.innerHTML = options.map(opt => `
+                <div class="pilih-nomor-option" data-nomor="${opt.nomor}" data-jenis="${opt.jenis}" style="
+                    padding: 12px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    background: ${opt.kosong ? '#fef2f2' : '#f9fafb'};
+                ">
+                    <div style="font-weight: 600; margin-bottom: 4px;">${opt.label}</div>
+                    <div style="font-size: 13px; color: #4f46e5;">${opt.nama}</div>
+                    <div style="font-size: 12px; color: #6b7280;">${opt.nomor || 'Nomor tidak tersedia'}</div>
+                    ${opt.kosong ? '<div style="font-size: 11px; color: #ef4444; margin-top: 4px;">⚠️ Nomor agent tidak tersedia</div>' : ''}
+                </div>
+            `).join('');
+            
+            // Event listener untuk setiap opsi
+            document.querySelectorAll('.pilih-nomor-option').forEach(el => {
+                el.addEventListener('click', () => {
+                    const nomor = el.dataset.nomor;
+                    const jenis = el.dataset.jenis;
+                    if (nomor && nomor !== '') {
+                        openWADirect(nomor);
+                        closeModal('pilihNomorModal');
+                    } else {
+                        showNotifTop('⚠️ Nomor WhatsApp tidak tersedia!', true);
+                    }
+                });
+            });
+        }
+        
+        modal.style.display = 'flex';
+    });
+}
+
+// Fungsi untuk membuka WA langsung
+function openWADirect(nomor) {
+    if (!nomor) return;
+    let cleanNomor = nomor.toString().replace('+', '').replace(/^0/, '62');
+    window.open('https://wa.me/' + cleanNomor, '_blank');
+}
+
+// Update fungsi openWAById dan openWACustomer
+function openWAById(customerId) {
+    showPilihNomor(customerId);
+}
+
+function openWACustomer(customerId) {
+    showPilihNomor(customerId);
+}
           
           // Validasi data dasar
-          if (!nama || !hp) {
-            failed++;
-            errors.push(`Baris ke-${json.indexOf(row)+2}: Nama atau HP kosong`);
-            continue;
-          }
+if (!nama) {
+    failed++;
+    errors.push(`Baris ke-${json.indexOf(row)+2}: Nama kosong`);
+    continue;
+}
+
+// HP boleh kosong atau 0 - tetap diproses
+let cleanHp = '';
+if (hp && hp !== 0 && hp !== '0') {
+    cleanHp = hp.toString().trim();
+    cleanHp = cleanHp.replace(/[^\d+]/g, '');
+    if (!cleanHp.startsWith('+')) {
+        cleanHp = cleanHp.replace(/^0+/, '');
+        if (cleanHp.startsWith('62')) cleanHp = '+' + cleanHp;
+        else if (cleanHp.match(/^\d+$/)) cleanHp = '+62' + cleanHp;
+        else cleanHp = '+' + cleanHp.replace(/^\+/, '');
+    }
+} else {
+    cleanHp = ''; // Biarkan kosong jika tidak ada nomor
+}
 
           if (uplinePhone) {
             uplinePhone = formatPhoneNumber(uplinePhone);
