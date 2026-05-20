@@ -8733,8 +8733,9 @@ if (importType === 'customer' && (!agentId || !apk)) {
     continue;
 }
 
-// Cek duplikat HANYA jika HP valid
+// ✅ PERTAHANKAN INI (sudah ada di kode Anda)
 let isDuplicate = false;
+
 if (isHpValid) {
     if (importType === 'customer') {
         const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
