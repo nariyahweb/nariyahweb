@@ -8638,18 +8638,11 @@ if (importType === 'customer') {
         }
     }
     
-    // HANYA SATU FILTER: progres_jenis = 'turun' DAN nilai absolut > 100
     if (importType === 'customer' && progresJenis === 'turun') {
-    // Jika progres_jumlah kosong atau 0, anggap sebagai valid
-    if (!progresJumlah || progresJumlah === 0) {
-        // Data langsung diproses tanpa batasan nilai
-        totalTercapai = 0;
-        // Lanjutkan proses import...
-    } 
-    else {
-        skipped++;
-        continue;
-    }
+    // Semua data dengan progres_jenis = 'turun' langsung diproses
+    // Tidak peduli nilai progres_jumlah (kosong, 0, atau berapapun)
+    totalTercapai = progresJumlah ? -Math.abs(progresJumlah) : 0;
+    // Lanjutkan proses import...
 }
 
           // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
