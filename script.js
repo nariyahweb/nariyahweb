@@ -8644,16 +8644,26 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           }
           
           // 🔥 FILTER DATA BERDASARKAN NILAI PROGRES
-          // Hanya data dengan progres_jumlah < -100 (minus lebih dari 100) yang diproses
-          // Data dengan progres_jumlah -100 ke atas sampai 0, dan 0 ke atas TIDAK DIPROSES
-          if (importType === 'customer' && progresJenis === 'turun') {
-            // Untuk data TURUN: hanya jika nilainya > 100 (lebih dari 100)
-            // Karena progresJumlah selalu positif, kita cek nilainya
-            if (progresJumlah <= 100) {
-              // Nilai turun 100 atau kurang - TIDAK DIPROSES (skip)
-              skipped++;
-              continue;
-            }
+if (importType === 'customer') {
+    // Ambil nilai absolut dari progres_jumlah (karena di Excel nilainya negatif)
+    let nilaiMutlak = Math.abs(progresJumlah);
+    
+    // Hanya proses jika progres_jenis = 'turun' DAN nilai absolutnya > 100
+    if (progresJenis === 'turun') {
+        if (nilaiMutlak > 100) {
+            // Data lolos filter - lanjutkan import
+            totalTercapai = -nilaiMutlak;
+        } else {
+            // Nilai <= 100 - skip
+            skipped++;
+            continue;
+        }
+    } else {
+        // Data dengan progres_jenis = 'naik' atau kosong - skip
+        skipped++;
+        continue;
+    }
+}
             // Nilai turun > 100 - LANJUTKAN PROSES
             totalTercapai = -progresJumlah;
           } else if (importType === 'customer' && (progresJenis === 'naik' || progresJenis === '')) {
