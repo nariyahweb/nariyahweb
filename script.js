@@ -4975,79 +4975,6 @@ async function deleteSelectedFullFollowup() {
   renderFullFollowupKanban();
 }
 
-// Fungsi untuk Prospek Full Mode
-function updateSelectAllFullProspekButton() {
-    const cards = document.querySelectorAll('#fullProspekBaruList .card-item, #fullProspekDihubungiList .card-item, #fullProspekNegosiasiList .card-item, #fullProspekTertarikList .card-item');
-    const allChecked = cards.length > 0 && Array.from(cards).every(card => selectedFullProspekIds.has(card.dataset.id));
-    const btn = document.getElementById('selectAllFullProspek');
-    if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
-}
-
-function toggleSelectAllFullProspek() {
-    const cards = document.querySelectorAll('#fullProspekBaruList .card-item, #fullProspekDihubungiList .card-item, #fullProspekNegosiasiList .card-item, #fullProspekTertarikList .card-item');
-    const allChecked = cards.length > 0 && Array.from(cards).every(card => selectedFullProspekIds.has(card.dataset.id));
-    
-    cards.forEach(card => {
-        const id = card.dataset.id;
-        const checkbox = card.querySelector('.full-item-checkbox');
-        if (checkbox) {
-            checkbox.checked = !allChecked;
-            if (!allChecked) {
-                selectedFullProspekIds.set(id, true);
-                card.style.opacity = '0.6';
-                card.style.background = '#eef2ff';
-            } else {
-                selectedFullProspekIds.delete(id);
-                card.style.opacity = '1';
-                card.style.background = '';
-            }
-        }
-    });
-    
-    const btn = document.getElementById('selectAllFullProspek');
-    if (btn) btn.textContent = allChecked ? '✅ Pilih Semua' : '⬜ Batal Semua';
-}
-
-async function deleteSelectedFullProspek() {
-    if (currentUserRole !== 'owner') {
-        showNotifTop('⚠️ Hanya Owner yang dapat menghapus massal!', true);
-        return;
-    }
-    
-    const selectedIds = Array.from(selectedFullProspekIds.keys());
-    if (selectedIds.length === 0) {
-        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
-        return;
-    }
-    
-    if (!confirm(`Hapus ${selectedIds.length} data prospek?`)) return;
-    
-    const progress = showFloatingProgress('🗑️ Menghapus Data Prospek', selectedIds.length);
-    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus...');
-    
-    let deleted = 0;
-    for (const id of selectedIds) {
-        try {
-            await db.collection('prospek').doc(id).delete();
-            selectedFullProspekIds.delete(id);
-            deleted++;
-            const percent = Math.floor((deleted / selectedIds.length) * 100);
-            progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
-            await delay(200);
-        } catch (e) {
-            console.error(`Gagal hapus ${id}:`, e);
-        }
-    }
-    
-    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, selectedIds.length);
-    showNotifTop(`✅ ${deleted} data berhasil dihapus`);
-    
-    setTimeout(() => progress.hide(), 2000);
-    
-    loadAllData();
-    renderFullProspekKanban();
-}
-
 // Panggil initFullModeSelection setelah auth state
 function initFullModeSelection() {
     // Hanya tampilkan tombol untuk OWNER
@@ -5090,119 +5017,161 @@ function initFullModeSelection() {
 }
 
 function renderFullProspekKanban() {
-  const today = getTodayDate();
-  const lists = {
-    prospekBaru: [],
-    prospekDihubungi: [],
-    prospekNegosiasi: [],
-    prospekTertarik: []
-  };
-  prospekData.forEach(item => {
-    const status = item.status || 'Baru';
-    if (status === 'Baru') lists.prospekBaru.push(item);
-    else if (status === 'Dihubungi') lists.prospekDihubungi.push(item);
-    else if (status === 'Negosiasi') lists.prospekNegosiasi.push(item);
-    else if (status === 'Tertarik') lists.prospekTertarik.push(item);
-    else lists.prospekTertarik.push(item);
-  });
-  lists.prospekBaru.sort((a, b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
-  lists.prospekDihubungi.sort((a, b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
-  lists.prospekNegosiasi.sort((a, b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
-  lists.prospekTertarik.sort((a, b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
-  document.getElementById('fullCountProspekBaru').innerText = lists.prospekBaru.length;
-  document.getElementById('fullCountDihubungi').innerText = lists.prospekDihubungi.length;
-  document.getElementById('fullCountNegosiasi').innerText = lists.prospekNegosiasi.length;
-  document.getElementById('fullCountTertarik').innerText = lists.prospekTertarik.length;
+    const today = getTodayDate();
+    const lists = {
+        prospekBaru: [],
+        prospekDihubungi: [],
+        prospekNegosiasi: [],
+        prospekTertarik: []
+    };
+    
+    prospekData.forEach(item => {
+        const status = item.status || 'Baru';
+        if (status === 'Baru') lists.prospekBaru.push(item);
+        else if (status === 'Dihubungi') lists.prospekDihubungi.push(item);
+        else if (status === 'Negosiasi') lists.prospekNegosiasi.push(item);
+        else if (status === 'Tertarik') lists.prospekTertarik.push(item);
+        else lists.prospekTertarik.push(item);
+    });
+    
+    lists.prospekBaru.sort((a, b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    lists.prospekDihubungi.sort((a, b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    lists.prospekNegosiasi.sort((a, b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    lists.prospekTertarik.sort((a, b) => (a.deadline || '9999-12-31').localeCompare(b.deadline || '9999-12-31'));
+    
+    document.getElementById('fullCountProspekBaru').innerText = lists.prospekBaru.length;
+    document.getElementById('fullCountDihubungi').innerText = lists.prospekDihubungi.length;
+    document.getElementById('fullCountNegosiasi').innerText = lists.prospekNegosiasi.length;
+    document.getElementById('fullCountTertarik').innerText = lists.prospekTertarik.length;
 
-  const baruContainer = document.getElementById('fullProspekBaruList');
-  if (baruContainer) {
-    baruContainer.innerHTML = lists.prospekBaru.map(item => {
-      const isOverdue = item.deadline && item.deadline < today;
-      const isToday = item.deadline === today;
-      let deadlineClass = '';
-      if (isOverdue) deadlineClass = 'deadline-overdue';
-      else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Baru"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
-    }).join('');
-    baruContainer.querySelectorAll('.card-item').forEach(card => {
-  card.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('whatsapp-icon') && 
-        !e.target.classList.contains('full-item-checkbox')) {
-      openDetailCustomer(card.dataset.id);
+    const isOwner = currentUserRole === 'owner';
+    
+    // Render kolom BARU
+    const baruContainer = document.getElementById('fullProspekBaruList');
+    if (baruContainer) {
+        baruContainer.innerHTML = lists.prospekBaru.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            const isChecked = selectedFullProspekIds.get(item.id) === true;
+            const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Baru" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
+                        <div style="display: flex; align-items: center;">
+                            ${checkboxHtml}
+                            <div style="flex: 1;">
+                                <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                                <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                                <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                            </div>
+                        </div>
+                    </div>`;
+        }).join('');
+        
+        if (isOwner) {
+            document.querySelectorAll('#fullProspekBaruList .full-item-checkbox').forEach(cb => {
+                cb.removeEventListener('change', handleFullProspekCheckboxChange);
+                cb.addEventListener('change', handleFullProspekCheckboxChange);
+            });
+        }
     }
-  });
-});
-    // Juga pastikan checkbox tidak memicu openDetailCustomer
-document.querySelectorAll('.full-item-checkbox').forEach(cb => {
-  cb.addEventListener('click', (e) => {
-    e.stopPropagation();
-  });
-});
-  const dihubungiContainer = document.getElementById('fullProspekDihubungiList');
-  if (dihubungiContainer) {
-    dihubungiContainer.innerHTML = lists.prospekDihubungi.map(item => {
-      const isOverdue = item.deadline && item.deadline < today;
-      const isToday = item.deadline === today;
-      let deadlineClass = '';
-      if (isOverdue) deadlineClass = 'deadline-overdue';
-      else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Dihubungi"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
-    }).join('');
-    dihubungiContainer.querySelectorAll('.card-item').forEach(card => {
-      card.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id);
-      });
-    });
-  }
-  const negosiasiContainer = document.getElementById('fullProspekNegosiasiList');
-  if (negosiasiContainer) {
-    negosiasiContainer.innerHTML = lists.prospekNegosiasi.map(item => {
-      const isOverdue = item.deadline && item.deadline < today;
-      const isToday = item.deadline === today;
-      let deadlineClass = '';
-      if (isOverdue) deadlineClass = 'deadline-overdue';
-      else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Negosiasi"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
-    }).join('');
-    negosiasiContainer.querySelectorAll('.card-item').forEach(card => {
-      card.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id);
-      });
-    });
-  }
-  const tertarikContainer = document.getElementById('fullProspekTertarikList');
-  if (tertarikContainer) {
-    tertarikContainer.innerHTML = lists.prospekTertarik.map(item => {
-      const isOverdue = item.deadline && item.deadline < today;
-      const isToday = item.deadline === today;
-      let deadlineClass = '';
-      if (isOverdue) deadlineClass = 'deadline-overdue';
-      else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tertarik"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
-    }).join('');
-    tertarikContainer.querySelectorAll('.card-item').forEach(card => {
-      card.addEventListener('click', (e) => {
-        if (!e.target.classList.contains('whatsapp-icon')) openDetailProspek(card.dataset.id);
-      });
-    });
-  }
-}
-
-// Handler untuk checkbox Prospek Full Mode
-function handleFullProspekCheckboxChange(e) {
-  e.stopPropagation();
-  const id = e.target.dataset.id;
-  if (e.target.checked) {
-    selectedFullProspekIds.set(id, true);
-    e.target.closest('.card-item').style.opacity = '0.6';
-    e.target.closest('.card-item').style.background = '#eef2ff';
-  } else {
-    selectedFullProspekIds.delete(id);
-    e.target.closest('.card-item').style.opacity = '1';
-    e.target.closest('.card-item').style.background = '';
-  }
-  updateSelectAllFullProspekButton();
-}
+    
+    // Render kolom DIHUBUNGI
+    const dihubungiContainer = document.getElementById('fullProspekDihubungiList');
+    if (dihubungiContainer) {
+        dihubungiContainer.innerHTML = lists.prospekDihubungi.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            const isChecked = selectedFullProspekIds.get(item.id) === true;
+            const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Dihubungi" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
+                        <div style="display: flex; align-items: center;">
+                            ${checkboxHtml}
+                            <div style="flex: 1;">
+                                <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                                <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                                <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                            </div>
+                        </div>
+                    </div>`;
+        }).join('');
+        
+        if (isOwner) {
+            document.querySelectorAll('#fullProspekDihubungiList .full-item-checkbox').forEach(cb => {
+                cb.removeEventListener('change', handleFullProspekCheckboxChange);
+                cb.addEventListener('change', handleFullProspekCheckboxChange);
+            });
+        }
+    }
+    
+    // Render kolom NEGOSIASI
+    const negosiasiContainer = document.getElementById('fullProspekNegosiasiList');
+    if (negosiasiContainer) {
+        negosiasiContainer.innerHTML = lists.prospekNegosiasi.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            const isChecked = selectedFullProspekIds.get(item.id) === true;
+            const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Negosiasi" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
+                        <div style="display: flex; align-items: center;">
+                            ${checkboxHtml}
+                            <div style="flex: 1;">
+                                <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                                <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                                <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                            </div>
+                        </div>
+                    </div>`;
+        }).join('');
+        
+        if (isOwner) {
+            document.querySelectorAll('#fullProspekNegosiasiList .full-item-checkbox').forEach(cb => {
+                cb.removeEventListener('change', handleFullProspekCheckboxChange);
+                cb.addEventListener('change', handleFullProspekCheckboxChange);
+            });
+        }
+    }
+    
+    // Render kolom TERTARIK
+    const tertarikContainer = document.getElementById('fullProspekTertarikList');
+    if (tertarikContainer) {
+        tertarikContainer.innerHTML = lists.prospekTertarik.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            const isChecked = selectedFullProspekIds.get(item.id) === true;
+            const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tertarik" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
+                        <div style="display: flex; align-items: center;">
+                            ${checkboxHtml}
+                            <div style="flex: 1;">
+                                <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                                <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                                <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                            </div>
+                        </div>
+                    </div>`;
+        }).join('');
+        
+        if (isOwner) {
+            document.querySelectorAll('#fullProspekTertarikList .full-item-checkbox').forEach(cb => {
+                cb.removeEventListener('change', handleFullProspekCheckboxChange);
+                cb.addEventListener('change', handleFullProspekCheckboxChange);
+            });
+        }
+    }
+    
+    updateSelectAllFullProspekButton();
+} // <-- INI PENUTUP YANG PENTING!
 
 function updateSelectAllFullProspekButton() {
   const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox, #fullProspekDihubungiList .full-item-checkbox, #fullProspekNegosiasiList .full-item-checkbox, #fullProspekTertarikList .full-item-checkbox');
