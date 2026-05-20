@@ -8344,14 +8344,56 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
     showNotif('Pilih file dulu!', true);
     return;
   }
+  
   const importBtn = document.getElementById('importBtn');
   const originalText = importBtn.textContent;
   importBtn.textContent = '⏳ Memproses...';
   importBtn.disabled = true;
+  
+  // 🔥 TAMPILKAN PROGRESS BAR
+  const progressContainer = document.createElement('div');
+  progressContainer.className = 'progress-container';
+  progressContainer.style.margin = '20px 0';
+  progressContainer.style.position = 'relative';
+  progressContainer.style.zIndex = '9999';
+  progressContainer.innerHTML = `
+    <div class="progress-bar-wrapper">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill-custom" id="importProgressFill" style="width: 0%"></div>
+      </div>
+      <div class="progress-text" id="importProgressText">0%</div>
+    </div>
+    <div class="progress-detail">
+      <span id="importProgressStatus">Membaca file Excel...</span>
+      <span id="importProgressCount">0 / 0 data</span>
+    </div>
+  `;
+  
+  // Cari tempat untuk menampilkan progress (di atas tombol import)
+  const importCard = document.querySelector('#importPage .import-card:last-child');
+  if (importCard) {
+    importCard.insertBefore(progressContainer, importCard.querySelector('.import-btn'));
+  }
+  
+  const updateProgress = (percent, status, current = 0, total = 0) => {
+    const fillEl = document.getElementById('importProgressFill');
+    const textEl = document.getElementById('importProgressText');
+    const statusEl = document.getElementById('importProgressStatus');
+    const countEl = document.getElementById('importProgressCount');
+    if (fillEl) fillEl.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+    if (textEl) textEl.innerHTML = `${Math.floor(percent)}%`;
+    if (statusEl && status) statusEl.innerHTML = status;
+    if (countEl && total > 0) countEl.innerHTML = `${current} / ${total} data`;
+  };
+  
+  updateProgress(5, 'Membaca file Excel...');
+  
   const reader = new FileReader();
   
   reader.onload = async function(e) {
     try {
+      updateProgress(10, 'Memproses file Excel...');
+      
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
@@ -8362,14 +8404,17 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
         showNotif('File Excel kosong!', true);
         importBtn.textContent = originalText;
         importBtn.disabled = false;
+        if (progressContainer) progressContainer.remove();
         return;
       }
 
-      let success = 0, failed = 0;
+      let success = 0, failed = 0, skipped = 0; // 🔥 TAMBAHKAN skipped untuk data yang tidak memenuhi syarat
       const errors = [];
       const duplicates = [];
       const firstRow = json[0];
       const columnMap = {};
+      
+      updateProgress(15, 'Mendeteksi kolom...');
       
       // 🔥 DETEKSI KOLOM STANDAR
       if (importType === 'customer') {
@@ -8396,6 +8441,7 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: agent_id, nama, hp, apk, deadline (opsional)', true);
           importBtn.textContent = originalText;
           importBtn.disabled = false;
+          if (progressContainer) progressContainer.remove();
           return;
         }
       } else {
@@ -8414,6 +8460,7 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: nama, hp, deadline (opsional)', true);
           importBtn.textContent = originalText;
           importBtn.disabled = false;
+          if (progressContainer) progressContainer.remove();
           return;
         }
       }
@@ -8432,8 +8479,21 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
         }
       }
       
+      const totalRows = json.length;
+      updateProgress(20, `Memproses ${totalRows} baris data...`, 0, totalRows);
+      
       // 🔥 LOOP DATA
+      let processed = 0;
       for (let row of json) {
+        processed++;
+        
+        // Update progress setiap 10 baris
+        if (processed % 10 === 0 || processed === totalRows) {
+          const percent = 20 + Math.floor((processed / totalRows) * 70);
+          updateProgress(percent, `Memproses data...`, processed, totalRows);
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        
         try {
           let agentId = columnMap.agentId ? row[columnMap.agentId] : null;
           let nama = row[columnMap.nama];
@@ -8466,17 +8526,41 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
             progresKeterangan = String(row[progresKeteranganCol]).trim();
           }
           
+          // 🔥 FILTER DATA BERDASARKAN NILAI PROGRES
+          // Hanya data dengan progres_jumlah < -100 (minus lebih dari 100) yang diproses
+          // Data dengan progres_jumlah -100 ke atas sampai 0, dan 0 ke atas TIDAK DIPROSES
+          if (importType === 'customer' && progresJenis === 'turun') {
+            // Untuk data TURUN: hanya jika nilainya > 100 (lebih dari 100)
+            // Karena progresJumlah selalu positif, kita cek nilainya
+            if (progresJumlah <= 100) {
+              // Nilai turun 100 atau kurang - TIDAK DIPROSES (skip)
+              skipped++;
+              continue;
+            }
+            // Nilai turun > 100 - LANJUTKAN PROSES
+            totalTercapai = -progresJumlah;
+          } else if (importType === 'customer' && (progresJenis === 'naik' || progresJenis === '')) {
+            // Untuk data NAIK atau TIDAK ADA PROGRES - TIDAK DIPROSES
+            if (progresJenis === 'naik') {
+              // Data naik - skip
+              skipped++;
+              continue;
+            }
+            // Data tanpa progres - skip juga
+            skipped++;
+            continue;
+          } else if (importType === 'customer' && !progresJenis) {
+            // Tidak ada data progres - skip
+            skipped++;
+            continue;
+          }
+          
           if (progresJenis === 'naik') totalTercapai = progresJumlah;
           else if (progresJenis === 'turun') totalTercapai = -progresJumlah;
 
-          // 🔥 VALIDASI MAKSIMAL PENURUNAN 100
-          if (progresJenis === 'turun' && progresJumlah > 100) {
-          showNotifTop(`⚠️ Baris ke-${json.indexOf(row)+2}: Penurunan transaksi maksimal 100!`, true);
-          failed++;
-          continue;
-          }
+          // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
           
-          // Validasi data
+          // Validasi data dasar
           if (!nama || !hp) {
             failed++;
             errors.push(`Baris ke-${json.indexOf(row)+2}: Nama atau HP kosong`);
@@ -8484,7 +8568,7 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           }
 
           if (uplinePhone) {
-          uplinePhone = formatPhoneNumber(uplinePhone);
+            uplinePhone = formatPhoneNumber(uplinePhone);
           }
           
           if (importType === 'customer' && (!agentId || !apk)) {
@@ -8531,7 +8615,7 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           let formattedDeadline = deadline ? new Date(deadline).toISOString().split('T')[0] : getTodayDate();
           if (deadline && isNaN(new Date(deadline).getTime())) formattedDeadline = getTodayDate();
           
-          // 🔥 SIMPAN KE DATABASE
+          // 🔥 SIMPAN KE DATABASE (hanya untuk data yang lolos filter)
           if (importType === 'customer') {
             const progresItem = (progresJenis && progresJumlah > 0) ? {
               tanggal: formattedDeadline,
@@ -8579,7 +8663,13 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
         }
       }
       
-      let resultMsg = `✅ Selesai!\nBerhasil: ${success}\nGagal: ${failed}`;
+      updateProgress(95, 'Menyelesaikan...', totalRows, totalRows);
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      let resultMsg = `✅ Selesai!\n📊 Berhasil: ${success}\n⏭ Dilewati (tidak memenuhi syarat): ${skipped}\n❌ Gagal: ${failed}`;
+      if (importType === 'customer') {
+        resultMsg += `\n\n📌 Catatan: Hanya data dengan PROGRES TURUN > 100 yang diimport.`;
+      }
       if (duplicates.length > 0) {
         resultMsg += `\n\n⏭ Data duplikat dilewati:\n${duplicates.slice(0,5).join('\n')}${duplicates.length > 5 ? `\n... dan ${duplicates.length-5} lainnya` : ''}`;
       }
@@ -8590,14 +8680,21 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
       }
       alert(resultMsg);
       
+      updateProgress(100, 'Selesai!', totalRows, totalRows);
+      setTimeout(() => {
+        if (progressContainer) progressContainer.remove();
+      }, 3000);
+      
       excelFileInput.value = '';
       document.getElementById('fileInfo').innerHTML = '';
       updateAllBadges();
       loadAllData();
+      await updateTotalTransaksiDariCustomer();
       
     } catch (error) {
       console.error('Import error:', error);
       showNotif('❌ Gagal memproses file: ' + error.message, true);
+      if (progressContainer) progressContainer.remove();
     } finally {
       importBtn.textContent = originalText;
       importBtn.disabled = false;
@@ -8608,6 +8705,8 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
     showNotif('❌ Gagal membaca file', true);
     importBtn.textContent = originalText;
     importBtn.disabled = false;
+    const progressContainer = document.querySelector('#importPage .progress-container');
+    if (progressContainer) progressContainer.remove();
   };
   
   reader.readAsArrayBuffer(file);
