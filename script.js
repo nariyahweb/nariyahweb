@@ -8801,7 +8801,7 @@ if (isDuplicate) {
           }
           
           // Cek duplikat
-          let isDuplicate = false;
+          isDuplicate = false;
           if (importType === 'customer') {
             const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
             if (duplicateAgent) {
