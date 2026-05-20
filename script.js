@@ -8611,45 +8611,39 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
             }
           }
           
-          if (progresJumlahCol && row[progresJumlahCol]) {
-            progresJumlah = parseInt(String(row[progresJumlahCol]).replace(/[^0-9]/g, '')) || 0;
-          }
+          // 🔥 PERBAIKAN 1: Baca nilai asli termasuk tanda negatif
+let rawJumlah = '';
+if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== '') {
+    rawJumlah = String(row[progresJumlahCol]).trim();
+    // Hapus hanya karakter non-digit dan non-minus (pertahankan tanda negatif di depan)
+    let matches = rawJumlah.match(/-?\d+/);
+    if (matches) {
+        progresJumlah = parseInt(matches[0]) || 0;
+    }
+}
           
           if (progresKeteranganCol && row[progresKeteranganCol]) {
             progresKeterangan = String(row[progresKeteranganCol]).trim();
           }
           
           // 🔥 FILTER DATA BERDASARKAN NILAI PROGRES
+// 🔥 PERBAIKAN 2: Filter berdasarkan nilai asli (termasuk negatif)
 if (importType === 'customer') {
-    // Ambil nilai absolut dari progres_jumlah (karena di Excel nilainya negatif)
-    let nilaiMutlak = Math.abs(progresJumlah);
-    
-    // Hanya proses jika progres_jenis = 'turun' DAN nilai absolutnya > 100
+    // Untuk data dengan progres_jenis = 'turun'
     if (progresJenis === 'turun') {
-        if (nilaiMutlak > 100) {
-            // Data lolos filter - lanjutkan import
-            totalTercapai = -nilaiMutlak;
-            // Nilai turun > 100 - LANJUTKAN PROSES
-            totalTercapai = -progresJumlah;
-          } else if (importType === 'customer' && (progresJenis === 'naik' || progresJenis === '')) {
-            // Untuk data NAIK atau TIDAK ADA PROGRES - TIDAK DIPROSES
-            if (progresJenis === 'naik') {
-              // Data naik - skip
-              skipped++;
-              continue;
-            }
-            // Data tanpa progres - skip juga
+        // Gunakan nilai absolut > 100
+        if (Math.abs(progresJumlah) > 100) {
+            // Data lolos filter
+            totalTercapai = progresJumlah; // tetap negatif
+        } else {
             skipped++;
             continue;
-          } else if (importType === 'customer' && !progresJenis) {
-            // Tidak ada data progres - skip
-            skipped++;
-            continue;
-          }
-      } else {
-            // Nilai <= 100 - skip
-            skipped++;
-            continue;
+        }
+    } 
+    // Hanya proses data dengan progres_jenis = 'turun'
+    else {
+        skipped++;
+        continue;
     }
 }
 
