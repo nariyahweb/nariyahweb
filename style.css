@@ -2093,6 +2093,13 @@ body.dark-mode .progress-status {
     transform: translateX(4px);
 }
 
+/* Modal Pilih Nomor */
+.pilih-nomor-option:hover {
+    background: #eef2ff !important;
+    border-color: #4f46e5 !important;
+    transform: translateX(4px);
+}
+
 /* ========== BROADCAST PANEL ========== */
 .broadcast-panel {
     background: #fff;
