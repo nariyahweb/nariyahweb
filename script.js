@@ -971,7 +971,7 @@ async function updateTotalTransaksiDariCustomer() {
 
 // ========== FUNGSI VALIDASI DUPLIKAT ==========
 async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
-  // 🔥 PERBAIKAN 1: Jika HP tidak valid (kosong, 0, '+62', '62'), SKIP CEK DUPLIKAT
+  // 🔥 PERUBAHAN 1: Cek apakah HP valid (bukan kosong, 0, '+62', dll)
   const isHpValid = hp && hp !== '+62' && hp !== '62' && hp !== '0' && hp.trim() !== '';
   
   let query = db.collection('customers').where('user_id', '==', currentUser.uid);
@@ -990,7 +990,7 @@ async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
         owner: currentUserName
       };
     }
-    // 🔥 PERBAIKAN 2: Cek duplikat HANYA jika HP valid
+    // 🔥 PERUBAHAN 2: Cek duplikat HP HANYA jika HP valid
     if (isHpValid && data.hp === hp) {
       duplicateHp = {
         id: doc.id,
@@ -1000,7 +1000,6 @@ async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
     }
   }
 
-  // Jika owner, cek juga di semua CS
   if (currentUserRole === 'owner') {
     const allCustomers = await db.collection('customers').get();
     for (const doc of allCustomers.docs) {
@@ -1015,7 +1014,7 @@ async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
           owner: userName
         };
       }
-      // 🔥 PERBAIKAN 3: Cek duplikat HANYA jika HP valid
+      // 🔥 PERUBAHAN 3: Cek duplikat HP HANYA jika HP valid
       if (isHpValid && data.hp === hp) {
         const userDoc = await db.collection('users').doc(data.user_id).get();
         const userName = userDoc.exists ? userDoc.data().nama || 'CS Agent' : 'CS Agent';
@@ -1035,10 +1034,10 @@ async function checkDuplicateCustomer(agentId, hp, excludeId = null) {
 }
 
 async function checkDuplicateProspek(hp, excludeId = null) {
-  // 🔥 PERBAIKAN: Jika HP tidak valid, SKIP CEK DUPLIKAT
+  // 🔥 PERUBAHAN 1: Cek apakah HP valid
   const isHpValid = hp && hp !== '+62' && hp !== '62' && hp !== '0' && hp.trim() !== '';
   
-  // Jika HP tidak valid, langsung return null (tidak ada duplikat)
+  // 🔥 PERUBAHAN 2: Jika HP tidak valid, langsung return null
   if (!isHpValid) {
     return null;
   }
@@ -8652,7 +8651,7 @@ let progresJumlah = 0;
 let progresKeterangan = '';
 let totalTercapai = 0;
 
-// 🔥 PARSING PROGRES JENIS
+// 🔥 PERUBAHAN: Deteksi lebih fleksibel
 if (progresJenisCol && row[progresJenisCol] !== undefined && row[progresJenisCol] !== null && row[progresJenisCol] !== '') {
     const jenisInput = String(row[progresJenisCol]).toLowerCase().trim();
     
@@ -8663,6 +8662,7 @@ if (progresJenisCol && row[progresJenisCol] !== undefined && row[progresJenisCol
         progresJenis = 'turun';
     }
     else {
+        // 🔥 TAMBAHAN: Simpan sebagai string asli jika tidak dikenali
         progresJenis = jenisInput;
     }
 }
@@ -8680,6 +8680,7 @@ if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlah
             progresJumlah = parseInt(matches[0], 10);  // ← LANGSUNG ASSIGN
         }
     }
+  console.log(`Debug - raw: ${rawValue}, parsed: ${progresJumlah}`);
 }
 
 // 🔥 PARSING PROGRES KETERANGAN
