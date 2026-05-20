@@ -2888,10 +2888,12 @@ if (saveCustomerBtn) {
     if (!tanggal) tanggal = getTodayDate();
     let cleanHp = '+62' + hp;
 
-    // Di saveCustomerBtn
+   // Di saveCustomerBtn
 db.collection('customers').add({
     agent_id: agentId,
     nama: nama,
+    upline_name: uplineName,
+    upline_phone: uplinePhone,
     hp: cleanHp,
     apk: apk,
     agent_type: agentType,
@@ -2901,10 +2903,13 @@ db.collection('customers').add({
         items: [],
         total_tercapai: 0
     },
+    upline_name: '',  // 🔥 TAMBAHKAN - Nama Upline
+    upline_phone: '', // 🔥 TAMBAHKAN - Nomor HP Upline
     user_id: currentUser.uid,
     created_at: new Date().toISOString(),
     followup_data: null,
     pending_data: []
+})ending_data: []
 })
       .then(() => {
         closeModal('customerModal');
@@ -3001,6 +3006,66 @@ if (saveProspekBtn) {
   });
 }
 
+// Fungsi untuk mendapatkan nomor WhatsApp yang tepat berdasarkan type/class
+function getTargetPhone(customerData) {
+    // Jika type/class bukan AGENT (CA, KORWIL, SUB CA, SUB KORWIL) dan ada upline phone
+    if (customerData.agent_type && 
+        customerData.agent_type !== 'AGENT' && 
+        customerData.agent_type !== '' &&
+        customerData.upline_phone && 
+        customerData.upline_phone.trim() !== '') {
+        return customerData.upline_phone;
+    }
+    
+    // Jika AGENT atau tidak ada upline, gunakan nomor agent sendiri
+    return customerData.hp;
+}
+
+// Fungsi untuk mendapatkan nama tujuan
+function getTargetName(customerData) {
+    if (customerData.agent_type && 
+        customerData.agent_type !== 'AGENT' && 
+        customerData.agent_type !== '' &&
+        customerData.upline_name && 
+        customerData.upline_name.trim() !== '') {
+        return customerData.upline_name;
+    }
+    return customerData.nama;
+}
+
+function openWA(hp, customerData = null) {
+    if (!hp) return;
+    
+    // Jika customerData ada dan perlu menggunakan upline
+    let targetPhone = hp;
+    if (customerData) {
+        targetPhone = getTargetPhone(customerData);
+    }
+    
+    let nomor = targetPhone.toString().replace('+', '').replace(/^0/, '62');
+    window.open('https://wa.me/' + nomor, '_blank');
+}
+
+function openWACustomer(customerId) {
+    db.collection('customers').doc(customerId).get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            openWA(null, data);
+        }
+    });
+}
+
+function openWAById(customerId) {
+    db.collection('customers').doc(customerId).get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            const targetPhone = getTargetPhone(data);
+            let nomor = targetPhone.toString().replace('+', '').replace(/^0/, '62');
+            window.open('https://wa.me/' + nomor, '_blank');
+        }
+    });
+}
+
 // ========== DETAIL MODAL ==========
 function showModal(modalId) {
   const modal = document.getElementById(modalId);
@@ -3081,7 +3146,14 @@ function openDetailCustomer(id) {
     const deadlineDisplay = d.tanggal || '-';
     const editBtn = `<button class="edit-deadline-btn" onclick="openEditDeadlineModal('${id}','customer','${d.tanggal || ''}')" title="Edit deadline">✏️</button>`;
 
-    // 🔥 MODIFIKASI detailContent - TAMBAHKAN BAGIAN PROGRES
+    // Di openDetailCustomer, tambahkan setelah mengambil data
+const uplineName = d.upline_name || '-';
+const uplinePhone = d.upline_phone || '-';
+const targetPhone = getTargetPhone(d);
+const targetName = getTargetName(d);
+
+    // Detail-info
+    // detailContent
     document.getElementById('detailContent').innerHTML = `
       <div class="detail-header">
         <div class="detail-avatar">${statusIcon}</div>
@@ -3120,6 +3192,29 @@ function openDetailCustomer(id) {
             </div>
           </div>
           <div class="detail-info-item">
+    <div class="detail-info-icon">👤</div>
+    <div class="detail-info-content">
+        <label>Upline / Atasan</label>
+        <div class="value">${escapeHtml(uplineName)}</div>
+    </div>
+</div>
+<div class="detail-info-item">
+    <div class="detail-info-icon">📱</div>
+    <div class="detail-info-content">
+        <label>Nomor HP Upline</label>
+        <div class="value">${escapeHtml(uplinePhone)}</div>
+    </div>
+</div>
+<div class="detail-info-item">
+    <div class="detail-info-icon">🎯</div>
+    <div class="detail-info-content">
+        <label>Nomor Tujuan WA</label>
+        <div class="value" style="color: #4f46e5; font-weight: 600;">
+            ${targetName} - ${targetPhone}
+        </div>
+    </div>
+</div>
+          <div class="detail-info-item">
             <div class="detail-info-icon">📅</div>
             <div class="detail-info-content">
               <label>Deadline</label>
@@ -3150,7 +3245,7 @@ function openDetailCustomer(id) {
           </div>
         </div>
         <div class="detail-actions">
-          <button class="btn-success" onclick="openWA('${d.hp}')">💬 WhatsApp</button>
+          <button class="btn-success" onclick="openWACustomer('${id}')">💬 WhatsApp</button>
           <button class="btn-primary" onclick="openTambahProgres('${id}')">📊 Tambah Progres</button>
           ${actionButtons}
         </div>
@@ -4576,7 +4671,7 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
     }).join('');
     baruContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -4592,7 +4687,7 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
     }).join('');
     followupContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -4608,7 +4703,7 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
     }).join('');
     pendingContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -4624,7 +4719,7 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
     }).join('');
     closingContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -4667,7 +4762,7 @@ function renderFullProspekKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Baru"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Baru"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
     }).join('');
     baruContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -4683,7 +4778,7 @@ function renderFullProspekKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Dihubungi"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Dihubungi"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
     }).join('');
     dihubungiContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -4699,7 +4794,7 @@ function renderFullProspekKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Negosiasi"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Negosiasi"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
     }).join('');
     negosiasiContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -4715,7 +4810,7 @@ function renderFullProspekKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tertarik"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="Tertarik"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
     }).join('');
     tertarikContainer.querySelectorAll('.card-item').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -5546,7 +5641,7 @@ if (!isOwner) {
           let deadlineClass = '';
           if (isOverdue) deadlineClass = 'deadline-overdue';
           else if (isToday) deadlineClass = 'deadline-today';
-          return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}" data-deadline="${item.tanggal || ''}"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
+          return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${status}" data-deadline="${item.tanggal || ''}"><div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.tanggal || '-'}</div></div>`;
         }).join('');
         container.querySelectorAll('.card-item').forEach(card => {
           card.addEventListener('click', (e) => {
@@ -5627,7 +5722,7 @@ if (!isOwner) {
           let deadlineClass = '';
           if (isOverdue) deadlineClass = 'deadline-overdue';
           else if (isToday) deadlineClass = 'deadline-today';
-          return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${item.status}" data-deadline="${item.deadline || ''}"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWA('${item.hp}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
+          return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="${item.status}" data-deadline="${item.deadline || ''}"><div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div><div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div><div class="card-deadline">📅 ${item.deadline || '-'}</div></div>`;
         }).join('');
         container.querySelectorAll('.card-item').forEach(card => {
           card.addEventListener('click', (e) => {
@@ -5938,12 +6033,16 @@ async function loadNumbers() {
       }
       const snapshot = await query.get();
       snapshot.forEach(doc => {
-        const data = doc.data();
-        numbers.push({
-          hp: data.hp,
-          nama: data.nama || data.name || 'Agent'
-        });
-      });
+    const data = doc.data();
+    const targetPhone = getTargetPhone(data);
+    const targetName = getTargetName(data);
+    numbers.push({
+        hp: targetPhone,
+        nama: targetName,
+        original_hp: data.hp,
+        original_nama: data.nama
+    });
+});
     }
     currentNumbers = numbers;
     const selectedCountSpan = document.getElementById('selectedCount');
@@ -5964,6 +6063,7 @@ async function loadNumbers() {
 }
 
 async function sendBroadcast() {
+  const message = messageTemplate.replace(/{nama}/g, item.nama || 'Customer');
   const messageTemplate = document.getElementById('broadcastMessage')?.value,
     sendOneByOne = document.getElementById('sendOneByOne')?.checked;
   if (!messageTemplate) {
@@ -6207,6 +6307,8 @@ function renderAgentList(items) {
   const filterDate = document.getElementById('filterDateAgent')?.value || '';
   const filterHasHp = document.getElementById('filterHasHpAgent')?.checked || false;
   const filterHasApk = document.getElementById('filterHasApkAgent')?.checked || false;
+  const uplineName = document.getElementById('customerUplineName')?.value || '';
+  let uplinePhone = document.getElementById('customerUplinePhone')?.value || '';
 
   let filtered = [...items];
 
@@ -7915,12 +8017,17 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
         const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
         const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app'];
         const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
-        
+        const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan'];
+        const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline'];
+          
+        }
         for (let key in firstRow) {
           const lowerKey = key.toLowerCase();
           if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
           if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
           if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
+          if (possibleUplineName.some(p => p.toLowerCase() === lowerKey)) columnMap.uplineName = key;
+          if (possibleUplinePhone.some(p => p.toLowerCase() === lowerKey)) columnMap.uplinePhone = key;
           if (possibleApk.some(p => p.toLowerCase() === lowerKey)) columnMap.apk = key;
           if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
         }
@@ -7971,6 +8078,8 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
           let agentId = columnMap.agentId ? row[columnMap.agentId] : null;
           let nama = row[columnMap.nama];
           let hp = row[columnMap.hp];
+          let uplineName = columnMap.uplineName ? row[columnMap.uplineName] : '';
+          let uplinePhone = columnMap.uplinePhone ? row[columnMap.uplinePhone] : '';
           let apk = columnMap.apk ? row[columnMap.apk] : null;
           let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
           
@@ -8005,6 +8114,10 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
             failed++;
             errors.push(`Baris ke-${json.indexOf(row)+2}: Nama atau HP kosong`);
             continue;
+          }
+
+          if (uplinePhone) {
+          uplinePhone = formatPhoneNumber(uplinePhone);
           }
           
           if (importType === 'customer' && (!agentId || !apk)) {
@@ -8072,6 +8185,8 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
                 items: progresItem ? [progresItem] : [],
                 total_tercapai: totalTercapai
               },
+              upline_name: uplineName || '',
+              upline_phone: uplinePhone || '', 
               user_id: currentUser.uid,
               created_at: new Date().toISOString(),
               followup_data: null,
@@ -8138,6 +8253,9 @@ document.getElementById('downloadCustomerExample')?.addEventListener('click', ()
         hp: '6281234567890',
         apk: 'GNP',
         deadline: getTodayDate(),
+        agent_type: 'CollectingAgent (CA)',
+        upline_name: 'Siti Aminah',
+        upline_phone: '6281234567891',
         progres_jenis: 'naik',
         progres_jumlah: 25,
         progres_keterangan: 'Penambahan outlet baru'
@@ -8147,6 +8265,9 @@ document.getElementById('downloadCustomerExample')?.addEventListener('click', ()
         hp: '6281234567891',
         apk: 'BSB',
         deadline: getTodayDate(),
+        agent_type: 'AGENT',
+        upline_name: '',
+        upline_phone: '',
         progres_jenis: 'turun',
         progres_jumlah: 8,
         progres_keterangan: 'Penurunan order'
