@@ -8611,11 +8611,11 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
             }
           }
           
-          // 🔥 PERBAIKAN 1: Baca nilai asli termasuk tanda negatif
+          // ✅ PERBAIKAN PARSING - BACA NILAI ASLI TERMASUK TANDA NEGATIF
 let rawJumlah = '';
 if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== '') {
     rawJumlah = String(row[progresJumlahCol]).trim();
-    // Hapus hanya karakter non-digit dan non-minus (pertahankan tanda negatif di depan)
+    // Gunakan regex yang mempertahankan tanda negatif
     let matches = rawJumlah.match(/-?\d+/);
     if (matches) {
         progresJumlah = parseInt(matches[0]) || 0;
@@ -8626,23 +8626,25 @@ if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlah
             progresKeterangan = String(row[progresKeteranganCol]).trim();
           }
           
-          // 🔥 FILTER DATA BERDASARKAN NILAI PROGRES
+          // 🔥 FILTER DATA BERDASARKAN TURUN TRANSAKSI
+// ✅ KODE BARU YANG BENAR
 if (importType === 'customer') {
-    // Ambil nilai absolut dengan benar (termasuk tanda negatif)
-    let rawJumlah = '';
-    if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== '') {
-        rawJumlah = String(row[progresJumlahCol]).trim();
-        let matches = rawJumlah.match(/-?\d+/);
-        if (matches) {
-            progresJumlah = parseInt(matches[0]) || 0;
-        }
-    }
+    // Ambil nilai absolut dengan benar
+    let nilaiAbsolut = Math.abs(progresJumlah);
     
-    if (importType === 'customer' && progresJenis === 'turun') {
-    // Semua data dengan progres_jenis = 'turun' langsung diproses
-    // Tidak peduli nilai progres_jumlah (kosong, 0, atau berapapun)
-    totalTercapai = progresJumlah ? -Math.abs(progresJumlah) : 0;
-    // Lanjutkan proses import...
+    // 🔥 HANYA SATU FILTER: progres_jenis === 'turun'
+    // HAPUS pengecekan nilai > 100 atau lainnya
+    if (progresJenis === 'turun') {
+        // Semua data dengan status 'turun' langsung diproses
+        // Tidak peduli nilai progres_jumlah (kosong, 0, atau berapapun)
+        totalTercapai = -nilaiAbsolut; // Simpan sebagai negatif
+        // Lanjutkan ke proses berikutnya
+    } 
+    // Selain 'turun' (naik, normal, tetap, dll) - SKIP
+    else {
+        skipped++;
+        continue;
+    }
 }
 
           // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
