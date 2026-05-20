@@ -2835,6 +2835,15 @@ if (saveCustomerBtn) {
     const apk = document.getElementById('customerApk').value;
     const agentType = document.getElementById('customerType').value;
     let tanggal = document.getElementById('customerDate').value;
+    const uplineName = document.getElementById('customerUplineName')?.value || '';
+    let uplinePhone = document.getElementById('customerUplinePhone')?.value || '';
+
+    // Format upline phone
+    if (uplinePhone) {
+        uplinePhone = uplinePhone.replace(/\D/g, '');
+        if (uplinePhone.startsWith('0')) uplinePhone = uplinePhone.substring(1);
+        uplinePhone = '+62' + uplinePhone;
+    }
 
     if (!agentId) {
       showNotif('ID Agent wajib diisi!', true);
@@ -2892,8 +2901,6 @@ if (saveCustomerBtn) {
 db.collection('customers').add({
     agent_id: agentId,
     nama: nama,
-    upline_name: uplineName,
-    upline_phone: uplinePhone,
     hp: cleanHp,
     apk: apk,
     agent_type: agentType,
@@ -2903,13 +2910,12 @@ db.collection('customers').add({
         items: [],
         total_tercapai: 0
     },
-    upline_name: '',  // 🔥 TAMBAHKAN - Nama Upline
-    upline_phone: '', // 🔥 TAMBAHKAN - Nomor HP Upline
+    upline_name: uplineName || '',  // Gunakan variabel uplineName
+    upline_phone: uplinePhone || '', // Gunakan variabel uplinePhone
     user_id: currentUser.uid,
     created_at: new Date().toISOString(),
     followup_data: null,
     pending_data: []
-})ending_data: []
 })
       .then(() => {
         closeModal('customerModal');
