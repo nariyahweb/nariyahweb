@@ -8627,21 +8627,31 @@ if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlah
           }
           
           // 🔥 FILTER DATA BERDASARKAN NILAI PROGRES
-// 🔥 PERBAIKAN 2: Filter berdasarkan nilai asli (termasuk negatif)
 if (importType === 'customer') {
-    // Untuk data dengan progres_jenis = 'turun'
+    // Ambil nilai absolut dengan benar (termasuk tanda negatif)
+    let rawJumlah = '';
+    if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== '') {
+        rawJumlah = String(row[progresJumlahCol]).trim();
+        let matches = rawJumlah.match(/-?\d+/);
+        if (matches) {
+            progresJumlah = parseInt(matches[0]) || 0;
+        }
+    }
+    
+    // HANYA SATU FILTER: progres_jenis = 'turun' DAN nilai absolut > 100
     if (progresJenis === 'turun') {
-        // Gunakan nilai absolut > 100
-        if (Math.abs(progresJumlah) > 100) {
-            // Data lolos filter
-            totalTercapai = progresJumlah; // tetap negatif
+        const nilaiAbsolut = Math.abs(progresJumlah);
+        if (nilaiAbsolut > 100) {
+            // ✅ Data LOLOS filter
+            totalTercapai = -nilaiAbsolut; // Simpan sebagai negatif
+            // Lanjutkan ke proses import...
         } else {
+            // ❌ Nilai ≤ 100 - skip
             skipped++;
             continue;
         }
-    } 
-    // Hanya proses data dengan progres_jenis = 'turun'
-    else {
+    } else {
+        // ❌ Bukan 'turun' - skip
         skipped++;
         continue;
     }
