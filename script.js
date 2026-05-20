@@ -5208,6 +5208,43 @@ function renderFullProspekKanban() {
     updateSelectAllFullProspekButton();
 } // <-- INI PENUTUP YANG PENTING!
 
+// ========== HANDLER CHECKBOX FULL PROSPEK ==========
+function handleFullProspekCheckboxChange(e) {
+  e.stopPropagation();
+  const id = e.target.dataset.id;
+  if (e.target.checked) {
+    selectedFullProspekIds.set(id, true);
+    const card = e.target.closest('.card-item');
+    if (card) {
+      card.style.opacity = '0.6';
+      card.style.background = '#eef2ff';
+    }
+  } else {
+    selectedFullProspekIds.delete(id);
+    const card = e.target.closest('.card-item');
+    if (card) {
+      card.style.opacity = '1';
+      card.style.background = '';
+    }
+  }
+  updateSelectAllFullProspekButton();
+}
+
+// ========== UPDATE BUTTON SELECT ALL PROSPEK ==========
+function updateSelectAllFullProspekButton() {
+  const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox, #fullProspekDihubungiList .full-item-checkbox, #fullProspekNegosiasiList .full-item-checkbox, #fullProspekTertarikList .full-item-checkbox');
+  const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
+  const btn = document.getElementById('selectAllFullProspek');
+  if (btn) {
+    btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+    if (currentUserRole !== 'owner') {
+      btn.style.display = 'none';
+    } else {
+      btn.style.display = 'inline-block';
+    }
+  }
+}
+
 function updateSelectAllFullProspekButton() {
   const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox, #fullProspekDihubungiList .full-item-checkbox, #fullProspekNegosiasiList .full-item-checkbox, #fullProspekTertarikList .full-item-checkbox');
   const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
