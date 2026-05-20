@@ -8639,19 +8639,14 @@ if (importType === 'customer') {
     }
     
     // HANYA SATU FILTER: progres_jenis = 'turun' DAN nilai absolut > 100
-    if (progresJenis === 'turun') {
-        const nilaiAbsolut = Math.abs(progresJumlah);
-        if (nilaiAbsolut > 100) {
-            // ✅ Data LOLOS filter
-            totalTercapai = -nilaiAbsolut; // Simpan sebagai negatif
-            // Lanjutkan ke proses import...
-        } else {
-            // ❌ Nilai ≤ 100 - skip
-            skipped++;
-            continue;
-        }
-    } else {
-        // ❌ Bukan 'turun' - skip
+    if (importType === 'customer' && progresJenis === 'turun') {
+    // Jika progres_jumlah kosong atau 0, anggap sebagai valid
+    if (!progresJumlah || progresJumlah === 0) {
+        // Data langsung diproses tanpa batasan nilai
+        totalTercapai = 0;
+        // Lanjutkan proses import...
+    } 
+    else {
         skipped++;
         continue;
     }
