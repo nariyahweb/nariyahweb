@@ -4754,6 +4754,7 @@ function renderFullFollowupKanban() {
     pending: [],
     closing: []
   };
+  
   customersData.forEach(item => {
     const status = item.status || 'baru';
     if (status === 'closing') lists.closing.push(item);
@@ -4761,10 +4762,12 @@ function renderFullFollowupKanban() {
     else if (status === 'followup') lists.followup.push(item);
     else lists.baru.push(item);
   });
+  
   lists.baru.sort((a, b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
   lists.followup.sort((a, b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
   lists.pending.sort((a, b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
   lists.closing.sort((a, b) => (a.tanggal || '9999-12-31').localeCompare(b.tanggal || '9999-12-31'));
+  
   document.getElementById('fullCountBaru').innerText = lists.baru.length;
   document.getElementById('fullCountFollowup').innerText = lists.followup.length;
   document.getElementById('fullCountPending').innerText = lists.pending.length;
@@ -4772,7 +4775,7 @@ function renderFullFollowupKanban() {
 
   const isOwner = currentUserRole === 'owner';
   
-  // Render kolom BARU
+  // ========== RENDER KOLOM BARU (DENGAN CHECKBOX UNTUK OWNER) ==========
   const baruContainer = document.getElementById('fullBaruList');
   if (baruContainer) {
     baruContainer.innerHTML = lists.baru.map(item => {
@@ -4782,11 +4785,12 @@ function renderFullFollowupKanban() {
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
       const isChecked = selectedFullFollowupIds.get(item.id) === true;
-      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
-                <div style="display: flex; align-items: center;">
+      // ✅ CHECKBOX HANYA UNTUK KOLOM BARU
+      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" data-column="baru" ${isChecked ? 'checked' : ''}>` : '';
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru">
+                <div style="display: flex; align-items: center; gap: 8px;">
                     ${checkboxHtml}
-                    <div style="flex: 1;">
+                    <div style="flex: 1; cursor: pointer;" class="card-click-area">
                         <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
                         <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
                         <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
@@ -4796,15 +4800,22 @@ function renderFullFollowupKanban() {
             </div>`;
     }).join('');
     
+    // Event listener untuk checkbox di kolom BARU
     if (isOwner) {
       document.querySelectorAll('#fullBaruList .full-item-checkbox').forEach(cb => {
         cb.removeEventListener('change', handleFullFollowupCheckboxChange);
         cb.addEventListener('change', handleFullFollowupCheckboxChange);
       });
     }
+    
+    // Event listener untuk klik card (area click-area)
+    document.querySelectorAll('#fullBaruList .card-click-area').forEach(area => {
+      area.removeEventListener('click', handleCardClick);
+      area.addEventListener('click', handleCardClick);
+    });
   }
   
-  // Render kolom FOLLOWUP
+  // ========== RENDER KOLOM FOLLOWUP (TANPA CHECKBOX) ==========
   const followupContainer = document.getElementById('fullFollowupList');
   if (followupContainer) {
     followupContainer.innerHTML = lists.followup.map(item => {
@@ -4813,30 +4824,25 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      const isChecked = selectedFullFollowupIds.get(item.id) === true;
-      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
-                <div style="display: flex; align-items: center;">
-                    ${checkboxHtml}
-                    <div style="flex: 1;">
-                        <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
-                        <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                    </div>
+      // ❌ TIDAK ADA CHECKBOX DI KOLOM FOLLOWUP
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup">
+                <div style="flex: 1; cursor: pointer;" class="card-click-area">
+                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
                 </div>
             </div>`;
     }).join('');
     
-    if (isOwner) {
-      document.querySelectorAll('#fullFollowupList .full-item-checkbox').forEach(cb => {
-        cb.removeEventListener('change', handleFullFollowupCheckboxChange);
-        cb.addEventListener('change', handleFullFollowupCheckboxChange);
-      });
-    }
+    // Event listener untuk klik card
+    document.querySelectorAll('#fullFollowupList .card-click-area').forEach(area => {
+      area.removeEventListener('click', handleCardClick);
+      area.addEventListener('click', handleCardClick);
+    });
   }
   
-  // Render kolom PENDING
+  // ========== RENDER KOLOM PENDING (TANPA CHECKBOX) ==========
   const pendingContainer = document.getElementById('fullPendingList');
   if (pendingContainer) {
     pendingContainer.innerHTML = lists.pending.map(item => {
@@ -4845,30 +4851,25 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      const isChecked = selectedFullFollowupIds.get(item.id) === true;
-      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
-                <div style="display: flex; align-items: center;">
-                    ${checkboxHtml}
-                    <div style="flex: 1;">
-                        <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
-                        <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                    </div>
+      // ❌ TIDAK ADA CHECKBOX DI KOLOM PENDING
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending">
+                <div style="flex: 1; cursor: pointer;" class="card-click-area">
+                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
                 </div>
             </div>`;
     }).join('');
     
-    if (isOwner) {
-      document.querySelectorAll('#fullPendingList .full-item-checkbox').forEach(cb => {
-        cb.removeEventListener('change', handleFullFollowupCheckboxChange);
-        cb.addEventListener('change', handleFullFollowupCheckboxChange);
-      });
-    }
+    // Event listener untuk klik card
+    document.querySelectorAll('#fullPendingList .card-click-area').forEach(area => {
+      area.removeEventListener('click', handleCardClick);
+      area.addEventListener('click', handleCardClick);
+    });
   }
   
-  // Render kolom CLOSING
+  // ========== RENDER KOLOM CLOSING (TANPA CHECKBOX) ==========
   const closingContainer = document.getElementById('fullClosingList');
   if (closingContainer) {
     closingContainer.innerHTML = lists.closing.map(item => {
@@ -4877,56 +4878,89 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      const isChecked = selectedFullFollowupIds.get(item.id) === true;
-      const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px; width: 16px; height: 16px; cursor: pointer;" ${isChecked ? 'checked' : ''}>` : '';
-      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing" style="${isChecked ? 'opacity: 0.6; background: #eef2ff;' : ''}">
-                <div style="display: flex; align-items: center;">
-                    ${checkboxHtml}
-                    <div style="flex: 1;">
-                        <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-                        <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                        <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
-                        <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
-                    </div>
+      // ❌ TIDAK ADA CHECKBOX DI KOLOM CLOSING
+      return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing">
+                <div style="flex: 1; cursor: pointer;" class="card-click-area">
+                    <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
+                    <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                    <div class="card-phone"><span title="${item.hp}">${item.hp}</span><span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                    <div class="card-deadline">📅 ${item.tanggal || '-'}</div>
                 </div>
             </div>`;
     }).join('');
     
-    if (isOwner) {
-      document.querySelectorAll('#fullClosingList .full-item-checkbox').forEach(cb => {
-        cb.removeEventListener('change', handleFullFollowupCheckboxChange);
-        cb.addEventListener('change', handleFullFollowupCheckboxChange);
-      });
-    }
+    // Event listener untuk klik card
+    document.querySelectorAll('#fullClosingList .card-click-area').forEach(area => {
+      area.removeEventListener('click', handleCardClick);
+      area.addEventListener('click', handleCardClick);
+    });
+  }
+  
+  // Update tombol Pilih Semua (hanya untuk kolom BARU)
+  updateSelectAllFullFollowupButton();
+}
+
+// Handler untuk klik card (membuka detail)
+function handleCardClick(e) {
+  e.stopPropagation();
+  const card = this.closest('.card-item');
+  if (card) {
+    const id = card.dataset.id;
+    openDetailCustomer(id);
   }
 }
 
-// Handler untuk checkbox Followup Full Mode
+// Handler untuk checkbox Full Followup (hanya untuk data di kolom BARU)
 function handleFullFollowupCheckboxChange(e) {
   e.stopPropagation();
   const id = e.target.dataset.id;
   if (e.target.checked) {
     selectedFullFollowupIds.set(id, true);
-    e.target.closest('.card-item').style.opacity = '0.6';
-    e.target.closest('.card-item').style.background = '#eef2ff';
+    // Ubah style card terdekat
+    const card = e.target.closest('.card-item');
+    if (card) {
+      card.style.opacity = '0.6';
+      card.style.background = '#eef2ff';
+    }
   } else {
     selectedFullFollowupIds.delete(id);
-    e.target.closest('.card-item').style.opacity = '1';
-    e.target.closest('.card-item').style.background = '';
+    const card = e.target.closest('.card-item');
+    if (card) {
+      card.style.opacity = '1';
+      card.style.background = '';
+    }
   }
   updateSelectAllFullFollowupButton();
 }
 
+// Update tombol Pilih Semua (hanya untuk data di kolom BARU)
 function updateSelectAllFullFollowupButton() {
-  const cards = document.querySelectorAll('#fullBaruList .full-item-checkbox, #fullFollowupList .full-item-checkbox, #fullPendingList .full-item-checkbox, #fullClosingList .full-item-checkbox');
+  // Hanya ambil checkbox dari kolom BARU
+  const cards = document.querySelectorAll('#fullBaruList .full-item-checkbox');
   const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
   const btn = document.getElementById('selectAllFullFollowup');
-  if (btn) btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+  if (btn) {
+    btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
+    // Sembunyikan tombol jika bukan owner
+    if (currentUserRole !== 'owner') {
+      btn.style.display = 'none';
+    } else {
+      btn.style.display = 'inline-block';
+    }
+  }
 }
 
+// Toggle Pilih Semua (hanya untuk data di kolom BARU)
 function toggleSelectAllFullFollowup() {
-  const cards = document.querySelectorAll('#fullBaruList .full-item-checkbox, #fullFollowupList .full-item-checkbox, #fullPendingList .full-item-checkbox, #fullClosingList .full-item-checkbox');
-  const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
+  if (currentUserRole !== 'owner') {
+    showNotifTop('⚠️ Hanya Owner yang dapat menggunakan fitur ini!', true);
+    return;
+  }
+  
+  const cards = document.querySelectorAll('#fullBaruList .full-item-checkbox');
+  if (cards.length === 0) return;
+  
+  const allChecked = Array.from(cards).every(cb => cb.checked);
   
   cards.forEach(cb => {
     cb.checked = !allChecked;
@@ -4935,6 +4969,7 @@ function toggleSelectAllFullFollowup() {
   });
 }
 
+// Hapus selected data (hanya untuk data di kolom BARU)
 async function deleteSelectedFullFollowup() {
   if (currentUserRole !== 'owner') {
     showNotifTop('⚠️ Hanya Owner yang dapat menghapus massal!', true);
@@ -4947,7 +4982,7 @@ async function deleteSelectedFullFollowup() {
     return;
   }
   
-  if (!confirm(`Hapus ${selectedIds.length} data customer?`)) return;
+  if (!confirm(`Hapus ${selectedIds.length} data customer dari kolom BARU?`)) return;
   
   const progress = showFloatingProgress('🗑️ Menghapus Data', selectedIds.length);
   progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus...');
