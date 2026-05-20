@@ -8654,7 +8654,7 @@ function showPilihNomor(customerId) {
             });
         }
 
-      const validOptions = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
+        const validOptions = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
         if (validOptions.length > 1) {
             options.unshift({
                 jenis: 'semua',
@@ -8720,6 +8720,29 @@ function openWAById(customerId) {
 
 function openWACustomer(customerId) {
     showPilihNomor(customerId);
+}
+
+// Fungsi untuk mendapatkan nomor WhatsApp yang tepat
+function getTargetPhone(customerData) {
+    if (customerData.agent_type && 
+        customerData.agent_type !== 'AGENT' && 
+        customerData.agent_type !== '' &&
+        customerData.upline_phone && 
+        customerData.upline_phone.trim() !== '') {
+        return customerData.upline_phone;
+    }
+    return customerData.hp;
+}
+
+function getTargetName(customerData) {
+    if (customerData.agent_type && 
+        customerData.agent_type !== 'AGENT' && 
+        customerData.agent_type !== '' &&
+        customerData.upline_name && 
+        customerData.upline_name.trim() !== '') {
+        return customerData.upline_name;
+    }
+    return customerData.nama;
 }
           
           // Validasi data dasar
