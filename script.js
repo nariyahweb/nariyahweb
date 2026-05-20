@@ -1541,28 +1541,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Event listener untuk tombol Full Mode Followup
-const selectAllFullFollowupBtn = document.getElementById('selectAllFullFollowup');
-if (selectAllFullFollowupBtn) {
-  selectAllFullFollowupBtn.onclick = () => toggleSelectAllFullFollowup();
-}
-
-const deleteSelectedFullFollowupBtn = document.getElementById('deleteSelectedFullFollowup');
-if (deleteSelectedFullFollowupBtn) {
-  deleteSelectedFullFollowupBtn.onclick = () => deleteSelectedFullFollowup();
-}
-
-// Event listener untuk tombol Full Mode Prospek
-const selectAllFullProspekBtn = document.getElementById('selectAllFullProspek');
-if (selectAllFullProspekBtn) {
-  selectAllFullProspekBtn.onclick = () => toggleSelectAllFullProspek();
-}
-
-const deleteSelectedFullProspekBtn = document.getElementById('deleteSelectedFullProspek');
-if (deleteSelectedFullProspekBtn) {
-  deleteSelectedFullProspekBtn.onclick = () => deleteSelectedFullProspek();
-}
-
   // Tombol select all produk
   const selectAllProdukBtn = document.getElementById('selectAllProduk');
   if (selectAllProdukBtn) {
@@ -4999,56 +4977,42 @@ async function deleteSelectedFullProspek() {
 
 // Panggil initFullModeSelection setelah auth state
 function initFullModeSelection() {
-    if (currentUserRole !== 'owner') return;
-    
-    // Tampilkan tombol di Followup Full Page
-    const followupHeader = document.querySelector('#followupFullPage .fullpage-header div');
-    if (followupHeader) {
-        let selectBtn = document.getElementById('selectAllFullFollowup');
-        let deleteBtn = document.getElementById('deleteSelectedFullFollowup');
+    // Hanya tampilkan tombol untuk OWNER
+    if (currentUserRole !== 'owner') {
+        // Sembunyikan tombol jika bukan owner
+        const followupSelectBtn = document.getElementById('selectAllFullFollowup');
+        const followupDeleteBtn = document.getElementById('deleteSelectedFullFollowup');
+        const prospekSelectBtn = document.getElementById('selectAllFullProspek');
+        const prospekDeleteBtn = document.getElementById('deleteSelectedFullProspek');
         
-        if (!selectBtn) {
-            selectBtn = document.createElement('button');
-            selectBtn.id = 'selectAllFullFollowup';
-            selectBtn.className = 'db-select-all';
-            selectBtn.textContent = '✅ Pilih Semua';
-            followupHeader.appendChild(selectBtn);
-        }
-        if (!deleteBtn) {
-            deleteBtn = document.createElement('button');
-            deleteBtn.id = 'deleteSelectedFullFollowup';
-            deleteBtn.className = 'db-delete-selected';
-            deleteBtn.textContent = '🗑️ Hapus Terpilih';
-            followupHeader.appendChild(deleteBtn);
-        }
-        
-        selectBtn.onclick = () => toggleSelectAllFullFollowup();
-        deleteBtn.onclick = () => deleteSelectedFullFollowup();
+        if (followupSelectBtn) followupSelectBtn.style.display = 'none';
+        if (followupDeleteBtn) followupDeleteBtn.style.display = 'none';
+        if (prospekSelectBtn) prospekSelectBtn.style.display = 'none';
+        if (prospekDeleteBtn) prospekDeleteBtn.style.display = 'none';
+        return;
     }
     
-    // Tampilkan tombol di Prospek Full Page
-    const prospekHeader = document.querySelector('#prospekFullPage .fullpage-header div');
-    if (prospekHeader) {
-        let selectBtn = document.getElementById('selectAllFullProspek');
-        let deleteBtn = document.getElementById('deleteSelectedFullProspek');
-        
-        if (!selectBtn) {
-            selectBtn = document.createElement('button');
-            selectBtn.id = 'selectAllFullProspek';
-            selectBtn.className = 'db-select-all';
-            selectBtn.textContent = '✅ Pilih Semua';
-            prospekHeader.appendChild(selectBtn);
-        }
-        if (!deleteBtn) {
-            deleteBtn = document.createElement('button');
-            deleteBtn.id = 'deleteSelectedFullProspek';
-            deleteBtn.className = 'db-delete-selected';
-            deleteBtn.textContent = '🗑️ Hapus Terpilih';
-            prospekHeader.appendChild(deleteBtn);
-        }
-        
-        selectBtn.onclick = () => toggleSelectAllFullProspek();
-        deleteBtn.onclick = () => deleteSelectedFullProspek();
+    // Tampilkan tombol untuk Owner
+    const followupSelectBtn = document.getElementById('selectAllFullFollowup');
+    const followupDeleteBtn = document.getElementById('deleteSelectedFullFollowup');
+    const prospekSelectBtn = document.getElementById('selectAllFullProspek');
+    const prospekDeleteBtn = document.getElementById('deleteSelectedFullProspek');
+    
+    if (followupSelectBtn) {
+        followupSelectBtn.style.display = 'inline-block';
+        followupSelectBtn.onclick = () => toggleSelectAllFullFollowup();
+    }
+    if (followupDeleteBtn) {
+        followupDeleteBtn.style.display = 'inline-block';
+        followupDeleteBtn.onclick = () => deleteSelectedFullFollowup();
+    }
+    if (prospekSelectBtn) {
+        prospekSelectBtn.style.display = 'inline-block';
+        prospekSelectBtn.onclick = () => toggleSelectAllFullProspek();
+    }
+    if (prospekDeleteBtn) {
+        prospekDeleteBtn.style.display = 'inline-block';
+        prospekDeleteBtn.onclick = () => deleteSelectedFullProspek();
     }
 }
 
