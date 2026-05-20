@@ -8386,21 +8386,21 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
   
   reader.onload = async function(e) {
     try {
-      updateProgress(10, 'Memproses file Excel...');
-      
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-      
-      if (!json || json.length === 0) {
-        showNotif('File Excel kosong!', true);
-        importBtn.textContent = originalText;
-        importBtn.disabled = false;
-        if (progressContainer) progressContainer.remove();
-        return;
-      }
+        updateProgress(10, 'Memproses file Excel...');
+        
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+        
+        if (!json || json.length === 0) {
+            showNotif('File Excel kosong!', true);
+            importBtn.textContent = originalText;
+            importBtn.disabled = false;
+            if (progressContainer) progressContainer.remove();
+            return;
+        }
 
       let success = 0, failed = 0, skipped = 0; // 🔥 TAMBAHKAN skipped untuk data yang tidak memenuhi syarat
       const errors = [];
@@ -8827,12 +8827,12 @@ if (hp && hp !== 0 && hp !== '0') {
       await updateTotalTransaksiDariCustomer();
       
     } catch (error) {
-      console.error('Import error:', error);
-      showNotif('❌ Gagal memproses file: ' + error.message, true);
-      if (progressContainer) progressContainer.remove();
+        console.error('Import error:', error);
+        showNotif('❌ Gagal memproses file: ' + error.message, true);
+        if (progressContainer) progressContainer.remove();
     } finally {
-      importBtn.textContent = originalText;
-      importBtn.disabled = false;
+        importBtn.textContent = originalText;
+        importBtn.disabled = false;
     }
   };
   
