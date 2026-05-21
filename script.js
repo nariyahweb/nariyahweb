@@ -1774,54 +1774,6 @@ function downloadTarifExample() {
 // ========== SEMUA EVENT LISTENER DI DALAM DOMContentLoaded ==========
 document.addEventListener('DOMContentLoaded', function() {
 
-  // // ========== SUPER BROADCAST EVENT LISTENER ==========
-const superBroadcastBtn = document.getElementById('superBroadcastBtn');
-if (superBroadcastBtn) {
-  superBroadcastBtn.addEventListener('click', () => {
-    loadSuperBroadcastNumbers();
-  });
-}
-
-// Tambahkan tombol kirim super broadcast
-const sendSuperBroadcastBtn = document.createElement('button');
-sendSuperBroadcastBtn.textContent = '📢 Kirim SUPER BROADCAST ke Upline';
-sendSuperBroadcastBtn.className = 'broadcast-btn';
-sendSuperBroadcastBtn.style.background = '#8b5cf6';
-sendSuperBroadcastBtn.style.marginTop = '12px';
-sendSuperBroadcastBtn.onclick = sendSuperBroadcast;
-
-const broadcastCard = document.querySelector('#broadcastPage .broadcast-card:last-child');
-if (broadcastCard) {
-  broadcastCard.appendChild(sendSuperBroadcastBtn);
-}
-
-// Di dalam DOMContentLoaded, cari bagian superModeCheckbox dan pastikan kode ini ada:
-const superModeCheckbox = document.getElementById('superBroadcastMode');
-if (superModeCheckbox) {
-  // Hapus event listener lama
-  const newSuperModeCheckbox = superModeCheckbox.cloneNode(true);
-  superModeCheckbox.parentNode.replaceChild(newSuperModeCheckbox, superModeCheckbox);
-  
-  newSuperModeCheckbox.addEventListener('change', function(e) {
-    const selectedNumbersDiv = document.getElementById('selectedNumbersList');
-    const refreshBtn = document.getElementById('refreshNumbersBtn');
-    
-    if (this.checked) {
-      console.log('✅ SUPER BROADCAST MODE diaktifkan');
-      selectedNumbersDiv.innerHTML = '<p style="color:#8b5cf6; padding: 20px; text-align: center;">⭐ Mode SUPER BROADCAST Aktif<br><small>Data akan dikelompokkan berdasarkan Upline saat tombol Kirim ditekan</small></p>';
-      document.getElementById('selectedCount').innerText = '0';
-      
-      // Nonaktifkan tombol refresh
-      if (refreshBtn) refreshBtn.disabled = true;
-    } else {
-      console.log('❌ SUPER BROADCAST MODE dinonaktifkan');
-      // Load ulang nomor biasa
-      if (refreshBtn) refreshBtn.disabled = false;
-      loadNumbers();
-    }
-  });
-}
-
   // ========== DARK MODE FUNCTION ==========
   function initDarkMode() {
     // Cek preferensi yang tersimpan di localStorage
