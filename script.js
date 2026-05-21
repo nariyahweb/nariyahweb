@@ -4827,7 +4827,6 @@ function renderFullFollowupKanban() {
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
       const isChecked = selectedFullFollowupIds.get(item.id) === true;
-      // ✅ CHECKBOX HANYA UNTUK KOLOM BARU
       const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" data-column="baru" ${isChecked ? 'checked' : ''}>` : '';
       return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="baru">
                 <div style="display: flex; align-items: center; gap: 8px;">
@@ -4852,19 +4851,19 @@ function renderFullFollowupKanban() {
     
     // Event listener untuk klik card (area click-area)
     document.querySelectorAll('#fullBaruList .card-click-area').forEach(area => {
-    // Hapus event listener lama
-    const newArea = area.cloneNode(true);
-    area.parentNode.replaceChild(newArea, area);
-    
-    newArea.addEventListener('click', (e) => {
+      const newArea = area.cloneNode(true);
+      area.parentNode.replaceChild(newArea, area);
+      
+      newArea.addEventListener('click', (e) => {
         e.stopPropagation();
         const card = newArea.closest('.card-item');
         if (card) {
-            const id = card.dataset.id;
-            openDetailCustomer(id);
+          const id = card.dataset.id;
+          openDetailCustomer(id);
         }
+      });
     });
-});
+  }
   
   // ========== RENDER KOLOM FOLLOWUP (TANPA CHECKBOX) ==========
   const followupContainer = document.getElementById('fullFollowupList');
@@ -4875,7 +4874,6 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      // ❌ TIDAK ADA CHECKBOX DI KOLOM FOLLOWUP
       return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="followup">
                 <div style="flex: 1; cursor: pointer;" class="card-click-area">
                     <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
@@ -4886,10 +4884,18 @@ function renderFullFollowupKanban() {
             </div>`;
     }).join('');
     
-    // Event listener untuk klik card
     document.querySelectorAll('#fullFollowupList .card-click-area').forEach(area => {
-      area.removeEventListener('click', handleCardClick);
-      area.addEventListener('click', handleCardClick);
+      const newArea = area.cloneNode(true);
+      area.parentNode.replaceChild(newArea, area);
+      
+      newArea.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const card = newArea.closest('.card-item');
+        if (card) {
+          const id = card.dataset.id;
+          openDetailCustomer(id);
+        }
+      });
     });
   }
   
@@ -4902,7 +4908,6 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      // ❌ TIDAK ADA CHECKBOX DI KOLOM PENDING
       return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="pending">
                 <div style="flex: 1; cursor: pointer;" class="card-click-area">
                     <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
@@ -4913,10 +4918,18 @@ function renderFullFollowupKanban() {
             </div>`;
     }).join('');
     
-    // Event listener untuk klik card
     document.querySelectorAll('#fullPendingList .card-click-area').forEach(area => {
-      area.removeEventListener('click', handleCardClick);
-      area.addEventListener('click', handleCardClick);
+      const newArea = area.cloneNode(true);
+      area.parentNode.replaceChild(newArea, area);
+      
+      newArea.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const card = newArea.closest('.card-item');
+        if (card) {
+          const id = card.dataset.id;
+          openDetailCustomer(id);
+        }
+      });
     });
   }
   
@@ -4929,7 +4942,6 @@ function renderFullFollowupKanban() {
       let deadlineClass = '';
       if (isOverdue) deadlineClass = 'deadline-overdue';
       else if (isToday) deadlineClass = 'deadline-today';
-      // ❌ TIDAK ADA CHECKBOX DI KOLOM CLOSING
       return `<div class="card-item ${deadlineClass}" data-id="${item.id}" data-status="closing">
                 <div style="flex: 1; cursor: pointer;" class="card-click-area">
                     <div class="card-id">🆔 ${escapeHtml(item.agent_id || '-')}</div>
@@ -4940,15 +4952,60 @@ function renderFullFollowupKanban() {
             </div>`;
     }).join('');
     
-    // Event listener untuk klik card
     document.querySelectorAll('#fullClosingList .card-click-area').forEach(area => {
-      area.removeEventListener('click', handleCardClick);
-      area.addEventListener('click', handleCardClick);
+      const newArea = area.cloneNode(true);
+      area.parentNode.replaceChild(newArea, area);
+      
+      newArea.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const card = newArea.closest('.card-item');
+        if (card) {
+          const id = card.dataset.id;
+          openDetailCustomer(id);
+        }
+      });
     });
   }
   
   // Update tombol Pilih Semua (hanya untuk kolom BARU)
   updateSelectAllFullFollowupButton();
+} // <-- INI PENUTUP FUNGSI renderFullFollowupKanban
+
+function openWAById(customerId) {
+    console.log('openWAById dipanggil untuk ID:', customerId);
+    
+    // Cari dari customersData
+    const customer = customersData.find(c => c.id === customerId);
+    if (customer) {
+        showPilihNomor(customerId);
+        return;
+    }
+    
+    // Cari dari prospekData
+    const prospek = prospekData.find(p => p.id === customerId);
+    if (prospek && prospek.hp) {
+        openWADirect(prospek.hp);
+        return;
+    }
+    
+    // Jika tidak ditemukan di kedua array, coba langsung dari Firestore
+    db.collection('customers').doc(customerId).get().then(doc => {
+        if (doc.exists) {
+            showPilihNomor(customerId);
+        } else {
+            db.collection('prospek').doc(customerId).get().then(prospekDoc => {
+                if (prospekDoc.exists && prospekDoc.data().hp) {
+                    openWADirect(prospekDoc.data().hp);
+                } else {
+                    showNotifTop('⚠️ Data tidak ditemukan!', true);
+                }
+            }).catch(() => {
+                showNotifTop('⚠️ Data tidak ditemukan!', true);
+            });
+        }
+    }).catch(() => {
+        showNotifTop('⚠️ Data tidak ditemukan!', true);
+    });
 }
 
 // Handler untuk klik card (membuka detail)
