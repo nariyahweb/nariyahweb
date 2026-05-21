@@ -3056,7 +3056,7 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
 
     // ARRAY PAGE
     const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'dbAgentPage', 'produkPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'broadcastUplinePage', 'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage'];
-    
+   
     // Sembunyikan semua halaman
     pages.forEach(p => {
       const el = document.getElementById(p);
@@ -3097,8 +3097,15 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
       document.getElementById('broadcastPage').style.display = 'block';
       initBroadcast();
     } else if (page === 'broadcastUpline') {
-      document.getElementById('broadcastUplinePage').style.display = 'block';
-      initUplineBroadcast();
+      const pageElement = document.getElementById('broadcastUplinePage');
+      if (pageElement) {
+        pageElement.style.display = 'block';
+        pageElement.style.position = 'relative';
+        pageElement.style.top = '0';
+        pageElement.style.left = '0';
+        pageElement.style.marginTop = '0';
+        initUplineBroadcast();
+      }
     } else if (page === 'followupFull') {
       document.getElementById('followupFullPage').style.display = 'block';
       renderFullFollowupKanban();
