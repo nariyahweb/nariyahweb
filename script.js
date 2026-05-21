@@ -303,6 +303,21 @@ function showPilihNomor(customerId) {
     console.log('showPilihNomor dipanggil untuk ID:', customerId);
     currentPilihNomorCustomerId = customerId;
     
+    // Fungsi helper untuk aman mendapatkan string
+    const safeString = (value) => {
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'string') return value;
+        if (typeof value === 'number') return value.toString();
+        if (typeof value === 'boolean') return value.toString();
+        return '';
+    };
+    
+    // Fungsi untuk cek apakah nomor valid
+    const isValidPhone = (phone) => {
+        const phoneStr = safeString(phone);
+        return phoneStr && phoneStr !== '' && phoneStr !== '+62' && phoneStr !== '62' && phoneStr !== '0';
+    };
+    
     db.collection('customers').doc(customerId).get().then(doc => {
         if (!doc.exists) {
             showNotifTop('⚠️ Data tidak ditemukan!', true);
@@ -311,20 +326,6 @@ function showPilihNomor(customerId) {
         
         const data = doc.data();
         const options = [];
-        
-        // Fungsi helper untuk aman mendapatkan string
-        const safeString = (value) => {
-            if (value === null || value === undefined) return '';
-            if (typeof value === 'string') return value;
-            if (typeof value === 'number') return value.toString();
-            return '';
-        };
-        
-        // Fungsi untuk cek apakah nomor valid (bukan kosong, bukan '+62', bukan '62')
-        const isValidPhone = (phone) => {
-            const phoneStr = safeString(phone);
-            return phoneStr && phoneStr !== '' && phoneStr !== '+62' && phoneStr !== '62' && phoneStr !== '0';
-        };
         
         // Opsi 1: Nomor Agent sendiri
         const agentPhone = safeString(data.hp);
@@ -356,9 +357,6 @@ function showPilihNomor(customerId) {
             });
         }
         
-        // Opsi 3: Nomor tambahan jika ada (misal nomor alternatif)
-        // Bisa ditambahkan sesuai kebutuhan
-        
         // Filter opsi yang valid (nomor tidak kosong)
         const validOptions = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
         
@@ -384,7 +382,6 @@ function showPilihNomor(customerId) {
         if (validOptions.length === 0) {
             container.innerHTML = '<p style="color: #ef4444; padding: 12px;">⚠️ Tidak ada nomor WhatsApp yang tersedia!</p>';
         } else {
-            // Tampilkan hanya opsi yang valid (nomor tidak kosong)
             const optionsToShow = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
             
             container.innerHTML = optionsToShow.map(opt => `
@@ -402,9 +399,7 @@ function showPilihNomor(customerId) {
                 </div>
             `).join('');
             
-            // Event listener untuk opsi
             document.querySelectorAll('.pilih-nomor-option').forEach(el => {
-                // Hapus event listener lama
                 const newEl = el.cloneNode(true);
                 el.parentNode.replaceChild(newEl, el);
                 
@@ -416,7 +411,6 @@ function showPilihNomor(customerId) {
                         openWADirect(nomor);
                         closeModal('pilihNomorModal');
                     } else if (nomor === 'all') {
-                        // Kirim ke semua nomor
                         const allNumbers = validOptions.map(opt => opt.nomor);
                         allNumbers.forEach(num => openWADirect(num));
                         closeModal('pilihNomorModal');
@@ -6617,6 +6611,21 @@ async function loadNumbers() {
     const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
     let numbers = [];
     
+    // Fungsi helper untuk aman mendapatkan string
+    const safeString = (value) => {
+      if (value === null || value === undefined) return '';
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number') return value.toString();
+      if (typeof value === 'boolean') return value.toString();
+      return '';
+    };
+    
+    // Fungsi untuk cek apakah nomor valid
+    const isValidPhone = (phone) => {
+      const phoneStr = safeString(phone);
+      return phoneStr && phoneStr !== '' && phoneStr !== '+62' && phoneStr !== '62' && phoneStr !== '0';
+    };
+    
     if (sourceType === 'custom') {
       const customText = document.getElementById('customNumbers')?.value || '';
       numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
@@ -6654,30 +6663,32 @@ async function loadNumbers() {
         // 🔥 TAMBAHKAN OPSI NOMOR AGENT DAN UPLINE
         const phoneOptions = [];
         
-        // Nomor Agent
-        if (data.hp && data.hp.trim() !== '') {
+        // Nomor Agent - gunakan safeString
+        const agentPhone = safeString(data.hp);
+        if (isValidPhone(agentPhone)) {
           phoneOptions.push({
             jenis: 'agent',
             label: 'Agent',
-            nama: data.nama,
-            hp: data.hp
+            nama: safeString(data.nama),
+            hp: agentPhone
           });
         }
         
-        // Nomor Upline (jika ada)
-        if (data.upline_phone && data.upline_phone.trim() !== '' && data.upline_phone !== '+62') {
+        // Nomor Upline (jika ada) - gunakan safeString
+        const uplinePhone = safeString(data.upline_phone);
+        if (isValidPhone(uplinePhone)) {
           phoneOptions.push({
             jenis: 'upline',
             label: 'Upline',
-            nama: data.upline_name || 'Upline',
-            hp: data.upline_phone
+            nama: safeString(data.upline_name) || 'Upline',
+            hp: uplinePhone
           });
         }
         
         // Simpan semua opsi
         numbers.push({
           id: doc.id,
-          nama_agent: data.nama,
+          nama_agent: safeString(data.nama),
           options: phoneOptions,
           has_multiple: phoneOptions.length > 1
         });
@@ -6721,6 +6732,7 @@ async function loadNumbers() {
     showNotifTop('❌ Gagal memuat nomor: ' + e.message, true);
   }
 }
+
 async function sendBroadcast() {
   const messageTemplate = document.getElementById('broadcastMessage')?.value;
   const sendOneByOne = document.getElementById('sendOneByOne')?.checked;
