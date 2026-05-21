@@ -4371,7 +4371,6 @@ function renderTemplateList() {
 }
 
 // ========== UPLINE BROADCAST LENGKAP ==========
-let uplineDataList = [];
 
 async function loadUplineNumbers() {
     const sourceType = document.querySelector('input[name="uplineSourceType"]:checked')?.value || 'customer';
