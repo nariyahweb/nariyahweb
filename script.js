@@ -9928,5 +9928,5 @@ document.getElementById('downloadTransaksiExample')?.addEventListener('click', (
     XLSX.writeFile(wb, `contoh_db_transaksi_${new Date().toISOString().split('T')[0]}.xlsx`);
     showNotifTop('📋 Contoh file Excel DB Transaksi (lengkap) berhasil diunduh');
 });
-
-// ========== PENUTUP - TIDAK ADA KODE TAMBAHAN ==========
+}
+});
