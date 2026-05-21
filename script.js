@@ -299,7 +299,6 @@ if (batalPilihNomorBtn) {
     };
 }
 
-// Perbaiki fungsi showPilihNomor agar lebih reliable
 function showPilihNomor(customerId) {
     console.log('showPilihNomor dipanggil untuk ID:', customerId);
     currentPilihNomorCustomerId = customerId;
@@ -313,35 +312,54 @@ function showPilihNomor(customerId) {
         const data = doc.data();
         const options = [];
         
+        // Fungsi helper untuk aman mendapatkan string
+        const safeString = (value) => {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'string') return value;
+            if (typeof value === 'number') return value.toString();
+            return '';
+        };
+        
+        // Fungsi untuk cek apakah nomor valid (bukan kosong, bukan '+62', bukan '62')
+        const isValidPhone = (phone) => {
+            const phoneStr = safeString(phone);
+            return phoneStr && phoneStr !== '' && phoneStr !== '+62' && phoneStr !== '62' && phoneStr !== '0';
+        };
+        
         // Opsi 1: Nomor Agent sendiri
-        if (data.hp && data.hp.trim() !== '' && data.hp !== '+62') {
+        const agentPhone = safeString(data.hp);
+        if (isValidPhone(agentPhone)) {
             options.push({
                 jenis: 'agent',
                 label: '📞 Nomor Agent (Pemilik)',
-                nama: data.nama,
-                nomor: data.hp
+                nama: safeString(data.nama),
+                nomor: agentPhone
             });
         } else {
             options.push({
                 jenis: 'agent',
                 label: '📞 Nomor Agent (Pemilik)',
-                nama: data.nama,
+                nama: safeString(data.nama),
                 nomor: '',
                 kosong: true
             });
         }
         
         // Opsi 2: Nomor Upline (jika ada)
-        if (data.upline_phone && data.upline_phone.trim() !== '' && data.upline_phone !== '+62') {
+        const uplinePhone = safeString(data.upline_phone);
+        if (isValidPhone(uplinePhone)) {
             options.push({
                 jenis: 'upline',
                 label: '👤 Nomor Upline (Atasan)',
-                nama: data.upline_name || 'Upline',
-                nomor: data.upline_phone
+                nama: safeString(data.upline_name) || 'Upline',
+                nomor: uplinePhone
             });
         }
-
-        // Filter opsi yang valid
+        
+        // Opsi 3: Nomor tambahan jika ada (misal nomor alternatif)
+        // Bisa ditambahkan sesuai kebutuhan
+        
+        // Filter opsi yang valid (nomor tidak kosong)
         const validOptions = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
         
         // Jika ada lebih dari 1 opsi valid, tambahkan opsi "kirim ke semua"
@@ -359,13 +377,17 @@ function showPilihNomor(customerId) {
         
         if (!modal || !container) {
             console.error('Modal atau container tidak ditemukan');
+            showNotifTop('⚠️ Terjadi kesalahan sistem', true);
             return;
         }
         
         if (validOptions.length === 0) {
             container.innerHTML = '<p style="color: #ef4444; padding: 12px;">⚠️ Tidak ada nomor WhatsApp yang tersedia!</p>';
         } else {
-            container.innerHTML = options.filter(opt => !opt.kosong).map(opt => `
+            // Tampilkan hanya opsi yang valid (nomor tidak kosong)
+            const optionsToShow = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
+            
+            container.innerHTML = optionsToShow.map(opt => `
                 <div class="pilih-nomor-option" data-nomor="${opt.nomor}" data-jenis="${opt.jenis}" style="
                     padding: 12px;
                     border: 1px solid #e5e7eb;
