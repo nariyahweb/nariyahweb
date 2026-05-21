@@ -9865,7 +9865,7 @@ document.getElementById('downloadProspekExample')?.addEventListener('click', () 
   XLSX.utils.book_append_sheet(wb, ws, 'Prospek');
   XLSX.writeFile(wb, 'contoh_prospek.xlsx');
 });
-// Download contoh DB Transaksi (format lengkap)
+// ========== DOWNLOAD EXAMPLE FILE ==========
 document.getElementById('downloadTransaksiExample')?.addEventListener('click', () => {
     const data = [{
         agent_id: 'AG-001',
@@ -9928,3 +9928,9 @@ document.getElementById('downloadTransaksiExample')?.addEventListener('click', (
     XLSX.writeFile(wb, `contoh_db_transaksi_${new Date().toISOString().split('T')[0]}.xlsx`);
     showNotifTop('📋 Contoh file Excel DB Transaksi (lengkap) berhasil diunduh');
 });
+
+// ========== PENUTUP AKHIR ==========
+// Pastikan semua fungsi dan event listener sudah ditutup dengan benar
+// Tidak ada kode tambahan setelah ini
+
+}); // <-- TAMBAHKAN INI - Menutup DOMContentLoaded
