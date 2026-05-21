@@ -838,16 +838,36 @@ async function sendUplineBroadcast() {
         const totalTransaksi = upline.agents.reduce((sum, a) => sum + (a.total_transaksi || 0), 0);
         message = message.replace(/{total_transaksi}/g, totalTransaksi);
         
-        // Buat tabel agent
-        let tableText = '╔════════════╦══════════════════════╦══════════════╦════════════╗\n';
-        tableText += '║ Agent ID   ║ Nama Agent           ║ Progres Jenis║ Progres Jml║\n';
-        tableText += '╠════════════╬══════════════════════╬══════════════╬════════════╣\n';
-        
-        for (const agent of upline.agents) {
-            tableText += `║ ${(agent.agent_id || '-').slice(0,10).padEnd(10)} ║ ${(agent.nama || '-').slice(0,20).padEnd(20)} ║ ${(agent.progres_jenis || '-').slice(0,12).padEnd(12)} ║ ${String(agent.progres_jumlah || 0).padStart(10)} ║\n`;
+// Format poin per agent (paling rapi di WhatsApp)
+let tableText = '';
+
+for (let i = 0; i < upline.agents.length; i++) {
+    const agent = upline.agents[i];
+    const nomorUrut = i + 1;
+    
+    // Progres dengan emoji
+    let progresEmoji = '';
+    let progresText = '';
+    
+    if (agent.progres_jenis && agent.progres_jenis !== '-' && agent.progres_jumlah > 0) {
+        if (agent.progres_jenis === 'naik') {
+            progresEmoji = '✅';
+            progresText = `+${agent.progres_jumlah} transaksi`;
+        } else {
+            progresEmoji = '⚠️';
+            progresText = `-${agent.progres_jumlah} transaksi`;
         }
-        
-        tableText += '╚════════════╩══════════════════════╩══════════════╩════════════╝';
+    } else {
+        progresEmoji = '⏳';
+        progresText = 'Belum ada perubahan';
+    }
+    
+    tableText += `${progresEmoji} *${nomorUrut}. ${agent.nama}*\n`;
+    tableText += `   └ 🆔 ${agent.agent_id}\n`;
+    tableText += `   └ 📊 ${progresText}\n\n`;
+}
+
+tableText += `📊 *TOTAL: ${upline.agents.length} agent*`;
         
         message = message.replace(/{tabel_agent}/g, tableText);
         
