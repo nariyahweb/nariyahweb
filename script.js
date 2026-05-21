@@ -7317,47 +7317,30 @@ async function loadNumbers() {
       return phoneStr && phoneStr !== '' && phoneStr !== '+62' && phoneStr !== '62' && phoneStr !== '0';
     };
     
-    if (sourceType === 'customer') {
+    if (sourceType === 'custom') {
+      const customText = document.getElementById('customNumbers')?.value || '';
+      numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
+    } 
+    else if (sourceType === 'customer') {
       // 🔥 Baca dari db_transaksi
-      collection = 'db_transaksi';
+      let collection = 'db_transaksi';
+      let statusField = 'progres_jenis';
+      let statusValues = [];
       
       // ========== BACA NILAI FILTER PROGRES ==========
       const filterProgresNaik = document.getElementById('filterProgresNaik')?.checked || false;
       const filterProgresTurun = document.getElementById('filterProgresTurun')?.checked || false;
       const filterProgresNormal = document.getElementById('filterProgresNormal')?.checked || false;
       
-      const selectedProgres = [];
-      if (filterProgresNaik) selectedProgres.push('naik');
-      if (filterProgresTurun) selectedProgres.push('turun');
-      if (filterProgresNormal) selectedProgres.push('normal');
-      
-      if (selectedProgres.length > 0) {
-        statusField = 'progres_jenis';
-        statusValues = selectedProgres;
-      }
-        // Optional: Filter status (pending_import / imported)
-        const filterStatus = document.getElementById('filterStatusTransaksiBroadcast')?.value;
-        // Bisa ditambahkan filter status jika diperlukan
-      } 
-      else if (sourceType === 'prospek') {
-        collection = 'prospek';
-        statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value);
-        statusField = 'status';
-      } 
-      else if (sourceType === 'closing') {
-        collection = 'db_closing';
-        statusField = null;
-      } 
-      else if (sourceType === 'dbTidak') {
-        collection = 'db_tidak_tertarik';
-        statusField = null;
-      }
+      if (filterProgresNaik) statusValues.push('naik');
+      if (filterProgresTurun) statusValues.push('turun');
+      if (filterProgresNormal) statusValues.push('normal');
       
       let query = db.collection(collection);
       if (currentUserRole !== 'owner') query = query.where('user_id', '==', currentUser.uid);
       query = query.limit(1000);
       
-      if (statusValues && statusValues.length > 0 && statusField) {
+      if (statusValues.length > 0 && statusField) {
         query = query.where(statusField, 'in', statusValues);
       }
       
@@ -7377,11 +7360,79 @@ async function loadNumbers() {
             agent_id: safeString(data.agent_id),
             upline_phone: safeString(data.upline_phone),
             upline_name: safeString(data.upline_name),
-            // 🔥 TAMBAHKAN DATA PROGRES dari db_transaksi
             progres_jenis: data.progres_jenis || 'normal',
             progres_jumlah: data.progres_jumlah || 0,
             total_transaksi: data.total_transaksi || 0,
             status: data.status || 'pending_import'
+          });
+        }
+      });
+    } 
+    else if (sourceType === 'prospek') {
+      let collection = 'prospek';
+      let statusField = 'status';
+      let statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value);
+      
+      let query = db.collection(collection);
+      if (currentUserRole !== 'owner') query = query.where('user_id', '==', currentUser.uid);
+      query = query.limit(1000);
+      
+      if (statusValues.length > 0 && statusField) {
+        query = query.where(statusField, 'in', statusValues);
+      }
+      
+      const snapshot = await query.get();
+      console.log(`📊 LoadNumbers dari ${collection}: ${snapshot.size} data ditemukan`);
+      
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const agentPhone = safeString(data.hp);
+        if (isValidPhone(agentPhone)) {
+          numbers.push({
+            id: doc.id,
+            nama_agent: safeString(data.nama),
+            hp: agentPhone,
+            agent_id: safeString(data.agent_id || ''),
+            upline_phone: safeString(data.upline_phone || ''),
+            upline_name: safeString(data.upline_name || '')
+          });
+        }
+      });
+    } 
+    else if (sourceType === 'closing') {
+      let collection = 'db_closing';
+      let query = db.collection(collection);
+      if (currentUserRole !== 'owner') query = query.where('user_id', '==', currentUser.uid);
+      query = query.limit(1000);
+      
+      const snapshot = await query.get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const agentPhone = safeString(data.hp);
+        if (isValidPhone(agentPhone)) {
+          numbers.push({
+            id: doc.id,
+            nama_agent: safeString(data.nama),
+            hp: agentPhone
+          });
+        }
+      });
+    } 
+    else if (sourceType === 'dbTidak') {
+      let collection = 'db_tidak_tertarik';
+      let query = db.collection(collection);
+      if (currentUserRole !== 'owner') query = query.where('user_id', '==', currentUser.uid);
+      query = query.limit(1000);
+      
+      const snapshot = await query.get();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const agentPhone = safeString(data.hp);
+        if (isValidPhone(agentPhone)) {
+          numbers.push({
+            id: doc.id,
+            nama_agent: safeString(data.nama),
+            hp: agentPhone
           });
         }
       });
@@ -7398,14 +7449,13 @@ async function loadNumbers() {
       listDiv.innerHTML = '<p style="color:#9ca3af;">Tidak ada nomor yang dipilih</p>';
     } else {
       listDiv.innerHTML = numbers.map(item => {
-        // Tampilkan icon progres
         const progresIcon = item.progres_jenis === 'naik' ? '📈' : (item.progres_jenis === 'turun' ? '📉' : '⚖️');
         return `
           <div class="number-item broadcast-item" data-id="${item.id}" style="border-bottom: 1px solid #e5e7eb; padding: 8px 0;">
             <div style="font-weight: 600;">${escapeHtml(item.nama_agent)}</div>
             <div style="font-size: 11px; color: #6b7280;">📞 ${escapeHtml(item.hp)}</div>
             <div style="font-size: 10px; color: #9ca3af;">🆔 ${escapeHtml(item.agent_id || '-')}</div>
-            <div style="font-size: 10px; margin-top: 4px;">${progresIcon} ${item.progres_jenis?.toUpperCase() || 'NORMAL'} | ${Math.abs(item.progres_jumlah).toLocaleString()} transaksi</div>
+            ${item.progres_jenis ? `<div style="font-size: 10px; margin-top: 4px;">${progresIcon} ${item.progres_jenis?.toUpperCase() || 'NORMAL'} | ${Math.abs(item.progres_jumlah || 0).toLocaleString()} transaksi</div>` : ''}
           </div>
         `;
       }).join('');
