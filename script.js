@@ -9559,45 +9559,81 @@ document.getElementById('importBtn')?.addEventListener('click', async () => {
       
       updateProgress(15, 'Mendeteksi kolom...');
       
-      // 🔥 DETEKSI KOLOM STANDAR
-      if (importType === 'customer') {
-        const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
-        const possibleNama = ['nama', 'Nama', 'name', 'Name', 'customer_name', 'CustomerName'];
-        const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
-        const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app'];
-        const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
-        const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan'];
-        const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline'];
-          
-        for (let key in firstRow) {
-          const lowerKey = key.toLowerCase();
-          if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
-          if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
-          if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
-          if (possibleUplineName.some(p => p.toLowerCase() === lowerKey)) columnMap.uplineName = key;
-          if (possibleUplinePhone.some(p => p.toLowerCase() === lowerKey)) columnMap.uplinePhone = key;
-          if (possibleApk.some(p => p.toLowerCase() === lowerKey)) columnMap.apk = key;
-          if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
-        }
-        
-        if (!columnMap.agentId || !columnMap.nama || !columnMap.hp || !columnMap.apk) {
-          showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: agent_id, nama, hp, apk, deadline (opsional)', true);
-          importBtn.textContent = originalText;
-          importBtn.disabled = false;
-          if (progressContainer) progressContainer.remove();
-          return;
-        }
-      } else {
-        const possibleNama = ['nama', 'Nama', 'name', 'Name', 'prospek_name', 'ProspekName'];
-        const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
-        const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
-        
-        for (let key in firstRow) {
-          const lowerKey = key.toLowerCase();
-          if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
-          if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
-          if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
-        }
+// 🔥 DETEKSI KOLOM STANDAR
+if (importType === 'customer') {
+    const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
+    const possibleNama = ['nama', 'Nama', 'name', 'Name', 'customer_name', 'CustomerName'];
+    const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
+    const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app'];
+    const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
+    const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan'];
+    const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline'];
+      
+    for (let key in firstRow) {
+        const lowerKey = key.toLowerCase();
+        if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
+        if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
+        if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
+        if (possibleUplineName.some(p => p.toLowerCase() === lowerKey)) columnMap.uplineName = key;
+        if (possibleUplinePhone.some(p => p.toLowerCase() === lowerKey)) columnMap.uplinePhone = key;
+        if (possibleApk.some(p => p.toLowerCase() === lowerKey)) columnMap.apk = key;
+        if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
+    }
+} 
+else if (importType === 'transaksi') {
+    // 🔥 Minimal wajib: agent_id dan nama
+    const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
+    const possibleNama = ['nama', 'Nama', 'name', 'Name', 'agent_name'];
+    const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
+    const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan'];
+    const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline'];
+    const possibleProgresJenis = ['progres_jenis', 'jenis_progres', 'jenis'];
+    const possibleProgresJumlah = ['progres_jumlah', 'jumlah_progres', 'jumlah'];
+    const possibleTanggal = ['tanggal_transaksi', 'tanggal', 'date', 'deadline'];
+    
+    for (let key in firstRow) {
+        const lowerKey = key.toLowerCase();
+        if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
+        if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
+        if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
+        if (possibleUplineName.some(p => p.toLowerCase() === lowerKey)) columnMap.uplineName = key;
+        if (possibleUplinePhone.some(p => p.toLowerCase() === lowerKey)) columnMap.uplinePhone = key;
+        if (possibleProgresJenis.some(p => p.toLowerCase() === lowerKey)) columnMap.progresJenis = key;
+        if (possibleProgresJumlah.some(p => p.toLowerCase() === lowerKey)) columnMap.progresJumlah = key;
+        if (possibleTanggal.some(p => p.toLowerCase() === lowerKey)) columnMap.tanggal = key;
+    }
+    
+    // 🔥 Validasi: agent_id WAJIB ada, nama WAJIB ada (hp opsional)
+    if (!columnMap.agentId) {
+        showNotif('❌ Format Excel tidak sesuai! Kolom agent_id WAJIB ada!', true);
+        importBtn.textContent = originalText;
+        importBtn.disabled = false;
+        if (progressContainer) progressContainer.remove();
+        return;
+    }
+    
+    if (!columnMap.nama) {
+        showNotif('❌ Format Excel tidak sesuai! Kolom nama WAJIB ada!', true);
+        importBtn.textContent = originalText;
+        importBtn.disabled = false;
+        if (progressContainer) progressContainer.remove();
+        return;
+    }
+}
+  
+else {
+    // Untuk prospek
+    const possibleNama = ['nama', 'Nama', 'name', 'Name', 'prospek_name', 'ProspekName'];
+    const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
+    const possibleDeadline = ['deadline', 'Deadline', 'tanggal', 'Tanggal', 'date'];
+    
+    for (let key in firstRow) {
+        const lowerKey = key.toLowerCase();
+        if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
+        if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
+        if (possibleDeadline.some(p => p.toLowerCase() === lowerKey)) columnMap.deadline = key;
+    }
+}
         
         if (!columnMap.nama || !columnMap.hp) {
           showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: nama, hp, deadline (opsional)', true);
@@ -9709,11 +9745,49 @@ if (importType === 'customer') {
 
           // 🔥 VALIDASI MAKSIMAL PENURUNAN (tidak perlu karena sudah difilter)
           
-// Validasi data dasar
-if (!nama) {
-    failed++;
-    errors.push(`Baris ke-${json.indexOf(row)+2}: Nama kosong`);
-    continue;
+// Validasi data dasar untuk transaksi
+if (importType === 'transaksi') {
+    // Untuk transaksi: agent_id dan nama WAJIB, hp OPSIONAL
+    if (!agentId) {
+        failed++;
+        errors.push(`Baris ke-${json.indexOf(row)+2}: Agent ID kosong`);
+        continue;
+    }
+    if (!nama) {
+        failed++;
+        errors.push(`Baris ke-${json.indexOf(row)+2}: Nama kosong`);
+        continue;
+    }
+    
+    // HP tidak wajib, hanya digunakan untuk broadcast
+    let cleanHp = '';
+    if (hp && hp !== '0' && String(hp).trim() !== '') {
+        let rawHp = String(hp).trim();
+        let digits = rawHp.replace(/[^\d+]/g, '');
+        if (!digits.startsWith('+')) {
+            digits = digits.replace(/^0+/, '');
+            if (digits.startsWith('62')) {
+                cleanHp = '+' + digits;
+            } else {
+                cleanHp = '+62' + digits;
+            }
+        } else {
+            cleanHp = digits;
+        }
+    }
+} 
+else {
+    // Untuk customer/prospek: nama dan hp WAJIB
+    if (!nama) {
+        failed++;
+        errors.push(`Baris ke-${json.indexOf(row)+2}: Nama kosong`);
+        continue;
+    }
+    if (!hp || hp === '0') {
+        failed++;
+        errors.push(`Baris ke-${json.indexOf(row)+2}: Nomor HP kosong atau tidak valid`);
+        continue;
+    }
 }
 
 // 🔥 PERBAIKAN: Validasi HP dengan lebih baik
@@ -9791,46 +9865,67 @@ if (isDuplicate) {
           let formattedDeadline = deadline ? new Date(deadline).toISOString().split('T')[0] : getTodayDate();
           if (deadline && isNaN(new Date(deadline).getTime())) formattedDeadline = getTodayDate();
           
-          // 🔥 SIMPAN KE DATABASE (hanya untuk data yang lolos filter)
-          if (importType === 'customer') {
-            const progresItem = (progresJenis && progresJumlah > 0) ? {
-              tanggal: formattedDeadline,
-              jenis: progresJenis,
-              jumlah: progresJumlah,
-              keterangan: progresKeterangan,
-              created_at: new Date().toISOString()
-            } : null;
-            
-            await db.collection('customers').add({
-              agent_id: agentId.toString().trim().toUpperCase(),
-              nama: nama.toString().trim(),
-              hp: cleanHp,
-              apk: apk.toString().trim(),
-              tanggal: formattedDeadline,
-              status: 'baru',
-              progres_transaksi: {
-                items: progresItem ? [progresItem] : [],
-                total_tercapai: totalTercapai
-              },
-              upline_name: uplineName || '',
-              upline_phone: uplinePhone || '', 
-              user_id: currentUser.uid,
-              created_at: new Date().toISOString(),
-              followup_data: null,
-              pending_data: []
-            });
-          } else {
-            await db.collection('prospek').add({
-              nama: nama.toString().trim(),
-              hp: cleanHp,
-              status: 'Baru',
-              deadline: formattedDeadline,
-              user_id: currentUser.uid,
-              created_at: new Date().toISOString(),
-              dihubungi_data: null,
-              negosiasi_data: null
-            });
-          }
+// 🔥 SIMPAN KE DATABASE
+if (importType === 'customer') {
+    await db.collection('customers').add({
+        agent_id: agentId.toString().trim().toUpperCase(),
+        nama: nama.toString().trim(),
+        hp: cleanHp,
+        apk: apk.toString().trim(),
+        tanggal: formattedDeadline,
+        status: 'baru',
+        progres_transaksi: {
+            items: progresItem ? [progresItem] : [],
+            total_tercapai: totalTercapai
+        },
+        upline_name: uplineName || '',
+        upline_phone: uplinePhone || '', 
+        user_id: currentUser.uid,
+        created_at: new Date().toISOString(),
+        followup_data: null,
+        pending_data: []
+    });
+} 
+else if (importType === 'transaksi') {
+    // 🔥 Import ke db_transaksi
+    const progresJenisValue = progresJenis || 'normal';
+    const progresJumlahValue = Math.abs(progresJumlah) || 0;
+    
+    // Cek apakah agent_id sudah ada di db_agent (opsional, untuk validasi)
+    const agentCheck = await db.collection('db_agent').where('agent_id', '==', agentId.toString().trim().toUpperCase()).get();
+    if (agentCheck.empty) {
+        console.log(`⚠️ Agent ID ${agentId} tidak ditemukan di Database Agent, tetap disimpan`);
+    }
+    
+    await db.collection('db_transaksi').add({
+        agent_id: agentId.toString().trim().toUpperCase(),
+        nama: nama.toString().trim(),
+        hp: cleanHp || '',  // Bisa kosong
+        upline_name: uplineName || '',
+        upline_phone: uplinePhone || '',
+        progres_jenis: progresJenisValue,
+        progres_jumlah: progresJumlahValue,
+        tanggal_transaksi: formattedDeadline,
+        status: 'pending_import',
+        user_id: currentUser.uid,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+    });
+}
+  
+else {
+    // Import ke prospek
+    await db.collection('prospek').add({
+        nama: nama.toString().trim(),
+        hp: cleanHp,
+        status: 'Baru',
+        deadline: formattedDeadline,
+        user_id: currentUser.uid,
+        created_at: new Date().toISOString(),
+        dihubungi_data: null,
+        negosiasi_data: null
+    });
+}
           success++;
           
         } catch (rowError) {
@@ -9929,4 +10024,67 @@ document.getElementById('downloadProspekExample')?.addEventListener('click', () 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Prospek');
   XLSX.writeFile(wb, 'contoh_prospek.xlsx');
+});
+// Download contoh DB Transaksi (format lengkap)
+document.getElementById('downloadTransaksiExample')?.addEventListener('click', () => {
+    const data = [{
+        agent_id: 'AG-001',
+        nama: 'Budi Santoso',
+        hp: '6281234567890',
+        upline_name: 'Siti Aminah',
+        upline_phone: '6281234567891',
+        progres_jenis: 'turun',
+        progres_jumlah: 2120,
+        tanggal_transaksi: new Date().toISOString().split('T')[0],
+        keterangan: 'Penurunan transaksi karena tutup outlet',
+        total_transaksi: 15000,
+        status: 'pending_import'
+    }, {
+        agent_id: 'AG-002',
+        nama: 'Siti Aminah',
+        hp: '6281234567891',
+        upline_name: 'Hajar Global',
+        upline_phone: '6285790405506',
+        progres_jenis: 'turun',
+        progres_jumlah: 1212,
+        tanggal_transaksi: new Date().toISOString().split('T')[0],
+        keterangan: 'Penurunan order dari 3 outlet menjadi 2 outlet',
+        total_transaksi: 8750,
+        status: 'pending_import'
+    }, {
+        agent_id: 'AG-003',
+        nama: 'Joko Widodo',
+        hp: '6281234567892',
+        upline_name: 'Hajar Global',
+        upline_phone: '6285790405506',
+        progres_jenis: 'naik',
+        progres_jumlah: 500,
+        tanggal_transaksi: new Date().toISOString().split('T')[0],
+        keterangan: 'Penambahan 2 outlet baru',
+        total_transaksi: 22500,
+        status: 'pending_import'
+    }, {
+        agent_id: 'AG-004',
+        nama: 'Rina Marlina',
+        hp: '6281234567893',
+        upline_name: 'Khozin',
+        upline_phone: '6285714700767',
+        progres_jenis: 'normal',
+        progres_jumlah: 0,
+        tanggal_transaksi: new Date().toISOString().split('T')[0],
+        keterangan: 'Tidak ada perubahan transaksi',
+        total_transaksi: 5000,
+        status: 'pending_import'
+    }];
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [
+        { wch: 15 }, { wch: 20 }, { wch: 18 }, { wch: 20 }, { wch: 18 },
+        { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 35 }, { wch: 15 }, { wch: 15 }
+    ];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'DB Transaksi');
+    XLSX.writeFile(wb, `contoh_db_transaksi_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showNotifTop('📋 Contoh file Excel DB Transaksi (lengkap) berhasil diunduh');
 });
