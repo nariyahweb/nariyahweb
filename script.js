@@ -7458,7 +7458,7 @@ async function loadNumbers() {
     console.error('Error loadNumbers:', e);
     showNotifTop('❌ Gagal memuat nomor: ' + e.message, true);
   }
-}
+} // <-- PASTIKAN KURUNG TUTUP INI ADA
 
 async function sendBroadcast() {
   const messageTemplate = document.getElementById('broadcastMessage')?.value;
