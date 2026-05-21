@@ -9472,7 +9472,6 @@ else {
           if (progressContainer) progressContainer.remove();
           return;
         }
-      }
       
       // 🔥 DETEKSI KOLOM PROGRES (HANYA UNTUK CUSTOMER)
       let progresJenisCol = null;
@@ -9620,6 +9619,9 @@ else {
     }
 }
 
+let cleanHp = '';
+let isHpValid = false;
+
 // Cek apakah HP ada dan bukan 0/'0'
 const hasValidHp = hp !== undefined && hp !== null && hp !== 0 && hp !== '0' && String(hp).trim() !== '';
 
@@ -9693,6 +9695,18 @@ if (isDuplicate) {
           
 // 🔥 SIMPAN KE DATABASE
 if (importType === 'customer') {
+    // Buat progres item jika ada data progres
+    let progresItem = null;
+    if (progresJenis && progresJumlah !== 0) {
+        progresItem = {
+            tanggal: getTodayDate(),
+            jenis: progresJenis,
+            jumlah: Math.abs(progresJumlah),
+            keterangan: progresKeterangan || '',
+            created_at: new Date().toISOString()
+        };
+    }
+    
     await db.collection('customers').add({
         agent_id: agentId.toString().trim().toUpperCase(),
         nama: nama.toString().trim(),
@@ -9765,7 +9779,7 @@ else {
       
       let resultMsg = `✅ Selesai!\n📊 Berhasil: ${success}\n⏭ Dilewati (tidak memenuhi syarat): ${skipped}\n❌ Gagal: ${failed}`;
       if (importType === 'customer') {
-        resultMsg += `\n\n📌 Catatan: Hanya data dengan PROGRES TURUN > 100 yang diimport.`;
+        resultMsg += `\n\n📌 Catatan: Hanya data dengan PROGRES TURUN yang diimport.`;
       }
       if (duplicates.length > 0) {
         resultMsg += `\n\n⏭ Data duplikat dilewati:\n${duplicates.slice(0,5).join('\n')}${duplicates.length > 5 ? `\n... dan ${duplicates.length-5} lainnya` : ''}`;
