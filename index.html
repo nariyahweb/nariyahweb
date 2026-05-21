@@ -52,6 +52,7 @@
                 <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
                 <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📁</span><span>DB Nomor Salah</span></div>
                 <div class="menu-item" data-page="dbCommitment"><span class="icon">📁</span><span>DB Commitment</span></div>
+                <div class="menu-item" data-page="dbTransaksi"><span class="icon">📁</span><span>DB Transaksi</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">IMPORT DATA</div>
                 <div class="menu-item" data-page="import"><span class="icon">📜</span><span>Import Data</span></div>
@@ -316,6 +317,58 @@
                 <button class="db-export-excel" id="exportAgentExcelBtn" style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📤 Export Excel</button>
             </div>
         </div>
+
+                        <!-- DATABASE TRANSAKSI PAGE -->
+                <div id="dbTransaksiPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header">
+                            <h3>📊 Database Transaksi</h3>
+                            <div class="db-actions">
+                                <button class="db-select-all" id="selectAllTransaksi">✅ Pilih Semua</button>
+                                <button class="db-delete-selected" id="deleteSelectedTransaksi">🗑️ Hapus Terpilih</button>
+                                <button class="db-import-excel" id="importTransaksiExcelBtn" style="background: #10b981; color: white;">📥 Import Excel</button>
+                                <button class="db-export-excel" id="exportTransaksiExcelBtn" style="background: #3b82f6; color: white;">📤 Export Excel</button>
+                                <button class="db-move-followup" id="moveSelectedToFollowupBtn" style="background: #8b5cf6; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📋 Pindah ke Followup</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter dan Pencarian -->
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                                <div style="flex: 2; min-width: 200px;">
+                                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🔍 Cari</label>
+                                    <input type="text" id="searchTransaksiInput" placeholder="Cari Nama, ID Agent, atau Nomor..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                                </div>
+                                <div style="flex: 1; min-width: 150px;">
+                                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📊 Filter Progres</label>
+                                    <select id="filterProgresTransaksi" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                                        <option value="">Semua</option>
+                                        <option value="naik">📈 Naik</option>
+                                        <option value="turun">📉 Turun</option>
+                                        <option value="normal">⚖️ Normal</option>
+                                    </select>
+                                </div>
+                                <div style="flex: 1; min-width: 150px;">
+                                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📌 Filter Status</label>
+                                    <select id="filterStatusTransaksi" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                                        <option value="">Semua</option>
+                                        <option value="pending_import">⏳ Pending Import</option>
+                                        <option value="imported">✅ Sudah Dipindah</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button id="resetTransaksiFilterBtn" style="background: #f3f4f6; color: #374151; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer;">🔄 Reset Filter</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="transaksiStats" style="margin-bottom: 12px; font-size: 12px; color: #6b7280;">
+                            Menampilkan <span id="transaksiFilteredCount">0</span> dari <span id="transaksiTotalCount">0</span> data
+                        </div>
+                        
+                        <div id="dbTransaksiList" class="db-list"></div>
+                    </div>
+                </div>
         
         <!-- 🔍 FILTER DAN PENCARIAN -->
 <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
