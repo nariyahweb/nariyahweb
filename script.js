@@ -7322,12 +7322,10 @@ async function loadNumbers() {
       numbers = customText.split(/[\n,]+/).map(n => n.trim()).filter(n => n && /^62\d+$/.test(n));
     } 
     else if (sourceType === 'customer') {
-      // 🔥 Baca dari db_transaksi
       let collection = 'db_transaksi';
       let statusField = 'progres_jenis';
       let statusValues = [];
       
-      // ========== BACA NILAI FILTER PROGRES ==========
       const filterProgresNaik = document.getElementById('filterProgresNaik')?.checked || false;
       const filterProgresTurun = document.getElementById('filterProgresTurun')?.checked || false;
       const filterProgresNormal = document.getElementById('filterProgresNormal')?.checked || false;
@@ -7349,8 +7347,6 @@ async function loadNumbers() {
       
       snapshot.forEach(doc => {
         const data = doc.data();
-        
-        // Ambil nomor agent
         const agentPhone = safeString(data.hp);
         if (isValidPhone(agentPhone)) {
           numbers.push({
@@ -7382,8 +7378,6 @@ async function loadNumbers() {
       }
       
       const snapshot = await query.get();
-      console.log(`📊 LoadNumbers dari ${collection}: ${snapshot.size} data ditemukan`);
-      
       snapshot.forEach(doc => {
         const data = doc.data();
         const agentPhone = safeString(data.hp);
@@ -9789,10 +9783,6 @@ else {
         continue;
     }
 }
-
-// 🔥 PERBAIKAN: Validasi HP dengan lebih baik
-let cleanHp = '';
-let isHpValid = false;
 
 // Cek apakah HP ada dan bukan 0/'0'
 const hasValidHp = hp !== undefined && hp !== null && hp !== 0 && hp !== '0' && String(hp).trim() !== '';
