@@ -128,6 +128,76 @@
         <div class="stat-icon bg-orange">👤</div>
     </div>
 </div>
+                    <!-- ========== HALAMAN BROADCAST UPLINE ========== -->
+<div id="broadcastUplinePage" class="page-content" style="display:none">
+    <div class="broadcast-section">
+        <div class="broadcast-header">
+            <h3>⭐ Broadcast ke Upline</h3>
+            <p>Kirim pesan rangkuman ke semua Upline dengan data agent di bawahnya</p>
+        </div>
+        <div class="broadcast-grid">
+            <!-- Pilih Sumber -->
+            <div class="broadcast-card">
+                <h4>📋 Pilih Sumber Data</h4>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="uplineSourceType" value="customer" checked> 
+                        <span>📞 Followup Agen (Customer)</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="uplineSourceType" value="prospek"> 
+                        <span>🎯 Prospek Agen</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Filter Status -->
+            <div class="broadcast-card">
+                <h4>🎯 Filter Status</h4>
+                <div class="filter-status-group" id="uplineCustomerFilter">
+                    <label><input type="checkbox" value="baru"> Baru</label>
+                    <label><input type="checkbox" value="followup" checked> Follow Up</label>
+                    <label><input type="checkbox" value="pending"> Pending</label>
+                    <label><input type="checkbox" value="closing"> Closing</label>
+                </div>
+                <div class="filter-status-group" id="uplineProspekFilter" style="display:none;">
+                    <label><input type="checkbox" value="Baru"> Baru</label>
+                    <label><input type="checkbox" value="Dihubungi" checked> Dihubungi</label>
+                    <label><input type="checkbox" value="Negosiasi"> Negosiasi</label>
+                    <label><input type="checkbox" value="Tertarik"> Tertarik</label>
+                </div>
+            </div>
+            
+            <!-- Daftar Upline -->
+            <div class="broadcast-card">
+                <h4>👥 Daftar Upline (<span id="uplineCount">0</span>)</h4>
+                <div class="selected-numbers" id="uplineNumbersList" style="max-height: 300px; overflow-y: auto;">
+                    <p style="color:#9ca3af;">Pilih sumber dan filter, lalu klik Refresh</p>
+                </div>
+                <button class="btn-refresh" id="refreshUplineBtn" style="margin-top: 12px;">🔄 Refresh Data Upline</button>
+            </div>
+            
+            <!-- Pesan Broadcast -->
+            <div class="broadcast-card">
+                <h4>✏️ Pesan Broadcast ke Upline</h4>
+                <textarea id="uplineBroadcastMessage" rows="6" placeholder="Tulis pesan...&#10;&#10;Variabel yang tersedia:&#10;{nama_upline} - Nama Upline&#10;{total_agent} - Jumlah Agent di bawah Upline&#10;{total_transaksi} - Total Transaksi semua Agent&#10;{tabel_agent} - Tabel lengkap data Agent"></textarea>
+                <div class="variable-hint" style="margin-top: 8px;">
+                    <small>💡 Gunakan variabel: <code>{nama_upline}</code>, <code>{total_agent}</code>, <code>{total_transaksi}</code>, <code>{tabel_agent}</code></small>
+                </div>
+            </div>
+            
+            <!-- Tombol Kirim -->
+            <div class="broadcast-card">
+                <h4>📤 Kirim Broadcast ke Upline</h4>
+                <div class="send-options">
+                    <label><input type="checkbox" id="uplineSendOneByOne" checked> Kirim satu per satu (manual)</label>
+                </div>
+                <button class="broadcast-btn" id="sendUplineBroadcastBtn" style="background: #8b5cf6;">⭐ Kirim ke Semua Upline</button>
+                <div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div>
+            </div>
+        </div>
+    </div>
+</div>
 
                                         <!-- TARGET & KPI SECTION -->
 <div class="target-kpi-section" style="margin-bottom: 24px;">
@@ -431,77 +501,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ========== HALAMAN BROADCAST UPLINE ========== -->
-<div id="broadcastUplinePage" class="page-content" style="display:none">
-    <div class="broadcast-section">
-        <div class="broadcast-header">
-            <h3>⭐ Broadcast ke Upline</h3>
-            <p>Kirim pesan rangkuman ke semua Upline dengan data agent di bawahnya</p>
-        </div>
-        <div class="broadcast-grid">
-            <!-- Pilih Sumber -->
-            <div class="broadcast-card">
-                <h4>📋 Pilih Sumber Data</h4>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="uplineSourceType" value="customer" checked> 
-                        <span>📞 Followup Agen (Customer)</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="uplineSourceType" value="prospek"> 
-                        <span>🎯 Prospek Agen</span>
-                    </label>
-                </div>
-            </div>
-            
-            <!-- Filter Status -->
-            <div class="broadcast-card">
-                <h4>🎯 Filter Status</h4>
-                <div class="filter-status-group" id="uplineCustomerFilter">
-                    <label><input type="checkbox" value="baru"> Baru</label>
-                    <label><input type="checkbox" value="followup" checked> Follow Up</label>
-                    <label><input type="checkbox" value="pending"> Pending</label>
-                    <label><input type="checkbox" value="closing"> Closing</label>
-                </div>
-                <div class="filter-status-group" id="uplineProspekFilter" style="display:none;">
-                    <label><input type="checkbox" value="Baru"> Baru</label>
-                    <label><input type="checkbox" value="Dihubungi" checked> Dihubungi</label>
-                    <label><input type="checkbox" value="Negosiasi"> Negosiasi</label>
-                    <label><input type="checkbox" value="Tertarik"> Tertarik</label>
-                </div>
-            </div>
-            
-            <!-- Daftar Upline -->
-            <div class="broadcast-card">
-                <h4>👥 Daftar Upline (<span id="uplineCount">0</span>)</h4>
-                <div class="selected-numbers" id="uplineNumbersList" style="max-height: 300px; overflow-y: auto;">
-                    <p style="color:#9ca3af;">Pilih sumber dan filter, lalu klik Refresh</p>
-                </div>
-                <button class="btn-refresh" id="refreshUplineBtn" style="margin-top: 12px;">🔄 Refresh Data Upline</button>
-            </div>
-            
-            <!-- Pesan Broadcast -->
-            <div class="broadcast-card">
-                <h4>✏️ Pesan Broadcast ke Upline</h4>
-                <textarea id="uplineBroadcastMessage" rows="6" placeholder="Tulis pesan...&#10;&#10;Variabel yang tersedia:&#10;{nama_upline} - Nama Upline&#10;{total_agent} - Jumlah Agent di bawah Upline&#10;{total_transaksi} - Total Transaksi semua Agent&#10;{tabel_agent} - Tabel lengkap data Agent"></textarea>
-                <div class="variable-hint" style="margin-top: 8px;">
-                    <small>💡 Gunakan variabel: <code>{nama_upline}</code>, <code>{total_agent}</code>, <code>{total_transaksi}</code>, <code>{tabel_agent}</code></small>
-                </div>
-            </div>
-            
-            <!-- Tombol Kirim -->
-            <div class="broadcast-card">
-                <h4>📤 Kirim Broadcast ke Upline</h4>
-                <div class="send-options">
-                    <label><input type="checkbox" id="uplineSendOneByOne" checked> Kirim satu per satu (manual)</label>
-                </div>
-                <button class="broadcast-btn" id="sendUplineBroadcastBtn" style="background: #8b5cf6;">⭐ Kirim ke Semua Upline</button>
-                <div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div>
             </div>
         </div>
     </div>
