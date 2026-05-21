@@ -6745,22 +6745,97 @@ async function sendBroadcast() {
     showNotif('Tidak ada nomor tujuan!', true);
     return;
   }
+  
+  // Fungsi helper untuk aman mendapatkan nomor
+  const getPhoneNumber = (item) => {
+    if (typeof item === 'string') return item;
+    if (item && typeof item === 'object') {
+      if (item.hp) return item.hp;
+      if (item.options && item.options.length > 0) {
+        const agentOpt = item.options.find(opt => opt.jenis === 'agent');
+        if (agentOpt && agentOpt.hp) return agentOpt.hp;
+        if (item.options[0] && item.options[0].hp) return item.options[0].hp;
+      }
+      if (item.nomor) return item.nomor;
+    }
+    return '';
+  };
+  
+  const getNama = (item) => {
+    if (typeof item === 'string') return '';
+    if (item && typeof item === 'object') {
+      if (item.nama) return item.nama;
+      if (item.nama_agent) return item.nama_agent;
+    }
+    return '';
+  };
+  
   if (!sendOneByOne) {
+    // Buka semua di tab baru (tanpa progress panel)
     for (const item of currentNumbers) {
-      const hp = typeof item === 'string' ? item : item.hp;
-      const nama = typeof item === 'string' ? '' : item.nama;
+      let hp = getPhoneNumber(item);
+      let nama = getNama(item);
+      
+      if (!hp) continue;
+      
       const message = messageTemplate.replace(/{nama}/g, nama || 'Customer');
-      const nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+      const nomor = hp.toString().replace('+', '').replace(/^0/, '62').replace(/[^\d]/g, '');
       window.open('https://wa.me/' + nomor + '?text=' + encodeURIComponent(message), '_blank');
     }
     showNotif(`✅ Membuka ${currentNumbers.length} chat WhatsApp`);
     return;
   }
+  
   if (isBroadcasting) {
     showNotif('⚠️ Broadcast sedang berjalan!', true);
     return;
   }
-  broadcastNumbers = [...currentNumbers];
+  
+  // Prepare broadcast numbers dengan format yang konsisten
+  broadcastNumbers = [];
+  for (const item of currentNumbers) {
+    if (typeof item === 'string') {
+      broadcastNumbers.push({
+        hp: item,
+        nama: ''
+      });
+    } else if (item && typeof item === 'object') {
+      // Jika memiliki multiple options, kita perlu memproses setiap option yang dipilih
+      if (item.has_multiple && item.options) {
+        // Untuk sementara, kita hanya ambil option agent
+        // Nanti bisa dikembangkan untuk multiple pilihan
+        const agentOpt = item.options.find(opt => opt.jenis === 'agent');
+        if (agentOpt && agentOpt.hp) {
+          broadcastNumbers.push({
+            hp: agentOpt.hp,
+            nama: item.nama_agent || agentOpt.nama,
+            originalItem: item
+          });
+        }
+      } else if (item.hp) {
+        broadcastNumbers.push({
+          hp: item.hp,
+          nama: item.nama || item.nama_agent || '',
+          originalItem: item
+        });
+      } else if (item.nomor) {
+        broadcastNumbers.push({
+          hp: item.nomor,
+          nama: item.nama_agent || item.nama || '',
+          originalItem: item
+        });
+      }
+    }
+  }
+  
+  // Filter yang memiliki hp
+  broadcastNumbers = broadcastNumbers.filter(item => item.hp && item.hp !== '');
+  
+  if (broadcastNumbers.length === 0) {
+    showNotif('⚠️ Tidak ada nomor yang valid untuk broadcast!', true);
+    return;
+  }
+  
   broadcastMessageTemplate = messageTemplate;
   currentBroadcastIndex = 0;
   broadcastStatus = [];
@@ -6777,12 +6852,38 @@ function showBroadcastPanel() {
       panelDiv = document.createElement('div');
       panelDiv.id = 'broadcastPanel';
       panelDiv.className = 'broadcast-panel';
-      panelDiv.innerHTML = `<div class="panel-header"><span>📢 Broadcast Manual</span><button id="closeBroadcastPanelBtn" class="close-panel-btn">✕</button></div><div class="panel-content"><div class="current-info"><div class="current-label">Sedang Diproses:</div><div class="current-name" id="currentName">-</div><div class="current-number" id="currentNumber">-</div></div><div class="message-preview" id="messagePreview"></div><div class="action-buttons"><button id="markSentBtn" class="mark-sent-btn">✅ Tandai Terkirim & Lanjut</button><button id="markFailedBtn" class="mark-failed-btn">❌ Tandai Gagal Kirim & Lanjut</button><button id="stopBroadcastPanelBtn" class="stop-btn">⏹️ Hentikan Broadcast</button></div><div class="whatsapp-link-container"><a href="#" id="whatsappLink" target="_blank" class="whatsapp-link-btn">💬 Buka WhatsApp</a></div></div><div class="progress-panel"><div class="progress-bar-container"><div class="progress-bar-fill" id="progressBarFillPanel"></div></div><div class="progress-text" id="progressTextPanel">0 / 0</div><div class="progress-list" id="progressListPanel"></div></div>`;
+      panelDiv.innerHTML = `<div class="panel-header"><span>📢 Broadcast Manual</span><button id="closeBroadcastPanelBtn" class="close-panel-btn">✕</button></div>
+        <div class="panel-content">
+          <div class="current-info">
+            <div class="current-label">Sedang Diproses:</div>
+            <div class="current-name" id="currentName">-</div>
+            <div class="current-number" id="currentNumber">-</div>
+          </div>
+          <div class="message-preview" id="messagePreview"></div>
+          <div class="action-buttons">
+            <button id="markSentBtn" class="mark-sent-btn">✅ Tandai Terkirim & Lanjut</button>
+            <button id="markFailedBtn" class="mark-failed-btn">❌ Tandai Gagal Kirim & Lanjut</button>
+            <button id="stopBroadcastPanelBtn" class="stop-btn">⏹️ Hentikan Broadcast</button>
+          </div>
+          <div class="whatsapp-link-container">
+            <a href="#" id="whatsappLink" target="_blank" class="whatsapp-link-btn" onclick="event.stopPropagation();">💬 Buka WhatsApp</a>
+          </div>
+        </div>
+        <div class="progress-panel">
+          <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progressBarFillPanel"></div>
+          </div>
+          <div class="progress-text" id="progressTextPanel">0 / 0</div>
+          <div class="progress-list" id="progressListPanel"></div>
+        </div>`;
       broadcastCard.parentNode.insertBefore(panelDiv, broadcastCard.nextSibling);
+      
+      // Event listeners
       document.getElementById('closeBroadcastPanelBtn')?.addEventListener('click', () => {
         document.getElementById('broadcastPanel').style.display = 'none';
         isBroadcasting = false;
       });
+      
       document.getElementById('markSentBtn')?.addEventListener('click', () => {
         if (isBroadcasting) {
           broadcastStatus[currentBroadcastIndex] = 'success';
@@ -6792,6 +6893,7 @@ function showBroadcastPanel() {
           else displayCurrentBroadcast();
         }
       });
+      
       document.getElementById('markFailedBtn')?.addEventListener('click', () => {
         if (isBroadcasting) {
           broadcastStatus[currentBroadcastIndex] = 'failed';
@@ -6801,6 +6903,7 @@ function showBroadcastPanel() {
           else displayCurrentBroadcast();
         }
       });
+      
       document.getElementById('stopBroadcastPanelBtn')?.addEventListener('click', () => {
         if (confirm('⏹️ Hentikan broadcast?')) {
           isBroadcasting = false;
@@ -6808,8 +6911,19 @@ function showBroadcastPanel() {
           showNotif('⏹️ Broadcast dihentikan');
         }
       });
+      
+      // Event listener untuk tombol WhatsApp link
+      const waLink = document.getElementById('whatsappLink');
+      if (waLink) {
+        waLink.addEventListener('click', function(e) {
+          e.stopPropagation();
+          // Link sudah di-set di displayCurrentBroadcast
+        });
+      }
     }
-  } else panelDiv.style.display = 'block';
+  } else {
+    panelDiv.style.display = 'block';
+  }
 }
 
 function displayCurrentBroadcast() {
@@ -6818,11 +6932,60 @@ function displayCurrentBroadcast() {
     finishBroadcast();
     return;
   }
-  const item = broadcastNumbers[currentBroadcastIndex],
-    hp = typeof item === 'string' ? item : item.hp,
-    nama = typeof item === 'string' ? '' : item.nama,
-    message = broadcastMessageTemplate.replace(/{nama}/g, nama || 'Customer'),
-    nomor = hp.toString().replace('+', '').replace(/^0/, '62');
+  
+  const item = broadcastNumbers[currentBroadcastIndex];
+  
+  // Fungsi helper untuk aman mendapatkan string
+  const safeString = (value) => {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return value.toString();
+    return '';
+  };
+  
+  // Ambil hp dengan aman - cek dari berbagai kemungkinan struktur data
+  let hp = '';
+  let nama = '';
+  
+  if (typeof item === 'string') {
+    hp = item;
+    nama = '';
+  } else if (item && typeof item === 'object') {
+    // Cek apakah ada properti hp langsung
+    if (item.hp) {
+      hp = safeString(item.hp);
+      nama = safeString(item.nama);
+    }
+    // Cek apakah ada dalam options (untuk broadcast dengan multiple options)
+    else if (item.options && item.options.length > 0) {
+      // Ambil option pertama (agent) sebagai default
+      const defaultOption = item.options.find(opt => opt.jenis === 'agent') || item.options[0];
+      if (defaultOption) {
+        hp = safeString(defaultOption.hp);
+        nama = safeString(item.nama_agent || defaultOption.nama);
+      }
+    }
+    // Cek apakah ada properti nomor (dari custom numbers)
+    else if (item.nomor) {
+      hp = safeString(item.nomor);
+      nama = safeString(item.nama_agent || item.nama);
+    }
+  }
+  
+  // Jika hp masih kosong, skip
+  if (!hp) {
+    console.warn('displayCurrentBroadcast: hp kosong untuk item', item);
+    broadcastStatus[currentBroadcastIndex] = 'failed';
+    currentBroadcastIndex++;
+    updateBroadcastPanel();
+    if (currentBroadcastIndex >= broadcastNumbers.length) finishBroadcast();
+    else displayCurrentBroadcast();
+    return;
+  }
+  
+  const message = broadcastMessageTemplate.replace(/{nama}/g, nama || 'Customer');
+  const nomor = hp.toString().replace('+', '').replace(/^0/, '62').replace(/[^\d]/g, '');
+  
   document.getElementById('currentName').innerHTML = escapeHtml(nama || '-');
   document.getElementById('currentNumber').innerHTML = escapeHtml(hp);
   document.getElementById('messagePreview').innerHTML = `<strong>Pesan:</strong><br>${escapeHtml(message)}`;
