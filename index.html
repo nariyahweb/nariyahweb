@@ -415,93 +415,94 @@
                 <!-- BROADCAST PAGE -->
                 <div id="broadcastPage" class="page-content" style="display:none">
                     <div class="broadcast-section">
-                        <div class="broadcast-header">...</div>
-                        <div class="broadcast-grid">
-                            <div class="broadcast-card">...</div>
-                            <div class="broadcast-card">...</div>
-                            <div class="broadcast-card">...</div>
-                            <div class="broadcast-card">...</div>
-                            <div class="broadcast-card">...</div>
-                            <div class="broadcast-card">...</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ========== BROADCAST UPLINE PAGE (TERPISAH, DI LUAR BROADCAST PAGE) ========== -->
-                <div id="broadcastUplinePage" class="page-content" style="display:none">
-                    <div class="broadcast-section">
                         <div class="broadcast-header">
-                            <h3>⭐ Broadcast ke Upline</h3>
-                            <p>Kirim pesan rangkuman ke semua Upline dengan data agent di bawahnya</p>
+                            <h3>📢 Broadcast WhatsApp</h3>
+                            <p>Kirim pesan ke banyak nomor sekaligus</p>
                         </div>
                         <div class="broadcast-grid">
-                            <!-- Pilih Sumber -->
+                            <!-- Pilih Sumber Nomor -->
                             <div class="broadcast-card">
-                                <h4>📋 Pilih Sumber Data</h4>
+                                <h4>📋 Pilih Sumber Nomor</h4>
                                 <div class="radio-group">
-                                    <label class="radio-label">
-                                        <input type="radio" name="uplineSourceType" value="customer" checked> 
-                                        <span>📞 Followup Agen (Customer)</span>
-                                    </label>
-                                    <label class="radio-label">
-                                        <input type="radio" name="uplineSourceType" value="prospek"> 
-                                        <span>🎯 Prospek Agen</span>
-                                    </label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="customer" checked> <span>📞 Followup Agen (Customer)</span></label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="prospek"> <span>🎯 Prospek Agen</span></label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="closing"> <span>📁 Database Closing</span></label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="dbTidak"> <span>📁 Database Tidak Tertarik</span></label>
+                                    <label class="radio-label"><input type="radio" name="sourceType" value="custom"> <span>✏️ Custom Nomor</span></label>
                                 </div>
                             </div>
-                            
+
                             <!-- Filter Status -->
-                            <div class="broadcast-card">
+                            <div class="broadcast-card" id="filterStatusCard">
                                 <h4>🎯 Filter Status</h4>
-                                <div class="filter-status-group" id="uplineCustomerFilter">
+                                <div class="filter-status-group" id="customerFilter">
                                     <label><input type="checkbox" value="baru"> Baru</label>
                                     <label><input type="checkbox" value="followup" checked> Follow Up</label>
                                     <label><input type="checkbox" value="pending"> Pending</label>
                                     <label><input type="checkbox" value="closing"> Closing</label>
                                 </div>
-                                <div class="filter-status-group" id="uplineProspekFilter" style="display:none;">
+                                <div class="filter-status-group" id="prospekFilter" style="display:none;">
                                     <label><input type="checkbox" value="Baru"> Baru</label>
                                     <label><input type="checkbox" value="Dihubungi" checked> Dihubungi</label>
                                     <label><input type="checkbox" value="Negosiasi"> Negosiasi</label>
                                     <label><input type="checkbox" value="Tertarik"> Tertarik</label>
                                 </div>
                             </div>
-                            
-                            <!-- Daftar Upline -->
-                            <div class="broadcast-card">
-                                <h4>👥 Daftar Upline (<span id="uplineCount">0</span>)</h4>
-                                <div class="selected-numbers" id="uplineNumbersList" style="max-height: 300px; overflow-y: auto;">
-                                    <p style="color:#9ca3af;">Pilih sumber dan filter, lalu klik Refresh</p>
-                                </div>
-                                <button class="btn-refresh" id="refreshUplineBtn" style="margin-top: 12px;">🔄 Refresh Data Upline</button>
+
+                            <!-- Custom Numbers -->
+                            <div class="broadcast-card" id="customNumbersCard" style="display:none;">
+                                <h4>✏️ Daftar Nomor</h4>
+                                <textarea id="customNumbers" rows="4" placeholder="Contoh:&#10;6281234567890&#10;6281234567891"></textarea>
+                                <small>Format: 628xxxxx (tanpa +62 atau 0)</small>
                             </div>
-                            
+
+                            <!-- Nomor Terpilih -->
+                            <div class="broadcast-card">
+                                <h4>📱 Nomor Terpilih (<span id="selectedCount">0</span>)</h4>
+                                <div class="selected-numbers" id="selectedNumbersList"><p style="color:#9ca3af;">Pilih sumber nomor terlebih dahulu</p></div>
+                                <button class="btn-refresh" id="refreshNumbersBtn">🔄 Refresh Nomor</button>
+                            </div>
+
                             <!-- Pesan Broadcast -->
                             <div class="broadcast-card">
-                                <h4>✏️ Pesan Broadcast ke Upline</h4>
-                                <textarea id="uplineBroadcastMessage" rows="6" placeholder="Tulis pesan...&#10;&#10;Variabel yang tersedia:&#10;{nama_upline} - Nama Upline&#10;{total_agent} - Jumlah Agent di bawah Upline&#10;{total_transaksi} - Total Transaksi semua Agent&#10;{tabel_agent} - Tabel lengkap data Agent"></textarea>
-                                <div class="variable-hint" style="margin-top: 8px;">
-                                    <small>💡 Gunakan variabel: <code>{nama_upline}</code>, <code>{total_agent}</code>, <code>{total_transaksi}</code>, <code>{tabel_agent}</code></small>
+                                <h4>✏️ Pesan Broadcast</h4>
+                                <textarea id="broadcastMessage" rows="5" placeholder="Tulis pesan...&#10;Gunakan {nama} untuk personalisasi"></textarea>
+                                <div class="variable-hint"><small>Gunakan <code>{nama}</code> untuk mengganti dengan nama customer</small></div>
+                            </div>
+
+                            <!-- Simpan Template -->
+                            <div class="broadcast-card">
+                                <h4>💾 Simpan Template Pesan</h4>
+                                <input type="text" id="templateName" placeholder="Nama template (contoh: Promo Akhir Tahun)" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; margin-bottom:10px;">
+                                <button id="saveTemplateBtn" class="btn-primary" style="width:100%; padding:10px;">💾 Simpan sebagai Template</button>
+                                <div style="margin-top: 16px;">
+                                    <h5 style="font-size: 12px; margin-bottom: 8px; color: #374151;">📋 Template Tersimpan:</h5>
+                                    <div id="templateList" style="max-height: 250px; overflow-y: auto;"></div>
                                 </div>
                             </div>
-                            
-                            <!-- Tombol Kirim -->
+
+                            <!-- Kirim Broadcast -->
                             <div class="broadcast-card">
-                                <h4>📤 Kirim Broadcast ke Upline</h4>
+                                <h4>📤 Kirim Broadcast</h4>
                                 <div class="send-options">
-                                    <label><input type="checkbox" id="uplineSendOneByOne" checked> Kirim satu per satu (manual)</label>
+                                    <label><input type="checkbox" id="openAllWA"> Buka semua di tab baru</label>
+                                    <label><input type="checkbox" id="sendOneByOne" checked> Kirim satu per satu (manual)</label>
                                 </div>
-                                <button class="broadcast-btn" id="sendUplineBroadcastBtn" style="background: #8b5cf6;">⭐ Kirim ke Semua Upline</button>
+                                <button class="broadcast-btn" id="sendBroadcastBtn">📢 Kirim Broadcast</button>
                                 <div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div>
                             </div>
-                        </div>
-                    </div>
-                </div>
 
-            </div>  <!-- penutup .content-area -->
-        </div>      <!-- penutup .main-content -->
-    </div>          <!-- penutup .app-container -->
-</div>              <!-- penutup #app -->
+                            <!-- Super Broadcast Mode -->
+                            <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="superBroadcastMode" style="width: 18px; height: 18px;">
+                                    <span style="font-weight: 600; color: #8b5cf6;">⭐ Mode SUPER BROADCAST (Kirim ke Upline dengan Rangkuman)</span>
+                                </label>
+                                <small style="color: #6b7280; margin-left: 26px; display: block;">Aktifkan untuk mengirim pesan ke Upline dengan data lengkap semua agent di bawahnya</small>
+                            </div>
+                        </div>  <!-- tutup broadcast-grid -->
+                    </div>      <!-- tutup broadcast-section -->
+                </div>          <!-- tutup broadcastPage -->
 
 <!-- MODALS -->
 <div class="modal" id="infoModal"><div class="modal-content" style="max-width: 500px;"><h3>📋 Panduan Followup & Prospek</h3><div class="modal-subtitle">Aturan penambahan deadline berdasarkan respon</div><div style="padding: 0 20px 20px 20px;"><div style="margin-bottom: 20px;"><h4 style="color: #10b981; margin-bottom: 8px;">✅ Respon Bagus (Aktif/Diam tapi respon)</h4><p style="font-size: 13px; color: #374151;">+3 hari untuk deadline berikutnya. Dapat terus diperpanjang tanpa batas selama status belum berubah menjadi "Pasif/Tidak Aktif".</p></div><div style="margin-bottom: 20px;"><h4 style="color: #f59e0b; margin-bottom: 8px;">⚠️ Respon Pasif (Kurang respon/membutuhkan followup berulang)</h4><p style="font-size: 13px; color: #374151;">+5 hari untuk deadline berikutnya. Maksimal 5 kali followup pasif sebelum data dipindahkan ke database.</p></div><div style="margin-bottom: 20px;"><h4 style="color: #ef4444; margin-bottom: 8px;">❌ Respon Jelek (Tidak tertarik/komplain)</h4><p style="font-size: 13px; color: #374151;">+1 Minggu (7 hari) untuk deadline berikutnya. Maksimal 3 kali followup jelek sebelum data dipindahkan ke database.</p></div><div style="background: #eef2ff; padding: 12px; border-radius: 12px; margin-top: 12px;"><p style="font-size: 12px; color: #4f46e5; margin: 0;">💡 <strong>Catatan:</strong> Setiap perubahan status atau penyimpanan data akan secara otomatis menambah deadline sesuai aturan di atas. Anda dapat mengedit deadline manual kapan saja dengan mengklik icon ✏️ di popup detail.</p></div></div><div class="modal-buttons"><button id="infoModalClose" class="btn-primary">Tutup</button></div></div></div>
