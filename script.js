@@ -4101,7 +4101,7 @@ async function loadNumbers() {
     showNotifTop(`✅ ${numbers.length} nomor ditemukan`);
 }
 
-function sendBroadcast() {
+async function sendBroadcast() {
     const messageTemplate = document.getElementById('broadcastMessage')?.value;
     const sendOneByOne = document.getElementById('sendOneByOne')?.checked;
     
@@ -4474,7 +4474,7 @@ async function loadUplineNumbers() {
     showNotifTop(`✅ Ditemukan ${uplineDataList.length} Upline dengan total ${uplineDataList.reduce((sum, u) => sum + u.agents.length, 0)} agent`);
 }
 
-function sendUplineBroadcast() {
+async function sendUplineBroadcast() {
     const messageTemplate = document.getElementById('uplineBroadcastMessage')?.value;
     const sendOneByOne = document.getElementById('uplineSendOneByOne')?.checked;
     
