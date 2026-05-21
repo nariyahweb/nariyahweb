@@ -258,18 +258,63 @@ function showNotifTop(msg, isError = false) {
 }
 
 let currentPilihNomorCustomerId = null;
-          
+
+function openWADirect(nomor) {
+    if (!nomor) {
+        showNotifTop('⚠️ Nomor WhatsApp tidak ditemukan!', true);
+        return;
+    }
+    
+    // Bersihkan nomor
+    let cleanNomor = nomor.toString();
+    cleanNomor = cleanNomor.replace(/[^\d+]/g, '');
+    if (!cleanNomor.startsWith('+')) {
+        cleanNomor = cleanNomor.replace(/^0+/, '');
+        if (cleanNomor.startsWith('62')) {
+            cleanNomor = '+' + cleanNomor;
+        } else {
+            cleanNomor = '+62' + cleanNomor;
+        }
+    }
+    
+    console.log('Membuka WhatsApp untuk nomor:', cleanNomor);
+    window.open('https://wa.me/' + encodeURIComponent(cleanNomor), '_blank');
+}
+
+// Setup modal pilih nomor
+const pilihNomorModal = document.getElementById('pilihNomorModal');
+if (pilihNomorModal) {
+    pilihNomorModal.onclick = (e) => {
+        if (e.target === pilihNomorModal) {
+            closeModal('pilihNomorModal');
+        }
+    };
+}
+
+// Tombol batal
+const batalPilihNomorBtn = document.getElementById('batalPilihNomorBtn');
+if (batalPilihNomorBtn) {
+    batalPilihNomorBtn.onclick = () => {
+        closeModal('pilihNomorModal');
+    };
+}
+
+// Perbaiki fungsi showPilihNomor agar lebih reliable
 function showPilihNomor(customerId) {
+    console.log('showPilihNomor dipanggil untuk ID:', customerId);
     currentPilihNomorCustomerId = customerId;
     
     db.collection('customers').doc(customerId).get().then(doc => {
-        if (!doc.exists) return;
+        if (!doc.exists) {
+            showNotifTop('⚠️ Data tidak ditemukan!', true);
+            return;
+        }
         
         const data = doc.data();
         const options = [];
         
         // Opsi 1: Nomor Agent sendiri
-        if (data.hp && data.hp.trim() !== '') {
+        if (data.hp && data.hp.trim() !== '' && data.hp !== '+62') {
             options.push({
                 jenis: 'agent',
                 label: '📞 Nomor Agent (Pemilik)',
@@ -296,7 +341,10 @@ function showPilihNomor(customerId) {
             });
         }
 
+        // Filter opsi yang valid
         const validOptions = options.filter(opt => opt.nomor && opt.nomor !== '' && !opt.kosong);
+        
+        // Jika ada lebih dari 1 opsi valid, tambahkan opsi "kirim ke semua"
         if (validOptions.length > 1) {
             options.unshift({
                 jenis: 'semua',
@@ -309,30 +357,46 @@ function showPilihNomor(customerId) {
         const modal = document.getElementById('pilihNomorModal');
         const container = document.getElementById('pilihNomorOptions');
         
-        if (options.length === 0) {
-            container.innerHTML = '<p style="color: #ef4444;">⚠️ Tidak ada nomor WhatsApp yang tersedia!</p>';
+        if (!modal || !container) {
+            console.error('Modal atau container tidak ditemukan');
+            return;
+        }
+        
+        if (validOptions.length === 0) {
+            container.innerHTML = '<p style="color: #ef4444; padding: 12px;">⚠️ Tidak ada nomor WhatsApp yang tersedia!</p>';
         } else {
-            container.innerHTML = options.map(opt => `
+            container.innerHTML = options.filter(opt => !opt.kosong).map(opt => `
                 <div class="pilih-nomor-option" data-nomor="${opt.nomor}" data-jenis="${opt.jenis}" style="
                     padding: 12px;
                     border: 1px solid #e5e7eb;
                     border-radius: 12px;
                     cursor: pointer;
                     transition: all 0.2s;
-                    background: ${opt.kosong ? '#fef2f2' : '#f9fafb'};
+                    background: #f9fafb;
                 ">
                     <div style="font-weight: 600; margin-bottom: 4px;">${opt.label}</div>
-                    <div style="font-size: 13px; color: #4f46e5;">${opt.nama}</div>
-                    <div style="font-size: 12px; color: #6b7280;">${opt.nomor || 'Nomor tidak tersedia'}</div>
-                    ${opt.kosong ? '<div style="font-size: 11px; color: #ef4444; margin-top: 4px;">⚠️ Nomor agent tidak tersedia</div>' : ''}
+                    <div style="font-size: 13px; color: #4f46e5;">${escapeHtml(opt.nama)}</div>
+                    <div style="font-size: 12px; color: #6b7280;">${opt.nomor}</div>
                 </div>
             `).join('');
             
+            // Event listener untuk opsi
             document.querySelectorAll('.pilih-nomor-option').forEach(el => {
-                el.addEventListener('click', () => {
-                    const nomor = el.dataset.nomor;
-                    if (nomor && nomor !== '') {
+                // Hapus event listener lama
+                const newEl = el.cloneNode(true);
+                el.parentNode.replaceChild(newEl, el);
+                
+                newEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const nomor = newEl.dataset.nomor;
+                    console.log('Opsi dipilih, nomor:', nomor);
+                    if (nomor && nomor !== '' && nomor !== 'all') {
                         openWADirect(nomor);
+                        closeModal('pilihNomorModal');
+                    } else if (nomor === 'all') {
+                        // Kirim ke semua nomor
+                        const allNumbers = validOptions.map(opt => opt.nomor);
+                        allNumbers.forEach(num => openWADirect(num));
                         closeModal('pilihNomorModal');
                     } else {
                         showNotifTop('⚠️ Nomor WhatsApp tidak tersedia!', true);
@@ -342,17 +406,12 @@ function showPilihNomor(customerId) {
         }
         
         modal.style.display = 'flex';
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+    }).catch(err => {
+        console.error('Error showPilihNomor:', err);
+        showNotifTop('❌ Gagal memuat data: ' + err.message, true);
     });
-}
-
-function openWADirect(nomor) {
-    if (!nomor) return;
-    let cleanNomor = nomor.toString().replace('+', '').replace(/^0/, '62');
-    window.open('https://wa.me/' + cleanNomor, '_blank');
-}
-
-function openWAById(customerId) {
-    showPilihNomor(customerId);
 }
 
 function openWACustomer(customerId) {
@@ -4793,10 +4852,19 @@ function renderFullFollowupKanban() {
     
     // Event listener untuk klik card (area click-area)
     document.querySelectorAll('#fullBaruList .card-click-area').forEach(area => {
-      area.removeEventListener('click', handleCardClick);
-      area.addEventListener('click', handleCardClick);
+    // Hapus event listener lama
+    const newArea = area.cloneNode(true);
+    area.parentNode.replaceChild(newArea, area);
+    
+    newArea.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const card = newArea.closest('.card-item');
+        if (card) {
+            const id = card.dataset.id;
+            openDetailCustomer(id);
+        }
     });
-  }
+});
   
   // ========== RENDER KOLOM FOLLOWUP (TANPA CHECKBOX) ==========
   const followupContainer = document.getElementById('fullFollowupList');
