@@ -1552,6 +1552,20 @@ if (broadcastCard) {
   broadcastCard.appendChild(sendSuperBroadcastBtn);
 }
 
+  const superModeCheckbox = document.getElementById('superBroadcastMode');
+if (superModeCheckbox) {
+  superModeCheckbox.addEventListener('change', function(e) {
+    const selectedNumbersDiv = document.getElementById('selectedNumbersList');
+    if (this.checked) {
+      selectedNumbersDiv.innerHTML = '<p style="color:#8b5cf6; padding: 20px; text-align: center;">⭐ Mode SUPER BROADCAST Aktif<br><small>Data akan dikelompokkan berdasarkan Upline saat tombol Kirim ditekan</small></p>';
+      document.getElementById('selectedCount').innerText = '0';
+    } else {
+      // Load ulang nomor biasa
+      loadNumbers();
+    }
+  });
+}
+
   // ========== DARK MODE FUNCTION ==========
   function initDarkMode() {
     // Cek preferensi yang tersimpan di localStorage
@@ -6629,6 +6643,10 @@ function initBroadcast() {
 
 async function loadNumbers() {
   try {
+    // Reset mode super broadcast
+    const superModeCheckbox = document.getElementById('superBroadcastMode');
+    if (superModeCheckbox) superModeCheckbox.checked = false;
+    
     const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
     let numbers = [];
     
@@ -6722,11 +6740,20 @@ async function loadNumbers() {
 async function sendBroadcast() {
   const messageTemplate = document.getElementById('broadcastMessage')?.value;
   const sendOneByOne = document.getElementById('sendOneByOne')?.checked;
+  const isSuperMode = document.getElementById('superBroadcastMode')?.checked || false;
   
   if (!messageTemplate) {
     showNotif('Pesan tidak boleh kosong!', true);
     return;
   }
+  
+  // 🔥 JIKA SUPER BROADCAST MODE
+  if (isSuperMode) {
+    await sendSuperBroadcastInternal(messageTemplate);
+    return;
+  }
+  
+  // BROADCAST BIASA
   if (currentNumbers.length === 0) {
     showNotif('Tidak ada nomor tujuan!', true);
     return;
@@ -7206,6 +7233,178 @@ async function sendSuperBroadcast() {
   showNotifTop(`✅ SUPER BROADCAST selesai! Terkirim ke ${success} upline, Gagal: ${failed}`);
   
   setTimeout(() => progress.hide(), 3000);
+}
+
+async function sendSuperBroadcastInternal(messageTemplate) {
+  // Ambil data dari filter yang dipilih
+  const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
+  
+  let collection = 'customers';
+  let statusField = 'status';
+  let statusValues = [];
+  
+  if (sourceType === 'prospek') {
+    collection = 'prospek';
+    statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value);
+  } else if (sourceType === 'customer') {
+    collection = 'customers';
+    statusValues = Array.from(document.querySelectorAll('#customerFilter input:checked')).map(cb => cb.value);
+  } else {
+    showNotifTop('⚠️ SUPER BROADCAST hanya untuk Customer/Prospek!', true);
+    return;
+  }
+  
+  if (statusValues.length === 0) {
+    showNotifTop('⚠️ Pilih minimal satu status!', true);
+    return;
+  }
+  
+  showNotifTop('⏳ Mengelompokkan data berdasarkan Upline...');
+  
+  try {
+    let query = db.collection(collection);
+    if (currentUserRole !== 'owner') query = query.where('user_id', '==', currentUser.uid);
+    query = query.limit(2000);
+    
+    if (statusField) {
+      query = query.where(statusField, 'in', statusValues);
+    }
+    
+    const snapshot = await query.get();
+    
+    // Kelompokkan berdasarkan upline_phone
+    const uplineMap = new Map();
+    
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const uplinePhone = data.upline_phone || '';
+      const uplineName = data.upline_name || 'Tidak ada upline';
+      
+      // Skip jika tidak punya upline atau upline phone tidak valid
+      if (!uplinePhone || uplinePhone === '+62' || uplinePhone === '62' || uplinePhone === '' || uplinePhone === '0') {
+        return;
+      }
+      
+      if (!uplineMap.has(uplinePhone)) {
+        uplineMap.set(uplinePhone, {
+          upline_phone: uplinePhone,
+          upline_name: uplineName,
+          agents: []
+        });
+      }
+      
+      // Ambil data progres
+      const progresData = data.progres_transaksi || { items: [], total_tercapai: 0 };
+      const totalTercapai = progresData.total_tercapai || 0;
+      
+      // Tentukan progres jenis dari items terakhir
+      let progresJenis = '-';
+      let progresJumlah = 0;
+      if (progresData.items && progresData.items.length > 0) {
+        const lastItem = progresData.items[progresData.items.length - 1];
+        progresJenis = lastItem.jenis || '-';
+        progresJumlah = lastItem.jumlah || 0;
+      }
+      
+      uplineMap.get(uplinePhone).agents.push({
+        agent_id: data.agent_id || '-',
+        nama: data.nama || '-',
+        hp: data.hp || '-',
+        progres_jenis: progresJenis,
+        progres_jumlah: progresJumlah,
+        total_transaksi: totalTercapai
+      });
+    });
+    
+    const superData = Array.from(uplineMap.values());
+    
+    if (superData.length === 0) {
+      showNotifTop('⚠️ Tidak ada data upline yang ditemukan!', true);
+      return;
+    }
+    
+    if (!confirm(`Kirim SUPER BROADCAST ke ${superData.length} Upline?\n\nTotal Agent: ${superData.reduce((sum, u) => sum + u.agents.length, 0)}\n\nSetiap upline akan menerima rangkuman data agent di bawahnya.`)) {
+      return;
+    }
+    
+    // Kirim satu per satu
+    const progress = showFloatingProgress('📢 SUPER BROADCAST', superData.length);
+    progress.update(0, '🚀 Mengirim SUPER BROADCAST', 'Memulai pengiriman...');
+    
+    let success = 0;
+    let failed = 0;
+    const failedList = [];
+    
+    for (let i = 0; i < superData.length; i++) {
+      const upline = superData[i];
+      
+      // Format pesan khusus untuk upline ini
+      let message = messageTemplate
+        .replace(/{nama_upline}/g, upline.upline_name)
+        .replace(/{total_agent}/g, upline.agents.length);
+      
+      // Hitung total transaksi semua agent
+      const totalTransaksi = upline.agents.reduce((sum, a) => sum + a.total_transaksi, 0);
+      message = message.replace(/{total_transaksi}/g, totalTransaksi);
+      
+      // Buat tabel data agent
+      let tableRows = '';
+      for (const agent of upline.agents) {
+        tableRows += `\n${agent.agent_id.padEnd(12)} | ${agent.nama.substring(0,25).padEnd(25)} | ${agent.progres_jenis.padEnd(12)} | ${String(agent.progres_jumlah).padStart(8)}`;
+      }
+      
+      const tabelAgent = `
+┌──────────────┬───────────────────────────┬──────────────┬──────────┐
+│ Agent ID     │ Nama Agent                │ Progres Jenis│ Jumlah   │
+├──────────────┼───────────────────────────┼──────────────┼──────────┤${tableRows}
+└──────────────┴───────────────────────────┴──────────────┴──────────┘`;
+      
+      message = message.replace(/{tabel_agent}/g, tabelAgent);
+      
+      // Bersihkan nomor
+      let nomor = upline.upline_phone.toString();
+      nomor = nomor.replace(/[^\d+]/g, '');
+      if (!nomor.startsWith('+')) {
+        nomor = nomor.replace(/^0+/, '');
+        if (nomor.startsWith('62')) {
+          nomor = '+' + nomor;
+        } else {
+          nomor = '+62' + nomor;
+        }
+      }
+      const cleanNomor = nomor.replace(/[^\d]/g, '');
+      
+      try {
+        window.open('https://wa.me/' + cleanNomor + '?text=' + encodeURIComponent(message), '_blank');
+        success++;
+        
+        const percent = Math.floor(((i + 1) / superData.length) * 100);
+        progress.update(percent, '📢 Mengirim', `Mengirim ke ${upline.upline_name} (${i + 1}/${superData.length})...`, i + 1, superData.length);
+        
+        // Delay 1 detik agar tidak overload
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+      } catch (e) {
+        failed++;
+        failedList.push(upline.upline_name);
+        console.error(`Gagal kirim ke ${upline.upline_name}:`, e);
+      }
+    }
+    
+    let resultMsg = `✅ SUPER BROADCAST selesai!\n📊 Terkirim: ${success} upline\n❌ Gagal: ${failed}`;
+    if (failedList.length > 0) {
+      resultMsg += `\n\nGagal ke: ${failedList.join(', ')}`;
+    }
+    
+    progress.update(100, '✅ Selesai', resultMsg, superData.length, superData.length);
+    showNotifTop(resultMsg, failed > 0);
+    
+    setTimeout(() => progress.hide(), 4000);
+    
+  } catch (e) {
+    console.error('Error sendSuperBroadcast:', e);
+    showNotifTop('❌ Gagal mengirim SUPER BROADCAST: ' + e.message, true);
+  }
 }
 
 const deadlineNotifBtn = document.getElementById('deadlineNotifBtn');
