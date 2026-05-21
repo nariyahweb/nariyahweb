@@ -4002,10 +4002,6 @@ function downloadProdukExample() {
 
 // ========== BROADCAST FUNCTIONS ==========
 // ========== FUNGSI BROADCAST LENGKAP ==========
-let broadcastMessageTemplate = '';
-let isBroadcasting = false;
-let broadcastStatus = [];
-let currentBroadcastIndex = 0;
 
 async function loadNumbers() {
     const sourceType = document.querySelector('input[name="sourceType"]:checked')?.value || 'customer';
