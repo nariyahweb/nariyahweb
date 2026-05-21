@@ -223,13 +223,13 @@
                 <div id="followupFullPage" class="page-content" style="display:none">
                     <div class="fullpage-kanban">
                         <div class="fullpage-header">
-    <h2>📋 Data Followup Agen (Full Mode)</h2>
-    <div style="display: flex; gap: 10px;">
-        <button class="add-btn" id="addCustomerFullBtn">+ Tambah Data</button>
-        <button class="db-select-all" id="selectAllFullFollowup">✅ Pilih Semua</button>
-        <button class="db-delete-selected" id="deleteSelectedFullFollowup">🗑️ Hapus Terpilih</button>
-    </div>
-</div>
+            <h2>📋 Data Followup Agen (Full Mode)</h2>
+            <div style="display: flex; gap: 10px;">
+                <button class="add-btn" id="addCustomerFullBtn">+ Tambah Data</button>
+                <button class="db-select-all" id="selectAllFullFollowup">✅ Pilih Semua</button>
+                <button class="db-delete-selected" id="deleteSelectedFullFollowup">🗑️ Hapus Terpilih</button>
+            </div>
+        </div>
                         <div class="kanban-board-full">
                             <div class="kanban-column" data-status="baru"><div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountBaru">0</span></div><div class="kanban-cards" id="fullBaruList"></div></div>
                             <div class="kanban-column" data-status="followup"><div class="column-header blue-header"><span>Follow Up</span><span class="count" id="fullCountFollowup">0</span></div><div class="kanban-cards" id="fullFollowupList"></div></div>
@@ -243,13 +243,13 @@
                 <div id="prospekFullPage" class="page-content" style="display:none">
                     <div class="fullpage-kanban">
                         <div class="fullpage-header">
-    <h2>🎯 Data Prospek Agen (Full Mode)</h2>
-    <div style="display: flex; gap: 10px;">
-        <button class="add-btn" id="addProspekFullBtn">+ Tambah Data</button>
-        <button class="db-select-all" id="selectAllFullProspek">✅ Pilih Semua</button>
-        <button class="db-delete-selected" id="deleteSelectedFullProspek">🗑️ Hapus Terpilih</button>
-    </div>
-</div>
+            <h2>🎯 Data Prospek Agen (Full Mode)</h2>
+            <div style="display: flex; gap: 10px;">
+                <button class="add-btn" id="addProspekFullBtn">+ Tambah Data</button>
+                <button class="db-select-all" id="selectAllFullProspek">✅ Pilih Semua</button>
+                <button class="db-delete-selected" id="deleteSelectedFullProspek">🗑️ Hapus Terpilih</button>
+            </div>
+        </div>
                         <div class="kanban-board-full">
                             <div class="kanban-column" data-status="Baru"><div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountProspekBaru">0</span></div><div class="kanban-cards" id="fullProspekBaruList"></div></div>
                             <div class="kanban-column" data-status="Dihubungi"><div class="column-header blue-header"><span>Dihubungi</span><span class="count" id="fullCountDihubungi">0</span></div><div class="kanban-cards" id="fullProspekDihubungiList"></div></div>
@@ -425,8 +425,7 @@
                             <div class="broadcast-card"><h4>📤 Kirim Broadcast</h4><div class="send-options"><label><input type="checkbox" id="openAllWA"> Buka semua di tab baru</label><label><input type="checkbox" id="sendOneByOne" checked> Kirim satu per satu (manual)</label></div><button class="broadcast-btn" id="sendBroadcastBtn">📢 Kirim Broadcast</button><div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div></div>
                             <div class="broadcast-card" style="margin-top: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><h4 style="color: white;">⭐ SUPER BROADCAST - Kirim ke Upline</h4><p style="color: rgba(255,255,255,0.8); font-size: 12px;">Kirim rangkuman data semua agent di bawah upline</p><button class="super-broadcast-btn" id="superBroadcastBtn" style="width:100%; padding: 12px; background: white; color: #4f46e5; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 12px;">🚀 Kirim SUPER BROADCAST ke Upline</button>
                             <div class="broadcast-card" id="filterStatusCard"><h4>🎯 Filter Status</h4><div class="filter-status-group" id="customerFilter"><label><input type="checkbox" value="baru"> Baru</label><label><input type="checkbox" value="followup" checked> Follow Up</label><label><input type="checkbox" value="pending"> Pending</label><label><input type="checkbox" value="closing"> Closing</label></div><div class="filter-status-group" id="prospekFilter" style="display:none;"><label><input type="checkbox" value="Baru"> Baru</label><label><input type="checkbox" value="Dihubungi" checked> Dihubungi</label><label><input type="checkbox" value="Negosiasi"> Negosiasi</label><label><input type="checkbox" value="Tertarik"> Tertarik</label></div>
-                            <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;"><label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="superBroadcastMode" style="width: 18px; height: 18px;"><span style="font-weight: 600; color: #8b5cf6;">⭐ Mode SUPER BROADCAST (Kirim ke Upline dengan Rangkuman)</span></label><small style="color: #6b7280; margin-left: 26px; display: block;">Aktifkan untuk mengirim pesan ke Upline dengan data lengkap semua agent di bawahnya</small>
-                            </div>
+                            <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb;"><label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="superBroadcastMode" style="width: 18px; height: 18px;"><span style="font-weight: 600; color: #8b5cf6;">⭐ Mode SUPER BROADCAST (Kirim ke Upline dengan Rangkuman)</span></label><small style="color: #6b7280; margin-left: 26px; display: block;">Aktifkan untuk mengirim pesan ke Upline dengan data lengkap semua agent di bawahnya</small></div>
                             </div>
                             </div>
                         </div>
@@ -492,6 +491,20 @@
                         <option value="BSB">🏦 BSB</option>
                         <option value="BTN">🏦 BTN</option>
                     </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Upline / Atasan</label>
+                <div class="input-icon">
+                    <span>👤</span>
+                    <input type="text" id="customerUplineName" placeholder="Nama Upline / Atasan">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Nomor HP Upline</label>
+                <div class="phone-input">
+                    <div class="phone-prefix">+62</div>
+                    <input type="tel" id="customerUplinePhone" placeholder="81234567890" style="flex:1">
                 </div>
             </div>
             <div class="form-group">
