@@ -657,8 +657,18 @@ async function loadUplineNumbers() {
             statusValues = Array.from(document.querySelectorAll('#uplineCustomerFilter input:checked')).map(cb => cb.value);
         }
         
+        console.log('Source Type:', sourceType);
+        console.log('Collection:', collection);
+        console.log('Status Values:', statusValues);
+        
         if (statusValues.length === 0) {
             showNotifTop('⚠️ Pilih minimal satu status!', true);
+            // Tampilkan pesan di list
+            const listDiv = document.getElementById('uplineNumbersList');
+            if (listDiv) {
+                listDiv.innerHTML = '<p style="color:#ef4444; padding: 20px;">⚠️ Silakan pilih minimal satu status terlebih dahulu!</p>';
+            }
+            document.getElementById('uplineCount').innerText = '0';
             return;
         }
         
@@ -675,11 +685,17 @@ async function loadUplineNumbers() {
         }
         
         const snapshot = await query.get();
+        console.log('Total data ditemukan:', snapshot.size);
+        
+        const listDiv = document.getElementById('uplineNumbersList');
+        const countSpan = document.getElementById('uplineCount');
         
         if (snapshot.empty) {
             showNotifTop('⚠️ Tidak ada data dengan filter yang dipilih!', true);
-            document.getElementById('uplineNumbersList').innerHTML = '<p style="color:#9ca3af;">Tidak ada data</p>';
-            document.getElementById('uplineCount').innerText = '0';
+            if (listDiv) {
+                listDiv.innerHTML = '<p style="color:#ef4444; padding: 20px;">⚠️ Tidak ada data dengan filter yang dipilih.<br><br>Pastikan:<br>1. Data memiliki field upline_phone<br>2. Data memiliki upline_name<br>3. Filter status yang dipilih sesuai dengan data</p>';
+            }
+            if (countSpan) countSpan.innerText = '0';
             return;
         }
         
@@ -692,6 +708,9 @@ async function loadUplineNumbers() {
             const uplinePhone = data.upline_phone || '';
             const uplineName = data.upline_name || 'Tidak ada upline';
             
+            console.log(`Data: ${data.nama}, upline_phone: ${uplinePhone}, upline_name: ${uplineName}`);
+            
+            // Skip jika tidak punya upline atau upline phone tidak valid
             if (!uplinePhone || uplinePhone === '+62' || uplinePhone === '62' || uplinePhone === '' || uplinePhone === '0') {
                 dataWithoutUpline++;
                 return;
@@ -705,6 +724,7 @@ async function loadUplineNumbers() {
                 });
             }
             
+            // Ambil data progres
             const progresData = data.progres_transaksi || { items: [], total_tercapai: 0 };
             const totalTercapai = progresData.total_tercapai || 0;
             
@@ -728,31 +748,44 @@ async function loadUplineNumbers() {
         
         uplineDataList = Array.from(uplineMap.values());
         
-        // Tampilkan daftar upline
-        const listDiv = document.getElementById('uplineNumbersList');
-        const countSpan = document.getElementById('uplineCount');
+        console.log('Jumlah Upline ditemukan:', uplineDataList.length);
+        console.log('Data tanpa upline (dilewati):', dataWithoutUpline);
         
+        // Tampilkan daftar upline
         if (listDiv) {
             if (uplineDataList.length === 0) {
-                listDiv.innerHTML = '<p style="color:#9ca3af;">Tidak ada data upline yang ditemukan</p>';
-                countSpan.innerText = '0';
+                listDiv.innerHTML = `<p style="color:#ef4444; padding: 20px;">⚠️ Tidak ada data upline yang ditemukan!</p>
+                    <p style="color:#6b7280; font-size: 12px; padding: 0 20px 20px 20px;">
+                    📌 Pastikan data memiliki field:<br>
+                    • <strong>upline_phone</strong> (nomor HP upline, contoh: +628123456789)<br>
+                    • <strong>upline_name</strong> (nama upline)<br><br>
+                    📊 Total data: ${snapshot.size}<br>
+                    ⏭ Data tanpa upline: ${dataWithoutUpline}
+                    </p>`;
+                if (countSpan) countSpan.innerText = '0';
             } else {
                 const totalAgent = uplineDataList.reduce((sum, u) => sum + u.agents.length, 0);
-                countSpan.innerText = uplineDataList.length;
+                if (countSpan) countSpan.innerText = uplineDataList.length;
                 
-                listDiv.innerHTML = uplineDataList.map(upline => `
-                    <div class="number-item upline-item" data-upline-phone="${upline.upline_phone}" style="border-bottom: 1px solid #e5e7eb; padding: 12px 0;">
-                        <div style="font-weight: 600; color: #8b5cf6;">👤 ${escapeHtml(upline.upline_name)}</div>
-                        <div style="font-size: 11px; color: #6b7280;">📞 ${escapeHtml(upline.upline_phone)}</div>
-                        <div style="font-size: 11px; margin-top: 6px; background: #f3f4f6; padding: 8px; border-radius: 8px;">
-                            <strong>📋 Agent (${upline.agents.length}):</strong><br>
-                            ${upline.agents.slice(0, 3).map(agent => 
-                                `🆔 ${escapeHtml(agent.agent_id)} - ${escapeHtml(agent.nama)}`
-                            ).join('<br>')}
-                            ${upline.agents.length > 3 ? `<br>... dan ${upline.agents.length - 3} agent lainnya` : ''}
-                        </div>
+                listDiv.innerHTML = `
+                    <div style="background: #eef2ff; padding: 10px; border-radius: 8px; margin-bottom: 12px;">
+                        <strong>📊 Ringkasan:</strong><br>
+                        Upline: ${uplineDataList.length} | Total Agent: ${totalAgent} | Data tanpa upline: ${dataWithoutUpline}
                     </div>
-                `).join('');
+                    ${uplineDataList.map(upline => `
+                        <div class="number-item upline-item" data-upline-phone="${upline.upline_phone}" style="border-bottom: 1px solid #e5e7eb; padding: 12px 0;">
+                            <div style="font-weight: 600; color: #8b5cf6;">👤 ${escapeHtml(upline.upline_name)}</div>
+                            <div style="font-size: 11px; color: #6b7280;">📞 ${escapeHtml(upline.upline_phone)}</div>
+                            <div style="font-size: 11px; margin-top: 6px; background: #f3f4f6; padding: 8px; border-radius: 8px;">
+                                <strong>📋 Agent (${upline.agents.length}):</strong><br>
+                                ${upline.agents.slice(0, 5).map(agent => 
+                                    `🆔 ${escapeHtml(agent.agent_id)} - ${escapeHtml(agent.nama)}`
+                                ).join('<br>')}
+                                ${upline.agents.length > 5 ? `<br>... dan ${upline.agents.length - 5} agent lainnya` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
             }
         }
         
@@ -761,6 +794,10 @@ async function loadUplineNumbers() {
     } catch (e) {
         console.error('Error loadUplineNumbers:', e);
         showNotifTop('❌ Gagal memuat data upline: ' + e.message, true);
+        const listDiv = document.getElementById('uplineNumbersList');
+        if (listDiv) {
+            listDiv.innerHTML = '<p style="color:#ef4444; padding: 20px;">❌ Error: ' + e.message + '</p>';
+        }
     }
 }
 
