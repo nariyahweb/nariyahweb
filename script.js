@@ -9929,8 +9929,4 @@ document.getElementById('downloadTransaksiExample')?.addEventListener('click', (
     showNotifTop('📋 Contoh file Excel DB Transaksi (lengkap) berhasil diunduh');
 });
 
-// ========== PENUTUP AKHIR ==========
-// Pastikan semua fungsi dan event listener sudah ditutup dengan benar
-// Tidak ada kode tambahan setelah ini
-
-}); // <-- TAMBAHKAN INI - Menutup DOMContentLoaded
+// ========== PENUTUP - TIDAK ADA KODE TAMBAHAN ==========
