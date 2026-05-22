@@ -8113,6 +8113,73 @@ document.addEventListener('DOMContentLoaded', function() {
     updateAllBadges();
   });
 
+  // ========== REMINDER BUTTON ==========
+document.getElementById('addReminderBtn')?.addEventListener('click', () => {
+    document.getElementById('reminderTitle').value = '';
+    document.getElementById('reminderDesc').value = '';
+    document.getElementById('reminderDateTime').value = '';
+    document.getElementById('reminderModal').style.display = 'flex';
+});
+
+document.getElementById('saveReminderBtn')?.addEventListener('click', async () => {
+    const title = document.getElementById('reminderTitle').value;
+    const description = document.getElementById('reminderDesc').value;
+    const datetime = document.getElementById('reminderDateTime').value;
+    
+    if (!title) {
+        showNotifTop('⚠️ Judul pengingat wajib diisi!', true);
+        return;
+    }
+    
+    try {
+        await db.collection('reminders').add({
+            title: title,
+            description: description,
+            datetime: datetime,
+            user_id: currentUser.uid,
+            user_name: currentUserName,
+            created_at: new Date().toISOString()
+        });
+        showNotifTop('✅ Pengingat berhasil ditambahkan');
+        closeModal('reminderModal');
+        loadReminders();
+    } catch (e) {
+        showNotifTop('❌ Gagal: ' + e.message, true);
+    }
+});
+
+// ========== PESAN BUTTON ==========
+document.getElementById('addPesanBtn')?.addEventListener('click', async () => {
+    await loadUsersForSelect();
+    document.getElementById('pesanModal').style.display = 'flex';
+});
+
+document.getElementById('savePesanBtn')?.addEventListener('click', async () => {
+    const toId = document.getElementById('pesanTo').value;
+    const message = document.getElementById('pesanMessage').value;
+    if (!toId || !message) {
+        showNotifTop('Lengkapi data!', true);
+        return;
+    }
+    await db.collection('messages').add({
+        from_id: currentUser.uid,
+        to_id: toId,
+        message,
+        is_read: false,
+        created_at: new Date().toISOString()
+    });
+    closeModal('pesanModal');
+    document.getElementById('pesanTo').value = '';
+    document.getElementById('pesanMessage').value = '';
+    showNotifTop('✅ Pesan terkirim');
+    updateAllBadges();
+});
+
+// ========== VIEW TRANSAKSI HISTORY BUTTON ==========
+document.getElementById('viewTransaksiHistoryBtn')?.addEventListener('click', () => {
+    showTransaksiListModal();
+});
+
   // ========== DEADLINE NOTIFICATION BUTTON ==========
   const deadlineNotifBtn = document.getElementById('deadlineNotifBtn');
   if (deadlineNotifBtn) {
