@@ -6617,121 +6617,123 @@ function renderFullProspekKanban() {
         });
     }
     
-// Render kolom DIHUBUNGI
-const dihubungiContainer = document.getElementById('fullProspekDihubungiList');
-if (dihubungiContainer) {
-    dihubungiContainer.innerHTML = lists.prospekDihubungi.map(item => {
-        const isOverdue = item.deadline && item.deadline < today;
-        const isToday = item.deadline === today;
-        let deadlineClass = '';
-        if (isOverdue) deadlineClass = 'deadline-overdue';
-        else if (isToday) deadlineClass = 'deadline-today';
-        const isChecked = selectedFullProspekIds.get(item.id) === true;
-        const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px;" ${isChecked ? 'checked' : ''}>` : '';
-        return `<div class="card-item ${deadlineClass}" data-id="${item.id}">
-                    <div style="display: flex; align-items: center;">
-                        ${checkboxHtml}
-                        <div style="flex: 1; cursor: pointer;" class="card-click-area">
-                            <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                            <div class="card-phone">${escapeHtml(item.hp)}<span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
-                            <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+    // Render kolom DIHUBUNGI
+    const dihubungiContainer = document.getElementById('fullProspekDihubungiList');
+    if (dihubungiContainer) {
+        dihubungiContainer.innerHTML = lists.prospekDihubungi.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            const isChecked = selectedFullProspekIds.get(item.id) === true;
+            const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px;" ${isChecked ? 'checked' : ''}>` : '';
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}">
+                        <div style="display: flex; align-items: center;">
+                            ${checkboxHtml}
+                            <div style="flex: 1; cursor: pointer;" class="card-click-area">
+                                <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                                <div class="card-phone">${escapeHtml(item.hp)}<span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                                <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                            </div>
                         </div>
-                    </div>
-                </div>`;
-    }).join('');
-    
-    if (isOwner) {
-        document.querySelectorAll('#fullProspekDihubungiList .full-item-checkbox').forEach(cb => {
-            cb.onchange = (e) => handleFullProspekCheckboxChange(e);
+                    </div>`;
+        }).join('');
+        
+        if (isOwner) {
+            document.querySelectorAll('#fullProspekDihubungiList .full-item-checkbox').forEach(cb => {
+                cb.onchange = (e) => handleFullProspekCheckboxChange(e);
+            });
+        }
+        
+        document.querySelectorAll('#fullProspekDihubungiList .card-click-area').forEach(area => {
+            area.onclick = (e) => {
+                e.stopPropagation();
+                const card = area.closest('.card-item');
+                if (card) openDetailProspek(card.dataset.id);
+            };
         });
     }
     
-    document.querySelectorAll('#fullProspekDihubungiList .card-click-area').forEach(area => {
-        area.onclick = (e) => {
-            e.stopPropagation();
-            const card = area.closest('.card-item');
-            if (card) openDetailProspek(card.dataset.id);
-        };
-    });
-}
-
-// Render kolom NEGOSIASI
-const negosiasiContainer = document.getElementById('fullProspekNegosiasiList');
-if (negosiasiContainer) {
-    negosiasiContainer.innerHTML = lists.prospekNegosiasi.map(item => {
-        const isOverdue = item.deadline && item.deadline < today;
-        const isToday = item.deadline === today;
-        let deadlineClass = '';
-        if (isOverdue) deadlineClass = 'deadline-overdue';
-        else if (isToday) deadlineClass = 'deadline-today';
-        const isChecked = selectedFullProspekIds.get(item.id) === true;
-        const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px;" ${isChecked ? 'checked' : ''}>` : '';
-        return `<div class="card-item ${deadlineClass}" data-id="${item.id}">
-                    <div style="display: flex; align-items: center;">
-                        ${checkboxHtml}
-                        <div style="flex: 1; cursor: pointer;" class="card-click-area">
-                            <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                            <div class="card-phone">${escapeHtml(item.hp)}<span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
-                            <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+    // Render kolom NEGOSIASI
+    const negosiasiContainer = document.getElementById('fullProspekNegosiasiList');
+    if (negosiasiContainer) {
+        negosiasiContainer.innerHTML = lists.prospekNegosiasi.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            const isChecked = selectedFullProspekIds.get(item.id) === true;
+            const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px;" ${isChecked ? 'checked' : ''}>` : '';
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}">
+                        <div style="display: flex; align-items: center;">
+                            ${checkboxHtml}
+                            <div style="flex: 1; cursor: pointer;" class="card-click-area">
+                                <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                                <div class="card-phone">${escapeHtml(item.hp)}<span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                                <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                            </div>
                         </div>
-                    </div>
-                </div>`;
-    }).join('');
-    
-    if (isOwner) {
-        document.querySelectorAll('#fullProspekNegosiasiList .full-item-checkbox').forEach(cb => {
-            cb.onchange = (e) => handleFullProspekCheckboxChange(e);
+                    </div>`;
+        }).join('');
+        
+        if (isOwner) {
+            document.querySelectorAll('#fullProspekNegosiasiList .full-item-checkbox').forEach(cb => {
+                cb.onchange = (e) => handleFullProspekCheckboxChange(e);
+            });
+        }
+        
+        document.querySelectorAll('#fullProspekNegosiasiList .card-click-area').forEach(area => {
+            area.onclick = (e) => {
+                e.stopPropagation();
+                const card = area.closest('.card-item');
+                if (card) openDetailProspek(card.dataset.id);
+            };
         });
     }
     
-    document.querySelectorAll('#fullProspekNegosiasiList .card-click-area').forEach(area => {
-        area.onclick = (e) => {
-            e.stopPropagation();
-            const card = area.closest('.card-item');
-            if (card) openDetailProspek(card.dataset.id);
-        };
-    });
-}
-
-// Render kolom TERTARIK
-const tertarikContainer = document.getElementById('fullProspekTertarikList');
-if (tertarikContainer) {
-    tertarikContainer.innerHTML = lists.prospekTertarik.map(item => {
-        const isOverdue = item.deadline && item.deadline < today;
-        const isToday = item.deadline === today;
-        let deadlineClass = '';
-        if (isOverdue) deadlineClass = 'deadline-overdue';
-        else if (isToday) deadlineClass = 'deadline-today';
-        const isChecked = selectedFullProspekIds.get(item.id) === true;
-        const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px;" ${isChecked ? 'checked' : ''}>` : '';
-        return `<div class="card-item ${deadlineClass}" data-id="${item.id}">
-                    <div style="display: flex; align-items: center;">
-                        ${checkboxHtml}
-                        <div style="flex: 1; cursor: pointer;" class="card-click-area">
-                            <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
-                            <div class="card-phone">${escapeHtml(item.hp)}<span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
-                            <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+    // Render kolom TERTARIK
+    const tertarikContainer = document.getElementById('fullProspekTertarikList');
+    if (tertarikContainer) {
+        tertarikContainer.innerHTML = lists.prospekTertarik.map(item => {
+            const isOverdue = item.deadline && item.deadline < today;
+            const isToday = item.deadline === today;
+            let deadlineClass = '';
+            if (isOverdue) deadlineClass = 'deadline-overdue';
+            else if (isToday) deadlineClass = 'deadline-today';
+            const isChecked = selectedFullProspekIds.get(item.id) === true;
+            const checkboxHtml = isOwner ? `<input type="checkbox" class="full-item-checkbox" data-id="${item.id}" style="margin-right: 8px;" ${isChecked ? 'checked' : ''}>` : '';
+            return `<div class="card-item ${deadlineClass}" data-id="${item.id}">
+                        <div style="display: flex; align-items: center;">
+                            ${checkboxHtml}
+                            <div style="flex: 1; cursor: pointer;" class="card-click-area">
+                                <div class="card-name" title="${escapeHtml(item.nama)}">${escapeHtml(item.nama)}</div>
+                                <div class="card-phone">${escapeHtml(item.hp)}<span class="whatsapp-icon" onclick="event.stopPropagation(); openWAById('${item.id}')">💬</span></div>
+                                <div class="card-deadline">📅 ${item.deadline || '-'}</div>
+                            </div>
                         </div>
-                    </div>
-                </div>`;
-    }).join('');
-    
-    if (isOwner) {
-        document.querySelectorAll('#fullProspekTertarikList .full-item-checkbox').forEach(cb => {
-            cb.onchange = (e) => handleFullProspekCheckboxChange(e);
+                    </div>`;
+        }).join('');
+        
+        if (isOwner) {
+            document.querySelectorAll('#fullProspekTertarikList .full-item-checkbox').forEach(cb => {
+                cb.onchange = (e) => handleFullProspekCheckboxChange(e);
+            });
+        }
+        
+        document.querySelectorAll('#fullProspekTertarikList .card-click-area').forEach(area => {
+            area.onclick = (e) => {
+                e.stopPropagation();
+                const card = area.closest('.card-item');
+                if (card) openDetailProspek(card.dataset.id);
+            };
         });
     }
     
-    document.querySelectorAll('#fullProspekTertarikList .card-click-area').forEach(area => {
-        area.onclick = (e) => {
-            e.stopPropagation();
-            const card = area.closest('.card-item');
-            if (card) openDetailProspek(card.dataset.id);
-        };
-    });
-  }
-}
+} // <-- INI TUTUP FUNGSI renderFullProspekKanban - HARUS ADA
 
+// ========== FUNGSI HANDLER FULL PROSPEK ==========
 function handleFullProspekCheckboxChange(e) {
     e.stopPropagation();
     const id = e.target.dataset.id;
@@ -6754,7 +6756,7 @@ function handleFullProspekCheckboxChange(e) {
 }
 
 function updateSelectAllFullProspekButton() {
-    const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox');
+    const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox, #fullProspekDihubungiList .full-item-checkbox, #fullProspekNegosiasiList .full-item-checkbox, #fullProspekTertarikList .full-item-checkbox');
     const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
     const btn = document.getElementById('selectAllFullProspek');
     if (btn) {
@@ -6765,8 +6767,13 @@ function updateSelectAllFullProspekButton() {
 }
 
 function toggleSelectAllFullProspek() {
-    const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox');
-    const allChecked = cards.length > 0 && Array.from(cards).every(cb => cb.checked);
+    if (currentUserRole !== 'owner') {
+        showNotifTop('⚠️ Hanya Owner yang dapat menggunakan fitur ini!', true);
+        return;
+    }
+    const cards = document.querySelectorAll('#fullProspekBaruList .full-item-checkbox, #fullProspekDihubungiList .full-item-checkbox, #fullProspekNegosiasiList .full-item-checkbox, #fullProspekTertarikList .full-item-checkbox');
+    if (cards.length === 0) return;
+    const allChecked = Array.from(cards).every(cb => cb.checked);
     cards.forEach(cb => {
         cb.checked = !allChecked;
         const event = new Event('change', { bubbles: true });
@@ -6798,6 +6805,7 @@ async function deleteSelectedFullProspek() {
             deleted++;
             const percent = Math.floor((deleted / selectedIds.length) * 100);
             progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
+            await delay(100);
         } catch (e) {
             console.error(`Gagal hapus ${id}:`, e);
         }
