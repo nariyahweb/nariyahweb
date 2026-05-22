@@ -6489,6 +6489,7 @@ if (tertarikContainer) {
             if (card) openDetailProspek(card.dataset.id);
         };
     });
+  }
 }
 
 function handleFullProspekCheckboxChange(e) {
