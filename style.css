@@ -4674,3 +4674,75 @@ body.dark-mode .produk-item:hover {
 body.dark-mode .produk-item h4 {
     color: #f1f5f9 !important;
 }
+
+/* ========== DB TRANSAKSI STYLES ========== */
+.db-item-agent {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    background: #fff !important;
+    transition: all 0.2s ease !important;
+}
+
+.db-item-agent:hover {
+    background: #f9fafb !important;
+    transform: translateX(4px) !important;
+}
+
+.db-item-agent-info {
+    flex: 1 !important;
+}
+
+.db-item-agent-info h4 {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+    color: #1f2937 !important;
+}
+
+.db-item-agent-info p {
+    font-size: 12px !important;
+    color: #6b7280 !important;
+    margin-bottom: 2px !important;
+}
+
+.db-item-agent-info small {
+    font-size: 10px !important;
+    color: #9ca3af !important;
+}
+
+.db-item-agent-actions {
+    display: flex !important;
+    gap: 6px !important;
+}
+
+.db-item-checkbox-transaksi {
+    width: 18px !important;
+    height: 18px !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+}
+
+/* Dark mode untuk DB Transaksi */
+body.dark-mode .db-item-agent {
+    background: #1e293b !important;
+    border-bottom-color: #334155 !important;
+}
+
+body.dark-mode .db-item-agent:hover {
+    background: #334155 !important;
+}
+
+body.dark-mode .db-item-agent-info h4 {
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .db-item-agent-info p {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode .db-item-agent-info small {
+    color: #64748b !important;
+}
