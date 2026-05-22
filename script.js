@@ -4031,18 +4031,13 @@ async function loadNumbers() {
         statusValues = Array.from(document.querySelectorAll('#prospekFilter input:checked')).map(cb => cb.value);
     } else if (sourceType === 'tidak_tertarik') {
         collection = 'db_tidak_tertarik';
-        statusField = null; // Tidak ada filter status
+        statusField = null;
     }
     
     if (!collection) {
         showNotifTop('⚠️ Sumber tidak valid!', true);
         return;
     }
-    
-    // Filter progres untuk customer
-    const filterProgresNaik = document.getElementById('filterProgresNaik')?.checked;
-    const filterProgresTurun = document.getElementById('filterProgresTurun')?.checked;
-    const filterProgresNormal = document.getElementById('filterProgresNormal')?.checked;
     
     if (sourceType !== 'custom' && statusValues.length === 0 && sourceType !== 'tidak_tertarik') {
         showNotifTop('⚠️ Pilih minimal satu status!', true);
@@ -4067,20 +4062,6 @@ async function loadNumbers() {
     for (const doc of snapshot.docs) {
         const data = doc.data();
         let hp = data.hp || '';
-        
-        // Filter berdasarkan progres (hanya untuk customer)
-        if (sourceType === 'customer' && (filterProgresNaik || filterProgresTurun || filterProgresNormal)) {
-            const progresData = data.progres_transaksi || { items: [] };
-            let lastProgres = null;
-            if (progresData.items && progresData.items.length > 0) {
-                lastProgres = progresData.items[progresData.items.length - 1];
-            }
-            const progresJenis = lastProgres?.jenis || 'normal';
-            
-            if (filterProgresNaik && progresJenis !== 'naik') continue;
-            if (filterProgresTurun && progresJenis !== 'turun') continue;
-            if (filterProgresNormal && progresJenis !== 'normal') continue;
-        }
         
         if (hp && hp !== '+62' && hp !== '62') {
             numbers.push({
@@ -4389,15 +4370,13 @@ async function loadUplineNumbers() {
     let statusField = 'status';
     let statusValues = [];
     
-    // Tentukan collection berdasarkan sumber
     if (sourceType === 'transaksi') {
         collection = 'db_transaksi';
-        statusField = null; // Tidak ada filter status
+        statusField = null;
     } else if (sourceType === 'customer') {
         collection = 'customers';
         statusValues = Array.from(document.querySelectorAll('#uplineCustomerFilter input:checked')).map(cb => cb.value);
     } else if (sourceType === 'custom') {
-        // Custom numbers akan ditangani terpisah
         const customNumbers = document.getElementById('uplineCustomNumbers')?.value || '';
         const numbers = customNumbers.split('\n').filter(n => n.trim());
         
@@ -4478,9 +4457,7 @@ async function loadUplineNumbers() {
         uplineMap.get(uplinePhone).agents.push({
             agent_id: data.agent_id || '-',
             nama: data.nama || '-',
-            hp: data.hp || '-',
-            progres_jenis: data.progres_jenis || '-',
-            progres_jumlah: data.progres_jumlah || 0
+            hp: data.hp || '-'
         });
     });
     
@@ -4506,13 +4483,13 @@ async function loadUplineNumbers() {
                     Upline: ${uplineDataList.length} | Total Agent: ${totalAgent} | Data tanpa upline: ${dataWithoutUpline}
                 </div>
                 ${uplineDataList.map(upline => `
-                    <div class="number-item upline-item" data-upline-phone="${upline.upline_phone}" style="border-bottom: 1px solid #e5e7eb; padding: 12px 0;">
+                    <div class="number-item upline-item" style="border-bottom: 1px solid #e5e7eb; padding: 12px 0;">
                         <div style="font-weight: 600; color: #8b5cf6;">👤 ${escapeHtml(upline.upline_name)}</div>
                         <div style="font-size: 11px; color: #6b7280;">📞 ${escapeHtml(upline.upline_phone)}</div>
                         <div style="font-size: 11px; margin-top: 6px; background: #f3f4f6; padding: 8px; border-radius: 8px;">
                             <strong>📋 Agent (${upline.agents.length}):</strong><br>
                             ${upline.agents.slice(0, 5).map(agent => 
-                                `🆔 ${escapeHtml(agent.agent_id)} - ${escapeHtml(agent.nama)}${agent.progres_jenis !== '-' ? ` (${agent.progres_jenis === 'naik' ? '📈' : '📉'} ${Math.abs(agent.progres_jumlah)})` : ''}`
+                                `🆔 ${escapeHtml(agent.agent_id)} - ${escapeHtml(agent.nama)}`
                             ).join('<br>')}
                             ${upline.agents.length > 5 ? `<br>... dan ${upline.agents.length - 5} agent lainnya` : ''}
                         </div>
@@ -4755,7 +4732,6 @@ async function loadUsersForSelect() {
 function initBroadcast() {
     if (!document.querySelector('input[name="sourceType"]')) return;
 
-    // Radio button change handler
     document.querySelectorAll('input[name="sourceType"]').forEach(radio => {
         radio.removeEventListener('change', handleSourceChange);
         radio.addEventListener('change', handleSourceChange);
@@ -4767,16 +4743,12 @@ function initBroadcast() {
         const customCard = document.getElementById('customNumbersCard');
         const prospekFilter = document.getElementById('prospekFilter');
         const customerFilter = document.getElementById('customerFilter');
-        const tidakTertarikFilter = document.getElementById('tidakTertarikFilter');
 
-        // Sembunyikan semua filter terlebih dahulu
         if (filterCard) filterCard.style.display = 'none';
         if (prospekFilter) prospekFilter.style.display = 'none';
         if (customerFilter) customerFilter.style.display = 'none';
-        if (tidakTertarikFilter) tidakTertarikFilter.style.display = 'none';
         if (customCard) customCard.style.display = 'none';
 
-        // Tampilkan filter sesuai pilihan
         if (value === 'custom') {
             if (customCard) customCard.style.display = 'block';
         } else if (value === 'customer') {
@@ -4786,41 +4758,20 @@ function initBroadcast() {
             if (filterCard) filterCard.style.display = 'block';
             if (prospekFilter) prospekFilter.style.display = 'flex';
         } else if (value === 'tidak_tertarik') {
-            if (tidakTertarikFilter) tidakTertarikFilter.style.display = 'flex';
+            if (filterCard) filterCard.style.display = 'block';
         }
         loadNumbers();
     }
 
-    // Filter checkboxes
     document.querySelectorAll('#customerFilter input, #prospekFilter input').forEach(cb => {
         cb.removeEventListener('change', loadNumbers);
         cb.addEventListener('change', loadNumbers);
     });
 
-    // Progres filters
-    const filterProgresNaik = document.getElementById('filterProgresNaik');
-    const filterProgresTurun = document.getElementById('filterProgresTurun');
-    const filterProgresNormal = document.getElementById('filterProgresNormal');
-    
-    if (filterProgresNaik) {
-        filterProgresNaik.removeEventListener('change', loadNumbers);
-        filterProgresNaik.addEventListener('change', loadNumbers);
-    }
-    if (filterProgresTurun) {
-        filterProgresTurun.removeEventListener('change', loadNumbers);
-        filterProgresTurun.addEventListener('change', loadNumbers);
-    }
-    if (filterProgresNormal) {
-        filterProgresNormal.removeEventListener('change', loadNumbers);
-        filterProgresNormal.addEventListener('change', loadNumbers);
-    }
-    
-    // Custom numbers input
     document.getElementById('customNumbers')?.addEventListener('input', loadNumbers);
     document.getElementById('refreshNumbersBtn')?.addEventListener('click', loadNumbers);
     document.getElementById('sendBroadcastBtn')?.addEventListener('click', sendBroadcast);
 
-    // Load initial numbers
     loadNumbers();
     initTemplateFeature();
 }
@@ -6291,7 +6242,6 @@ function setupImportExcel() {
 
 // ========== UPLINE BROADCAST FUNCTIONS ==========
 function initUplineBroadcast() {
-    // Event listener untuk radio button
     document.querySelectorAll('input[name="uplineSourceType"]').forEach(radio => {
         radio.addEventListener('change', function() {
             const value = this.value;
@@ -6299,12 +6249,10 @@ function initUplineBroadcast() {
             const customerFilter = document.getElementById('uplineCustomerFilter');
             const customCard = document.getElementById('uplineCustomCard');
             
-            // Sembunyikan semua
             if (transaksiFilter) transaksiFilter.style.display = 'none';
             if (customerFilter) customerFilter.style.display = 'none';
             if (customCard) customCard.style.display = 'none';
             
-            // Tampilkan sesuai pilihan
             if (value === 'transaksi') {
                 if (transaksiFilter) transaksiFilter.style.display = 'flex';
             } else if (value === 'customer') {
@@ -6316,6 +6264,17 @@ function initUplineBroadcast() {
             loadUplineNumbers();
         });
     });
+    
+    document.querySelectorAll('#uplineCustomerFilter input').forEach(cb => {
+        cb.addEventListener('change', () => loadUplineNumbers());
+    });
+    
+    document.getElementById('uplineCustomNumbers')?.addEventListener('input', loadUplineNumbers);
+    document.getElementById('refreshUplineBtn')?.addEventListener('click', loadUplineNumbers);
+    document.getElementById('sendUplineBroadcastBtn')?.addEventListener('click', sendUplineBroadcast);
+    
+    loadUplineNumbers();
+}
     
     // Event listener untuk checkbox filter customer
     document.querySelectorAll('#uplineCustomerFilter input').forEach(cb => {
