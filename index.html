@@ -48,11 +48,11 @@
                 <div class="menu-divider"></div>
                 <div class="menu-label">DATABASE</div>
                 <div class="menu-item" data-page="dbAgent"><span class="icon">📁</span><span>Database Agent</span></div>
+                <div class="menu-item" data-page="dbTransaksi"><span class="icon">📊</span><span>DB Transaksi</span></div>
                 <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
                 <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
                 <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📁</span><span>DB Nomor Salah</span></div>
                 <div class="menu-item" data-page="dbCommitment"><span class="icon">📁</span><span>DB Commitment</span></div>
-                <div class="menu-item" data-page="dbTransaksi"><span class="icon">📊</span><span>DB Transaksi</span></div>
                 <div class="menu-divider"></div>
                 <div class="menu-label">IMPORT DATA</div>
                 <div class="menu-item" data-page="import"><span class="icon">📜</span><span>Import Data</span></div>
@@ -93,101 +93,52 @@
                 <!-- DASHBOARD PAGE -->
                 <div id="dashboardPage" class="page-content">
                     <div style="margin-bottom: 16px;">
-    <h3 style="color: #1f2937; font-size: 16px;">📈 Progres Followup Agent</h3>
-</div>
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-info">
-            <h4>Total Data</h4>
-            <div class="value" id="totalData">0</div>
-            <small>Semua Data</small>
-        </div>
-        <div class="stat-icon bg-purple">👥</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-info">
-            <h4>Closing</h4>
-            <div class="value" id="closingTotal">0</div>
-            <small>Data Closing</small>
-        </div>
-        <div class="stat-icon bg-green">✔</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-info">
-            <h4>Rate Closing</h4>
-            <div class="value" id="rateClosing">0%</div>
-            <small>Dari Total Data</small>
-        </div>
-        <div class="stat-icon bg-blue">📊</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-info">
-            <h4>Prospek Aktif</h4>
-            <div class="value" id="activeProspek">0</div>
-            <small>Dalam Proses</small>
-        </div>
-        <div class="stat-icon bg-orange">👤</div>
-    </div>
-</div>
+                        <h3 style="color: #1f2937; font-size: 16px;">📈 Progres Followup Agent</h3>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-info"><h4>Total Data</h4><div class="value" id="totalData">0</div><small>Semua Data</small></div><div class="stat-icon bg-purple">👥</div></div>
+                        <div class="stat-card"><div class="stat-info"><h4>Closing</h4><div class="value" id="closingTotal">0</div><small>Data Closing</small></div><div class="stat-icon bg-green">✔</div></div>
+                        <div class="stat-card"><div class="stat-info"><h4>Rate Closing</h4><div class="value" id="rateClosing">0%</div><small>Dari Total Data</small></div><div class="stat-icon bg-blue">📊</div></div>
+                        <div class="stat-card"><div class="stat-info"><h4>Prospek Aktif</h4><div class="value" id="activeProspek">0</div><small>Dalam Proses</small></div><div class="stat-icon bg-orange">👤</div></div>
+                    </div>
 
-                                        <!-- TARGET & KPI SECTION -->
-<div class="target-kpi-section" style="margin-bottom: 24px;">
-    <div class="target-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-    <h3 style="color: #1f2937; font-size: 16px;">🎯 Target & KPI Prospek Agent</h3>
-    <button id="manageTargetBtn" class="add-btn" style="background: #8b5cf6;">⚙️ Kelola Target</button>
-</div>
-    <div class="target-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
-    <!-- 1. Target Agent -->
-    <div class="target-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 16px; color: white;">
-        <div style="font-size: 12px; opacity: 0.9;">👤 Target Agent</div>
-        <div style="font-size: 28px; font-weight: 700;" id="targetAgentValue">0</div>
-        <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetAgentReached">0</span></div>
-        <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-            <div id="targetAgentProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-        </div>
-    </div>
-
-    <!-- 2. Target Koordinator -->
-    <div class="target-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 16px; padding: 16px; color: white;">
-        <div style="font-size: 12px; opacity: 0.9;">👥 Target Koordinator</div>
-        <div style="font-size: 28px; font-weight: 700;" id="targetKoorValue">0</div>
-        <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetKoorReached">0</span></div>
-        <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-            <div id="targetKoorProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-        </div>
-    </div>
-
-    <!-- 3. Target CA -->
-    <div class="target-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 16px; padding: 16px; color: white;">
-        <div style="font-size: 12px; opacity: 0.9;">🏦 Target CA</div>
-        <div style="font-size: 28px; font-weight: 700;" id="targetCAValue">0</div>
-        <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetCAReached">0</span></div>
-        <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-            <div id="targetCAProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-        </div>
-    </div>
-
-    <!-- 4. Target Transaksi - TAMBAHKAN ID -->
-<div class="target-card" id="targetTransaksiCard" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 16px; padding: 16px; color: white; cursor: pointer;">
-    <div style="font-size: 12px; opacity: 0.9;">📊 Target Transaksi/Bulan</div>
-    <div style="font-size: 28px; font-weight: 700;" id="targetTransaksiValue">0</div>
-    <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetTransaksiReached">0</span></div>
-    <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;">
-        <div id="targetTransaksiProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div>
-    </div>
-</div>
-</div>
-    <div class="chart-target-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div class="chart-card" id="targetChartCard" style="padding: 16px;">
-            <h3>📈 Pencapaian Target</h3>
-            <canvas id="targetChart" style="max-height: 250px;"></canvas>
-        </div>
-        <div class="chart-card" id="trendChartCard" style="padding: 16px;">
-            <h3>📊 Trend Pencapaian per Bulan</h3>
-            <canvas id="trendChart" style="max-height: 250px;"></canvas>
-        </div>
-    </div>
-</div>
+                    <!-- TARGET & KPI SECTION -->
+                    <div class="target-kpi-section" style="margin-bottom: 24px;">
+                        <div class="target-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                            <h3 style="color: #1f2937; font-size: 16px;">🎯 Target & KPI Prospek Agent</h3>
+                            <button id="manageTargetBtn" class="add-btn" style="background: #8b5cf6;">⚙️ Kelola Target</button>
+                        </div>
+                        <div class="target-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px;">
+                            <div class="target-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 16px; color: white;">
+                                <div style="font-size: 12px; opacity: 0.9;">👤 Target Agent</div>
+                                <div style="font-size: 28px; font-weight: 700;" id="targetAgentValue">0</div>
+                                <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetAgentReached">0</span></div>
+                                <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;"><div id="targetAgentProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div></div>
+                            </div>
+                            <div class="target-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 16px; padding: 16px; color: white;">
+                                <div style="font-size: 12px; opacity: 0.9;">👥 Target Koordinator</div>
+                                <div style="font-size: 28px; font-weight: 700;" id="targetKoorValue">0</div>
+                                <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetKoorReached">0</span></div>
+                                <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;"><div id="targetKoorProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div></div>
+                            </div>
+                            <div class="target-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 16px; padding: 16px; color: white;">
+                                <div style="font-size: 12px; opacity: 0.9;">🏦 Target CA</div>
+                                <div style="font-size: 28px; font-weight: 700;" id="targetCAValue">0</div>
+                                <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetCAReached">0</span></div>
+                                <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;"><div id="targetCAProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div></div>
+                            </div>
+                            <div class="target-card" id="targetTransaksiCard" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); border-radius: 16px; padding: 16px; color: white; cursor: pointer;">
+                                <div style="font-size: 12px; opacity: 0.9;">📊 Target Transaksi/Bulan</div>
+                                <div style="font-size: 28px; font-weight: 700;" id="targetTransaksiValue">0</div>
+                                <div style="font-size: 11px; opacity: 0.8;">Tercapai: <span id="targetTransaksiReached">0</span></div>
+                                <div class="progress-bar" style="background: rgba(255,255,255,0.3); border-radius: 10px; height: 6px; margin-top: 8px;"><div id="targetTransaksiProgress" style="background: white; height: 100%; border-radius: 10px; width: 0%;"></div></div>
+                            </div>
+                        </div>
+                        <div class="chart-target-wrapper" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="chart-card" id="targetChartCard" style="padding: 16px;"><h3>📈 Pencapaian Target</h3><canvas id="targetChart" style="max-height: 250px;"></canvas></div>
+                            <div class="chart-card" id="trendChartCard" style="padding: 16px;"><h3>📊 Trend Pencapaian per Bulan</h3><canvas id="trendChart" style="max-height: 250px;"></canvas></div>
+                        </div>
+                    </div>
 
                     <div class="charts-row">
                         <div class="chart-card"><h3>📊 Followup Agen</h3><canvas id="chartCustomer"></canvas></div>
@@ -206,7 +157,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="dashboard-column">
                             <div class="board-section">
                                 <div class="board-header"><h3>🎯 Prospek Agen</h3><button class="add-btn" id="addProspekBtn">+ Tambah Data</button></div>
@@ -225,13 +175,13 @@
                 <div id="followupFullPage" class="page-content" style="display:none">
                     <div class="fullpage-kanban">
                         <div class="fullpage-header">
-            <h2>📋 Data Followup Agen (Full Mode)</h2>
-            <div style="display: flex; gap: 10px;">
-                <button class="add-btn" id="addCustomerFullBtn">+ Tambah Data</button>
-                <button class="db-select-all" id="selectAllFullFollowup">✅ Pilih Semua</button>
-                <button class="db-delete-selected" id="deleteSelectedFullFollowup">🗑️ Hapus Terpilih</button>
-            </div>
-        </div>
+                            <h2>📋 Data Followup Agen (Full Mode)</h2>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="add-btn" id="addCustomerFullBtn">+ Tambah Data</button>
+                                <button class="db-select-all" id="selectAllFullFollowup">✅ Pilih Semua</button>
+                                <button class="db-delete-selected" id="deleteSelectedFullFollowup">🗑️ Hapus Terpilih</button>
+                            </div>
+                        </div>
                         <div class="kanban-board-full">
                             <div class="kanban-column" data-status="baru"><div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountBaru">0</span></div><div class="kanban-cards" id="fullBaruList"></div></div>
                             <div class="kanban-column" data-status="followup"><div class="column-header blue-header"><span>Follow Up</span><span class="count" id="fullCountFollowup">0</span></div><div class="kanban-cards" id="fullFollowupList"></div></div>
@@ -245,13 +195,13 @@
                 <div id="prospekFullPage" class="page-content" style="display:none">
                     <div class="fullpage-kanban">
                         <div class="fullpage-header">
-            <h2>🎯 Data Prospek Agen (Full Mode)</h2>
-            <div style="display: flex; gap: 10px;">
-                <button class="add-btn" id="addProspekFullBtn">+ Tambah Data</button>
-                <button class="db-select-all" id="selectAllFullProspek">✅ Pilih Semua</button>
-                <button class="db-delete-selected" id="deleteSelectedFullProspek">🗑️ Hapus Terpilih</button>
-            </div>
-        </div>
+                            <h2>🎯 Data Prospek Agen (Full Mode)</h2>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="add-btn" id="addProspekFullBtn">+ Tambah Data</button>
+                                <button class="db-select-all" id="selectAllFullProspek">✅ Pilih Semua</button>
+                                <button class="db-delete-selected" id="deleteSelectedFullProspek">🗑️ Hapus Terpilih</button>
+                            </div>
+                        </div>
                         <div class="kanban-board-full">
                             <div class="kanban-column" data-status="Baru"><div class="column-header purple-header"><span>Baru</span><span class="count" id="fullCountProspekBaru">0</span></div><div class="kanban-cards" id="fullProspekBaruList"></div></div>
                             <div class="kanban-column" data-status="Dihubungi"><div class="column-header blue-header"><span>Dihubungi</span><span class="count" id="fullCountDihubungi">0</span></div><div class="kanban-cards" id="fullProspekDihubungiList"></div></div>
@@ -303,1016 +253,215 @@
                     </div>
                 </div>
 
-<!-- DATABASE AGENT PAGE -->
-<div id="dbAgentPage" class="page-content" style="display:none">
-    <div class="db-section">
-        <div class="db-header">
-            <h3>👥 Database Agent</h3>
-            <div class="db-actions">
-                <button class="db-select-all" id="selectAllAgent">✅ Pilih Semua</button>
-                <button class="db-delete-selected" id="deleteSelectedAgent">🗑️ Hapus Terpilih</button>
-                <button id="loadAllAgentBtn" class="db-import-excel" style="background: #4f46e5;">🔄 Muat Semua Data</button>
-                <button class="db-import-excel" id="importAgentExcelBtn" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📥 Import Excel</button>
-                <button class="db-export-excel" id="exportAgentExcelBtn" style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📤 Export Excel</button>
-            </div>
-        </div>
-        
-        <!-- 🔍 FILTER DAN PENCARIAN -->
-        <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-                <div style="flex: 2; min-width: 200px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🔍 Cari</label>
-                    <input type="text" id="searchAgentInput" placeholder="Cari Nama, ID Agent, atau Nomor..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                <!-- DATABASE AGENT PAGE -->
+                <div id="dbAgentPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header">
+                            <h3>👥 Database Agent</h3>
+                            <div class="db-actions">
+                                <button class="db-select-all" id="selectAllAgent">✅ Pilih Semua</button>
+                                <button class="db-delete-selected" id="deleteSelectedAgent">🗑️ Hapus Terpilih</button>
+                                <button id="loadAllAgentBtn" class="db-import-excel" style="background: #4f46e5;">🔄 Muat Semua Data</button>
+                                <button class="db-import-excel" id="importAgentExcelBtn" style="background: #10b981;">📥 Import Excel</button>
+                                <button class="db-export-excel" id="exportAgentExcelBtn" style="background: #3b82f6;">📤 Export Excel</button>
+                            </div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                                <div style="flex: 2; min-width: 200px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🔍 Cari</label><input type="text" id="searchAgentInput" placeholder="Cari Nama, ID Agent, atau Nomor..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;"></div>
+                                <div style="flex: 1; min-width: 180px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">👤 Filter Upline</label><input type="text" id="filterUplineAgent" placeholder="Cari berdasarkan Upline..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;"></div>
+                                <div style="flex: 1; min-width: 150px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🆔 Filter CID</label><input type="text" id="filterCidAgent" placeholder="Cari berdasarkan CID..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;"></div>
+                                <div style="flex: 1; min-width: 150px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🏦 Filter Jenis Bank</label><select id="filterBankAgent" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;"><option value="">Semua Bank</option><option value="BCA">BCA</option><option value="Mandiri">Mandiri</option><option value="BRI">BRI</option><option value="BNI">BNI</option><option value="CIMB Niaga">CIMB Niaga</option><option value="Danamon">Danamon</option><option value="Permata">Permata</option><option value="Maybank">Maybank</option><option value="OCBC NISP">OCBC NISP</option><option value="Bank Lain">Bank Lain</option></select></div>
+                                <div style="flex: 1; min-width: 120px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📅 Filter Tanggal</label><select id="filterDateAgent" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;"><option value="">Semua Tanggal</option><option value="today">Hari Ini</option><option value="week">7 Hari Terakhir</option><option value="month">30 Hari Terakhir</option></select></div>
+                                <div><button id="resetAgentFilterBtn" style="background: #f3f4f6; color: #374151; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px;">🔄 Reset Filter</button></div>
+                            </div>
+                            <div style="margin-top: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
+                                <label style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="filterHasHpAgent" style="width: 16px; height: 16px;"> Hanya yang memiliki nomor WA</label>
+                                <label style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="filterHasApkAgent" style="width: 16px; height: 16px;"> Hanya yang memiliki aplikasi</label>
+                            </div>
+                        </div>
+                        <div id="agentStats" style="margin-bottom: 12px; font-size: 12px; color: #6b7280;">Menampilkan <span id="agentFilteredCount">0</span> dari <span id="agentTotalCount">0</span> data</div>
+                        <div id="dbAgentList" class="db-list"></div>
+                    </div>
                 </div>
-                <div style="flex: 1; min-width: 180px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">👤 Filter Upline</label>
-                    <input type="text" id="filterUplineAgent" placeholder="Cari berdasarkan Upline..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🆔 Filter CID</label>
-                    <input type="text" id="filterCidAgent" placeholder="Cari berdasarkan CID..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🏦 Filter Jenis Bank</label>
-                    <select id="filterBankAgent" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-                        <option value="">Semua Bank</option>
-                        <option value="BCA">BCA</option>
-                        <option value="Mandiri">Mandiri</option>
-                        <option value="BRI">BRI</option>
-                        <option value="BNI">BNI</option>
-                        <option value="CIMB Niaga">CIMB Niaga</option>
-                        <option value="Danamon">Danamon</option>
-                        <option value="Permata">Permata</option>
-                        <option value="Maybank">Maybank</option>
-                        <option value="OCBC NISP">OCBC NISP</option>
-                        <option value="Bank Lain">Bank Lain</option>
-                    </select>
-                </div>
-                <div style="flex: 1; min-width: 120px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📅 Filter Tanggal</label>
-                    <select id="filterDateAgent" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-                        <option value="">Semua Tanggal</option>
-                        <option value="today">Hari Ini</option>
-                        <option value="week">7 Hari Terakhir</option>
-                        <option value="month">30 Hari Terakhir</option>
-                    </select>
-                </div>
-                <div>
-                    <button id="resetAgentFilterBtn" style="background: #f3f4f6; color: #374151; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px;">🔄 Reset Filter</button>
-                </div>
-            </div>
-            <div style="margin-top: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
-                <label style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px;">
-                    <input type="checkbox" id="filterHasHpAgent" style="width: 16px; height: 16px;"> Hanya yang memiliki nomor WA
-                </label>
-                <label style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px;">
-                    <input type="checkbox" id="filterHasApkAgent" style="width: 16px; height: 16px;"> Hanya yang memiliki aplikasi
-                </label>
-            </div>
-        </div>
-        
-        <div id="agentStats" style="margin-bottom: 12px; font-size: 12px; color: #6b7280;">
-            Menampilkan <span id="agentFilteredCount">0</span> dari <span id="agentTotalCount">0</span> data
-        </div>
-        
-        <div id="dbAgentList" class="db-list"></div>
-    </div>
-</div>
 
-<!-- DATABASE TRANSAKSI PAGE (TERPISAH, BUKAN DI DALAM DB AGENT) -->
-<div id="dbTransaksiPage" class="page-content" style="display:none">
-    <div class="db-section">
-        <div class="db-header">
-            <h3>📊 Database Transaksi</h3>
-            <div class="db-actions">
-                <button class="db-select-all" id="selectAllTransaksi">✅ Pilih Semua</button>
-                <button class="db-delete-selected" id="deleteSelectedTransaksi">🗑️ Hapus Terpilih</button>
-                <button class="db-move-followup" id="moveSelectedToFollowupBtn" style="background: #8b5cf6; color: white;">📋 Pindah ke Followup</button>
-                <button class="add-btn" id="viewTransaksiHistoryBtn" style="background: #10b981;">📋 Riwayat Transaksi Global</button>
-            </div>
-        </div>
-        
-        <!-- Filter dan Pencarian -->
-        <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-                <div style="flex: 2; min-width: 200px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🔍 Cari</label>
-                    <input type="text" id="searchTransaksiInput" placeholder="Cari Nama, ID Agent, atau Nomor..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                <!-- DATABASE TRANSAKSI PAGE (TERPISAH) -->
+                <div id="dbTransaksiPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header">
+                            <h3>📊 Database Transaksi</h3>
+                            <div class="db-actions">
+                                <button class="db-select-all" id="selectAllTransaksi">✅ Pilih Semua</button>
+                                <button class="db-delete-selected" id="deleteSelectedTransaksi">🗑️ Hapus Terpilih</button>
+                                <button class="db-move-followup" id="moveSelectedToFollowupBtn" style="background: #8b5cf6;">📋 Pindah ke Followup</button>
+                                <button class="add-btn" id="viewTransaksiHistoryBtn" style="background: #10b981;">📋 Riwayat Transaksi Global</button>
+                            </div>
+                        </div>
+                        <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                                <div style="flex: 2; min-width: 200px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🔍 Cari</label><input type="text" id="searchTransaksiInput" placeholder="Cari Nama, ID Agent, atau Nomor..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;"></div>
+                                <div style="flex: 1; min-width: 150px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📊 Filter Progres</label><select id="filterProgresTransaksi" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;"><option value="">Semua</option><option value="naik">📈 Naik</option><option value="turun">📉 Turun</option><option value="normal">⚖️ Normal</option></select></div>
+                                <div style="flex: 1; min-width: 150px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📌 Filter Status</label><select id="filterStatusTransaksi" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;"><option value="">Semua</option><option value="pending_import">⏳ Pending Import</option><option value="imported">✅ Sudah Dipindah</option></select></div>
+                                <div><button id="resetTransaksiFilterBtn" style="background: #f3f4f6; color: #374151; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer;">🔄 Reset Filter</button></div>
+                            </div>
+                        </div>
+                        <div id="transaksiStats" style="margin-bottom: 12px; font-size: 12px; color: #6b7280;">Menampilkan <span id="transaksiFilteredCount">0</span> dari <span id="transaksiTotalCount">0</span> data</div>
+                        <div id="dbTransaksiList" class="db-list"></div>
+                    </div>
                 </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📊 Filter Progres</label>
-                    <select id="filterProgresTransaksi" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-                        <option value="">Semua</option>
-                        <option value="naik">📈 Naik</option>
-                        <option value="turun">📉 Turun</option>
-                        <option value="normal">⚖️ Normal</option>
-                    </select>
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📌 Filter Status</label>
-                    <select id="filterStatusTransaksi" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-                        <option value="">Semua</option>
-                        <option value="pending_import">⏳ Pending Import</option>
-                        <option value="imported">✅ Sudah Dipindah</option>
-                    </select>
-                </div>
-                <div>
-                    <button id="resetTransaksiFilterBtn" style="background: #f3f4f6; color: #374151; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer;">🔄 Reset Filter</button>
-                </div>
-            </div>
-        </div>
-        
-        <div id="transaksiStats" style="margin-bottom: 12px; font-size: 12px; color: #6b7280;">
-            Menampilkan <span id="transaksiFilteredCount">0</span> dari <span id="transaksiTotalCount">0</span> data
-        </div>
-        
-        <div id="dbTransaksiList" class="db-list"></div>
-    </div>
-</div>
-        
-        <!-- 🔍 FILTER DAN PENCARIAN -->
-<div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
-    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-        <div style="flex: 2; min-width: 200px;">
-            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🔍 Cari</label>
-            <input type="text" id="searchAgentInput" placeholder="Cari Nama, ID Agent, atau Nomor..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-        </div>
-        <div style="flex: 1; min-width: 180px;">
-            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">👤 Filter Upline</label>
-            <input type="text" id="filterUplineAgent" placeholder="Cari berdasarkan Upline..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-        </div>
-        <div style="flex: 1; min-width: 150px;">
-            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🆔 Filter CID</label>
-            <input type="text" id="filterCidAgent" placeholder="Cari berdasarkan CID..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-        </div>
-        <div style="flex: 1; min-width: 150px;">
-            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🏦 Filter Jenis Bank</label>
-            <select id="filterBankAgent" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-                <option value="">Semua Bank</option>
-                <option value="BCA">BCA</option>
-                <option value="Mandiri">Mandiri</option>
-                <option value="BRI">BRI</option>
-                <option value="BNI">BNI</option>
-                <option value="CIMB Niaga">CIMB Niaga</option>
-                <option value="Danamon">Danamon</option>
-                <option value="Permata">Permata</option>
-                <option value="Maybank">Maybank</option>
-                <option value="OCBC NISP">OCBC NISP</option>
-                <option value="Bank Lain">Bank Lain</option>
-            </select>
-        </div>
-        <div style="flex: 1; min-width: 120px;">
-            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📅 Filter Tanggal</label>
-            <select id="filterDateAgent" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
-                <option value="">Semua Tanggal</option>
-                <option value="today">Hari Ini</option>
-                <option value="week">7 Hari Terakhir</option>
-                <option value="month">30 Hari Terakhir</option>
-            </select>
-        </div>
-        <div>
-            <button id="resetAgentFilterBtn" style="background: #f3f4f6; color: #374151; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px;">🔄 Reset Filter</button>
-        </div>
-    </div>
-    <div style="margin-top: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
-        <label style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px;">
-            <input type="checkbox" id="filterHasHpAgent" style="width: 16px; height: 16px;"> Hanya yang memiliki nomor WA
-        </label>
-        <label style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px;">
-            <input type="checkbox" id="filterHasApkAgent" style="width: 16px; height: 16px;"> Hanya yang memiliki aplikasi
-        </label>
-    </div>
-</div>
-        
-        <div id="agentStats" style="margin-bottom: 12px; font-size: 12px; color: #6b7280;">
-            Menampilkan <span id="agentFilteredCount">0</span> dari <span id="agentTotalCount">0</span> data
-        </div>
-        
-        <div id="dbAgentList" class="db-list"></div>
-    </div>
-</div>
-                <div id="dbClosingPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📁 Database Closing</h3><div class="db-actions"><button class="db-select-all" id="selectAllClosing">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedClosing">🗑️ Hapus Terpilih</button></div></div><div id="dbClosingList" class="db-list"></div></div></div>
-                <div id="dbTidakPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📁 Database Tidak Tertarik</h3><div class="db-actions"><button class="db-select-all" id="selectAllTidak">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedTidak">🗑️ Hapus Terpilih</button></div></div><div id="dbTidakList" class="db-list"></div></div></div>
-                <div id="dbNomorSalahPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>📵 Database Nomor Salah</h3><div class="db-actions"><button class="db-select-all" id="selectAllNomorSalah">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedNomorSalah">🗑️ Hapus Terpilih</button></div></div><div id="dbNomorSalahList" class="db-list"></div></div></div>
-                <div id="dbCommitmentPage" class="page-content" style="display:none"><div class="db-section"><div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions"><button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button></div></div><div id="dbCommitmentList" class="db-list"></div></div></div>
 
-               <!-- PRODUK PAGE -->
-<!-- PRODUK PAGE -->
-<div id="produkPage" class="page-content" style="display:none">
-    <div class="db-section">
-        <div class="db-header">
-            <h3>🏷️ Manajemen Produk</h3>
-            <div class="db-actions">
-                <button class="db-select-all" id="selectAllProduk">✅ Pilih Semua</button>
-                <button class="db-delete-selected" id="deleteSelectedProduk">🗑️ Hapus Terpilih</button>
-                <button class="add-btn" id="addProdukBtn">+ Tambah Produk</button>
-                <button class="add-btn" id="manageTarifAdminBtn" style="background: #8b5cf6;">🏷️ Kelola Admin per CID</button>
-                <button class="db-import-excel" id="importProdukExcelBtn" style="background: #10b981; color: white;">📥 Import Excel</button>
-                <button class="db-export-excel" id="exportProdukExcelBtn" style="background: #3b82f6; color: white;">📤 Export Excel</button>
-            </div>
-        </div>
-        <div style="margin-bottom: 16px;">
-            <input type="text" id="searchProdukInput" placeholder="🔍 Cari produk (nama, jenis)..." 
-                   style="width:100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px;">
-        </div>
-        <div id="produkList" class="db-list"></div>
-    </div>
-</div>
-                
+                <!-- DATABASE CLOSING PAGE -->
+                <div id="dbClosingPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header"><h3>📁 Database Closing</h3><div class="db-actions"><button class="db-select-all" id="selectAllClosing">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedClosing">🗑️ Hapus Terpilih</button></div></div>
+                        <div id="dbClosingList" class="db-list"></div>
+                    </div>
+                </div>
+
+                <!-- DATABASE TIDAK TERTARIK PAGE -->
+                <div id="dbTidakPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header"><h3>📁 Database Tidak Tertarik</h3><div class="db-actions"><button class="db-select-all" id="selectAllTidak">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedTidak">🗑️ Hapus Terpilih</button></div></div>
+                        <div id="dbTidakList" class="db-list"></div>
+                    </div>
+                </div>
+
+                <!-- DATABASE NOMOR SALAH PAGE -->
+                <div id="dbNomorSalahPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header"><h3>📵 Database Nomor Salah</h3><div class="db-actions"><button class="db-select-all" id="selectAllNomorSalah">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedNomorSalah">🗑️ Hapus Terpilih</button></div></div>
+                        <div id="dbNomorSalahList" class="db-list"></div>
+                    </div>
+                </div>
+
+                <!-- DATABASE COMMITMENT PAGE -->
+                <div id="dbCommitmentPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions"><button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button></div></div>
+                        <div id="dbCommitmentList" class="db-list"></div>
+                    </div>
+                </div>
+
+                <!-- PRODUK PAGE -->
+                <div id="produkPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header">
+                            <h3>🏷️ Manajemen Produk</h3>
+                            <div class="db-actions">
+                                <button class="db-select-all" id="selectAllProduk">✅ Pilih Semua</button>
+                                <button class="db-delete-selected" id="deleteSelectedProduk">🗑️ Hapus Terpilih</button>
+                                <button class="add-btn" id="addProdukBtn">+ Tambah Produk</button>
+                                <button class="add-btn" id="manageTarifAdminBtn" style="background: #8b5cf6;">🏷️ Kelola Admin per CID</button>
+                                <button class="db-import-excel" id="importProdukExcelBtn" style="background: #10b981;">📥 Import Excel</button>
+                                <button class="db-export-excel" id="exportProdukExcelBtn" style="background: #3b82f6;">📤 Export Excel</button>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 16px;"><input type="text" id="searchProdukInput" placeholder="🔍 Cari produk (nama, jenis)..." style="width:100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px;"></div>
+                        <div id="produkList" class="db-list"></div>
+                    </div>
+                </div>
+
                 <!-- REMINDER PAGE -->
-<div id="reminderPage" class="page-content" style="display:none">
-    <div class="db-section">
-        <div class="db-header">
-            <h3>⏰ Pengingat (Reminder)</h3>
-            <div class="db-actions">
-                <button class="add-btn" id="addReminderBtn">+ Tambah Pengingat</button>
-            </div>
-        </div>
-        <div id="reminderList" class="db-list">
-            <p style="text-align:center;padding:40px;color:#9ca3af;">⏰ Loading pengingat...</p>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL TAMBAH REMINDER -->
-<div class="modal" id="reminderModal">
-    <div class="modal-content">
-        <h3>⏰ Tambah Pengingat</h3>
-        <div class="modal-subtitle">Buat pengingat untuk tugas Anda</div>
-        <div style="padding: 0 20px;">
-            <div class="form-group">
-                <label>Judul Pengingat <span class="required">*</span></label>
-                <input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
-            <div class="form-group">
-                <label>Deskripsi</label>
-                <textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Tanggal & Waktu</label>
-                <input type="datetime-local" id="reminderDateTime" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveReminderBtn" class="btn-primary">💾 Simpan</button>
-            <button class="closeModalBtn btn-outline" data-modal="reminderModal">Batal</button>
-        </div>
-    </div>
-</div>
+                <div id="reminderPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header"><h3>⏰ Pengingat (Reminder)</h3><div class="db-actions"><button class="add-btn" id="addReminderBtn">+ Tambah Pengingat</button></div></div>
+                        <div id="reminderList" class="db-list"><p style="text-align:center;padding:40px;color:#9ca3af;">⏰ Loading pengingat...</p></div>
+                    </div>
+                </div>
 
                 <!-- PESAN PAGE -->
-<div id="pesanPage" class="page-content" style="display:none">
-    <div class="db-section">
-        <div class="db-header">
-            <h3>💬 Pesan Antar CS</h3>
-            <div class="db-actions">
-                <button class="add-btn" id="addPesanBtn">+ Kirim Pesan</button>
-            </div>
-        </div>
-        <div id="pesanList" class="db-list">
-            <p style="text-align:center;padding:40px;color:#9ca3af;">💬 Loading pesan...</p>
-        </div>
-    </div>
-</div>
+                <div id="pesanPage" class="page-content" style="display:none">
+                    <div class="db-section">
+                        <div class="db-header"><h3>💬 Pesan Antar CS</h3><div class="db-actions"><button class="add-btn" id="addPesanBtn">+ Kirim Pesan</button></div></div>
+                        <div id="pesanList" class="db-list"><p style="text-align:center;padding:40px;color:#9ca3af;">💬 Loading pesan...</p></div>
+                    </div>
+                </div>
 
                 <!-- BROADCAST PAGE -->
-<div id="broadcastPage" class="page-content" style="display:none">
-    <div class="broadcast-section">
-        <div class="broadcast-header">
-            <h3>📢 Broadcast WhatsApp</h3>
-            <p>Kirim pesan ke banyak nomor sekaligus</p>
-        </div>
-        <div class="broadcast-grid">
-            <!-- Pilih Sumber Nomor -->
-            <div class="broadcast-card">
-                <h4>📋 Pilih Sumber Nomor</h4>
-                <div class="radio-group">
-                    <label class="radio-label"><input type="radio" name="sourceType" value="customer" checked> <span>📞 Followup Agen</span></label>
-                    <label class="radio-label"><input type="radio" name="sourceType" value="prospek"> <span>🎯 Prospek Agen</span></label>
-                    <label class="radio-label"><input type="radio" name="sourceType" value="tidak_tertarik"> <span>📁 Database Tidak Tertarik</span></label>
-                    <label class="radio-label"><input type="radio" name="sourceType" value="custom"> <span>✏️ Custom Nomor</span></label>
-                </div>
-            </div>
-
-            <!-- Filter Status untuk Customer -->
-            <div class="broadcast-card" id="filterStatusCard">
-                <h4>🎯 Filter Status</h4>
-                <div class="filter-status-group" id="customerFilter">
-                    <label><input type="checkbox" value="baru"> Baru</label>
-                    <label><input type="checkbox" value="followup" checked> Follow Up</label>
-                    <label><input type="checkbox" value="pending"> Pending</label>
-                    <label><input type="checkbox" value="closing"> Closing</label>
-                </div>
-                <div class="filter-status-group" id="prospekFilter" style="display:none;">
-                    <label><input type="checkbox" value="Baru"> Baru</label>
-                    <label><input type="checkbox" value="Dihubungi" checked> Dihubungi</label>
-                    <label><input type="checkbox" value="Negosiasi"> Negosiasi</label>
-                    <label><input type="checkbox" value="Tertarik"> Tertarik</label>
-                </div>
-
-                <!-- Filter Progres Transaksi -->
-                <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #e5e7eb;">
-                    <label style="font-weight: 600; font-size: 12px; color: #4f46e5;">📊 Filter Progres Transaksi:</label>
-                    <div style="display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap;">
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" id="filterProgresNaik" value="naik" checked> 📈 Naik
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" id="filterProgresTurun" value="turun" checked> 📉 Turun
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px;">
-                            <input type="checkbox" id="filterProgresNormal" value="normal"> ⚖️ Normal
-                        </label>
+                <div id="broadcastPage" class="page-content" style="display:none">
+                    <div class="broadcast-section">
+                        <div class="broadcast-header"><h3>📢 Broadcast WhatsApp</h3><p>Kirim pesan ke banyak nomor sekaligus</p></div>
+                        <div class="broadcast-grid">
+                            <div class="broadcast-card"><h4>📋 Pilih Sumber Nomor</h4><div class="radio-group"><label class="radio-label"><input type="radio" name="sourceType" value="customer" checked> <span>📞 Followup Agen</span></label><label class="radio-label"><input type="radio" name="sourceType" value="prospek"> <span>🎯 Prospek Agen</span></label><label class="radio-label"><input type="radio" name="sourceType" value="tidak_tertarik"> <span>📁 Database Tidak Tertarik</span></label><label class="radio-label"><input type="radio" name="sourceType" value="custom"> <span>✏️ Custom Nomor</span></label></div></div>
+                            <div class="broadcast-card" id="filterStatusCard"><h4>🎯 Filter Status</h4><div class="filter-status-group" id="customerFilter"><label><input type="checkbox" value="baru"> Baru</label><label><input type="checkbox" value="followup" checked> Follow Up</label><label><input type="checkbox" value="pending"> Pending</label><label><input type="checkbox" value="closing"> Closing</label></div><div class="filter-status-group" id="prospekFilter" style="display:none;"><label><input type="checkbox" value="Baru"> Baru</label><label><input type="checkbox" value="Dihubungi" checked> Dihubungi</label><label><input type="checkbox" value="Negosiasi"> Negosiasi</label><label><input type="checkbox" value="Tertarik"> Tertarik</label></div><div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #e5e7eb;"><label style="font-weight: 600; font-size: 12px; color: #4f46e5;">📊 Filter Progres Transaksi:</label><div style="display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap;"><label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="filterProgresNaik" value="naik" checked> 📈 Naik</label><label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="filterProgresTurun" value="turun" checked> 📉 Turun</label><label style="display: flex; align-items: center; gap: 5px;"><input type="checkbox" id="filterProgresNormal" value="normal"> ⚖️ Normal</label></div><small style="color: #9ca3af; font-size: 10px;">💡 Hanya menampilkan data dengan progres yang dipilih</small></div></div>
+                            <div class="broadcast-card" id="customNumbersCard" style="display:none;"><h4>✏️ Daftar Nomor</h4><textarea id="customNumbers" rows="4" placeholder="Contoh:&#10;6281234567890&#10;6281234567891"></textarea><small>Format: 628xxxxx (tanpa +62 atau 0)</small></div>
+                            <div class="broadcast-card"><h4>📱 Nomor Terpilih (<span id="numberCount">0</span>)</h4><div class="selected-numbers" id="numbersList"><p style="color:#9ca3af;">Pilih sumber nomor terlebih dahulu</p></div><button class="btn-refresh" id="refreshNumbersBtn">🔄 Refresh Nomor</button></div>
+                            <div class="broadcast-card"><h4>✏️ Pesan Broadcast</h4><textarea id="broadcastMessage" rows="5" placeholder="Tulis pesan...&#10;Gunakan {nama} untuk personalisasi"></textarea><div class="variable-hint"><small>Gunakan <code>{nama}</code> untuk mengganti dengan nama customer</small></div></div>
+                            <div class="broadcast-card"><h4>💾 Simpan Template Pesan</h4><input type="text" id="templateName" placeholder="Nama template (contoh: Promo Akhir Tahun)" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; margin-bottom:10px;"><button id="saveTemplateBtn" class="btn-primary" style="width:100%; padding:10px;">💾 Simpan sebagai Template</button><div style="margin-top: 16px;"><h5 style="font-size: 12px; margin-bottom: 8px; color: #374151;">📋 Template Tersimpan:</h5><div id="templateList" style="max-height: 250px; overflow-y: auto;"></div></div></div>
+                            <div class="broadcast-card"><h4>📤 Kirim Broadcast</h4><div class="send-options"><label><input type="checkbox" id="sendOneByOne" checked> Kirim satu per satu (manual)</label></div><button class="broadcast-btn" id="sendBroadcastBtn">📢 Kirim Broadcast</button><div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div></div>
+                        </div>
                     </div>
-                    <small style="color: #9ca3af; font-size: 10px;">💡 Hanya menampilkan data dengan progres yang dipilih</small>
                 </div>
-            </div>
 
-            <!-- Custom Numbers -->
-            <div class="broadcast-card" id="customNumbersCard" style="display:none;">
-                <h4>✏️ Daftar Nomor</h4>
-                <textarea id="customNumbers" rows="4" placeholder="Contoh:&#10;6281234567890&#10;6281234567891"></textarea>
-                <small>Format: 628xxxxx (tanpa +62 atau 0)</small>
-            </div>
-
-            <!-- Nomor Terpilih -->
-            <div class="broadcast-card">
-                <h4>📱 Nomor Terpilih (<span id="numberCount">0</span>)</h4>
-                <div class="selected-numbers" id="numbersList"><p style="color:#9ca3af;">Pilih sumber nomor terlebih dahulu</p></div>
-                <button class="btn-refresh" id="refreshNumbersBtn">🔄 Refresh Nomor</button>
-            </div>
-
-            <!-- Pesan Broadcast -->
-            <div class="broadcast-card">
-                <h4>✏️ Pesan Broadcast</h4>
-                <textarea id="broadcastMessage" rows="5" placeholder="Tulis pesan...&#10;Gunakan {nama} untuk personalisasi"></textarea>
-                <div class="variable-hint"><small>Gunakan <code>{nama}</code> untuk mengganti dengan nama customer</small></div>
-            </div>
-
-            <!-- Simpan Template -->
-            <div class="broadcast-card">
-                <h4>💾 Simpan Template Pesan</h4>
-                <input type="text" id="templateName" placeholder="Nama template (contoh: Promo Akhir Tahun)" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; margin-bottom:10px;">
-                <button id="saveTemplateBtn" class="btn-primary" style="width:100%; padding:10px;">💾 Simpan sebagai Template</button>
-                <div style="margin-top: 16px;">
-                    <h5 style="font-size: 12px; margin-bottom: 8px; color: #374151;">📋 Template Tersimpan:</h5>
-                    <div id="templateList" style="max-height: 250px; overflow-y: auto;"></div>
+                <!-- BROADCAST UPLINE PAGE -->
+                <div id="broadcastUplinePage" class="page-content" style="display:none">
+                    <div class="broadcast-section">
+                        <div class="broadcast-header"><h3>⭐ Broadcast ke Upline</h3><p>Kirim pesan rangkuman ke semua Upline dengan data agent di bawahnya</p></div>
+                        <div class="broadcast-grid">
+                            <div class="broadcast-card"><h4>📋 Pilih Sumber Data</h4><div class="radio-group"><label class="radio-label"><input type="radio" name="uplineSourceType" value="transaksi" checked> <span>📁 Database Transaksi</span></label><label class="radio-label"><input type="radio" name="uplineSourceType" value="customer"> <span>📞 Followup Agen</span></label><label class="radio-label"><input type="radio" name="uplineSourceType" value="custom"> <span>✏️ Custom Nomor</span></label></div></div>
+                            <div class="broadcast-card" id="uplineCustomerFilter" style="display:none;"><h4>🎯 Filter Status</h4><div class="filter-status-group"><label><input type="checkbox" value="baru"> Baru</label><label><input type="checkbox" value="followup" checked> Follow Up</label><label><input type="checkbox" value="pending"> Pending</label><label><input type="checkbox" value="closing"> Closing</label></div></div>
+                            <div class="broadcast-card" id="uplineTransaksiFilter" style="display:flex;"><h4>📊 Database Transaksi</h4><p style="font-size: 12px; color: #6b7280;">Semua data transaksi akan dikelompokkan berdasarkan Upline</p><small style="color: #9ca3af;">💡 Data akan otomatis dikelompokkan berdasarkan upline_phone dan upline_name</small></div>
+                            <div class="broadcast-card" id="uplineCustomCard" style="display:none;"><h4>✏️ Daftar Nomor Upline</h4><textarea id="uplineCustomNumbers" rows="4" placeholder="Contoh:&#10;6281234567890&#10;6281234567891"></textarea><small>Masukkan nomor WhatsApp upline (satu nomor per baris)</small></div>
+                            <div class="broadcast-card"><h4>👥 Daftar Upline (<span id="uplineCount">0</span>)</h4><div class="selected-numbers" id="uplineNumbersList" style="max-height: 300px; overflow-y: auto;"><p style="color:#9ca3af;">Pilih sumber dan filter, lalu klik Refresh</p></div><button class="btn-refresh" id="refreshUplineBtn" style="margin-top: 12px;">🔄 Refresh Data Upline</button></div>
+                            <div class="broadcast-card"><h4>✏️ Pesan Broadcast ke Upline</h4><textarea id="uplineBroadcastMessage" rows="6" placeholder="Tulis pesan...&#10;&#10;Variabel yang tersedia:&#10;{nama_upline} - Nama Upline&#10;{total_agent} - Jumlah Agent di bawah Upline&#10;{tabel_agent} - Tabel lengkap data Agent"></textarea><div class="variable-hint" style="margin-top: 8px;"><small>💡 Gunakan variabel: <code>{nama_upline}</code>, <code>{total_agent}</code>, <code>{tabel_agent}</code></small></div></div>
+                            <div class="broadcast-card"><h4>📤 Kirim Broadcast ke Upline</h4><div class="send-options"><label><input type="checkbox" id="uplineSendOneByOne" checked> Kirim satu per satu (manual)</label></div><button class="broadcast-btn" id="sendUplineBroadcastBtn" style="background: #8b5cf6;">⭐ Kirim ke Semua Upline</button><div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Kirim Broadcast -->
-            <div class="broadcast-card">
-                <h4>📤 Kirim Broadcast</h4>
-                <div class="send-options">
-                    <label><input type="checkbox" id="sendOneByOne" checked> Kirim satu per satu (manual)</label>
-                </div>
-                <button class="broadcast-btn" id="sendBroadcastBtn">📢 Kirim Broadcast</button>
-                <div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div>
+                <!-- MODALS -->
+                <div class="modal" id="infoModal"><div class="modal-content" style="max-width: 500px;"><h3>📋 Panduan Followup & Prospek</h3><div class="modal-subtitle">Aturan penambahan deadline berdasarkan respon</div><div style="padding: 0 20px 20px 20px;"><div style="margin-bottom: 20px;"><h4 style="color: #10b981;">✅ Respon Bagus (Aktif/Diam tapi respon)</h4><p style="font-size: 13px; color: #374151;">+3 hari untuk deadline berikutnya. Dapat terus diperpanjang tanpa batas selama status belum berubah menjadi "Pasif/Tidak Aktif".</p></div><div style="margin-bottom: 20px;"><h4 style="color: #f59e0b;">⚠️ Respon Pasif (Kurang respon/membutuhkan followup berulang)</h4><p style="font-size: 13px; color: #374151;">+5 hari untuk deadline berikutnya. Maksimal 5 kali followup pasif sebelum data dipindahkan ke database.</p></div><div style="margin-bottom: 20px;"><h4 style="color: #ef4444;">❌ Respon Jelek (Tidak tertarik/komplain)</h4><p style="font-size: 13px; color: #374151;">+1 Minggu (7 hari) untuk deadline berikutnya. Maksimal 3 kali followup jelek sebelum data dipindahkan ke database.</p></div><div style="background: #eef2ff; padding: 12px; border-radius: 12px; margin-top: 12px;"><p style="font-size: 12px; color: #4f46e5; margin: 0;">💡 <strong>Catatan:</strong> Setiap perubahan status atau penyimpanan data akan secara otomatis menambah deadline sesuai aturan di atas. Anda dapat mengedit deadline manual kapan saja dengan mengklik icon ✏️ di popup detail.</p></div></div><div class="modal-buttons"><button id="infoModalClose" class="btn-primary">Tutup</button></div></div></div>
+
+                <div class="modal" id="editDeadlineModal"><div class="modal-content" style="max-width: 400px;"><h3>📅 Edit Deadline</h3><div class="modal-subtitle">Ubah tanggal deadline untuk data ini</div><div style="padding: 0 20px 20px 20px;"><label for="editDeadlineDate">Tanggal Deadline Baru <span class="required">*</span></label><input type="date" id="editDeadlineDate" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div id="deadlineWarning" style="background: #fef3c7; padding: 10px; border-radius: 10px; margin-top: 10px;"><p style="font-size: 12px; color: #d97706; margin: 0;">⚠️ <strong>Peringatan:</strong> Perubahan deadline harus diketahui oleh Owner/Atasan. Pastikan Anda sudah mendapat persetujuan!</p></div></div><div class="modal-buttons"><button id="saveDeadlineBtn" class="btn-primary">💾 Simpan Perubahan</button><button id="cancelDeadlineBtn" class="btn-outline">Batal</button></div></div></div>
+
+                <div class="modal" id="customerModal"><div class="modal-content"><h3>➕ Tambah Customer</h3><div class="modal-subtitle">Isi data customer baru</div><div style="padding: 0 20px;"><div class="form-group"><label>ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="customerId" placeholder="Contoh: AG-001"></div></div><div class="form-group"><label>Type/Class <span class="required">*</span></label><div class="input-icon"><span>🏷️</span><select id="customerType"><option value="">Pilih Type</option><option value="CollectingAgent (CA)">CollectingAgent (CA)</option><option value="SUB CA">SUB CA</option><option value="Koordinator Wilayah (KORWIL)">Koordinator Wilayah (KORWIL)</option><option value="SUB KORWIL">SUB KORWIL</option><option value="AGENT">AGENT</option></select></div></div><div class="form-group"><label>Nama Lengkap <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="customerName" placeholder="Masukkan nama lengkap"></div></div><div class="form-group"><label>Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1"></div></div><div class="form-group"><label>Aplikasi <span class="required">*</span></label><div class="input-icon"><span>📱</span><select id="customerApk"><option value="">Pilih Aplikasi</option><option value="GNP">🏦 GNP</option><option value="BSB">🏦 BSB</option><option value="BTN">🏦 BTN</option></select></div></div><div class="form-group"><label>Upline / Atasan</label><div class="input-icon"><span>👤</span><input type="text" id="customerUplineName" placeholder="Nama Upline / Atasan"></div></div><div class="form-group"><label>Nomor HP Upline</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="customerUplinePhone" placeholder="81234567890" style="flex:1"></div></div><div class="form-group"><label>Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="customerDate"></div></div></div><div class="modal-buttons"><button id="saveCustomerBtn" class="btn-primary">💾 Simpan Data</button><button class="closeModalBtn btn-outline" data-modal="customerModal">❌ Batal</button></div></div></div>
+
+                <div class="modal" id="prospekModal"><div class="modal-content"><h3>➕ Tambah Prospek</h3><div class="modal-subtitle">Isi data prospek baru</div><div style="padding: 0 20px;"><div class="form-group"><label>Type/Class <span class="required">*</span></label><div class="input-icon"><span>🏷️</span><select id="prospekType"><option value="">Pilih Type</option><option value="CollectingAgent (CA)">CollectingAgent (CA)</option><option value="SUB CA">SUB CA</option><option value="Koordinator Wilayah (KORWIL)">Koordinator Wilayah (KORWIL)</option><option value="SUB KORWIL">SUB KORWIL</option><option value="AGENT">AGENT</option></select></div></div><div class="form-group"><label>Nama Agen <span class="required">*</span></label><div class="input-icon"><span>👤</span><input type="text" id="prospekName" placeholder="Masukkan nama agen"></div></div><div class="form-group"><label>Nomor WhatsApp <span class="required">*</span></label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1"></div></div><div class="form-group"><label>Status Awal</label><div class="input-icon"><span>📌</span><select id="prospekStatusSelect"><option value="Baru">🆕 Baru</option><option value="Dihubungi">📞 Dihubungi</option><option value="Negosiasi">📋 Negosiasi</option><option value="Tertarik">⭐ Tertarik</option></select></div></div><div class="form-group"><label>Deadline <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="prospekDeadline"></div></div></div><div class="modal-buttons"><button id="saveProspekBtn" class="btn-primary">💾 Simpan Data</button><button class="closeModalBtn btn-outline" data-modal="prospekModal">❌ Batal</button></div></div></div>
+
+                <div class="modal" id="prospekNegosiasiModal"><div class="modal-content"><h3>📋 Kuesioner Negosiasi</h3><div class="modal-subtitle">Isi data kuesioner di bawah ini</div><div class="form-group"><label for="prospek_aplikasi">Aplikasi yang dipakai? <span class="required">*</span></label><div class="input-icon"><span>📱</span><input type="text" id="prospek_aplikasi" placeholder="Contoh: GNP, BSB, BTN"></div></div><div class="form-group"><label for="prospek_domisili">Domisili dimana? <span class="required">*</span></label><div class="input-icon"><span>📍</span><input type="text" id="prospek_domisili" placeholder="Kota/Kabupaten"></div></div><div class="form-group"><label for="prospek_transaksi">Total transaksi per bulan? <span class="required">*</span></label><div class="input-icon"><span>💰</span><input type="text" id="prospek_transaksi" placeholder="Nominal"></div></div><div class="form-group"><label for="prospek_deposit">Apakah deposit atau saldo pinjaman? <span class="required">*</span></label><div class="input-icon"><span>🏦</span><input type="text" id="prospek_deposit" placeholder="Deposit / Saldo Pinjaman"></div></div><div class="form-group"><label for="prospek_tertarik">Apakah tertarik dengan penawaran kamu? <span class="required">*</span></label><div class="input-icon"><span>⭐</span><select id="prospek_tertarik"><option value="">Pilih</option><option value="Ya">Ya</option><option value="Tidak">Tidak</option></select></div></div><div class="form-group"><label for="prospek_penawaran">Penawaran apa yang diberikan? <span class="required">*</span></label><div class="input-icon"><span>📢</span><input type="text" id="prospek_penawaran" placeholder="Penawaran"></div></div><div class="modal-buttons"><button id="negosiasiTertarikBtn" class="btn-success">⭐ Tertarik</button><button id="negosiasiTidakTertarikBtn" class="btn-danger">❌ Tidak Tertarik</button><button id="negosiasiSimpanBtn" class="btn-primary">💾 Simpan</button><button id="negosiasiBatalBtn" class="btn-outline">Batal</button></div></div></div>
+
+                <div class="modal" id="profileModal"><div class="modal-content" style="max-width: 450px;"><h3>👤 Profile CS Agent</h3><div class="modal-subtitle">Kelola informasi akun Anda</div><div style="padding: 0 20px;"><div class="profile-photo-wrapper" style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px; padding: 16px 0; border-bottom: 1px solid #e5e7eb;"><div class="profile-photo-container" style="position: relative;"><img id="previewFoto" src="https://i.pravatar.cc/100" alt="Foto Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 3px solid #4f46e5;"><input type="file" id="profileFoto" hidden accept="image/*"></div><div style="display: flex; flex-direction: column; gap: 8px;"><button type="button" id="cameraIconBtn" style="background: #4f46e5; color: white; border: none; border-radius: 10px; padding: 8px 16px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px;">📷 Ganti Foto</button><small style="color: #9ca3af; font-size: 11px;">🔍 Klik foto untuk memperbesar</small></div></div><div class="form-group"><label>Nama Lengkap</label><div class="input-icon"><span>👤</span><input type="text" id="profileName" placeholder="Nama Anda"></div></div><div class="form-group"><label>Email</label><div class="input-icon"><span>📧</span><input type="email" id="profileEmail" placeholder="Email" disabled style="background: #f3f4f6;"></div></div><div class="form-group"><label>Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="profilePhone" placeholder="81234567890" style="flex:1"></div></div><div class="dark-mode-toggle" id="darkModeToggle"><span>🌙 Mode Gelap / Terang</span><div class="toggle-switch"></div></div></div><div class="modal-buttons"><button id="saveProfileBtn" class="btn-primary">💾 Simpan Perubahan</button><button class="closeModalBtn btn-outline" data-modal="profileModal">❌ Batal</button></div></div></div>
+
+                <div class="modal" id="previewPhotoModal"><div class="modal-content" style="max-width: 90vw; max-height: 90vh; background: rgba(0,0,0,0.9); border-radius: 16px; padding: 20px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;"><h3 style="color: white; margin: 0;">📸 Foto Profile</h3><button onclick="closeModal('previewPhotoModal')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">✕</button></div><div style="text-align: center;"><img id="previewPhotoLarge" src="" alt="Foto Profile" style="max-width: 80vw; max-height: 75vh; object-fit: contain; border-radius: 12px;"></div><div style="margin-top: 16px; text-align: center;"><button onclick="closeModal('previewPhotoModal')" style="background: #4f46e5; color: white; border: none; border-radius: 10px; padding: 10px 20px; cursor: pointer;">Tutup</button></div></div></div>
+
+                <div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
+
+                <div class="modal" id="reminderModal"><div class="modal-content"><h3>⏰ Tambah Pengingat</h3><div class="modal-subtitle">Buat pengingat untuk tugas Anda</div><div class="form-group"><label for="reminderTitle">Judul Pengingat <span class="required">*</span></label><div class="input-icon"><span>📝</span><input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer"></div></div><div class="form-group"><label for="reminderDesc">Deskripsi</label><div class="input-icon"><span>📄</span><textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea></div></div><div class="form-group"><label for="reminderDateTime">Tanggal & Waktu</label><div class="input-icon"><span>📅</span><input type="datetime-local" id="reminderDateTime"></div></div><div class="modal-buttons"><button id="saveReminderBtn">Simpan</button><button class="closeModalBtn" data-modal="reminderModal">Batal</button></div></div></div>
+
+                <div class="modal" id="pesanModal"><div class="modal-content"><h3>💬 Kirim Pesan</h3><div class="modal-subtitle">Kirim pesan ke CS lain</div><div class="form-group"><label for="pesanTo">Kepada <span class="required">*</span></label><div class="input-icon"><span>👥</span><select id="pesanTo"><option value="">Pilih CS Tujuan</option></select></div></div><div class="form-group"><label for="pesanMessage">Pesan <span class="required">*</span></label><div class="input-icon"><span>💬</span><textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea></div></div><div class="modal-buttons"><button id="savePesanBtn">Kirim</button><button class="closeModalBtn" data-modal="pesanModal">Batal</button></div></div></div>
+
+                <div class="modal" id="convertModal"><div class="modal-content"><h3>🔄 Jadikan Customer (Followup Agen)</h3><div class="modal-subtitle">Isi data untuk memindahkan ke Followup Agen</div><div class="form-group"><label for="convertAgentId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="convertAgentId" placeholder="Contoh: AG-001"></div><small>ID unik untuk agent terdaftar</small></div><div class="form-group"><label for="convertFollowupDate">Tanggal Followup <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="convertFollowupDate"></div><small>Otomatis +1 bulan dari sekarang</small></div><div class="modal-buttons"><button id="confirmConvertBtn" class="confirm-convert-btn">✅ Konfirmasi Pindah</button><button id="cancelConvertBtn" class="closeModalBtn" data-modal="convertModal">❌ Batal</button></div></div></div>
+
+                <div class="modal" id="followupConfirmModal"><div class="modal-content"><h3>✅ Konfirmasi Follow Up</h3><div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div><div style="padding: 0 20px;"><div class="form-group"><label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label></div><div class="form-group"><label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label></div></div><div class="modal-buttons"><button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button><button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button><button class="closeModalBtn btn-outline" data-modal="followupConfirmModal">Batal</button></div></div></div>
+
+                <div class="modal" id="pendingModal"><div class="modal-content"><h3>📝 Catatan Pending</h3><div class="modal-subtitle">Catat setiap balasan/respon dari customer</div><div id="pendingItemsContainer" style="max-height: 300px; overflow-y: auto; padding: 0 20px;"></div><button id="addPendingItemBtn" class="add-btn" style="margin: 10px 20px; width: calc(100% - 40px);">+ Tambah Balasan</button><div class="modal-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;"><button id="pendingFinishBtn" class="btn-success" style="flex: 1;" disabled>✅ Selesai & Lanjut ke Closing</button><button id="pendingSaveBtn" class="btn-primary" style="flex: 1;">💾 Simpan</button><button id="pendingCancelBtn" class="btn-outline" style="flex: 1;">Batal</button></div></div></div>
+
+                <div class="modal" id="addCsModal"><div class="modal-content"><h3>➕ Tambah CS Agent</h3><div class="modal-subtitle">Buat akun untuk CS Agent baru</div><div class="form-group"><label for="csEmail">Email <span class="required">*</span></label><input type="email" id="csEmail" placeholder="cs@example.com" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPassword">Password <span class="required">*</span></label><input type="password" id="csPassword" placeholder="******" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csName">Nama Lengkap <span class="required">*</span></label><input type="text" id="csName" placeholder="Nama CS" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="csPhone" placeholder="81234567890" style="flex:1"></div></div><div class="modal-buttons"><button id="saveCsBtn" class="btn-primary">Simpan</button><button class="closeModalBtn" data-modal="addCsModal">Batal</button></div></div></div>
+
+                <div class="modal" id="agentDetailModal"><div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;"><h3>📋 Detail Agent</h3><div class="modal-subtitle">Informasi lengkap agent</div><div style="padding: 0 20px;"><div class="form-group"><label>ID Agent</label><input type="text" id="agentDetailId" readonly style="background: #f3f4f6;"></div><div class="form-group"><label>Nama Agent <span class="required">*</span></label><input type="text" id="agentDetailNama" placeholder="Nama lengkap agent"></div><div class="form-group"><label>Type/Class (Under) <span class="required">*</span></label><select id="agentDetailType"><option value="">Pilih Type</option><option value="CollectingAgent (CA)">CollectingAgent (CA)</option><option value="SUB CA">SUB CA</option><option value="Koordinator Wilayah (KORWIL)">Koordinator Wilayah (KORWIL)</option><option value="SUB KORWIL">SUB KORWIL</option><option value="AGENT">AGENT</option></select></div><div class="form-group"><label>Pemilik</label><input type="text" id="agentDetailPemilik" placeholder="Nama pemilik/atasan"></div><div class="form-group"><label>Alamat</label><textarea id="agentDetailAlamat" rows="2" placeholder="Alamat lengkap" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea></div><div class="form-group"><label>Email</label><input type="email" id="agentDetailEmail" placeholder="email@example.com"></div><div class="form-group"><label>Telepon</label><input type="tel" id="agentDetailTlp" placeholder="Nomor telepon"></div><div class="form-group"><label>Upline (CA/Korwil)</label><input type="text" id="agentDetailUpline" placeholder="Nama Upline / Atasan"></div><div class="form-group"><label>Nomor Rekening</label><input type="text" id="agentDetailNoRekening" placeholder="Nomor rekening bank"></div><div class="form-group"><label>Atas Nama Rekening</label><input type="text" id="agentDetailAtasNama" placeholder="Nama pemilik rekening"></div><div class="form-group"><label>Jenis Bank</label><select id="agentDetailBank"><option value="">Pilih Bank</option><option value="BCA">BCA</option><option value="Mandiri">Mandiri</option><option value="BRI">BRI</option><option value="BNI">BNI</option><option value="CIMB Niaga">CIMB Niaga</option><option value="Danamon">Danamon</option><option value="Permata">Permata</option><option value="Maybank">Maybank</option><option value="OCBC NISP">OCBC NISP</option><option value="Bank Lain">Bank Lain</option></select></div><div class="form-group"><label>No KTP</label><input type="text" id="agentDetailNoKtp" placeholder="Nomor KTP"></div><div class="form-group"><label>CID (Customer ID)</label><input type="text" id="agentDetailCid" placeholder="Customer ID"></div><div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;"><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;"><h4 style="margin: 0;">📦 Daftar Produk</h4><button type="button" id="refreshProdukBtn" class="add-btn" style="background: #10b981;">🔄 Refresh Produk</button></div><div id="agentProductsContainer" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px;"><p style="text-align:center; color:#9ca3af; padding:20px;">Loading produk...</p></div></div></div><div class="modal-buttons"><button id="saveAgentDetailBtn" class="btn-primary">💾 Simpan Data</button><button id="closeAgentDetailBtn" class="btn-outline">Tutup</button></div></div></div>
+
+                <div class="modal" id="produkMasterModal"><div class="modal-content" style="max-width: 450px;"><h3 id="produkMasterTitle">🏷️ Tambah Produk</h3><div class="modal-subtitle">Isi data produk master</div><div style="padding: 0 20px;"><div class="form-group"><label>Nama Produk <span class="required">*</span></label><input type="text" id="produkMasterNama" placeholder="Nama produk"></div><div class="form-group"><label>Jenis Produk <span class="required">*</span></label><select id="produkMasterJenis" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"><option value="tanpa_admin">📦 Tanpa Admin (HPP + Harga Jual)</option><option value="beradmin">🏷️ Beradmin (Admin/Potongan)</option></select></div><div id="tanpaAdminFields" style="display: none;"><div class="form-group"><label>Harga Jual Referensi</label><input type="number" id="produkMasterHargaJual" placeholder="Harga jual referensi" step="1000"></div></div><div id="beradminFields" style="display: none;"><div class="form-group"><label>Admin Default <span class="required">*</span></label><input type="number" id="produkMasterAdminDefault" placeholder="Admin default (potongan)" step="100"></div><div class="form-group"><label>Apakah admin berdasarkan CID?</label><select id="produkMasterCidBased" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"><option value="no">❌ Tidak (admin tetap)</option><option value="yes">✅ Ya (admin berbeda per CID)</option></select></div></div><div class="form-group"><label>Harga HPP (Modal) <span class="required">*</span></label><input type="number" id="produkMasterHpp" placeholder="Harga modal/HPP" step="1000"></div><div class="form-group"><label>Keterangan</label><textarea id="produkMasterKeterangan" rows="2" placeholder="Deskripsi produk" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea></div></div><div class="modal-buttons"><button id="saveProdukMasterBtn" class="btn-primary">💾 Simpan</button><button id="cancelProdukMasterBtn" class="btn-outline">Batal</button></div></div></div>
+
+                <div class="modal" id="tarifAdminModal"><div class="modal-content" style="max-width: 800px; max-height: 85vh; overflow-y: auto;"><h3>🏷️ Kelola Admin per CID</h3><div class="modal-subtitle">Atur potongan admin untuk setiap CID</div><div style="padding: 0 20px; margin-bottom: 16px;"><input type="text" id="searchTarifInput" placeholder="🔍 Cari berdasarkan CID..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;"></div><div style="padding: 0 20px; background: #f9fafb; margin: 0 20px 20px 20px; border-radius: 12px; padding: 16px;"><div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;"><div style="flex: 1; min-width: 150px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">CID <span class="required">*</span></label><input type="text" id="tarifCid" placeholder="Contoh: 5213247" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;"></div><div style="flex: 1; min-width: 150px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Pospaid</label><input type="number" id="tarifPospaid" placeholder="Admin PLN Pospaid" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;"></div><div style="flex: 1; min-width: 150px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Prepaid</label><input type="number" id="tarifPrepaid" placeholder="Admin PLN Prepaid" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;"></div><div style="flex: 1; min-width: 150px;"><label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Nontaglis</label><input type="number" id="tarifNontaglis" placeholder="Admin PLN Nontaglis" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;"></div><div><button id="saveTarifAdminBtn" class="btn-primary" style="padding: 10px 20px;">💾 Simpan</button><button id="clearTarifFormBtn" class="btn-outline" style="padding: 10px 20px;">✖ Bersihkan</button></div></div></div><div style="padding: 0 20px; margin-bottom: 16px; display: flex; gap: 10px;"><button id="importTarifExcelBtn" class="db-import-excel" style="background: #10b981;">📥 Import Excel</button><button id="exportTarifExcelBtn" class="db-export-excel" style="background: #3b82f6;">📤 Export Excel</button><button id="downloadTarifExampleBtn" style="background: #f59e0b; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📋 Download Contoh</button></div><div style="padding: 0 20px 20px 20px;"><div id="tarifAdminList" class="db-list" style="max-height: 400px; overflow-y: auto;"></div></div><div class="modal-buttons"><button id="closeTarifAdminModal" class="btn-outline">Tutup</button></div></div></div>
+
+                <div class="modal" id="manageTargetModal"><div class="modal-content" style="max-width: 500px;"><h3>⚙️ Kelola Target</h3><div class="modal-subtitle">Atur target untuk periode berjalan</div><div style="padding: 0 20px;"><div class="form-group"><label>👤 Target Agent (orang)</label><input type="number" id="targetAgentInput" class="target-input" placeholder="Jumlah target agent" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label>👥 Target Koordinator (orang)</label><input type="number" id="targetKoorInput" class="target-input" placeholder="Jumlah target koordinator" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label>🏦 Target CA (orang)</label><input type="number" id="targetCAInput" class="target-input" placeholder="Jumlah target CA" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label>📊 Target Transaksi per Bulan (jumlah)</label><input type="number" id="targetTransaksiInput" class="target-input" placeholder="Jumlah target transaksi" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><hr style="margin: 16px 0;"><h4 style="font-size: 14px; margin-bottom: 12px;">📅 Target per Bulan (Opsional)</h4><div id="monthlyTargetList" style="max-height: 250px; overflow-y: auto; margin-bottom: 16px;"></div><button id="addMonthlyTargetBtn" class="add-btn" style="width: 100%; margin-bottom: 16px;">+ Tambah Target Bulanan</button></div><div class="modal-buttons"><button id="saveTargetBtn" class="btn-primary">💾 Simpan Target</button><button id="cancelTargetBtn" class="btn-outline">Batal</button></div></div></div>
+
+                <div class="modal" id="inputTransaksiModal"><div class="modal-content" style="max-width: 400px;"><h3>📊 Input Transaksi</h3><div class="modal-subtitle">Catat penambahan atau perubahan transaksi</div><div style="padding: 0 20px;"><div class="form-group"><label for="transaksiNominal">Jumlah Transaksi <span class="required">*</span></label><input type="number" id="transaksiNominal" placeholder="Masukkan jumlah transaksi" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="transaksiKeterangan">Keterangan</label><textarea id="transaksiKeterangan" rows="2" placeholder="Contoh: Penjualan produk A, Fee upline, dll" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea></div><div class="form-group"><label for="transaksiTanggal">Tanggal Transaksi</label><input type="date" id="transaksiTanggal" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div></div><div class="modal-buttons"><button id="saveTransaksiBtn" class="btn-primary">✅ Simpan Transaksi</button><button id="cancelTransaksiBtn" class="btn-outline">Batal</button></div></div></div>
+
+                <div class="modal" id="transaksiListModal"><div class="modal-content" style="max-width: 500px; max-height: 85vh; overflow-y: auto;"><h3>📋 Riwayat Transaksi</h3><div class="modal-subtitle">Daftar semua transaksi yang telah dicatat</div><div id="transaksiList" class="db-list" style="max-height: 400px; overflow-y: auto;"></div><div class="modal-buttons"><button class="btn-outline" onclick="closeModal('transaksiListModal')">Tutup</button></div></div></div>
+
+                <div class="modal" id="pilihNomorModal"><div class="modal-content" style="max-width: 400px;"><h3>📱 Pilih Nomor Tujuan</h3><div class="modal-subtitle">Pilih nomor WhatsApp yang akan dihubungi</div><div style="padding: 0 20px 20px 20px;"><div id="pilihNomorOptions" style="display: flex; flex-direction: column; gap: 12px;"></div></div><div class="modal-buttons"><button id="batalPilihNomorBtn" class="btn-outline">Batal</button></div></div></div>
+
+                <input type="file" id="produkExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
+                <input type="file" id="agentExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
+                <input type="file" id="tarifExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
+                
+                <div id="notifBox"></div>
+                
+                <script src="script.js"></script>
             </div>
         </div>
     </div>
 </div>
-
-<!-- BROADCAST UPLINE PAGE -->
-<div id="broadcastUplinePage" class="page-content" style="display:none">
-    <div class="broadcast-section">
-        <div class="broadcast-header">
-            <h3>⭐ Broadcast ke Upline</h3>
-            <p>Kirim pesan rangkuman ke semua Upline dengan data agent di bawahnya</p>
-        </div>
-        <div class="broadcast-grid">
-            <!-- Pilih Sumber -->
-            <div class="broadcast-card">
-                <h4>📋 Pilih Sumber Data</h4>
-                <div class="radio-group">
-                    <label class="radio-label">
-                        <input type="radio" name="uplineSourceType" value="transaksi" checked> 
-                        <span>📁 Database Transaksi</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="uplineSourceType" value="customer"> 
-                        <span>📞 Followup Agen</span>
-                    </label>
-                    <label class="radio-label">
-                        <input type="radio" name="uplineSourceType" value="custom"> 
-                        <span>✏️ Custom Nomor</span>
-                    </label>
-                </div>
-            </div>
-            
-            <!-- Filter Status untuk Customer -->
-            <div class="broadcast-card" id="uplineCustomerFilter" style="display:none;">
-                <h4>🎯 Filter Status</h4>
-                <div class="filter-status-group">
-                    <label><input type="checkbox" value="baru"> Baru</label>
-                    <label><input type="checkbox" value="followup" checked> Follow Up</label>
-                    <label><input type="checkbox" value="pending"> Pending</label>
-                    <label><input type="checkbox" value="closing"> Closing</label>
-                </div>
-            </div>
-            
-            <!-- Filter untuk Database Transaksi (tidak perlu filter status) -->
-            <div class="broadcast-card" id="uplineTransaksiFilter" style="display:flex;">
-                <h4>📊 Database Transaksi</h4>
-                <p style="font-size: 12px; color: #6b7280;">Semua data transaksi akan dikelompokkan berdasarkan Upline</p>
-                <small style="color: #9ca3af;">💡 Data akan otomatis dikelompokkan berdasarkan upline_phone dan upline_name</small>
-            </div>
-            
-            <!-- Custom Numbers -->
-            <div class="broadcast-card" id="uplineCustomCard" style="display:none;">
-                <h4>✏️ Daftar Nomor Upline</h4>
-                <textarea id="uplineCustomNumbers" rows="4" placeholder="Contoh:&#10;6281234567890&#10;6281234567891"></textarea>
-                <small>Masukkan nomor WhatsApp upline (satu nomor per baris)</small>
-            </div>
-            
-            <!-- Daftar Upline -->
-            <div class="broadcast-card">
-                <h4>👥 Daftar Upline (<span id="uplineCount">0</span>)</h4>
-                <div class="selected-numbers" id="uplineNumbersList" style="max-height: 300px; overflow-y: auto;">
-                    <p style="color:#9ca3af;">Pilih sumber dan filter, lalu klik Refresh</p>
-                </div>
-                <button class="btn-refresh" id="refreshUplineBtn" style="margin-top: 12px;">🔄 Refresh Data Upline</button>
-            </div>
-            
-            <!-- Pesan Broadcast -->
-            <div class="broadcast-card">
-                <h4>✏️ Pesan Broadcast ke Upline</h4>
-                <textarea id="uplineBroadcastMessage" rows="6" placeholder="Tulis pesan...&#10;&#10;Variabel yang tersedia:&#10;{nama_upline} - Nama Upline&#10;{total_agent} - Jumlah Agent di bawah Upline&#10;{tabel_agent} - Tabel lengkap data Agent"></textarea>
-                <div class="variable-hint" style="margin-top: 8px;">
-                    <small>💡 Gunakan variabel: <code>{nama_upline}</code>, <code>{total_agent}</code>, <code>{tabel_agent}</code></small>
-                </div>
-            </div>
-            
-            <!-- Tombol Kirim -->
-            <div class="broadcast-card">
-                <h4>📤 Kirim Broadcast ke Upline</h4>
-                <div class="send-options">
-                    <label><input type="checkbox" id="uplineSendOneByOne" checked> Kirim satu per satu (manual)</label>
-                </div>
-                <button class="broadcast-btn" id="sendUplineBroadcastBtn" style="background: #8b5cf6;">⭐ Kirim ke Semua Upline</button>
-                <div class="warning-text">⚠️ Setiap klik akan membuka chat WhatsApp di tab baru. Kirim pesan secara manual.</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- MODALS -->
-<div class="modal" id="infoModal"><div class="modal-content" style="max-width: 500px;"><h3>📋 Panduan Followup & Prospek</h3><div class="modal-subtitle">Aturan penambahan deadline berdasarkan respon</div><div style="padding: 0 20px 20px 20px;"><div style="margin-bottom: 20px;"><h4 style="color: #10b981; margin-bottom: 8px;">✅ Respon Bagus (Aktif/Diam tapi respon)</h4><p style="font-size: 13px; color: #374151;">+3 hari untuk deadline berikutnya. Dapat terus diperpanjang tanpa batas selama status belum berubah menjadi "Pasif/Tidak Aktif".</p></div><div style="margin-bottom: 20px;"><h4 style="color: #f59e0b; margin-bottom: 8px;">⚠️ Respon Pasif (Kurang respon/membutuhkan followup berulang)</h4><p style="font-size: 13px; color: #374151;">+5 hari untuk deadline berikutnya. Maksimal 5 kali followup pasif sebelum data dipindahkan ke database.</p></div><div style="margin-bottom: 20px;"><h4 style="color: #ef4444; margin-bottom: 8px;">❌ Respon Jelek (Tidak tertarik/komplain)</h4><p style="font-size: 13px; color: #374151;">+1 Minggu (7 hari) untuk deadline berikutnya. Maksimal 3 kali followup jelek sebelum data dipindahkan ke database.</p></div><div style="background: #eef2ff; padding: 12px; border-radius: 12px; margin-top: 12px;"><p style="font-size: 12px; color: #4f46e5; margin: 0;">💡 <strong>Catatan:</strong> Setiap perubahan status atau penyimpanan data akan secara otomatis menambah deadline sesuai aturan di atas. Anda dapat mengedit deadline manual kapan saja dengan mengklik icon ✏️ di popup detail.</p></div></div><div class="modal-buttons"><button id="infoModalClose" class="btn-primary">Tutup</button></div></div></div>
-
-<div class="modal" id="editDeadlineModal"><div class="modal-content" style="max-width: 400px;"><h3>📅 Edit Deadline</h3><div class="modal-subtitle">Ubah tanggal deadline untuk data ini</div><div style="padding: 0 20px 20px 20px;"><label for="editDeadlineDate">Tanggal Deadline Baru <span class="required">*</span></label><input type="date" id="editDeadlineDate" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div id="deadlineWarning" style="background: #fef3c7; padding: 10px; border-radius: 10px; margin-top: 10px;"><p style="font-size: 12px; color: #d97706; margin: 0;">⚠️ <strong>Peringatan:</strong> Perubahan deadline harus diketahui oleh Owner/Atasan. Pastikan Anda sudah mendapat persetujuan!</p></div></div><div class="modal-buttons"><button id="saveDeadlineBtn" class="btn-primary">💾 Simpan Perubahan</button><button id="cancelDeadlineBtn" class="btn-outline">Batal</button></div></div></div>
-
-<div class="modal" id="customerModal">
-    <div class="modal-content">
-        <h3>➕ Tambah Customer</h3>
-        <div class="modal-subtitle">Isi data customer baru</div>
-        <div style="padding: 0 20px;">
-            <div class="form-group">
-                <label>ID Agent <span class="required">*</span></label>
-                <div class="input-icon">
-                    <span>🆔</span>
-                    <input type="text" id="customerId" placeholder="Contoh: AG-001">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Type/Class <span class="required">*</span></label>
-                <div class="input-icon">
-                    <span>🏷️</span>
-                    <select id="customerType">
-                        <option value="">Pilih Type</option>
-                        <option value="CollectingAgent (CA)">CollectingAgent (CA)</option>
-                        <option value="SUB CA">SUB CA</option>
-                        <option value="Koordinator Wilayah (KORWIL)">Koordinator Wilayah (KORWIL)</option>
-                        <option value="SUB KORWIL">SUB KORWIL</option>
-                        <option value="AGENT">AGENT</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nama Lengkap <span class="required">*</span></label>
-                <div class="input-icon">
-                    <span>👤</span>
-                    <input type="text" id="customerName" placeholder="Masukkan nama lengkap">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nomor WhatsApp <span class="required">*</span></label>
-                <div class="phone-input">
-                    <div class="phone-prefix">+62</div>
-                    <input type="tel" id="customerPhone" placeholder="81234567890" style="flex:1">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Aplikasi <span class="required">*</span></label>
-                <div class="input-icon">
-                    <span>📱</span>
-                    <select id="customerApk">
-                        <option value="">Pilih Aplikasi</option>
-                        <option value="GNP">🏦 GNP</option>
-                        <option value="BSB">🏦 BSB</option>
-                        <option value="BTN">🏦 BTN</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Upline / Atasan</label>
-                <div class="input-icon">
-                    <span>👤</span>
-                    <input type="text" id="customerUplineName" placeholder="Nama Upline / Atasan">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nomor HP Upline</label>
-                <div class="phone-input">
-                    <div class="phone-prefix">+62</div>
-                    <input type="tel" id="customerUplinePhone" placeholder="81234567890" style="flex:1">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Deadline <span class="required">*</span></label>
-                <div class="input-icon">
-                    <span>📅</span>
-                    <input type="date" id="customerDate">
-                </div>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveCustomerBtn" class="btn-primary">💾 Simpan Data</button>
-            <button class="closeModalBtn btn-outline" data-modal="customerModal">❌ Batal</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal" id="prospekModal">
-    <div class="modal-content">
-        <h3>➕ Tambah Prospek</h3>
-        <div class="modal-subtitle">Isi data prospek baru</div>
-        <div style="padding: 0 20px;">
-            <div class="form-group">
-                <label>Type/Class <span class="required">*</span></label>
-                <div class="input-icon">
-                    <span>🏷️</span>
-                    <select id="prospekType">
-                        <option value="">Pilih Type</option>
-                        <option value="CollectingAgent (CA)">CollectingAgent (CA)</option>
-                        <option value="SUB CA">SUB CA</option>
-                        <option value="Koordinator Wilayah (KORWIL)">Koordinator Wilayah (KORWIL)</option>
-                        <option value="SUB KORWIL">SUB KORWIL</option>
-                        <option value="AGENT">AGENT</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nama Agen <span class="required">*</span></label>
-                <div class="input-icon">
-                    <span>👤</span>
-                    <input type="text" id="prospekName" placeholder="Masukkan nama agen">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nomor WhatsApp <span class="required">*</span></label>
-                <div class="phone-input">
-                    <div class="phone-prefix">+62</div>
-                    <input type="tel" id="prospekPhone" placeholder="81234567890" style="flex:1">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Status Awal</label>
-                <div class="input-icon">
-                    <span>📌</span>
-                    <select id="prospekStatusSelect">
-                        <option value="Baru">🆕 Baru</option>
-                        <option value="Dihubungi">📞 Dihubungi</option>
-                        <option value="Negosiasi">📋 Negosiasi</option>
-                        <option value="Tertarik">⭐ Tertarik</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Deadline <span class="required">*</span></label>
-                <div class="input-icon">
-                    <span>📅</span>
-                    <input type="date" id="prospekDeadline">
-                </div>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveProspekBtn" class="btn-primary">💾 Simpan Data</button>
-            <button class="closeModalBtn btn-outline" data-modal="prospekModal">❌ Batal</button>
-        </div>
-    </div>
-</div>
-<div class="modal" id="prospekNegosiasiModal"><div class="modal-content"><h3>📋 Kuesioner Negosiasi</h3><div class="modal-subtitle">Isi data kuesioner di bawah ini</div><div class="form-group"><label for="prospek_aplikasi">Aplikasi yang dipakai? <span class="required">*</span></label><div class="input-icon"><span>📱</span><input type="text" id="prospek_aplikasi" placeholder="Contoh: GNP, BSB, BTN"></div></div><div class="form-group"><label for="prospek_domisili">Domisili dimana? <span class="required">*</span></label><div class="input-icon"><span>📍</span><input type="text" id="prospek_domisili" placeholder="Kota/Kabupaten"></div></div><div class="form-group"><label for="prospek_transaksi">Total transaksi per bulan? <span class="required">*</span></label><div class="input-icon"><span>💰</span><input type="text" id="prospek_transaksi" placeholder="Nominal"></div></div><div class="form-group"><label for="prospek_deposit">Apakah deposit atau saldo pinjaman? <span class="required">*</span></label><div class="input-icon"><span>🏦</span><input type="text" id="prospek_deposit" placeholder="Deposit / Saldo Pinjaman"></div></div><div class="form-group"><label for="prospek_tertarik">Apakah tertarik dengan penawaran kamu? <span class="required">*</span></label><div class="input-icon"><span>⭐</span><select id="prospek_tertarik"><option value="">Pilih</option><option value="Ya">Ya</option><option value="Tidak">Tidak</option></select></div></div><div class="form-group"><label for="prospek_penawaran">Penawaran apa yang diberikan? <span class="required">*</span></label><div class="input-icon"><span>📢</span><input type="text" id="prospek_penawaran" placeholder="Penawaran"></div></div><div class="modal-buttons"><button id="negosiasiTertarikBtn" class="btn-success">⭐ Tertarik</button><button id="negosiasiTidakTertarikBtn" class="btn-danger">❌ Tidak Tertarik</button><button id="negosiasiSimpanBtn" class="btn-primary">💾 Simpan</button><button id="negosiasiBatalBtn" class="btn-outline">Batal</button></div></div></div>
-
-<div class="modal" id="profileModal">
-    <div class="modal-content" style="max-width: 450px;">
-        <h3>👤 Profile CS Agent</h3>
-        <div class="modal-subtitle">Kelola informasi akun Anda</div>
-        <div style="padding: 0 20px;">
-            <!-- Profile Photo Section -->
-            <div class="profile-photo-wrapper" style="display: flex; align-items: center; gap: 20px; margin-bottom: 24px; padding: 16px 0; border-bottom: 1px solid #e5e7eb;">
-                <div class="profile-photo-container" style="position: relative;">
-                    <img id="previewFoto" src="https://i.pravatar.cc/100" alt="Foto Profile" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 3px solid #4f46e5;">
-                    <input type="file" id="profileFoto" hidden accept="image/*">
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <button type="button" id="cameraIconBtn" style="background: #4f46e5; color: white; border: none; border-radius: 10px; padding: 8px 16px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px;">
-                        📷 Ganti Foto
-                    </button>
-                    <small style="color: #9ca3af; font-size: 11px;">🔍 Klik foto untuk memperbesar</small>
-                </div>
-            </div>
-
-            <!-- Form fields -->
-            <div class="form-group">
-                <label>Nama Lengkap</label>
-                <div class="input-icon">
-                    <span>👤</span>
-                    <input type="text" id="profileName" placeholder="Nama Anda">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <div class="input-icon">
-                    <span>📧</span>
-                    <input type="email" id="profileEmail" placeholder="Email" disabled style="background: #f3f4f6;">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Nomor WhatsApp</label>
-                <div class="phone-input">
-                    <div class="phone-prefix">+62</div>
-                    <input type="tel" id="profilePhone" placeholder="81234567890" style="flex:1">
-                </div>
-            </div>
-
-            <!-- ========== DARK MODE TOGGLE ========== -->
-            <div class="dark-mode-toggle" id="darkModeToggle">
-                <span>🌙 Mode Gelap / Terang</span>
-                <div class="toggle-switch"></div>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveProfileBtn" class="btn-primary">💾 Simpan Perubahan</button>
-            <button class="closeModalBtn btn-outline" data-modal="profileModal">❌ Batal</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal" id="previewPhotoModal">
-    <div class="modal-content" style="max-width: 90vw; max-height: 90vh; background: rgba(0,0,0,0.9); border-radius: 16px; padding: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <h3 style="color: white; margin: 0;">📸 Foto Profile</h3>
-            <button onclick="closeModal('previewPhotoModal')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">✕</button>
-        </div>
-        <div style="text-align: center;">
-            <img id="previewPhotoLarge" src="" alt="Foto Profile" style="max-width: 80vw; max-height: 75vh; object-fit: contain; border-radius: 12px;">
-        </div>
-        <div style="margin-top: 16px; text-align: center;">
-            <button onclick="closeModal('previewPhotoModal')" style="background: #4f46e5; color: white; border: none; border-radius: 10px; padding: 10px 20px; cursor: pointer;">Tutup</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal" id="detailModal"><div class="modal-content" id="detailContent"></div></div>
-
-<div class="modal" id="reminderModal"><div class="modal-content"><h3>⏰ Tambah Pengingat</h3><div class="modal-subtitle">Buat pengingat untuk tugas Anda</div><div class="form-group"><label for="reminderTitle">Judul Pengingat <span class="required">*</span></label><div class="input-icon"><span>📝</span><input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer"></div></div><div class="form-group"><label for="reminderDesc">Deskripsi</label><div class="input-icon"><span>📄</span><textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;"></textarea></div></div><div class="form-group"><label for="reminderDateTime">Tanggal & Waktu</label><div class="input-icon"><span>📅</span><input type="datetime-local" id="reminderDateTime"></div></div><div class="modal-buttons"><button id="saveReminderBtn">Simpan</button><button class="closeModalBtn" data-modal="reminderModal">Batal</button></div></div></div>
-
-<div class="modal" id="pesanModal"><div class="modal-content"><h3>💬 Kirim Pesan</h3><div class="modal-subtitle">Kirim pesan ke CS lain</div><div class="form-group"><label for="pesanTo">Kepada <span class="required">*</span></label><div class="input-icon"><span>👥</span><select id="pesanTo"><option value="">Pilih CS Tujuan</option></select></div></div><div class="form-group"><label for="pesanMessage">Pesan <span class="required">*</span></label><div class="input-icon"><span>💬</span><textarea id="pesanMessage" rows="4" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb; font-family:inherit;" placeholder="Tulis pesan..."></textarea></div></div><div class="modal-buttons"><button id="savePesanBtn">Kirim</button><button class="closeModalBtn" data-modal="pesanModal">Batal</button></div></div></div>
-
-<div class="modal" id="convertModal"><div class="modal-content"><h3>🔄 Jadikan Customer (Followup Agen)</h3><div class="modal-subtitle">Isi data untuk memindahkan ke Followup Agen</div><div class="form-group"><label for="convertAgentId">ID Agent <span class="required">*</span></label><div class="input-icon"><span>🆔</span><input type="text" id="convertAgentId" placeholder="Contoh: AG-001"></div><small>ID unik untuk agent terdaftar</small></div><div class="form-group"><label for="convertFollowupDate">Tanggal Followup <span class="required">*</span></label><div class="input-icon"><span>📅</span><input type="date" id="convertFollowupDate"></div><small>Otomatis +1 bulan dari sekarang</small></div><div class="modal-buttons"><button id="confirmConvertBtn" class="confirm-convert-btn">✅ Konfirmasi Pindah</button><button id="cancelConvertBtn" class="closeModalBtn" data-modal="convertModal">❌ Batal</button></div></div></div>
-
-<div class="modal" id="followupConfirmModal">
-    <div class="modal-content">
-        <h3>✅ Konfirmasi Follow Up</h3>
-        <div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div>
-        <div style="padding: 0 20px;">
-            <div class="form-group">
-                <label><input type="checkbox" id="followup_terkirim"> Apakah pesan sudah terkirim dan terbaca?</label>
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="followup_dibalas"> Apakah sudah di balas?</label>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="followupConfirmYes" class="btn-primary" disabled>✅ Lanjut ke Pending</button>
-            <button id="followupConfirmNo" class="btn-danger">📵 Nomor salah/Tidak bisa dihubungi</button>
-            <button class="closeModalBtn btn-outline" data-modal="followupConfirmModal">Batal</button>
-        </div>
-    </div>
-</div>
-    
-<div class="modal" id="pendingModal"><div class="modal-content"><h3>📝 Catatan Pending</h3><div class="modal-subtitle">Catat setiap balasan/respon dari customer</div><div id="pendingItemsContainer" style="max-height: 300px; overflow-y: auto; padding: 0 20px;"></div><button id="addPendingItemBtn" class="add-btn" style="margin: 10px 20px; width: calc(100% - 40px);">+ Tambah Balasan</button><div class="modal-buttons" style="display: flex; gap: 10px; flex-wrap: wrap;"><button id="pendingFinishBtn" class="btn-success" style="flex: 1;" disabled>✅ Selesai & Lanjut ke Closing</button><button id="pendingSaveBtn" class="btn-primary" style="flex: 1;">💾 Simpan</button><button id="pendingCancelBtn" class="btn-outline" style="flex: 1;">Batal</button></div></div></div>
-
-<div class="modal" id="addCsModal"><div class="modal-content"><h3>➕ Tambah CS Agent</h3><div class="modal-subtitle">Buat akun untuk CS Agent baru</div><div class="form-group"><label for="csEmail">Email <span class="required">*</span></label><input type="email" id="csEmail" placeholder="cs@example.com" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPassword">Password <span class="required">*</span></label><input type="password" id="csPassword" placeholder="******" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csName">Nama Lengkap <span class="required">*</span></label><input type="text" id="csName" placeholder="Nama CS" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></div><div class="form-group"><label for="csPhone">Nomor WhatsApp</label><div class="phone-input"><div class="phone-prefix">+62</div><input type="tel" id="csPhone" placeholder="81234567890" style="flex:1"></div></div><div class="modal-buttons"><button id="saveCsBtn" class="btn-primary">Simpan</button><button class="closeModalBtn" data-modal="addCsModal">Batal</button></div></div></div>
-
-<!-- MODAL DETAIL AGENT LENGKAP -->
-<div class="modal" id="agentDetailModal">
-    <div class="modal-content" style="max-width: 600px; max-height: 85vh; overflow-y: auto;">
-        <h3>📋 Detail Agent</h3>
-        <div class="modal-subtitle">Informasi lengkap agent</div>
-        <div style="padding: 0 20px;">
-            <div class="form-group">
-                <label>ID Agent</label>
-                <input type="text" id="agentDetailId" readonly style="background: #f3f4f6;">
-            </div>
-            <div class="form-group">
-                <label>Nama Agent <span class="required">*</span></label>
-                <input type="text" id="agentDetailNama" placeholder="Nama lengkap agent">
-            </div>
-            <div class="form-group">
-                <label>Type/Class (Under) <span class="required">*</span></label>
-                <select id="agentDetailType">
-                    <option value="">Pilih Type</option>
-                    <option value="CollectingAgent (CA)">CollectingAgent (CA)</option>
-                    <option value="SUB CA">SUB CA</option>
-                    <option value="Koordinator Wilayah (KORWIL)">Koordinator Wilayah (KORWIL)</option>
-                    <option value="SUB KORWIL">SUB KORWIL</option>
-                    <option value="AGENT">AGENT</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Pemilik</label>
-                <input type="text" id="agentDetailPemilik" placeholder="Nama pemilik/atasan">
-            </div>
-            <div class="form-group">
-                <label>Alamat</label>
-                <textarea id="agentDetailAlamat" rows="2" placeholder="Alamat lengkap" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea>
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="agentDetailEmail" placeholder="email@example.com">
-            </div>
-            <div class="form-group">
-                <label>Telepon</label>
-                <input type="tel" id="agentDetailTlp" placeholder="Nomor telepon">
-            </div>
-            <div class="form-group">
-    <label>Upline (CA/Korwil)</label>
-    <input type="text" id="agentDetailUpline" placeholder="Nama Upline / Atasan">
-</div>
-            <div class="form-group">
-                <label>Nomor Rekening</label>
-                <input type="text" id="agentDetailNoRekening" placeholder="Nomor rekening bank">
-            </div>
-            <div class="form-group">
-                <label>Atas Nama Rekening</label>
-                <input type="text" id="agentDetailAtasNama" placeholder="Nama pemilik rekening">
-            </div>
-            <div class="form-group">
-                <label>Jenis Bank</label>
-                <select id="agentDetailBank">
-                    <option value="">Pilih Bank</option>
-                    <option value="BCA">BCA</option>
-                    <option value="Mandiri">Mandiri</option>
-                    <option value="BRI">BRI</option>
-                    <option value="BNI">BNI</option>
-                    <option value="CIMB Niaga">CIMB Niaga</option>
-                    <option value="Danamon">Danamon</option>
-                    <option value="Permata">Permata</option>
-                    <option value="Maybank">Maybank</option>
-                    <option value="OCBC NISP">OCBC NISP</option>
-                    <option value="Bank Lain">Bank Lain</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>No KTP</label>
-                <input type="text" id="agentDetailNoKtp" placeholder="Nomor KTP">
-            </div>
-            <div class="form-group">
-                <label>CID (Customer ID)</label>
-                <input type="text" id="agentDetailCid" placeholder="Customer ID">
-            </div>
-            
-            <!-- ========== PRODUK SECTION ========== -->
-<div style="margin-top: 20px; border-top: 2px solid #e5e7eb; padding-top: 16px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h4 style="margin: 0;">📦 Daftar Produk</h4>
-        <button type="button" id="refreshProdukBtn" class="add-btn" style="background: #10b981;">🔄 Refresh Produk</button>
-    </div>
-    <div id="agentProductsContainer" style="max-height: 400px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 12px; padding: 8px;">
-        <p style="text-align:center; color:#9ca3af; padding:20px;">Loading produk...</p>
-    </div>
-</div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveAgentDetailBtn" class="btn-primary">💾 Simpan Data</button>
-            <button id="closeAgentDetailBtn" class="btn-outline">Tutup</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL TAMBAH/EDIT PRODUK MASTER -->
-<div class="modal" id="produkMasterModal">
-    <div class="modal-content" style="max-width: 450px;">
-        <h3 id="produkMasterTitle">🏷️ Tambah Produk</h3>
-        <div class="modal-subtitle">Isi data produk master</div>
-        <div style="padding: 0 20px;">
-            <div class="form-group">
-                <label>Nama Produk <span class="required">*</span></label>
-                <input type="text" id="produkMasterNama" placeholder="Nama produk">
-            </div>
-            <div class="form-group">
-    <label>Jenis Produk <span class="required">*</span></label>
-    <select id="produkMasterJenis" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-        <option value="tanpa_admin">📦 Tanpa Admin (HPP + Harga Jual)</option>
-        <option value="beradmin">🏷️ Beradmin (Admin/Potongan)</option>
-    </select>
-</div>
-
-<!-- Field untuk produk TANPA admin (muncul jika jenis = tanpa_admin) -->
-<div id="tanpaAdminFields" style="display: none;">
-    <div class="form-group">
-        <label>Harga Jual Referensi</label>
-        <input type="number" id="produkMasterHargaJual" placeholder="Harga jual referensi" step="1000">
-    </div>
-</div>
-
-<!-- Field untuk produk BERADMIN (muncul jika jenis = beradmin) -->
-<div id="beradminFields" style="display: none;">
-    <div class="form-group">
-        <label>Admin Default <span class="required">*</span></label>
-        <input type="number" id="produkMasterAdminDefault" placeholder="Admin default (potongan)" step="100">
-    </div>
-    <div class="form-group">
-        <label>Apakah admin berdasarkan CID?</label>
-        <select id="produkMasterCidBased" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            <option value="no">❌ Tidak (admin tetap)</option>
-            <option value="yes">✅ Ya (admin berbeda per CID)</option>
-        </select>
-    </div>
-</div>
-            <div class="form-group">
-                <label>Harga HPP (Modal) <span class="required">*</span></label>
-                <input type="number" id="produkMasterHpp" placeholder="Harga modal/HPP" step="1000">
-            </div>
-            <div class="form-group">
-                <label>Harga Jual Referensi</label>
-                <input type="number" id="produkMasterHargaJual" placeholder="Harga jual referensi" step="1000">
-            </div>
-            <div class="form-group">
-                <label>Keterangan</label>
-                <textarea id="produkMasterKeterangan" rows="2" placeholder="Deskripsi produk" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea>
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveProdukMasterBtn" class="btn-primary">💾 Simpan</button>
-            <button id="cancelProdukMasterBtn" class="btn-outline">Batal</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL KELOLA TARIF ADMIN PER CID -->
-<div class="modal" id="tarifAdminModal">
-    <div class="modal-content" style="max-width: 800px; max-height: 85vh; overflow-y: auto;">
-        <h3>🏷️ Kelola Admin per CID</h3>
-        <div class="modal-subtitle">Atur potongan admin untuk setiap CID</div>
-
-        <!-- Tambahkan di dalam modal tarifAdminModal, di atas daftar -->
-<div style="padding: 0 20px; margin-bottom: 16px;">
-    <input type="text" id="searchTarifInput" placeholder="🔍 Cari berdasarkan CID..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
-</div>
-        
-        <!-- Form Tambah/Edit -->
-        <div style="padding: 0 20px; background: #f9fafb; margin: 0 20px 20px 20px; border-radius: 12px; padding: 16px;">
-            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">CID <span class="required">*</span></label>
-                    <input type="text" id="tarifCid" placeholder="Contoh: 5213247" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Pospaid</label>
-                    <input type="number" id="tarifPospaid" placeholder="Admin PLN Pospaid" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Prepaid</label>
-                    <input type="number" id="tarifPrepaid" placeholder="Admin PLN Prepaid" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
-                </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">PLN Nontaglis</label>
-                    <input type="number" id="tarifNontaglis" placeholder="Admin PLN Nontaglis" step="100" style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">
-                </div>
-                <div>
-                    <button id="saveTarifAdminBtn" class="btn-primary" style="padding: 10px 20px;">💾 Simpan</button>
-                    <button id="clearTarifFormBtn" class="btn-outline" style="padding: 10px 20px;">✖ Bersihkan</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Tombol Import/Export -->
-<div style="padding: 0 20px; margin-bottom: 16px; display: flex; gap: 10px;">
-    <button id="importTarifExcelBtn" class="db-import-excel" style="background: #10b981;">📥 Import Excel</button>
-    <button id="exportTarifExcelBtn" class="db-export-excel" style="background: #3b82f6;">📤 Export Excel</button>
-    <button id="downloadTarifExampleBtn" style="background: #f59e0b; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📋 Download Contoh</button>
-</div>
-
-<!-- Hidden file input -->
-<input type="file" id="tarifExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
-        
-        <!-- Daftar Tarif Admin -->
-        <div style="padding: 0 20px 20px 20px;">
-            <div id="tarifAdminList" class="db-list" style="max-height: 400px; overflow-y: auto;"></div>
-        </div>
-        
-        <div class="modal-buttons">
-            <button id="closeTarifAdminModal" class="btn-outline">Tutup</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL KELOLA TARGET (OWNER ONLY) -->
-<div class="modal" id="manageTargetModal">
-    <div class="modal-content" style="max-width: 500px;">
-        <h3>⚙️ Kelola Target</h3>
-        <div class="modal-subtitle">Atur target untuk periode berjalan</div>
-        <div style="padding: 0 20px;">
-            <div class="form-group">
-    <label>👤 Target Agent (orang)</label>
-    <input type="number" id="targetAgentInput" class="target-input" placeholder="Jumlah target agent" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-</div>
-<div class="form-group">
-    <label>👥 Target Koordinator (orang)</label>
-    <input type="number" id="targetKoorInput" class="target-input" placeholder="Jumlah target koordinator" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-</div>
-<div class="form-group">
-    <label>🏦 Target CA (orang)</label>
-    <input type="number" id="targetCAInput" class="target-input" placeholder="Jumlah target CA" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-</div>
-<div class="form-group">
-    <label>📊 Target Transaksi per Bulan (jumlah)</label>
-    <input type="number" id="targetTransaksiInput" class="target-input" placeholder="Jumlah target transaksi" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-</div>
-            <hr style="margin: 16px 0;">
-            <h4 style="font-size: 14px; margin-bottom: 12px;">📅 Target per Bulan (Opsional)</h4>
-            <div id="monthlyTargetList" style="max-height: 250px; overflow-y: auto; margin-bottom: 16px;"></div>
-            <button id="addMonthlyTargetBtn" class="add-btn" style="width: 100%; margin-bottom: 16px;">+ Tambah Target Bulanan</button>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveTargetBtn" class="btn-primary">💾 Simpan Target</button>
-            <button id="cancelTargetBtn" class="btn-outline">Batal</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL INPUT TRANSAKSI (CS) -->
-<div class="modal" id="inputTransaksiModal">
-    <div class="modal-content" style="max-width: 400px;">
-        <h3>📊 Input Transaksi</h3>
-        <div class="modal-subtitle">Catat penambahan atau perubahan transaksi</div>
-        <div style="padding: 0 20px;">
-            <div class="form-group">
-                <label for="transaksiNominal">Jumlah Transaksi <span class="required">*</span></label>
-                <input type="number" id="transaksiNominal" placeholder="Masukkan jumlah transaksi" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
-            <div class="form-group">
-                <label for="transaksiKeterangan">Keterangan</label>
-                <textarea id="transaksiKeterangan" rows="2" placeholder="Contoh: Penjualan produk A, Fee upline, dll" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="transaksiTanggal">Tanggal Transaksi</label>
-                <input type="date" id="transaksiTanggal" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="saveTransaksiBtn" class="btn-primary">✅ Simpan Transaksi</button>
-            <button id="cancelTransaksiBtn" class="btn-outline">Batal</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL DAFTAR TRANSAKSI -->
-<div class="modal" id="transaksiListModal">
-    <div class="modal-content" style="max-width: 500px; max-height: 85vh; overflow-y: auto;">
-        <h3>📋 Riwayat Transaksi</h3>
-        <div class="modal-subtitle">Daftar semua transaksi yang telah dicatat</div>
-        <div id="transaksiList" class="db-list" style="max-height: 400px; overflow-y: auto;"></div>
-        <div class="modal-buttons">
-            <button class="btn-outline" onclick="closeModal('transaksiListModal')">Tutup</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL PILIH NOMOR TUJUAN WA -->
-<div class="modal" id="pilihNomorModal">
-    <div class="modal-content" style="max-width: 400px;">
-        <h3>📱 Pilih Nomor Tujuan</h3>
-        <div class="modal-subtitle">Pilih nomor WhatsApp yang akan dihubungi</div>
-        <div style="padding: 0 20px 20px 20px;">
-            <div id="pilihNomorOptions" style="display: flex; flex-direction: column; gap: 12px;">
-                <!-- Opsi akan diisi oleh JavaScript -->
-            </div>
-        </div>
-        <div class="modal-buttons">
-            <button id="batalPilihNomorBtn" class="btn-outline">Batal</button>
-        </div>
-    </div>
-</div>
-
-<input type="file" id="tarifExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
-
-<input type="file" id="produkExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
-    
-<div id="notifBox"></div>
-<input type="file" id="agentExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
-<script src="script.js"></script>
 </body>
 </html>
