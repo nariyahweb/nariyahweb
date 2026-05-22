@@ -6271,23 +6271,6 @@ function initUplineBroadcast() {
     
     loadUplineNumbers();
 }
-    
-    // Event listener untuk checkbox filter customer
-    document.querySelectorAll('#uplineCustomerFilter input').forEach(cb => {
-        cb.addEventListener('change', () => loadUplineNumbers());
-    
-    // Custom numbers input
-    document.getElementById('uplineCustomNumbers')?.addEventListener('input', loadUplineNumbers);
-    
-    // Tombol refresh
-    document.getElementById('refreshUplineBtn')?.addEventListener('click', loadUplineNumbers);
-    
-    // Tombol kirim
-    document.getElementById('sendUplineBroadcastBtn')?.addEventListener('click', sendUplineBroadcast);
-    
-    // Load awal
-    loadUplineNumbers();
-}
 
 // ========== FULL PAGE KANBAN FUNCTIONS ==========
 function renderFullFollowupKanban() {
