@@ -5353,13 +5353,15 @@ async function checkTransaksiData() {
 
 // ========== RENDER DB TRANSAKSI LENGKAP DENGAN HEADER ==========
 function renderTransaksiList(items) {
+    console.log('renderTransaksiList dipanggil dengan', items.length, 'item');
+    
     const container = document.getElementById('dbTransaksiList');
     if (!container) {
-        console.log('renderTransaksiList: Container dbTransaksiList tidak ditemukan');
+        console.error('ERROR: Container dbTransaksiList TIDAK DITEMUKAN!');
         return;
     }
     
-    console.log('renderTransaksiList: Merender', items.length, 'item');
+    console.log('Container ditemukan:', container);
     
     // Update total count
     const totalCountSpan = document.getElementById('transaksiTotalCount');
@@ -5416,9 +5418,13 @@ function renderTransaksiList(items) {
         return '<span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">⏳ Pending</span>';
     };
     
-    container.innerHTML = filtered.map(item => {
+    // Buat HTML untuk 5 data pertama sebagai test
+    let html = '';
+    
+    for (let i = 0; i < Math.min(filtered.length, 50); i++) {  // Batasi 50 data dulu untuk test
+        const item = filtered[i];
         const isChecked = selectedTransaksiIds.get(item.id) === true;
-        return `
+        html += `
             <div class="db-item-agent" data-id="${item.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid #e5e7eb;">
                 <input type="checkbox" class="db-item-checkbox-transaksi" data-id="${item.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
                 <div class="db-item-agent-info" style="flex: 1;">
@@ -5426,7 +5432,7 @@ function renderTransaksiList(items) {
                     <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">📱 ${escapeHtml(item.hp || '-')} | 🆔 ${escapeHtml(item.agent_id || '-')}</p>
                     <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">📊 ${getProgresIcon(item.progres_jenis)} ${item.progres_jenis?.toUpperCase() || 'NORMAL'} | Jumlah: ${formatRupiah(Math.abs(item.progres_jumlah || 0))}</p>
                     <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">👤 Upline: ${escapeHtml(item.upline_name || '-')} | 📞 ${escapeHtml(item.upline_phone || '-')}</p>
-                    <small style="font-size: 10px; color: #9ca3af;">📅 ${new Date(item.tanggal_transaksi).toLocaleDateString('id-ID')} | Status: ${getStatusBadge(item.status)}</small>
+                    <small style="font-size: 10px; color: #9ca3af;">📅 ${item.tanggal_transaksi ? new Date(item.tanggal_transaksi).toLocaleDateString('id-ID') : '-'} | Status: ${getStatusBadge(item.status)}</small>
                 </div>
                 <div class="db-item-agent-actions" style="display: flex; gap: 6px;">
                     <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')" style="background: #25D366; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">💬 WA</button>
@@ -5435,7 +5441,14 @@ function renderTransaksiList(items) {
                 </div>
             </div>
         `;
-    }).join('');
+    }
+    
+    if (filtered.length > 50) {
+        html += `<div style="text-align:center; padding: 16px; color: #f59e0b;">⚠️ Menampilkan 50 dari ${filtered.length} data. Gunakan filter untuk menyaring.</div>`;
+    }
+    
+    container.innerHTML = html;
+    console.log('HTML berhasil di-set ke container, panjang HTML:', html.length);
     
     // Event listener untuk checkbox
     document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi').forEach(cb => {
@@ -7545,76 +7558,79 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ========== PAGE NAVIGATION ==========
-  document.querySelectorAll('.menu-item[data-page]').forEach(item => {
+document.querySelectorAll('.menu-item[data-page]').forEach(item => {
     item.addEventListener('click', () => {
-      const page = item.dataset.page;
-      const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'dbAgentPage', 'produkPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'broadcastUplinePage', 'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage'];
+        const page = item.dataset.page;
+        const pages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 'dbNomorSalahPage', 'dbCommitmentPage', 'dbAgentPage', 'produkPage', 'reminderPage', 'pesanPage', 'broadcastPage', 'broadcastUplinePage', 'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage', 'dbTransaksiPage'];
 
-      pages.forEach(p => {
-        const el = document.getElementById(p);
-        if (el) el.style.display = 'none';
-      });
+        pages.forEach(p => {
+            const el = document.getElementById(p);
+            if (el) el.style.display = 'none';
+        });
 
-      if (page === 'dashboard') {
-        document.getElementById('dashboardPage').style.display = 'block';
-      } else if (page === 'import') {
-        document.getElementById('importPage').style.display = 'block';
-      } else if (page === 'dbClosing') {
-        document.getElementById('dbClosingPage').style.display = 'block';
-        loadDBClosing();
-      } else if (page === 'dbTidak') {
-        document.getElementById('dbTidakPage').style.display = 'block';
-        loadDBTidak();
-      } else if (page === 'dbNomorSalah') {
-        document.getElementById('dbNomorSalahPage').style.display = 'block';
-        loadDBNomorSalah();
-      } else if (page === 'dbCommitment') {
-        document.getElementById('dbCommitmentPage').style.display = 'block';
-        loadDBCommitment();
-      } else if (page === 'dbAgent') {
-        document.getElementById('dbAgentPage').style.display = 'block';
-        loadDatabaseAgent();
-      } else if (page === 'produk') {
-        document.getElementById('produkPage').style.display = 'block';
-        loadProduk();
-      } else if (page === 'reminder') {
-        document.getElementById('reminderPage').style.display = 'block';
-        loadReminders();
-      } else if (page === 'pesan') {
-        document.getElementById('pesanPage').style.display = 'block';
-        loadPesan();
-        loadUsersForSelect();
-      } else if (page === 'broadcast') {
-        document.getElementById('broadcastPage').style.display = 'block';
-        initBroadcast();
-      } else if (page === 'broadcastUpline') {
-        const pageElement = document.getElementById('broadcastUplinePage');
-        if (pageElement) {
-          pageElement.style.display = 'block';
-          initUplineBroadcast();
+        if (page === 'dashboard') {
+            document.getElementById('dashboardPage').style.display = 'block';
+        } else if (page === 'import') {
+            document.getElementById('importPage').style.display = 'block';
+        } else if (page === 'dbClosing') {
+            document.getElementById('dbClosingPage').style.display = 'block';
+            loadDBClosing();
+        } else if (page === 'dbTidak') {
+            document.getElementById('dbTidakPage').style.display = 'block';
+            loadDBTidak();
+        } else if (page === 'dbNomorSalah') {
+            document.getElementById('dbNomorSalahPage').style.display = 'block';
+            loadDBNomorSalah();
+        } else if (page === 'dbCommitment') {
+            document.getElementById('dbCommitmentPage').style.display = 'block';
+            loadDBCommitment();
+        } else if (page === 'dbAgent') {
+            document.getElementById('dbAgentPage').style.display = 'block';
+            loadDatabaseAgent();
+        } else if (page === 'produk') {
+            document.getElementById('produkPage').style.display = 'block';
+            loadProduk();
+        } else if (page === 'reminder') {
+            document.getElementById('reminderPage').style.display = 'block';
+            loadReminders();
+        } else if (page === 'pesan') {
+            document.getElementById('pesanPage').style.display = 'block';
+            loadPesan();
+            loadUsersForSelect();
+        } else if (page === 'broadcast') {
+            document.getElementById('broadcastPage').style.display = 'block';
+            initBroadcast();
+        } else if (page === 'broadcastUpline') {
+            const pageElement = document.getElementById('broadcastUplinePage');
+            if (pageElement) {
+                pageElement.style.display = 'block';
+                initUplineBroadcast();
+            }
+        } else if (page === 'followupFull') {
+            document.getElementById('followupFullPage').style.display = 'block';
+            renderFullFollowupKanban();
+        } else if (page === 'prospekFull') {
+            document.getElementById('prospekFullPage').style.display = 'block';
+            renderFullProspekKanban();
+        } else if (page === 'search') {
+            document.getElementById('searchPage').style.display = 'block';
+        } else if (page === 'manageUsers' && currentUserRole === 'owner') {
+            document.getElementById('manageUsersPage').style.display = 'block';
+            loadUsersList();
+        } else if (page === 'dbTransaksi') {  // <-- TAMBAHKAN BAGIAN INI
+            document.getElementById('dbTransaksiPage').style.display = 'block';
+            loadDbTransaksi();  // <-- PANGGIL FUNGSI INI
         }
-      } else if (page === 'followupFull') {
-        document.getElementById('followupFullPage').style.display = 'block';
-        renderFullFollowupKanban();
-      } else if (page === 'prospekFull') {
-        document.getElementById('prospekFullPage').style.display = 'block';
-        renderFullProspekKanban();
-      } else if (page === 'search') {
-        document.getElementById('searchPage').style.display = 'block';
-      } else if (page === 'manageUsers' && currentUserRole === 'owner') {
-        document.getElementById('manageUsersPage').style.display = 'block';
-        loadUsersList();
-      }
 
-      document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
-      item.classList.add('active');
+        document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+        item.classList.add('active');
 
-      if (window.innerWidth <= 768) {
-        document.getElementById('sidebar')?.classList.remove('active');
-      }
-      updateSidebarBodyClass();
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar')?.classList.remove('active');
+        }
+        updateSidebarBodyClass();
     });
-  });
+});
 
   // ========== CLOSE MODAL BUTTONS ==========
   document.querySelectorAll('.closeModalBtn').forEach(btn => btn.addEventListener('click', () => closeModal(btn.dataset.modal)));
