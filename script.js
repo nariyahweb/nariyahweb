@@ -5564,7 +5564,9 @@ let totalCount = 0;
             const loadingDiv = document.getElementById('loadingMoreTransaksi');
             if (loadingDiv) loadingDiv.remove();
         }
-        
+       if (!loadMore) {
+            await getTransaksiStats(); 
+
         renderTransaksiList(transaksiData);
         
         // Update info Menampilkan X dari Y data
@@ -5902,56 +5904,130 @@ function closeModalFromElement(btn) {
 function setupTransaksiFilters() {
     const searchInput = document.getElementById('searchTransaksiInput');
     const filterProgres = document.getElementById('filterProgresTransaksi');
+if (filterProgres) {
+    // Pastikan value sesuai dengan data di database
+    filterProgres.innerHTML = `
+        <option value="">Semua Progres</option>
+        <option value="naik">📈 Naik</option>
+        <option value="turun">📉 Turun</option>
+        <option value="normal">⚖️ Normal</option>
+    `;
+}
     const filterStatus = document.getElementById('filterStatusTransaksi');
     const resetBtn = document.getElementById('resetTransaksiFilterBtn');
     
-    const applyFilters = () => {
+    // Variabel untuk menyimpan hasil filter dari database
+    let filteredDataCache = [];
+    let isFiltering = false;
+    
+    const applyFilters = async () => {
+        if (isFiltering) return;
+        isFiltering = true;
+        
         const searchTerm = searchInput?.value.toLowerCase() || '';
         const progresFilter = filterProgres?.value || '';
         const statusFilter = filterStatus?.value || '';
         
-        let filtered = [...transaksiData];
-        
-        if (searchTerm) {
-            filtered = filtered.filter(item =>
-                (item.nama && item.nama.toLowerCase().includes(searchTerm)) ||
-                (item.agent_id && String(item.agent_id).toLowerCase().includes(searchTerm)) ||
-                (item.hp && String(item.hp).includes(searchTerm))
-            );
+        // Tampilkan loading
+        const container = document.getElementById('dbTransaksiList');
+        if (container) {
+            container.innerHTML = '<div style="text-align:center;padding:40px;">⏳ Memuat data filter...</div>';
         }
         
-        if (progresFilter) {
-            filtered = filtered.filter(item => item.progres_jenis === progresFilter);
-        }
-        
-        if (statusFilter) {
-            filtered = filtered.filter(item => item.status === statusFilter);
-        }
-
-      const filteredIds = new Set(filtered.map(item => item.id));
-        for (const id of selectedTransaksiIds.keys()) {
-            if (!filteredIds.has(id)) {
-                selectedTransaksiIds.delete(id);
+        try {
+            // Query ke database langsung (bukan dari cache)
+            const isOwner = currentUserRole === 'owner';
+            let query = db.collection('db_transaksi');
+            
+            if (!isOwner) {
+                query = query.where('user_id', '==', currentUser.uid);
             }
+            
+            // Terapkan filter progres ke query jika ada
+            if (progresFilter) {
+                query = query.where('progres_jenis', '==', progresFilter);
+            }
+            
+            // Eksekusi query
+            const snapshot = await query.get();
+            let results = [];
+            
+            for (const doc of snapshot.docs) {
+                const d = doc.data();
+                let ownerName = '';
+                if (isOwner && d.user_id !== currentUser.uid) {
+                    const userDoc = await db.collection('users').doc(d.user_id).get();
+                    ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+                }
+                results.push({
+                    id: doc.id,
+                    ...d,
+                    displayName: (d.nama || '') + ownerName
+                });
+            }
+            
+            // Filter tambahan untuk search term dan status (jika tidak bisa di-filter di query)
+            if (searchTerm) {
+                results = results.filter(item =>
+                    (item.nama && item.nama.toLowerCase().includes(searchTerm)) ||
+                    (item.agent_id && String(item.agent_id).toLowerCase().includes(searchTerm)) ||
+                    (item.hp && String(item.hp).includes(searchTerm))
+                );
+            }
+            
+            if (statusFilter) {
+                results = results.filter(item => item.status === statusFilter);
+            }
+            
+            // Urutkan berdasarkan tanggal
+            results.sort((a, b) => new Date(b.tanggal_transaksi) - new Date(a.tanggal_transaksi));
+            
+            filteredDataCache = results;
+            
+            // Update statistik
+            const filteredCountSpan = document.getElementById('transaksiFilteredCount');
+            if (filteredCountSpan) filteredCountSpan.innerText = results.length;
+            
+            // Tampilkan hasil
+            renderTransaksiList(results);
+            
+            // Tampilkan notifikasi jumlah data
+            if (progresFilter) {
+                const jenisLabel = progresFilter === 'naik' ? '📈 Naik' : (progresFilter === 'turun' ? '📉 Turun' : '⚖️ Normal');
+                showNotifTop(`📊 Menampilkan ${results.length} data dengan status ${jenisLabel}`);
+            }
+            
+        } catch (error) {
+            console.error('Error filtering:', error);
+            showNotifTop('❌ Gagal memfilter data: ' + error.message, true);
+        } finally {
+            isFiltering = false;
         }
-        
-        // Update filtered count
-        const filteredCountSpan = document.getElementById('transaksiFilteredCount');
-        if (filteredCountSpan) filteredCountSpan.innerText = filtered.length;
-        
-        renderTransaksiList(filtered);
     };
     
-    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    // Event listener dengan debounce untuk search
+    let debounceTimer;
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(applyFilters, 500);
+        });
+    }
+    
     if (filterProgres) filterProgres.addEventListener('change', applyFilters);
     if (filterStatus) filterStatus.addEventListener('change', applyFilters);
     
     if (resetBtn) {
-        resetBtn.onclick = () => {
+        resetBtn.onclick = async () => {
             if (searchInput) searchInput.value = '';
             if (filterProgres) filterProgres.value = '';
             if (filterStatus) filterStatus.value = '';
-            applyFilters();
+            
+            // Reset selection
+            selectedTransaksiIds.clear();
+            
+            // Reload semua data
+            await loadDbTransaksi();
         };
     }
 }
@@ -8794,6 +8870,97 @@ if (moveSelectedBtn) {
     const newMoveBtn = moveSelectedBtn.cloneNode(true);
     moveSelectedBtn.parentNode.replaceChild(newMoveBtn, moveSelectedBtn);
     newMoveBtn.addEventListener('click', moveSelectedToFollowup);
+}
+
+  // Fungsi untuk menghitung jumlah data per jenis progres
+async function getTransaksiStats() {
+    try {
+        const isOwner = currentUserRole === 'owner';
+        let query = db.collection('db_transaksi');
+        
+        if (!isOwner) {
+            query = query.where('user_id', '==', currentUser.uid);
+        }
+        
+        const snapshot = await query.get();
+        
+        let stats = {
+            total: 0,
+            naik: 0,
+            turun: 0,
+            normal: 0,
+            pending: 0,
+            imported: 0
+        };
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            stats.total++;
+            
+            // Hitung berdasarkan progres_jenis
+            if (data.progres_jenis === 'naik') stats.naik++;
+            else if (data.progres_jenis === 'turun') stats.turun++;
+            else stats.normal++;
+            
+            // Hitung berdasarkan status
+            if (data.status === 'imported') stats.imported++;
+            else stats.pending++;
+        });
+        
+        console.log('📊 Statistik Transaksi:', stats);
+        
+        // Update tampilan statistik di halaman
+        updateTransaksiStatsPanel(stats);
+        
+        return stats;
+    } catch (e) {
+        console.error('Error get transaksi stats:', e);
+        return null;
+    }
+}
+
+// Update panel statistik di halaman DB Transaksi
+function updateTransaksiStatsPanel(stats) {
+    if (!stats) return;
+    
+    // Cari atau buat panel statistik
+    let statsPanel = document.getElementById('transaksiStatsPanel');
+    const container = document.querySelector('#dbTransaksiPage .db-section');
+    
+    if (!statsPanel && container) {
+        statsPanel = document.createElement('div');
+        statsPanel.id = 'transaksiStatsPanel';
+        statsPanel.style.cssText = 'display: flex; gap: 16px; flex-wrap: wrap; padding: 12px; background: #f8fafc; border-radius: 12px; margin-bottom: 16px;';
+        const filterDiv = container.querySelector('#transaksiStats');
+        if (filterDiv) {
+            filterDiv.insertAdjacentElement('afterend', statsPanel);
+        } else {
+            container.insertBefore(statsPanel, container.firstChild);
+        }
+    }
+    
+    if (statsPanel) {
+        statsPanel.innerHTML = `
+            <div style="background: #eef2ff; padding: 8px 16px; border-radius: 10px;">
+                <strong>📊 Total:</strong> ${stats.total}
+            </div>
+            <div style="background: #ecfdf5; padding: 8px 16px; border-radius: 10px;">
+                <strong>📈 Naik:</strong> ${stats.naik}
+            </div>
+            <div style="background: #fef2f2; padding: 8px 16px; border-radius: 10px;">
+                <strong>📉 Turun:</strong> ${stats.turun}
+            </div>
+            <div style="background: #f3f4f6; padding: 8px 16px; border-radius: 10px;">
+                <strong>⚖️ Normal:</strong> ${stats.normal}
+            </div>
+            <div style="background: #fef3c7; padding: 8px 16px; border-radius: 10px;">
+                <strong>⏳ Pending:</strong> ${stats.pending}
+            </div>
+            <div style="background: #d1fae5; padding: 8px 16px; border-radius: 10px;">
+                <strong>✅ Imported:</strong> ${stats.imported}
+            </div>
+        `;
+    }
 }
   
 }); // <-- INI SATU-SATUNYA TUTUP DARI DOMContentLoaded
