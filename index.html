@@ -318,8 +318,7 @@
             </div>
         </div>
 
-                        <!-- DATABASE TRANSAKSI PAGE -->
-                <!-- DATABASE TRANSAKSI PAGE -->
+<!-- DATABASE TRANSAKSI PAGE -->
 <div id="dbTransaksiPage" class="page-content" style="display:none">
     <div class="db-section">
         <div class="db-header">
@@ -328,7 +327,7 @@
                 <button class="db-select-all" id="selectAllTransaksi">✅ Pilih Semua</button>
                 <button class="db-delete-selected" id="deleteSelectedTransaksi">🗑️ Hapus Terpilih</button>
                 <button class="db-move-followup" id="moveSelectedToFollowupBtn" style="background: #8b5cf6; color: white;">📋 Pindah ke Followup</button>
-                <button class="db-export-excel" id="exportTransaksiExcelBtn" style="background: #3b82f6; color: white;">📤 Export Excel</button>
+                <button class="add-btn" id="viewTransaksiHistoryBtn" style="background: #10b981;">📋 Riwayat Transaksi Global</button>
             </div>
         </div>
         
@@ -460,12 +459,61 @@
 </div>
                 
                 <!-- REMINDER PAGE -->
-                <div id="reminderPage" class="page-content" style="display:none">...</div>
+<div id="reminderPage" class="page-content" style="display:none">
+    <div class="db-section">
+        <div class="db-header">
+            <h3>⏰ Pengingat (Reminder)</h3>
+            <div class="db-actions">
+                <button class="add-btn" id="addReminderBtn">+ Tambah Pengingat</button>
+            </div>
+        </div>
+        <div id="reminderList" class="db-list">
+            <p style="text-align:center;padding:40px;color:#9ca3af;">⏰ Loading pengingat...</p>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL TAMBAH REMINDER -->
+<div class="modal" id="reminderModal">
+    <div class="modal-content">
+        <h3>⏰ Tambah Pengingat</h3>
+        <div class="modal-subtitle">Buat pengingat untuk tugas Anda</div>
+        <div style="padding: 0 20px;">
+            <div class="form-group">
+                <label>Judul Pengingat <span class="required">*</span></label>
+                <input type="text" id="reminderTitle" placeholder="Contoh: Follow Up Customer" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+            </div>
+            <div class="form-group">
+                <label>Deskripsi</label>
+                <textarea id="reminderDesc" rows="3" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Tanggal & Waktu</label>
+                <input type="datetime-local" id="reminderDateTime" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="saveReminderBtn" class="btn-primary">💾 Simpan</button>
+            <button class="closeModalBtn btn-outline" data-modal="reminderModal">Batal</button>
+        </div>
+    </div>
+</div>
 
                 <!-- PESAN PAGE -->
-                <div id="pesanPage" class="page-content" style="display:none">...</div>
+<div id="pesanPage" class="page-content" style="display:none">
+    <div class="db-section">
+        <div class="db-header">
+            <h3>💬 Pesan Antar CS</h3>
+            <div class="db-actions">
+                <button class="add-btn" id="addPesanBtn">+ Kirim Pesan</button>
+            </div>
+        </div>
+        <div id="pesanList" class="db-list">
+            <p style="text-align:center;padding:40px;color:#9ca3af;">💬 Loading pesan...</p>
+        </div>
+    </div>
+</div>
 
-                 <!-- BROADCAST PAGE -->
                 <!-- BROADCAST PAGE -->
 <div id="broadcastPage" class="page-content" style="display:none">
     <div class="broadcast-section">
