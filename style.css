@@ -1488,6 +1488,8 @@ body.modal-open {
     border-radius: 20px;
     padding: 20px;
     border: 1px solid #e5e7eb;
+    width: 100%;
+    overflow-x: auto;
 }
 
 .db-header {
@@ -4745,4 +4747,32 @@ body.dark-mode .db-item-agent-info p {
 
 body.dark-mode .db-item-agent-info small {
     color: #64748b !important;
+}
+
+/* ========== PAGE CONTENT STYLES ========== */
+.page-content {
+    display: none;
+    width: 100%;
+    height: auto;
+    min-height: 400px;
+    overflow: visible;
+    position: relative;
+}
+
+.page-content.active {
+    display: block;
+}
+
+/* Khusus untuk DB Transaksi */
+#dbTransaksiPage {
+    width: 100%;
+    display: none;
+}
+
+#dbTransaksiPage[style*="display: block"],
+#dbTransaksiPage[style*="display: block"] .db-section,
+#dbTransaksiPage[style*="display: block"] .db-list {
+    width: 100% !important;
+    min-width: auto !important;
+    overflow: visible !important;
 }
