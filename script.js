@@ -5352,7 +5352,6 @@ async function checkTransaksiData() {
 }
 
 // ========== RENDER DB TRANSAKSI LENGKAP DENGAN HEADER ==========
-// Perbaikan fungsi renderTransaksiList - tambahkan penanganan untuk data kosong
 function renderTransaksiList(items) {
     console.log('renderTransaksiList dipanggil dengan', items.length, 'item');
     
@@ -5361,6 +5360,8 @@ function renderTransaksiList(items) {
         console.error('ERROR: Container dbTransaksiList TIDAK DITEMUKAN!');
         return;
     }
+    
+    console.log('Container ditemukan:', container);
     
     // Update total count
     const totalCountSpan = document.getElementById('transaksiTotalCount');
@@ -5394,33 +5395,15 @@ function renderTransaksiList(items) {
     
     if (filtered.length === 0) {
         if (items.length === 0) {
-            container.innerHTML = `
-                <div style="text-align:center;padding:60px;color:#9ca3af;">
-                    📭 Belum ada data transaksi.<br>
-                    <small>Silakan import data terlebih dahulu melalui menu Import Data</small>
-                </div>`;
+            container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Belum ada data transaksi. Silakan import data terlebih dahulu.</p>';
         } else {
-            container.innerHTML = `
-                <div style="text-align:center;padding:60px;color:#f59e0b;">
-                    🔍 Tidak ada data yang sesuai filter<br>
-                    <small>Coba ubah filter pencarian</small>
-                </div>`;
+            container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">🔍 Tidak ada data yang sesuai filter</p>';
         }
         return;
     }
     
-    // Tampilkan pesan info jika data terbatas
-    let infoMessage = '';
-    if (filtered.length > 0 && filtered.every(item => item.progres_jumlah === 0)) {
-        infoMessage = `
-            <div style="background:#fef3c7; padding:10px 16px; border-radius:12px; margin-bottom:16px; color:#d97706; font-size:13px;">
-                ⚠️ <strong>Informasi:</strong> Semua data transaksi memiliki progres jumlah 0 (nol). 
-                Ini normal jika data baru diimport tanpa nilai progres.
-            </div>`;
-    }
-    
     const formatRupiah = (angka) => {
-        if (!angka || angka === 0) return '0';
+        if (!angka) return '0';
         return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
     
@@ -5431,61 +5414,41 @@ function renderTransaksiList(items) {
     };
     
     const getStatusBadge = (status) => {
-        if (status === 'imported') {
-            return '<span style="background:#10b981; color:white; padding:2px 10px; border-radius:20px; font-size:11px;">✅ Sudah Dipindah</span>';
-        }
-        return '<span style="background:#f59e0b; color:white; padding:2px 10px; border-radius:20px; font-size:11px;">⏳ Pending Import</span>';
+        if (status === 'imported') return '<span style="background:#10b981; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">✅ Sudah Dipindah</span>';
+        return '<span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">⏳ Pending</span>';
     };
     
-    // Tampilkan data
-    let html = infoMessage;
-    const MAX_RENDER = 100;
-    const renderData = filtered.slice(0, MAX_RENDER);
+    // Buat HTML untuk 5 data pertama sebagai test
+    let html = '';
     
-    for (const item of renderData) {
+    for (let i = 0; i < Math.min(filtered.length, 50); i++) {  // Batasi 50 data dulu untuk test
+        const item = filtered[i];
         const isChecked = selectedTransaksiIds.get(item.id) === true;
-        const displayHp = item.hp && item.hp !== '' ? item.hp : '❌ Tidak ada nomor';
-        const waButton = item.hp && item.hp !== '' ? 
-            `<button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp)}')" style="background:#25D366; color:white; padding:4px 12px; border:none; border-radius:8px; cursor:pointer;">💬 WA</button>` :
-            `<button disabled style="background:#9ca3af; color:white; padding:4px 12px; border:none; border-radius:8px; cursor:not-allowed;">📵 No WA</button>`;
-        
         html += `
-            <div class="db-item-agent" data-id="${item.id}" style="display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid #e5e7eb; background: #fff;">
+            <div class="db-item-agent" data-id="${item.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid #e5e7eb;">
                 <input type="checkbox" class="db-item-checkbox-transaksi" data-id="${item.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
                 <div class="db-item-agent-info" style="flex: 1;">
-                    <h4 style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">${escapeHtml(item.nama || '-')}</h4>
-                    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 4px;">
-                        <span style="font-size: 12px; color: #6b7280;">📱 ${escapeHtml(displayHp)}</span>
-                        <span style="font-size: 12px; color: #6b7280;">🆔 ${escapeHtml(item.agent_id || '-')}</span>
-                    </div>
-                    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 4px;">
-                        <span style="font-size: 12px;">${getProgresIcon(item.progres_jenis)} ${item.progres_jenis?.toUpperCase() || 'NORMAL'}</span>
-                        <span style="font-size: 12px;">💰 Jumlah: ${formatRupiah(Math.abs(item.progres_jumlah || 0))}</span>
-                        <span>${getStatusBadge(item.status)}</span>
-                    </div>
-                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                        <span style="font-size: 11px; color: #9ca3af;">👤 Upline: ${escapeHtml(item.upline_name || '-')}</span>
-                        <span style="font-size: 11px; color: #9ca3af;">📞 ${escapeHtml(item.upline_phone || '-')}</span>
-                        <span style="font-size: 11px; color: #9ca3af;">📅 ${item.tanggal_transaksi ? new Date(item.tanggal_transaksi).toLocaleDateString('id-ID') : '-'}</span>
-                    </div>
+                    <h4 style="font-size: 14px; margin-bottom: 2px;">${escapeHtml(item.displayName || item.nama)}</h4>
+                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">📱 ${escapeHtml(item.hp || '-')} | 🆔 ${escapeHtml(item.agent_id || '-')}</p>
+                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">📊 ${getProgresIcon(item.progres_jenis)} ${item.progres_jenis?.toUpperCase() || 'NORMAL'} | Jumlah: ${formatRupiah(Math.abs(item.progres_jumlah || 0))}</p>
+                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">👤 Upline: ${escapeHtml(item.upline_name || '-')} | 📞 ${escapeHtml(item.upline_phone || '-')}</p>
+                    <small style="font-size: 10px; color: #9ca3af;">📅 ${item.tanggal_transaksi ? new Date(item.tanggal_transaksi).toLocaleDateString('id-ID') : '-'} | Status: ${getStatusBadge(item.status)}</small>
                 </div>
-                <div class="db-item-agent-actions" style="display: flex; gap: 8px;">
-                    ${waButton}
-                    ${item.status !== 'imported' ? `<button class="db-item-move-followup" onclick="event.stopPropagation(); moveSingleToFollowup('${item.id}')" style="background:#4f46e5; color:white; padding:4px 12px; border:none; border-radius:8px; cursor:pointer;">📋 Pindah ke Followup</button>` : ''}
-                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteTransaksiItem('${item.id}')" style="background:#fef2f2; color:#dc2626; padding:4px 12px; border:none; border-radius:8px; cursor:pointer;">🗑️ Hapus</button>
+                <div class="db-item-agent-actions" style="display: flex; gap: 6px;">
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')" style="background: #25D366; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">💬 WA</button>
+                    ${item.status !== 'imported' ? `<button class="db-item-move-followup" onclick="event.stopPropagation(); moveSingleToFollowup('${item.id}')" style="background: #4f46e5; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">📋 Pindah ke Followup</button>` : ''}
+                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteTransaksiItem('${item.id}')" style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
                 </div>
             </div>
         `;
     }
     
-    if (filtered.length > MAX_RENDER) {
-        html += `<div style="text-align:center; padding: 16px; background: #fef3c7; color: #d97706; border-radius: 12px; margin-top: 12px;">
-            ⚠️ Menampilkan ${MAX_RENDER} dari ${filtered.length} data. Gunakan filter untuk menyaring.
-        </div>`;
+    if (filtered.length > 50) {
+        html += `<div style="text-align:center; padding: 16px; color: #f59e0b;">⚠️ Menampilkan 50 dari ${filtered.length} data. Gunakan filter untuk menyaring.</div>`;
     }
     
     container.innerHTML = html;
-    console.log('✅ HTML berhasil di-render, total data:', filtered.length);
+    console.log('HTML berhasil di-set ke container, panjang HTML:', html.length);
     
     // Event listener untuk checkbox
     document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi').forEach(cb => {
@@ -7654,14 +7617,14 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         } else if (page === 'manageUsers' && currentUserRole === 'owner') {
             document.getElementById('manageUsersPage').style.display = 'block';
             loadUsersList();
-} else if (page === 'dbTransaksi') {
-    const dbTransaksiPage = document.getElementById('dbTransaksiPage');
-    if (dbTransaksiPage) {
+        } else if (page === 'dbTransaksi') {
+        const dbTransaksiPage = document.getElementById('dbTransaksiPage');
+        if (dbTransaksiPage) {
         dbTransaksiPage.style.display = 'block';
         dbTransaksiPage.style.width = '100%';
-    }
-    loadDbTransaksi();
-}
+        }
+        loadDbTransaksi();
+        }
 
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
         item.classList.add('active');
