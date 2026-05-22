@@ -303,7 +303,6 @@
                     </div>
                 </div>
 
-                <!-- DATABASE PAGES -->
 <!-- DATABASE AGENT PAGE -->
 <div id="dbAgentPage" class="page-content" style="display:none">
     <div class="db-section">
@@ -317,8 +316,70 @@
                 <button class="db-export-excel" id="exportAgentExcelBtn" style="background: #3b82f6; color: white; padding: 6px 12px; border-radius: 8px; border: none; cursor: pointer;">📤 Export Excel</button>
             </div>
         </div>
+        
+        <!-- 🔍 FILTER DAN PENCARIAN -->
+        <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+                <div style="flex: 2; min-width: 200px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🔍 Cari</label>
+                    <input type="text" id="searchAgentInput" placeholder="Cari Nama, ID Agent, atau Nomor..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                </div>
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">👤 Filter Upline</label>
+                    <input type="text" id="filterUplineAgent" placeholder="Cari berdasarkan Upline..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🆔 Filter CID</label>
+                    <input type="text" id="filterCidAgent" placeholder="Cari berdasarkan CID..." style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">🏦 Filter Jenis Bank</label>
+                    <select id="filterBankAgent" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                        <option value="">Semua Bank</option>
+                        <option value="BCA">BCA</option>
+                        <option value="Mandiri">Mandiri</option>
+                        <option value="BRI">BRI</option>
+                        <option value="BNI">BNI</option>
+                        <option value="CIMB Niaga">CIMB Niaga</option>
+                        <option value="Danamon">Danamon</option>
+                        <option value="Permata">Permata</option>
+                        <option value="Maybank">Maybank</option>
+                        <option value="OCBC NISP">OCBC NISP</option>
+                        <option value="Bank Lain">Bank Lain</option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 120px;">
+                    <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px;">📅 Filter Tanggal</label>
+                    <select id="filterDateAgent" style="width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 13px;">
+                        <option value="">Semua Tanggal</option>
+                        <option value="today">Hari Ini</option>
+                        <option value="week">7 Hari Terakhir</option>
+                        <option value="month">30 Hari Terakhir</option>
+                    </select>
+                </div>
+                <div>
+                    <button id="resetAgentFilterBtn" style="background: #f3f4f6; color: #374151; padding: 10px 16px; border: none; border-radius: 10px; cursor: pointer; font-size: 13px;">🔄 Reset Filter</button>
+                </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 20px; flex-wrap: wrap;">
+                <label style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" id="filterHasHpAgent" style="width: 16px; height: 16px;"> Hanya yang memiliki nomor WA
+                </label>
+                <label style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px;">
+                    <input type="checkbox" id="filterHasApkAgent" style="width: 16px; height: 16px;"> Hanya yang memiliki aplikasi
+                </label>
+            </div>
+        </div>
+        
+        <div id="agentStats" style="margin-bottom: 12px; font-size: 12px; color: #6b7280;">
+            Menampilkan <span id="agentFilteredCount">0</span> dari <span id="agentTotalCount">0</span> data
+        </div>
+        
+        <div id="dbAgentList" class="db-list"></div>
+    </div>
+</div>
 
-<!-- DATABASE TRANSAKSI PAGE -->
+<!-- DATABASE TRANSAKSI PAGE (TERPISAH, BUKAN DI DALAM DB AGENT) -->
 <div id="dbTransaksiPage" class="page-content" style="display:none">
     <div class="db-section">
         <div class="db-header">
