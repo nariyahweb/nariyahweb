@@ -5289,35 +5289,77 @@ function attachCheckboxEvents(selector, map, selectAllId) {
 let transaksiData = [];
 
 async function loadDbTransaksi() {
-    if (!currentUser) return;
-    
-    const isOwner = currentUserRole === 'owner';
-    let query = db.collection('db_transaksi');
-    if (!isOwner) {
-        query = query.where('user_id', '==', currentUser.uid);
+    if (!currentUser) {
+        console.log('loadDbTransaksi: No user logged in');
+        return;
     }
-    query = query.orderBy('tanggal_transaksi', 'desc').limit(500);
     
-    const snapshot = await query.get();
-    transaksiData = [];
+    console.log('loadDbTransaksi: Memuat data transaksi...');
     
-    for (const doc of snapshot.docs) {
-        const d = doc.data();
-        let ownerName = '';
-        if (isOwner && d.user_id !== currentUser.uid) {
-            const userDoc = await db.collection('users').doc(d.user_id).get();
-            ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+    try {
+        const isOwner = currentUserRole === 'owner';
+        let query = db.collection('db_transaksi');
+        if (!isOwner) {
+            query = query.where('user_id', '==', currentUser.uid);
         }
-        transaksiData.push({ id: doc.id, ...d, displayName: d.nama + ownerName });
+        query = query.orderBy('tanggal_transaksi', 'desc').limit(500);
+        
+        const snapshot = await query.get();
+        console.log('loadDbTransaksi: Data ditemukan:', snapshot.size);
+        
+        transaksiData = [];
+        
+        for (const doc of snapshot.docs) {
+            const d = doc.data();
+            let ownerName = '';
+            if (isOwner && d.user_id !== currentUser.uid) {
+                const userDoc = await db.collection('users').doc(d.user_id).get();
+                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+            }
+            transaksiData.push({ 
+                id: doc.id, 
+                ...d, 
+                displayName: (d.nama || '') + ownerName 
+            });
+        }
+        
+        console.log('transaksiData length:', transaksiData.length);
+        renderTransaksiList(transaksiData);
+        
+    } catch (error) {
+        console.error('Error loadDbTransaksi:', error);
+        showNotifTop('❌ Gagal memuat data transaksi: ' + error.message, true);
+        const container = document.getElementById('dbTransaksiList');
+        if (container) {
+            container.innerHTML = '<p style="text-align:center;padding:40px;color:#ef4444;">❌ Gagal memuat data transaksi</p>';
+        }
     }
-    
-    renderTransaksiList(transaksiData);
+}
+
+// Fungsi untuk debugging - cek data transaksi di console
+async function checkTransaksiData() {
+    console.log('Mengecek data transaksi...');
+    const snapshot = await db.collection('db_transaksi').limit(10).get();
+    console.log('Jumlah data di db_transaksi:', snapshot.size);
+    snapshot.forEach(doc => {
+        console.log('Data:', doc.id, doc.data());
+    });
+    if (snapshot.size === 0) {
+        console.log('⚠️ Tidak ada data di db_transaksi. Silakan import data terlebih dahulu.');
+    } else {
+        console.log('✅ Data ditemukan! Halaman DB Transaksi akan menampilkan data.');
+    }
 }
 
 // ========== RENDER DB TRANSAKSI LENGKAP DENGAN HEADER ==========
 function renderTransaksiList(items) {
     const container = document.getElementById('dbTransaksiList');
-    if (!container) return;
+    if (!container) {
+        console.log('renderTransaksiList: Container dbTransaksiList tidak ditemukan');
+        return;
+    }
+    
+    console.log('renderTransaksiList: Merender', items.length, 'item');
     
     // Update total count
     const totalCountSpan = document.getElementById('transaksiTotalCount');
@@ -5350,7 +5392,11 @@ function renderTransaksiList(items) {
     if (filteredCountSpan) filteredCountSpan.innerText = filtered.length;
     
     if (filtered.length === 0) {
-        container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Tidak ada data transaksi</p>';
+        if (items.length === 0) {
+            container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Belum ada data transaksi. Silakan import data terlebih dahulu.</p>';
+        } else {
+            container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">🔍 Tidak ada data yang sesuai filter</p>';
+        }
         return;
     }
     
@@ -5373,19 +5419,19 @@ function renderTransaksiList(items) {
     container.innerHTML = filtered.map(item => {
         const isChecked = selectedTransaksiIds.get(item.id) === true;
         return `
-            <div class="db-item-agent" data-id="${item.id}">
-                <input type="checkbox" class="db-item-checkbox-transaksi" data-id="${item.id}" ${isChecked ? 'checked' : ''}>
-                <div class="db-item-agent-info">
-                    <h4>${escapeHtml(item.displayName || item.nama)}</h4>
-                    <p>📱 ${escapeHtml(item.hp || '-')} | 🆔 ${escapeHtml(item.agent_id || '-')}</p>
-                    <p>📊 ${getProgresIcon(item.progres_jenis)} ${item.progres_jenis?.toUpperCase() || 'NORMAL'} | Jumlah: ${formatRupiah(Math.abs(item.progres_jumlah || 0))}</p>
-                    <p>👤 Upline: ${escapeHtml(item.upline_name || '-')} | 📞 ${escapeHtml(item.upline_phone || '-')}</p>
-                    <p>📅 ${new Date(item.tanggal_transaksi).toLocaleDateString('id-ID')} | Status: ${getStatusBadge(item.status)}</p>
+            <div class="db-item-agent" data-id="${item.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid #e5e7eb;">
+                <input type="checkbox" class="db-item-checkbox-transaksi" data-id="${item.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;">
+                <div class="db-item-agent-info" style="flex: 1;">
+                    <h4 style="font-size: 14px; margin-bottom: 2px;">${escapeHtml(item.displayName || item.nama)}</h4>
+                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">📱 ${escapeHtml(item.hp || '-')} | 🆔 ${escapeHtml(item.agent_id || '-')}</p>
+                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">📊 ${getProgresIcon(item.progres_jenis)} ${item.progres_jenis?.toUpperCase() || 'NORMAL'} | Jumlah: ${formatRupiah(Math.abs(item.progres_jumlah || 0))}</p>
+                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">👤 Upline: ${escapeHtml(item.upline_name || '-')} | 📞 ${escapeHtml(item.upline_phone || '-')}</p>
+                    <small style="font-size: 10px; color: #9ca3af;">📅 ${new Date(item.tanggal_transaksi).toLocaleDateString('id-ID')} | Status: ${getStatusBadge(item.status)}</small>
                 </div>
-                <div class="db-item-agent-actions">
-                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')">💬 WA</button>
-                    ${item.status !== 'imported' ? `<button class="db-item-move-followup" onclick="event.stopPropagation(); moveSingleToFollowup('${item.id}')">📋 Pindah ke Followup</button>` : ''}
-                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteTransaksiItem('${item.id}')">🗑️ Hapus</button>
+                <div class="db-item-agent-actions" style="display: flex; gap: 6px;">
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')" style="background: #25D366; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">💬 WA</button>
+                    ${item.status !== 'imported' ? `<button class="db-item-move-followup" onclick="event.stopPropagation(); moveSingleToFollowup('${item.id}')" style="background: #4f46e5; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">📋 Pindah ke Followup</button>` : ''}
+                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteTransaksiItem('${item.id}')" style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
                 </div>
             </div>
         `;
@@ -5395,12 +5441,6 @@ function renderTransaksiList(items) {
     document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi').forEach(cb => {
         cb.removeEventListener('change', handleTransaksiCheckboxChange);
         cb.addEventListener('change', handleTransaksiCheckboxChange);
-    });
-    
-    // Event listener untuk klik item
-    document.querySelectorAll('#dbTransaksiList .db-item-agent').forEach(el => {
-        el.removeEventListener('click', handleTransaksiItemClick);
-        el.addEventListener('click', handleTransaksiItemClick);
     });
     
     updateSelectAllTransaksiButton();
@@ -7281,6 +7321,10 @@ auth.onAuthStateChanged(async user => {
     await loadTransaksiGlobal();
     loadProduk();
     loadUsersList();
+    await loadDbTransaksi();
+    checkTransaksiData();
+
+    
 
     setTimeout(() => {
       const manageTargetBtn = document.getElementById('manageTargetBtn');
@@ -7312,6 +7356,7 @@ auth.onAuthStateChanged(async user => {
         }
       }
     }, 500);
+    
   } else {
     loginPage.style.display = 'flex';
     app.style.display = 'none';
