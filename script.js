@@ -6236,10 +6236,6 @@ function setupImportExcel() {
     });
 }
 
-// Panggil setupImportExcel di dalam DOMContentLoaded
-// Tambahkan baris ini di dalam DOMContentLoaded:
-// setupImportExcel();
-
 // ========== UPLINE BROADCAST FUNCTIONS ==========
 function initUplineBroadcast() {
     document.querySelectorAll('input[name="uplineSourceType"]').forEach(radio => {
