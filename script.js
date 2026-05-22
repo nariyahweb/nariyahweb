@@ -6275,7 +6275,6 @@ function initUplineBroadcast() {
     // Event listener untuk checkbox filter customer
     document.querySelectorAll('#uplineCustomerFilter input').forEach(cb => {
         cb.addEventListener('change', () => loadUplineNumbers());
-    });
     
     // Custom numbers input
     document.getElementById('uplineCustomNumbers')?.addEventListener('input', loadUplineNumbers);
