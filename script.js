@@ -5865,48 +5865,15 @@ function setupImportExcel() {
             btn.textContent = '⏳ Memproses...';
             btn.disabled = true;
             
-            // Create progress container
-            const progressContainer = document.createElement('div');
-            progressContainer.className = 'progress-container';
-            progressContainer.style.margin = '20px 0';
-            progressContainer.style.position = 'relative';
-            progressContainer.style.zIndex = '9999';
-            progressContainer.innerHTML = `
-                <div class="progress-bar-wrapper">
-                    <div class="progress-bar-track">
-                        <div class="progress-bar-fill-custom" id="importProgressFill" style="width: 0%"></div>
-                    </div>
-                    <div class="progress-text" id="importProgressText">0%</div>
-                </div>
-                <div class="progress-detail">
-                    <span id="importProgressStatus">Membaca file Excel...</span>
-                    <span id="importProgressCount">0 / 0 data</span>
-                </div>
-            `;
-            
-            const importCard = document.querySelector('#importPage .import-card:last-child');
-            if (importCard) {
-                importCard.insertBefore(progressContainer, importCard.querySelector('.import-btn'));
-            }
-            
-            const updateProgress = (percent, status, current = 0, total = 0) => {
-                const fillEl = document.getElementById('importProgressFill');
-                const textEl = document.getElementById('importProgressText');
-                const statusEl = document.getElementById('importProgressStatus');
-                const countEl = document.getElementById('importProgressCount');
-                if (fillEl) fillEl.style.width = `${Math.min(100, Math.max(0, percent))}%`;
-                if (textEl) textEl.innerHTML = `${Math.floor(percent)}%`;
-                if (statusEl && status) statusEl.innerHTML = status;
-                if (countEl && total > 0) countEl.innerHTML = `${current} / ${total} data`;
-            };
-            
-            updateProgress(5, 'Membaca file Excel...');
+            // ========== FLOATING PROGRESS (MENGAMBANG DI KANAN BAWAH) ==========
+            const progress = showFloatingProgress('📥 Import Data', 0);
+            progress.update(0, '📥 Import Data', 'Membaca file Excel...');
             
             const reader = new FileReader();
             
             reader.onload = async function(e) {
                 try {
-                    updateProgress(10, 'Memproses file Excel...');
+                    progress.update(5, '📥 Import Data', 'Memproses file Excel...');
                     
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
@@ -5918,7 +5885,7 @@ function setupImportExcel() {
                         showNotif('File Excel kosong!', true);
                         btn.textContent = originalText;
                         btn.disabled = false;
-                        if (progressContainer) progressContainer.remove();
+                        progress.hide();
                         return;
                     }
                     
@@ -5928,7 +5895,7 @@ function setupImportExcel() {
                     const firstRow = json[0];
                     const columnMap = {};
                     
-                    updateProgress(15, 'Mendeteksi kolom...');
+                    progress.update(10, '📥 Import Data', 'Mendeteksi kolom...');
                     
                     // Detect columns based on import type
                     if (importType === 'customer') {
@@ -5953,26 +5920,25 @@ function setupImportExcel() {
                             if (possibleAgentType.some(p => p.toLowerCase() === lowerKey)) columnMap.agentType = key;
                         }
                         
-                        // Validate required columns
                         if (!columnMap.agentId) {
                             showNotif('❌ Format Excel tidak sesuai! Kolom agent_id WAJIB ada!', true);
                             btn.textContent = originalText;
                             btn.disabled = false;
-                            if (progressContainer) progressContainer.remove();
+                            progress.hide();
                             return;
                         }
                         if (!columnMap.nama) {
                             showNotif('❌ Format Excel tidak sesuai! Kolom nama WAJIB ada!', true);
                             btn.textContent = originalText;
                             btn.disabled = false;
-                            if (progressContainer) progressContainer.remove();
+                            progress.hide();
                             return;
                         }
                         if (!columnMap.hp) {
                             showNotif('❌ Format Excel tidak sesuai! Kolom hp WAJIB ada!', true);
                             btn.textContent = originalText;
                             btn.disabled = false;
-                            if (progressContainer) progressContainer.remove();
+                            progress.hide();
                             return;
                         }
                     } 
@@ -5982,8 +5948,8 @@ function setupImportExcel() {
                         const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
                         const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan'];
                         const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline'];
-                        const possibleProgresJenis = ['progres_jenis', 'jenis_progres', 'jenis'];
-                        const possibleProgresJumlah = ['progres_jumlah', 'jumlah_progres', 'jumlah'];
+                        const possibleProgresJenis = ['progres_jenis', 'jenis_progres', 'jenis', 'progresjenis'];
+                        const possibleProgresJumlah = ['progres_jumlah', 'jumlah_progres', 'jumlah', 'progresjumlah'];
                         const possibleTanggal = ['tanggal_transaksi', 'tanggal', 'date', 'deadline'];
                         
                         for (let key in firstRow) {
@@ -6002,14 +5968,14 @@ function setupImportExcel() {
                             showNotif('❌ Format Excel tidak sesuai! Kolom agent_id WAJIB ada!', true);
                             btn.textContent = originalText;
                             btn.disabled = false;
-                            if (progressContainer) progressContainer.remove();
+                            progress.hide();
                             return;
                         }
                         if (!columnMap.nama) {
                             showNotif('❌ Format Excel tidak sesuai! Kolom nama WAJIB ada!', true);
                             btn.textContent = originalText;
                             btn.disabled = false;
-                            if (progressContainer) progressContainer.remove();
+                            progress.hide();
                             return;
                         }
                     }
@@ -6033,26 +5999,29 @@ function setupImportExcel() {
                         showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: nama, hp (wajib)', true);
                         btn.textContent = originalText;
                         btn.disabled = false;
-                        if (progressContainer) progressContainer.remove();
+                        progress.hide();
                         return;
                     }
                     
-                    // Detect progres columns for customer
+                    // Detect progres columns for transaksi
                     let progresJenisCol = null;
                     let progresJumlahCol = null;
                     let progresKeteranganCol = null;
                     
-                    if (importType === 'customer') {
+                    if (importType === 'transaksi') {
                         for (let key in firstRow) {
                             const lowerKey = key.toLowerCase();
-                            if (lowerKey === 'progres_jenis' || lowerKey === 'jenis_progres') progresJenisCol = key;
-                            if (lowerKey === 'progres_jumlah' || lowerKey === 'jumlah_progres') progresJumlahCol = key;
+                            if (lowerKey === 'progres_jenis' || lowerKey === 'jenis_progres' || lowerKey === 'jenis') progresJenisCol = key;
+                            if (lowerKey === 'progres_jumlah' || lowerKey === 'jumlah_progres' || lowerKey === 'jumlah') progresJumlahCol = key;
                             if (lowerKey === 'progres_keterangan' || lowerKey === 'keterangan_progres') progresKeteranganCol = key;
                         }
+                        
+                        console.log('Kolom progres terdeteksi:', { progresJenisCol, progresJumlahCol });
                     }
                     
                     const totalRows = json.length;
-                    updateProgress(20, `Memproses ${totalRows} baris data...`, 0, totalRows);
+                    progress.update(15, '📥 Import Data', `Memproses ${totalRows} baris data...`, 0, totalRows);
+                    progress.setTotal(totalRows);
                     
                     let processed = 0;
                     
@@ -6060,20 +6029,20 @@ function setupImportExcel() {
                         processed++;
                         
                         if (processed % 10 === 0 || processed === totalRows) {
-                            const percent = 20 + Math.floor((processed / totalRows) * 70);
-                            updateProgress(percent, `Memproses data...`, processed, totalRows);
+                            const percent = 15 + Math.floor((processed / totalRows) * 80);
+                            progress.update(percent, '📥 Import Data', `Memproses data...`, processed, totalRows);
                             await new Promise(resolve => setTimeout(resolve, 10));
                         }
                         
                         try {
-                            let agentId = columnMap.agentId ? row[columnMap.agentId] : null;
-                            let nama = row[columnMap.nama];
+                            let agentId = columnMap.agentId ? String(row[columnMap.agentId] || '').trim() : '';
+                            let nama = String(row[columnMap.nama] || '').trim();
                             let hp = row[columnMap.hp];
-                            let uplineName = columnMap.uplineName ? row[columnMap.uplineName] : '';
-                            let uplinePhone = columnMap.uplinePhone ? row[columnMap.uplinePhone] : '';
-                            let apk = columnMap.apk ? row[columnMap.apk] : null;
+                            let uplineName = columnMap.uplineName ? String(row[columnMap.uplineName] || '').trim() : '';
+                            let uplinePhone = columnMap.uplinePhone ? String(row[columnMap.uplinePhone] || '').trim() : '';
+                            let apk = columnMap.apk ? String(row[columnMap.apk] || '').trim() : null;
                             let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
-                            let agentType = columnMap.agentType ? row[columnMap.agentType] : '';
+                            let agentType = columnMap.agentType ? String(row[columnMap.agentType] || '').trim() : '';
                             
                             // Progres variables
                             let progresJenis = '';
@@ -6081,35 +6050,47 @@ function setupImportExcel() {
                             let progresKeterangan = '';
                             let totalTercapai = 0;
                             
-                            if (progresJenisCol && row[progresJenisCol] !== undefined && row[progresJenisCol] !== null && row[progresJenisCol] !== '') {
-                                const jenisInput = String(row[progresJenisCol]).toLowerCase().trim();
-                                if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+' || jenisInput === 'increase') {
-                                    progresJenis = 'naik';
-                                } else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-' || jenisInput === 'decrease') {
-                                    progresJenis = 'turun';
-                                } else {
-                                    progresJenis = jenisInput;
-                                }
-                            }
-                            
-                            if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== null && row[progresJumlahCol] !== '') {
-                                const rawValue = row[progresJumlahCol];
-                                if (typeof rawValue === 'number') {
-                                    progresJumlah = rawValue;
-                                } else {
-                                    const rawString = String(rawValue).trim();
-                                    const matches = rawString.match(/-?\d+/);
-                                    if (matches) {
-                                        progresJumlah = parseInt(matches[0], 10);
+                            // ========== PERBAIKAN: BACA PROGRES DENGAN BENAR ==========
+                            if (importType === 'transaksi') {
+                                // Baca progres_jenis dari Excel
+                                if (progresJenisCol && row[progresJenisCol] !== undefined && row[progresJenisCol] !== null && row[progresJenisCol] !== '') {
+                                    let jenisInput = String(row[progresJenisCol]).toLowerCase().trim();
+                                    console.log(`Baris ${processed}: progres_jenis raw = "${jenisInput}"`);
+                                    
+                                    if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+' || jenisInput === 'increase' || jenisInput === 'Naik') {
+                                        progresJenis = 'naik';
+                                    } else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-' || jenisInput === 'decrease' || jenisInput === 'Turun') {
+                                        progresJenis = 'turun';
+                                    } else if (jenisInput === 'normal') {
+                                        progresJenis = 'normal';
+                                    } else {
+                                        progresJenis = jenisInput; // Gunakan nilai asli jika tidak dikenali
                                     }
+                                    
+                                    console.log(`Baris ${processed}: progres_jenis parsed = "${progresJenis}"`);
+                                }
+                                
+                                // Baca progres_jumlah dari Excel
+                                if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== null && row[progresJumlahCol] !== '') {
+                                    const rawValue = row[progresJumlahCol];
+                                    if (typeof rawValue === 'number') {
+                                        progresJumlah = Math.abs(rawValue);
+                                    } else {
+                                        const rawString = String(rawValue).trim();
+                                        const matches = rawString.match(/-?\d+/);
+                                        if (matches) {
+                                            progresJumlah = Math.abs(parseInt(matches[0], 10));
+                                        }
+                                    }
+                                    console.log(`Baris ${processed}: progres_jumlah = ${progresJumlah}`);
+                                }
+                                
+                                if (progresKeteranganCol && row[progresKeteranganCol]) {
+                                    progresKeterangan = String(row[progresKeteranganCol]).trim();
                                 }
                             }
                             
-                            if (progresKeteranganCol && row[progresKeteranganCol]) {
-                                progresKeterangan = String(row[progresKeteranganCol]).trim();
-                            }
-                            
-                            // Filter for customer import - only 'turun' progres
+                            // Filter untuk customer import - hanya 'turun' progres
                             if (importType === 'customer') {
                                 const jenisLower = (progresJenis || '').toLowerCase();
                                 if (jenisLower === 'turun') {
@@ -6120,7 +6101,7 @@ function setupImportExcel() {
                                 }
                             }
                             
-                            // Validate for transaksi
+                            // Validate untuk transaksi
                             if (importType === 'transaksi') {
                                 if (!agentId) {
                                     failed++;
@@ -6131,6 +6112,11 @@ function setupImportExcel() {
                                     failed++;
                                     errors.push(`Baris ke-${json.indexOf(row)+2}: Nama kosong`);
                                     continue;
+                                }
+                                
+                                // Jika progres_jenis tidak terbaca, set default ke 'normal'
+                                if (!progresJenis) {
+                                    progresJenis = 'normal';
                                 }
                             } else {
                                 if (!nama) {
@@ -6175,32 +6161,31 @@ function setupImportExcel() {
                                 cleanHp = '';
                             }
                             
-                            // Check duplicate
-                            let isDuplicate = false;
-                            
-                            if (isHpValid && importType !== 'transaksi') {
-                                if (importType === 'customer') {
-                                    const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
-                                    if (duplicateAgent) {
-                                        duplicates.push(`ID Agent ${agentId} sudah terdaftar oleh ${duplicateAgent.owner}`);
-                                        isDuplicate = true;
-                                    }
-                                    if (duplicateHp) {
-                                        duplicates.push(`Nomor ${cleanHp} sudah terdaftar oleh ${duplicateHp.owner}`);
-                                        isDuplicate = true;
-                                    }
-                                } else {
-                                    const duplicateHp = await checkDuplicateProspek(cleanHp);
-                                    if (duplicateHp) {
-                                        duplicates.push(`Nomor ${cleanHp} sudah terdaftar sebagai prospek oleh ${duplicateHp.owner}`);
-                                        isDuplicate = true;
-                                    }
+                            // Check duplicate untuk transaksi
+                            if (importType === 'transaksi') {
+                                // Untuk transaksi, tidak perlu cek duplikat
+                                console.log(`Memproses transaksi: ${agentId} - ${nama} - ${progresJenis} - ${progresJumlah}`);
+                            } 
+                            else if (importType === 'customer' && isHpValid) {
+                                const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(agentId, cleanHp);
+                                if (duplicateAgent) {
+                                    duplicates.push(`ID Agent ${agentId} sudah terdaftar oleh ${duplicateAgent.owner}`);
+                                    failed++;
+                                    continue;
+                                }
+                                if (duplicateHp) {
+                                    duplicates.push(`Nomor ${cleanHp} sudah terdaftar oleh ${duplicateHp.owner}`);
+                                    failed++;
+                                    continue;
                                 }
                             }
-                            
-                            if (isDuplicate) {
-                                failed++;
-                                continue;
+                            else if (importType !== 'transaksi' && isHpValid) {
+                                const duplicateHp = await checkDuplicateProspek(cleanHp);
+                                if (duplicateHp) {
+                                    duplicates.push(`Nomor ${cleanHp} sudah terdaftar sebagai prospek oleh ${duplicateHp.owner}`);
+                                    failed++;
+                                    continue;
+                                }
                             }
                             
                             if (importType === 'customer' && (!agentId || !apk)) {
@@ -6226,10 +6211,10 @@ function setupImportExcel() {
                                 }
                                 
                                 await db.collection('customers').add({
-                                    agent_id: String(agentId).trim().toUpperCase(),
-                                    nama: String(nama).trim(),
+                                    agent_id: agentId.toUpperCase(),
+                                    nama: nama,
                                     hp: cleanHp,
-                                    apk: String(apk).trim(),
+                                    apk: apk,
                                     agent_type: agentType || '',
                                     tanggal: formattedDeadline,
                                     status: 'baru',
@@ -6246,17 +6231,22 @@ function setupImportExcel() {
                                 });
                             } 
                             else if (importType === 'transaksi') {
-                                const progresJenisValue = progresJenis || 'normal';
-                                const progresJumlahValue = Math.abs(progresJumlah) || 0;
+                                // Pastikan progres_jenis memiliki nilai yang valid
+                                let finalProgresJenis = progresJenis;
+                                if (!finalProgresJenis || finalProgresJenis === '') {
+                                    finalProgresJenis = 'normal';
+                                }
+                                
+                                console.log(`MENYIMPAN TRANSAKSI: agent=${agentId}, nama=${nama}, jenis=${finalProgresJenis}, jumlah=${progresJumlah}`);
                                 
                                 await db.collection('db_transaksi').add({
-                                    agent_id: String(agentId).trim().toUpperCase(),
-                                    nama: String(nama).trim(),
+                                    agent_id: agentId.toUpperCase(),
+                                    nama: nama,
                                     hp: cleanHp || '',
                                     upline_name: uplineName || '',
                                     upline_phone: uplinePhone || '',
-                                    progres_jenis: progresJenisValue,
-                                    progres_jumlah: progresJumlahValue,
+                                    progres_jenis: finalProgresJenis,
+                                    progres_jumlah: progresJumlah,
                                     tanggal_transaksi: formattedDeadline,
                                     status: 'pending_import',
                                     user_id: currentUser.uid,
@@ -6266,7 +6256,7 @@ function setupImportExcel() {
                             }
                             else {
                                 await db.collection('prospek').add({
-                                    nama: String(nama).trim(),
+                                    nama: nama,
                                     hp: cleanHp,
                                     agent_type: agentType || '',
                                     status: 'Baru',
@@ -6283,15 +6273,18 @@ function setupImportExcel() {
                         } catch (rowError) {
                             failed++;
                             errors.push(`Baris ke-${json.indexOf(row)+2}: ${rowError.message}`);
+                            console.error(`Error baris ${json.indexOf(row)+2}:`, rowError);
                         }
                     }
                     
-                    updateProgress(95, 'Menyelesaikan...', totalRows, totalRows);
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    progress.update(100, '✅ Selesai', 'Menyelesaikan...', totalRows, totalRows);
                     
                     let resultMsg = `✅ Selesai!\n📊 Berhasil: ${success}\n⏭ Dilewati: ${skipped}\n❌ Gagal: ${failed}`;
                     if (importType === 'customer') {
                         resultMsg += `\n\n📌 Catatan: Hanya data dengan PROGRES TURUN yang diimport.`;
+                    }
+                    if (importType === 'transaksi') {
+                        resultMsg += `\n\n📌 Data progres: Naik/Turun/Normal akan tersimpan sesuai file Excel.`;
                     }
                     if (duplicates.length > 0) {
                         resultMsg += `\n\n⏭ Data duplikat dilewati:\n${duplicates.slice(0,5).join('\n')}${duplicates.length > 5 ? `\n... dan ${duplicates.length-5} lainnya` : ''}`;
@@ -6303,21 +6296,21 @@ function setupImportExcel() {
                     }
                     alert(resultMsg);
                     
-                    updateProgress(100, 'Selesai!', totalRows, totalRows);
-                    setTimeout(() => {
-                        if (progressContainer) progressContainer.remove();
-                    }, 3000);
+                    setTimeout(() => progress.hide(), 3000);
                     
                     excelFileInput.value = '';
                     document.getElementById('fileInfo').innerHTML = '';
                     updateAllBadges();
                     loadAllData();
+                    if (importType === 'transaksi') {
+                        await loadDbTransaksi();
+                    }
                     await updateTotalTransaksiDariCustomer();
                     
                 } catch (error) {
                     console.error('Import error:', error);
                     showNotif('❌ Gagal memproses file: ' + error.message, true);
-                    if (progressContainer) progressContainer.remove();
+                    progress.hide();
                 } finally {
                     btn.textContent = originalText;
                     btn.disabled = false;
@@ -6328,8 +6321,7 @@ function setupImportExcel() {
                 showNotif('❌ Gagal membaca file', true);
                 btn.textContent = originalText;
                 btn.disabled = false;
-                const progressContainer = document.querySelector('#importPage .progress-container');
-                if (progressContainer) progressContainer.remove();
+                if (progress) progress.hide();
             };
             
             reader.readAsArrayBuffer(file);
