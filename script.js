@@ -5777,11 +5777,48 @@ function renderTransaksiList(items) {
     
     // Event listener untuk checkbox
     document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi').forEach(cb => {
+        const id = cb.dataset.id;
+        // Set checkbox sesuai dengan selectedTransaksiIds
+        if (selectedTransaksiIds.get(id) === true) {
+            cb.checked = true;
+        } else {
+            cb.checked = false;
+        }
+        
         cb.removeEventListener('change', handleTransaksiCheckboxChange);
         cb.addEventListener('change', handleTransaksiCheckboxChange);
     });
     
     updateSelectAllTransaksiButton();
+}
+
+// Handler untuk checkbox transaksi
+function handleTransaksiCheckboxChange(e) {
+    e.stopPropagation();
+    const id = e.target.dataset.id;
+    if (e.target.checked) {
+        selectedTransaksiIds.set(id, true);
+    } else {
+        selectedTransaksiIds.delete(id);
+    }
+    updateSelectAllTransaksiButton(); // Update tombol setiap kali checkbox berubah
+}
+
+// Update tombol "Pilih Semua" berdasarkan data yang DITAMPILKAN
+function updateSelectAllTransaksiButton() {
+    const btn = document.getElementById('selectAllTransaksi');
+    if (!btn) return;
+    
+    // Ambil checkbox yang ADA DI LAYAR (hasil filter saat ini)
+    const checkboxes = document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi');
+    if (checkboxes.length === 0) {
+        btn.textContent = '✅ Pilih Semua';
+        return;
+    }
+    
+    // Cek apakah semua checkbox yang tampil sudah terpilih
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
 }
 
 // Handler untuk klik item transaksi
@@ -5861,33 +5898,6 @@ function closeModalFromElement(btn) {
     }
 }
 
-// Handler untuk checkbox transaksi
-function handleTransaksiCheckboxChange(e) {
-    e.stopPropagation();
-    const id = e.target.dataset.id;
-    if (e.target.checked) {
-        selectedTransaksiIds.set(id, true);
-    } else {
-        selectedTransaksiIds.delete(id);
-    }
-    updateSelectAllTransaksiButton();
-}
-
-// Update tombol "Pilih Semua" untuk transaksi
-function updateSelectAllTransaksiButton() {
-    const btn = document.getElementById('selectAllTransaksi');
-    if (!btn) return;
-    
-    const checkboxes = document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi');
-    if (checkboxes.length === 0) {
-        btn.textContent = '✅ Pilih Semua';
-        return;
-    }
-    
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-    btn.textContent = allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
-}
-
 // Setup filter untuk DB Transaksi
 function setupTransaksiFilters() {
     const searchInput = document.getElementById('searchTransaksiInput');
@@ -5916,6 +5926,13 @@ function setupTransaksiFilters() {
         
         if (statusFilter) {
             filtered = filtered.filter(item => item.status === statusFilter);
+        }
+
+      const filteredIds = new Set(filtered.map(item => item.id));
+        for (const id of selectedTransaksiIds.keys()) {
+            if (!filteredIds.has(id)) {
+                selectedTransaksiIds.delete(id);
+            }
         }
         
         // Update filtered count
@@ -6086,18 +6103,21 @@ async function moveSingleToFollowup(id, silent = false) {
 
 // Fungsi untuk menghapus data terpilih
 async function deleteSelectedTransaksi() {
+    // Ambil ID yang terpilih dari selectedTransaksiIds
     const selectedIds = Array.from(selectedTransaksiIds.keys());
     if (selectedIds.length === 0) {
         showNotifTop('⚠️ Tidak ada data yang dipilih', true);
         return;
     }
     
-    if (!confirm(`Hapus ${selectedIds.length} data transaksi?`)) return;
+    if (!confirm(`Hapus ${selectedIds.length} data transaksi yang dipilih?`)) return;
     
     const progress = showFloatingProgress('🗑️ Menghapus Data Transaksi', selectedIds.length);
     progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus...');
     
     let deleted = 0;
+    let failed = 0;
+    
     for (const id of selectedIds) {
         try {
             await db.collection('db_transaksi').doc(id).delete();
@@ -6107,15 +6127,17 @@ async function deleteSelectedTransaksi() {
             progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
             await delay(100);
         } catch (e) {
+            failed++;
             console.error(`Gagal hapus ${id}:`, e);
         }
     }
     
-    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, selectedIds.length);
-    showNotifTop(`✅ ${deleted} data berhasil dihapus`);
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data${failed > 0 ? `, ${failed} gagal` : ''}`, deleted, selectedIds.length);
+    showNotifTop(`✅ ${deleted} data berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
     setTimeout(() => progress.hide(), 2000);
     
-    loadDbTransaksi();
+    // Reload data
+    await loadDbTransaksi();
 }
 
 // ========== IMPORT EXCEL FUNCTIONS ==========
@@ -8709,52 +8731,16 @@ document.getElementById('viewTransaksiHistoryBtn')?.addEventListener('click', ()
     });
   }
 
-// Setup DB Transaksi filters
+// ==================== DB TRANSAKSI SETUP ====================
+
+// Setup filter transaksi
 setupTransaksiFilters();
-
-// Tombol select all transaksi
-document.getElementById('selectAllTransaksi')?.addEventListener('click', () => {
-    const searchTerm = document.getElementById('searchTransaksiInput')?.value.toLowerCase() || '';
-    const filterProgres = document.getElementById('filterProgresTransaksi')?.value || '';
-    const filterStatus = document.getElementById('filterStatusTransaksi')?.value || '';
-    
-    let filtered = [...transaksiData];
-    if (searchTerm) {
-        filtered = filtered.filter(item =>
-            (item.nama && item.nama.toLowerCase().includes(searchTerm)) ||
-            (item.agent_id && String(item.agent_id).toLowerCase().includes(searchTerm))
-        );
-    }
-    if (filterProgres) filtered = filtered.filter(item => item.progres_jenis === filterProgres);
-    if (filterStatus) filtered = filtered.filter(item => item.status === filterStatus);
-    
-    if (filtered.length === 0) return;
-    
-    const allChecked = filtered.every(item => selectedTransaksiIds.get(item.id) === true);
-    
-    filtered.forEach(item => {
-        if (allChecked) {
-            selectedTransaksiIds.delete(item.id);
-        } else {
-            selectedTransaksiIds.set(item.id, true);
-        }
-    });
-    
-    renderTransaksiList(transaksiData);
-});
-
-// Tombol delete selected transaksi
-document.getElementById('deleteSelectedTransaksi')?.addEventListener('click', deleteSelectedTransaksi);
-
-// Tombol move selected to followup
-document.getElementById('moveSelectedToFollowupBtn')?.addEventListener('click', moveSelectedToFollowup);
 
 // Tombol hapus semua data transaksi
 const deleteAllTransaksiBtn = document.getElementById('deleteAllTransaksiBtn');
 if (deleteAllTransaksiBtn) {
     deleteAllTransaksiBtn.addEventListener('click', deleteAllTransaksi);
 } else {
-    // Jika tombol belum ada, tambahkan ke db-actions
     const dbActions = document.querySelector('#dbTransaksiPage .db-actions');
     if (dbActions) {
         const newBtn = document.createElement('button');
@@ -8769,26 +8755,45 @@ if (deleteAllTransaksiBtn) {
     }
 }
 
-// Setup filter transaksi
-setupTransaksiFilters();
-
-// Tombol select all transaksi
-document.getElementById('selectAllTransaksi')?.addEventListener('click', () => {
-    const checkboxes = document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi');
-    if (checkboxes.length === 0) return;
+// Tombol select all transaksi - HANYA memilih data yang tampil (hasil filter)
+const selectAllTransaksiBtn = document.getElementById('selectAllTransaksi');
+if (selectAllTransaksiBtn) {
+    const newSelectAllBtn = selectAllTransaksiBtn.cloneNode(true);
+    selectAllTransaksiBtn.parentNode.replaceChild(newSelectAllBtn, selectAllTransaksiBtn);
     
-    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-    checkboxes.forEach(cb => {
-        cb.checked = !allChecked;
-        const event = new Event('change', { bubbles: true });
-        cb.dispatchEvent(event);
+    newSelectAllBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi');
+        if (checkboxes.length === 0) {
+            showNotifTop('⚠️ Tidak ada data yang ditampilkan', true);
+            return;
+        }
+        
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        
+        checkboxes.forEach(cb => {
+            cb.checked = !allChecked;
+            const event = new Event('change', { bubbles: true });
+            cb.dispatchEvent(event);
+        });
+        
+        newSelectAllBtn.textContent = !allChecked ? '⬜ Batal Semua' : '✅ Pilih Semua';
     });
-});
+}
 
 // Tombol delete selected transaksi
-document.getElementById('deleteSelectedTransaksi')?.addEventListener('click', deleteSelectedTransaksi);
+const deleteSelectedBtn = document.getElementById('deleteSelectedTransaksi');
+if (deleteSelectedBtn) {
+    const newDeleteBtn = deleteSelectedBtn.cloneNode(true);
+    deleteSelectedBtn.parentNode.replaceChild(newDeleteBtn, deleteSelectedBtn);
+    newDeleteBtn.addEventListener('click', deleteSelectedTransaksi);
+}
 
 // Tombol move selected to followup
-document.getElementById('moveSelectedToFollowupBtn')?.addEventListener('click', moveSelectedToFollowup);
+const moveSelectedBtn = document.getElementById('moveSelectedToFollowupBtn');
+if (moveSelectedBtn) {
+    const newMoveBtn = moveSelectedBtn.cloneNode(true);
+    moveSelectedBtn.parentNode.replaceChild(newMoveBtn, moveSelectedBtn);
+    newMoveBtn.addEventListener('click', moveSelectedToFollowup);
+}
   
 }); // <-- INI SATU-SATUNYA TUTUP DARI DOMContentLoaded
