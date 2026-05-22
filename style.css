@@ -4776,3 +4776,52 @@ body.dark-mode .db-item-agent-info small {
     min-width: auto !important;
     overflow: visible !important;
 }
+
+/* ========== DB TRANSAKSI PAGE FIX ========== */
+#dbTransaksiPage {
+    display: block !important;
+    width: 100% !important;
+    min-height: 500px !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+#dbTransaksiPage .db-section {
+    width: 100% !important;
+    min-width: 300px !important;
+    overflow: visible !important;
+}
+
+#dbTransaksiPage .db-list {
+    width: 100% !important;
+    min-height: 400px !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+
+#dbTransaksiList {
+    width: 100% !important;
+    min-height: 400px !important;
+    display: block !important;
+    background: #fff !important;
+}
+
+.db-item-agent {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    width: 100% !important;
+    min-width: 600px !important;
+}
+
+/* Dark mode */
+body.dark-mode #dbTransaksiList {
+    background: #0f172a !important;
+}
+
+body.dark-mode .db-item-agent {
+    background: #1e293b !important;
+    border-bottom-color: #334155 !important;
+}
