@@ -5288,51 +5288,153 @@ function attachCheckboxEvents(selector, map, selectAllId) {
 // ========== DB TRANSAKSI FUNCTIONS ==========
 let transaksiData = [];
 
-async function loadDbTransaksi() {
+// ========== VARIABEL PAGINATION UNTUK DB TRANSAKSI ==========
+let transaksiLastDoc = null;
+let transaksiHasMore = true;
+let isLoadingMore = false;
+
+// Fungsi untuk menambahkan tombol "Muat Lebih Banyak"
+function addLoadMoreButton() {
+    const container = document.getElementById('dbTransaksiList');
+    if (!container) return;
+    
+    // Hapus tombol lama jika ada
+    removeLoadMoreButton();
+    
+    const btnContainer = document.createElement('div');
+    btnContainer.id = 'loadMoreTransaksiContainer';
+    btnContainer.style.textAlign = 'center';
+    btnContainer.style.padding = '20px';
+    btnContainer.innerHTML = `
+        <button id="loadMoreTransaksiBtn" style="background: #4f46e5; color: white; border: none; border-radius: 10px; padding: 10px 20px; cursor: pointer;">
+            📥 Muat Lebih Banyak (500 data lagi)
+        </button>
+    `;
+    container.appendChild(btnContainer);
+    
+    const loadMoreBtn = document.getElementById('loadMoreTransaksiBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', async () => {
+            document.getElementById('loadMoreTransaksiContainer')?.remove();
+            await loadDbTransaksi(true);
+        });
+    }
+}
+
+function removeLoadMoreButton() {
+    const btnContainer = document.getElementById('loadMoreTransaksiContainer');
+    if (btnContainer) btnContainer.remove();
+}
+
+// Fungsi loadDbTransaksi yang dimodifikasi dengan pagination
+async function loadDbTransaksi(loadMore = false) {
     if (!currentUser) {
         console.log('loadDbTransaksi: No user logged in');
         return;
     }
     
-    console.log('loadDbTransaksi: Memuat data transaksi...');
+    console.log('loadDbTransaksi: Memuat data transaksi...', loadMore ? '(load more)' : '(fresh)');
+    
+    if (!loadMore) {
+        transaksiData = [];
+        transaksiLastDoc = null;
+        transaksiHasMore = true;
+        isLoadingMore = false;
+    }
+    
+    if (isLoadingMore || !transaksiHasMore) {
+        if (!transaksiHasMore && loadMore) {
+            showNotifTop('📭 Tidak ada data lagi untuk dimuat', true);
+        }
+        return;
+    }
+    
+    isLoadingMore = true;
+    
+    // Tampilkan loading indicator
+    const container = document.getElementById('dbTransaksiList');
+    if (container && loadMore) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loadingMoreTransaksi';
+        loadingDiv.style.textAlign = 'center';
+        loadingDiv.style.padding = '20px';
+        loadingDiv.innerHTML = '⏳ Memuat lebih banyak data...';
+        container.appendChild(loadingDiv);
+    }
     
     try {
         const isOwner = currentUserRole === 'owner';
         let query = db.collection('db_transaksi');
+        
         if (!isOwner) {
             query = query.where('user_id', '==', currentUser.uid);
         }
-        query = query.orderBy('tanggal_transaksi', 'desc').limit(500);
+        
+        query = query.orderBy('tanggal_transaksi', 'desc');
+        
+        if (loadMore && transaksiLastDoc) {
+            query = query.startAfter(transaksiLastDoc);
+        }
+        
+        query = query.limit(500);
         
         const snapshot = await query.get();
         console.log('loadDbTransaksi: Data ditemukan:', snapshot.size);
         
-        transaksiData = [];
-        
-        for (const doc of snapshot.docs) {
-            const d = doc.data();
-            let ownerName = '';
-            if (isOwner && d.user_id !== currentUser.uid) {
-                const userDoc = await db.collection('users').doc(d.user_id).get();
-                ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+        if (snapshot.empty) {
+            transaksiHasMore = false;
+            if (loadMore && container) {
+                const noMoreDiv = document.createElement('div');
+                noMoreDiv.style.textAlign = 'center';
+                noMoreDiv.style.padding = '20px';
+                noMoreDiv.style.color = '#9ca3af';
+                noMoreDiv.innerHTML = '📭 Tidak ada data lagi';
+                container.appendChild(noMoreDiv);
+                setTimeout(() => noMoreDiv.remove(), 2000);
             }
-            transaksiData.push({ 
-                id: doc.id, 
-                ...d, 
-                displayName: (d.nama || '') + ownerName 
-            });
+        } else {
+            transaksiLastDoc = snapshot.docs[snapshot.docs.length - 1];
+            transaksiHasMore = snapshot.docs.length === 500;
+            
+            for (const doc of snapshot.docs) {
+                const d = doc.data();
+                let ownerName = '';
+                if (isOwner && d.user_id !== currentUser.uid) {
+                    const userDoc = await db.collection('users').doc(d.user_id).get();
+                    ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+                }
+                transaksiData.push({ 
+                    id: doc.id, 
+                    ...d, 
+                    displayName: (d.nama || '') + ownerName 
+                });
+            }
         }
         
-        console.log('transaksiData length:', transaksiData.length);
+        // Hapus loading indicator
+        if (container) {
+            const loadingDiv = document.getElementById('loadingMoreTransaksi');
+            if (loadingDiv) loadingDiv.remove();
+        }
+        
         renderTransaksiList(transaksiData);
+        
+        // Tambahkan tombol "Muat Lebih Banyak" jika masih ada data
+        if (transaksiHasMore && !loadMore) {
+            addLoadMoreButton();
+        } else if (!transaksiHasMore && !loadMore) {
+            removeLoadMoreButton();
+        }
         
     } catch (error) {
         console.error('Error loadDbTransaksi:', error);
         showNotifTop('❌ Gagal memuat data transaksi: ' + error.message, true);
         const container = document.getElementById('dbTransaksiList');
-        if (container) {
+        if (container && !loadMore) {
             container.innerHTML = '<p style="text-align:center;padding:40px;color:#ef4444;">❌ Gagal memuat data transaksi</p>';
         }
+    } finally {
+        isLoadingMore = false;
     }
 }
 
