@@ -5451,6 +5451,93 @@ async function deleteAllTransaksi() {
     setTimeout(() => progress.hide(), 3000);
 }
 
+// Fungsi untuk menghitung jumlah data per jenis progres
+async function getTransaksiStats() {
+    try {
+        const isOwner = currentUserRole === 'owner';
+        let query = db.collection('db_transaksi');
+        
+        if (!isOwner) {
+            query = query.where('user_id', '==', currentUser.uid);
+        }
+        
+        const snapshot = await query.get();
+        
+        let stats = {
+            total: 0,
+            naik: 0,
+            turun: 0,
+            normal: 0,
+            pending: 0,
+            imported: 0
+        };
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            stats.total++;
+            
+            if (data.progres_jenis === 'naik') stats.naik++;
+            else if (data.progres_jenis === 'turun') stats.turun++;
+            else if (data.progres_jenis === 'normal') stats.normal++;
+            
+            if (data.status === 'imported') stats.imported++;
+            else stats.pending++;
+        });
+        
+        console.log('📊 Statistik Transaksi:', stats);
+        updateTransaksiStatsPanel(stats);
+        
+        return stats;
+    } catch (e) {
+        console.error('Error get transaksi stats:', e);
+        return null;
+    }
+}
+
+// Update panel statistik di halaman DB Transaksi
+function updateTransaksiStatsPanel(stats) {
+    if (!stats) return;
+    
+    // Cari atau buat panel statistik
+    let statsPanel = document.getElementById('transaksiStatsPanel');
+    const container = document.querySelector('#dbTransaksiPage .db-section');
+    
+    if (!statsPanel && container) {
+        statsPanel = document.createElement('div');
+        statsPanel.id = 'transaksiStatsPanel';
+        statsPanel.style.cssText = 'display: flex; gap: 16px; flex-wrap: wrap; padding: 12px; background: #f8fafc; border-radius: 12px; margin-bottom: 16px;';
+        const filterDiv = container.querySelector('#transaksiStats');
+        if (filterDiv) {
+            filterDiv.insertAdjacentElement('afterend', statsPanel);
+        } else {
+            container.insertBefore(statsPanel, container.firstChild);
+        }
+    }
+    
+    if (statsPanel) {
+        statsPanel.innerHTML = `
+            <div style="background: #eef2ff; padding: 8px 16px; border-radius: 10px;">
+                <strong>📊 Total:</strong> ${stats.total}
+            </div>
+            <div style="background: #ecfdf5; padding: 8px 16px; border-radius: 10px;">
+                <strong>📈 Naik:</strong> ${stats.naik}
+            </div>
+            <div style="background: #fef2f2; padding: 8px 16px; border-radius: 10px;">
+                <strong>📉 Turun:</strong> ${stats.turun}
+            </div>
+            <div style="background: #f3f4f6; padding: 8px 16px; border-radius: 10px;">
+                <strong>⚖️ Normal:</strong> ${stats.normal}
+            </div>
+            <div style="background: #fef3c7; padding: 8px 16px; border-radius: 10px;">
+                <strong>⏳ Pending:</strong> ${stats.pending}
+            </div>
+            <div style="background: #d1fae5; padding: 8px 16px; border-radius: 10px;">
+                <strong>✅ Imported:</strong> ${stats.imported}
+            </div>
+        `;
+    }
+}
+
 // Fungsi loadDbTransaksi dengan pagination
 async function loadDbTransaksi(loadMore = false) {
     if (!currentUser) {
@@ -5506,7 +5593,7 @@ async function loadDbTransaksi(loadMore = false) {
         const snapshot = await query.get();
         console.log('loadDbTransaksi: Data ditemukan:', snapshot.size);
         
-let totalCount = 0;
+        let totalCount = 0;
         if (!loadMore) {
             // Buat query terpisah untuk menghitung total (tanpa limit)
             let countQuery = db.collection('db_transaksi');
@@ -5514,10 +5601,10 @@ let totalCount = 0;
                 countQuery = countQuery.where('user_id', '==', currentUser.uid);
             }
             const countSnapshot = await countQuery.get();
-            totalCount = countSnapshot.size;  // <-- Gunakan .size, bukan .count()
+            totalCount = countSnapshot.size;
             console.log('Total transaksi:', totalCount);
+            window.totalTransaksiCount = totalCount;
         } else {
-            // Jika load more, gunakan totalCount yang sudah ada
             totalCount = window.totalTransaksiCount || 0;
         }
         
@@ -5555,18 +5642,17 @@ let totalCount = 0;
             }
         }
         
-        // Update filtered count display
-        const filteredCountSpan = document.getElementById('transaksiFilteredCount');
-        if (filteredCountSpan) filteredCountSpan.innerText = transaksiData.length;
-        
         // Hapus loading indicator
         if (container) {
             const loadingDiv = document.getElementById('loadingMoreTransaksi');
             if (loadingDiv) loadingDiv.remove();
         }
-       if (!loadMore) {
-            await getTransaksiStats(); 
-
+        
+        // Panggil statistik jika bukan load more
+        if (!loadMore && typeof getTransaksiStats === 'function') {
+            await getTransaksiStats();
+        }
+        
         renderTransaksiList(transaksiData);
         
         // Update info Menampilkan X dari Y data
@@ -5579,7 +5665,7 @@ let totalCount = 0;
             removeLoadMoreButton();
         }
         
-        // Update total transaksi untuk target (perbaikan perhitungan)
+        // Update total transaksi untuk target
         await updateTotalTransaksiDariDBTransaksi();
         
     } catch (error) {
@@ -8870,97 +8956,6 @@ if (moveSelectedBtn) {
     const newMoveBtn = moveSelectedBtn.cloneNode(true);
     moveSelectedBtn.parentNode.replaceChild(newMoveBtn, moveSelectedBtn);
     newMoveBtn.addEventListener('click', moveSelectedToFollowup);
-}
-
-  // Fungsi untuk menghitung jumlah data per jenis progres
-async function getTransaksiStats() {
-    try {
-        const isOwner = currentUserRole === 'owner';
-        let query = db.collection('db_transaksi');
-        
-        if (!isOwner) {
-            query = query.where('user_id', '==', currentUser.uid);
-        }
-        
-        const snapshot = await query.get();
-        
-        let stats = {
-            total: 0,
-            naik: 0,
-            turun: 0,
-            normal: 0,
-            pending: 0,
-            imported: 0
-        };
-        
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            stats.total++;
-            
-            // Hitung berdasarkan progres_jenis
-            if (data.progres_jenis === 'naik') stats.naik++;
-            else if (data.progres_jenis === 'turun') stats.turun++;
-            else stats.normal++;
-            
-            // Hitung berdasarkan status
-            if (data.status === 'imported') stats.imported++;
-            else stats.pending++;
-        });
-        
-        console.log('📊 Statistik Transaksi:', stats);
-        
-        // Update tampilan statistik di halaman
-        updateTransaksiStatsPanel(stats);
-        
-        return stats;
-    } catch (e) {
-        console.error('Error get transaksi stats:', e);
-        return null;
-    }
-}
-
-// Update panel statistik di halaman DB Transaksi
-function updateTransaksiStatsPanel(stats) {
-    if (!stats) return;
-    
-    // Cari atau buat panel statistik
-    let statsPanel = document.getElementById('transaksiStatsPanel');
-    const container = document.querySelector('#dbTransaksiPage .db-section');
-    
-    if (!statsPanel && container) {
-        statsPanel = document.createElement('div');
-        statsPanel.id = 'transaksiStatsPanel';
-        statsPanel.style.cssText = 'display: flex; gap: 16px; flex-wrap: wrap; padding: 12px; background: #f8fafc; border-radius: 12px; margin-bottom: 16px;';
-        const filterDiv = container.querySelector('#transaksiStats');
-        if (filterDiv) {
-            filterDiv.insertAdjacentElement('afterend', statsPanel);
-        } else {
-            container.insertBefore(statsPanel, container.firstChild);
-        }
-    }
-    
-    if (statsPanel) {
-        statsPanel.innerHTML = `
-            <div style="background: #eef2ff; padding: 8px 16px; border-radius: 10px;">
-                <strong>📊 Total:</strong> ${stats.total}
-            </div>
-            <div style="background: #ecfdf5; padding: 8px 16px; border-radius: 10px;">
-                <strong>📈 Naik:</strong> ${stats.naik}
-            </div>
-            <div style="background: #fef2f2; padding: 8px 16px; border-radius: 10px;">
-                <strong>📉 Turun:</strong> ${stats.turun}
-            </div>
-            <div style="background: #f3f4f6; padding: 8px 16px; border-radius: 10px;">
-                <strong>⚖️ Normal:</strong> ${stats.normal}
-            </div>
-            <div style="background: #fef3c7; padding: 8px 16px; border-radius: 10px;">
-                <strong>⏳ Pending:</strong> ${stats.pending}
-            </div>
-            <div style="background: #d1fae5; padding: 8px 16px; border-radius: 10px;">
-                <strong>✅ Imported:</strong> ${stats.imported}
-            </div>
-        `;
-    }
 }
   
 }); // <-- INI SATU-SATUNYA TUTUP DARI DOMContentLoaded
