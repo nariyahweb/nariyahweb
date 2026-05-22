@@ -5285,12 +5285,13 @@ function attachCheckboxEvents(selector, map, selectAllId) {
     }
 }
 
-// ========== DB TRANSAKSI FUNCTIONS ==========
+// ========== VARIABEL GLOBAL DB TRANSAKSI ==========
 let transaksiData = [];
 let transaksiLastDoc = null;
 let transaksiHasMore = true;
 let isLoadingMore = false;
 let isDeletingAll = false;
+let totalTransaksiCount = 0;
 
 // Fungsi untuk menampilkan floating progress dengan tombol close
 function showFloatingProgressWithCancel(title, total = 0, onCancel = null) {
@@ -5505,10 +5506,20 @@ async function loadDbTransaksi(loadMore = false) {
         const snapshot = await query.get();
         console.log('loadDbTransaksi: Data ditemukan:', snapshot.size);
         
-        // Hitung total data
-        let totalCount = 0;
-        const countSnapshot = await db.collection('db_transaksi').count().get();
-        totalCount = countSnapshot.data().count;
+let totalCount = 0;
+        if (!loadMore) {
+            // Buat query terpisah untuk menghitung total (tanpa limit)
+            let countQuery = db.collection('db_transaksi');
+            if (!isOwner) {
+                countQuery = countQuery.where('user_id', '==', currentUser.uid);
+            }
+            const countSnapshot = await countQuery.get();
+            totalCount = countSnapshot.size;  // <-- Gunakan .size, bukan .count()
+            console.log('Total transaksi:', totalCount);
+        } else {
+            // Jika load more, gunakan totalCount yang sudah ada
+            totalCount = window.totalTransaksiCount || 0;
+        }
         
         // Update total count di UI
         const totalCountSpan = document.getElementById('transaksiTotalCount');
@@ -7688,6 +7699,27 @@ auth.onAuthStateChanged(async user => {
     loginPage.style.display = 'none';
     app.style.display = 'block';
 
+        // Sembunyikan semua page content terlebih dahulu
+    const allPages = ['dashboardPage', 'importPage', 'dbClosingPage', 'dbTidakPage', 
+                      'dbNomorSalahPage', 'dbCommitmentPage', 'dbAgentPage', 'produkPage', 
+                      'reminderPage', 'pesanPage', 'broadcastPage', 'broadcastUplinePage', 
+                      'followupFullPage', 'prospekFullPage', 'searchPage', 'manageUsersPage', 
+                      'dbTransaksiPage'];
+    
+    allPages.forEach(pageId => {
+      const el = document.getElementById(pageId);
+      if (el) el.style.display = 'none';
+    });
+    
+    // Tampilkan dashboard
+    const dashboardPage = document.getElementById('dashboardPage');
+    if (dashboardPage) dashboardPage.style.display = 'block';
+    
+    // Set active menu di sidebar
+    document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+    const dashboardMenu = document.querySelector('.menu-item[data-page="dashboard"]');
+    if (dashboardMenu) dashboardMenu.classList.add('active');
+
     const userDoc = await db.collection('users').doc(user.uid).get();
     let nama = 'CS Agent', foto = 'https://i.pravatar.cc/40';
     currentUserRole = 'cs';
@@ -7728,7 +7760,6 @@ auth.onAuthStateChanged(async user => {
     loadProduk();
     loadUsersList();
     await loadDbTransaksi();
-    checkTransaksiData();
 
     
 
