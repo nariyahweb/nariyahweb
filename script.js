@@ -7617,9 +7617,13 @@ document.querySelectorAll('.menu-item[data-page]').forEach(item => {
         } else if (page === 'manageUsers' && currentUserRole === 'owner') {
             document.getElementById('manageUsersPage').style.display = 'block';
             loadUsersList();
-        } else if (page === 'dbTransaksi') {  // <-- TAMBAHKAN BAGIAN INI
-            document.getElementById('dbTransaksiPage').style.display = 'block';
-            loadDbTransaksi();  // <-- PANGGIL FUNGSI INI
+        } else if (page === 'dbTransaksi') {
+        const dbTransaksiPage = document.getElementById('dbTransaksiPage');
+        if (dbTransaksiPage) {
+        dbTransaksiPage.style.display = 'block';
+        dbTransaksiPage.style.width = '100%';
+        }
+        loadDbTransaksi();
         }
 
         document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
