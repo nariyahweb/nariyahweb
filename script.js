@@ -6140,59 +6140,193 @@ async function deleteTransaksiItem(id) {
 
 // Fungsi untuk memindahkan data terpilih ke followup
 async function moveSelectedToFollowup() {
-    const selectedIds = Array.from(selectedTransaksiIds.keys());
+    // Ambil ID yang terpilih dari selectedTransaksiIds
+    let selectedIds = Array.from(selectedTransaksiIds.keys());
+    
     if (selectedIds.length === 0) {
-        showNotifTop('⚠️ Tidak ada data yang dipilih', true);
+        showNotifTop('⚠️ Tidak ada data yang dipilih! Silakan centang data terlebih dahulu.', true);
         return;
     }
     
-    // Filter hanya yang statusnya pending
-    const pendingIds = [];
-    for (const id of selectedIds) {
-        const item = transaksiData.find(t => t.id === id);
-        if (item && item.status !== 'imported') {
-            pendingIds.push(id);
+    // Jika ada filter yang aktif, ambil data dari database langsung (bukan dari yang tampil)
+    const filterProgres = document.getElementById('filterProgresTransaksi')?.value || '';
+    const filterStatus = document.getElementById('filterStatusTransaksi')?.value || '';
+    const searchTerm = document.getElementById('searchTransaksiInput')?.value.toLowerCase() || '';
+    
+    let dataToMove = [];
+    let isFilterActive = filterProgres !== '' || filterStatus !== '' || searchTerm !== '';
+    
+    if (isFilterActive) {
+        // Jika filter aktif, ambil data dari database sesuai filter
+        showNotifTop('⏳ Mengambil data dari database sesuai filter...');
+        
+        try {
+            const isOwner = currentUserRole === 'owner';
+            let query = db.collection('db_transaksi');
+            
+            if (!isOwner) {
+                query = query.where('user_id', '==', currentUser.uid);
+            }
+            
+            // Terapkan filter progres
+            if (filterProgres) {
+                query = query.where('progres_jenis', '==', filterProgres);
+            }
+            
+            // Terapkan filter status
+            if (filterStatus && filterStatus !== 'pending_import') {
+                query = query.where('status', '==', filterStatus);
+            }
+            
+            const snapshot = await query.get();
+            
+            for (const doc of snapshot.docs) {
+                const data = doc.data();
+                // Filter tambahan untuk search term
+                let matchesSearch = true;
+                if (searchTerm) {
+                    matchesSearch = (data.nama && data.nama.toLowerCase().includes(searchTerm)) ||
+                                   (data.agent_id && String(data.agent_id).toLowerCase().includes(searchTerm)) ||
+                                   (data.hp && String(data.hp).includes(searchTerm));
+                }
+                
+                // Hanya data yang statusnya pending (belum dipindah)
+                if (matchesSearch && data.status !== 'imported') {
+                    dataToMove.push({
+                        id: doc.id,
+                        ...data
+                    });
+                }
+            }
+            
+            console.log(`Ditemukan ${dataToMove.length} data dengan filter ${filterProgres || 'semua'}`);
+            
+            if (dataToMove.length === 0) {
+                showNotifTop('⚠️ Tidak ada data pending yang sesuai filter!', true);
+                return;
+            }
+            
+            // Konfirmasi dengan jumlah data yang sebenarnya
+            if (!confirm(`📋 Pindahkan ${dataToMove.length} data ke Followup Agen?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`)) {
+                return;
+            }
+            
+        } catch (error) {
+            console.error('Error mengambil data filter:', error);
+            showNotifTop('❌ Gagal mengambil data: ' + error.message, true);
+            return;
+        }
+    } else {
+        // Tanpa filter, gunakan data yang terpilih dari checkbox
+        dataToMove = selectedIds.map(id => {
+            const item = transaksiData.find(t => t.id === id);
+            return item ? { id: item.id, ...item } : null;
+        }).filter(item => item !== null && item.status !== 'imported');
+        
+        if (dataToMove.length === 0) {
+            showNotifTop('⚠️ Data yang dipilih sudah dipindahkan semua!', true);
+            return;
+        }
+        
+        // Konfirmasi dengan jumlah data yang terpilih
+        if (!confirm(`📋 Pindahkan ${dataToMove.length} data ke Followup Agen?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`)) {
+            return;
         }
     }
     
-    if (pendingIds.length === 0) {
-        showNotifTop('⚠️ Data yang dipilih sudah dipindahkan semua!', true);
-        return;
-    }
-    
-    // Konfirmasi SEKALI untuk semua data
-    if (!confirm(`📋 Pindahkan ${pendingIds.length} data ke Followup Agen?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`)) {
-        return;
-    }
-    
-    const progress = showFloatingProgressWithCancel('📋 Memindahkan ke Followup', pendingIds.length, () => {
+    // Proses pemindahan dengan progress bar
+    const progress = showFloatingProgressWithCancel('📋 Memindahkan ke Followup', dataToMove.length, () => {
         showNotifTop('⏹️ Pemindahan dibatalkan');
     });
     progress.update(0, '📋 Memindahkan', 'Memulai proses...');
     
     let success = 0;
     let failed = 0;
+    let skipped = 0;
     
-    for (let i = 0; i < pendingIds.length; i++) {
-        const id = pendingIds[i];
+    for (let i = 0; i < dataToMove.length; i++) {
+        const item = dataToMove[i];
+        
         try {
-            await moveSingleToFollowup(id, true);
+            // Cek duplikat sebelum pindah
+            const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(item.agent_id, item.hp);
+            
+            if (duplicateAgent) {
+                skipped++;
+                console.log(`Skip ${item.nama}: ID Agent ${item.agent_id} sudah terdaftar`);
+                continue;
+            }
+            if (duplicateHp) {
+                skipped++;
+                console.log(`Skip ${item.nama}: Nomor HP ${item.hp} sudah terdaftar`);
+                continue;
+            }
+            
+            // Hitung total tercapai berdasarkan progres
+            let totalTercapai = 0;
+            if (item.progres_jenis === 'naik') {
+                totalTercapai = Math.abs(item.progres_jumlah || 0);
+            } else if (item.progres_jenis === 'turun') {
+                totalTercapai = -Math.abs(item.progres_jumlah || 0);
+            } else {
+                totalTercapai = item.progres_jumlah || 0;
+            }
+            
+            // Buat item progres
+            const progresItem = {
+                tanggal: item.tanggal_transaksi || getTodayDate(),
+                jenis: item.progres_jenis || 'normal',
+                jumlah: Math.abs(item.progres_jumlah || 0),
+                keterangan: `Dipindahkan dari DB Transaksi (ID: ${item.agent_id})`,
+                created_at: new Date().toISOString()
+            };
+            
+            // Pindah ke customers
+            await db.collection('customers').add({
+                agent_id: item.agent_id,
+                nama: item.nama,
+                hp: item.hp,
+                upline_name: item.upline_name || '',
+                upline_phone: item.upline_phone || '',
+                status: 'baru',
+                tanggal: getTodayDate(),
+                user_id: item.user_id,
+                created_at: new Date().toISOString(),
+                followup_data: null,
+                pending_data: [],
+                progres_transaksi: {
+                    items: [progresItem],
+                    total_tercapai: totalTercapai
+                },
+                moved_from_transaksi: true,
+                original_transaksi_id: item.id
+            });
+            
+            // Update status di db_transaksi
+            await db.collection('db_transaksi').doc(item.id).update({
+                status: 'imported',
+                moved_to_followup_at: new Date().toISOString()
+            });
+            
+            // Hapus dari selectedIds jika ada
+            selectedTransaksiIds.delete(item.id);
             success++;
-            selectedTransaksiIds.delete(id);
+            
         } catch (e) {
             failed++;
-            console.error(`Gagal pindah ${id}:`, e);
+            console.error(`Gagal pindah ${item.nama}:`, e);
         }
         
-        const percent = Math.floor(((i + 1) / pendingIds.length) * 100);
-        progress.update(percent, '📋 Memindahkan', `Memproses... (${i + 1}/${pendingIds.length})`, i + 1, pendingIds.length);
+        const percent = Math.floor(((i + 1) / dataToMove.length) * 100);
+        progress.update(percent, '📋 Memindahkan', `Memproses... (${i + 1}/${dataToMove.length})`, i + 1, dataToMove.length);
         await delay(100);
     }
     
-    progress.update(100, '✅ Selesai', `Berhasil: ${success}, Gagal: ${failed}`, pendingIds.length, pendingIds.length);
-    showNotifTop(`✅ ${success} data dipindahkan ke Followup Agen${failed > 0 ? `, ${failed} gagal` : ''}`);
+    progress.update(100, '✅ Selesai', `Berhasil: ${success}, Gagal: ${failed}, Dilewati: ${skipped}`, dataToMove.length, dataToMove.length);
+    showNotifTop(`✅ ${success} data dipindahkan ke Followup Agen${failed > 0 ? `, ${failed} gagal` : ''}${skipped > 0 ? `, ${skipped} dilewati (duplikat)` : ''}`);
     setTimeout(() => progress.hide(), 3000);
     
+    // Refresh data
     await loadDbTransaksi();
     await loadAllData();
 }
@@ -6208,11 +6342,11 @@ async function moveSingleToFollowup(id, silent = false) {
     const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(data.agent_id, data.hp);
     if (duplicateAgent) {
         if (!silent) showNotifTop(`⚠️ ID Agent "${data.agent_id}" sudah terdaftar!`, true);
-        return;
+        return false;
     }
     if (duplicateHp) {
         if (!silent) showNotifTop(`⚠️ Nomor WhatsApp "${data.hp}" sudah terdaftar!`, true);
-        return;
+        return false;
     }
     
     // Hitung total tercapai berdasarkan progres
@@ -6225,7 +6359,7 @@ async function moveSingleToFollowup(id, silent = false) {
         totalTercapai = data.progres_jumlah || 0;
     }
     
-    // Buat item progres untuk dicatat di customer
+    // Buat item progres
     const progresItem = {
         tanggal: data.tanggal_transaksi || getTodayDate(),
         jenis: data.progres_jenis || 'normal',
@@ -6234,7 +6368,7 @@ async function moveSingleToFollowup(id, silent = false) {
         created_at: new Date().toISOString()
     };
     
-    // Proses pindah ke followup dengan membawa data progres
+    // Pindah ke customers
     await db.collection('customers').add({
         agent_id: data.agent_id,
         nama: data.nama,
@@ -6255,12 +6389,14 @@ async function moveSingleToFollowup(id, silent = false) {
         original_transaksi_id: id
     });
     
+    // Update status
     await db.collection('db_transaksi').doc(id).update({
         status: 'imported',
         moved_to_followup_at: new Date().toISOString()
     });
     
-    if (!silent) showNotifTop('✅ Data berhasil dipindahkan ke Followup Agen dengan membawa data progres!');
+    if (!silent) showNotifTop('✅ Data berhasil dipindahkan ke Followup Agen!');
+    return true;
 }
 
 // Fungsi untuk menghapus data terpilih
