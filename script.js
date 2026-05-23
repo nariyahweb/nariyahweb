@@ -7201,16 +7201,17 @@ function setupImportExcel() {
                         }
                     } 
                       
-                    else if (importType === 'transaksi') {
-                        // Daftar kemungkinan nama kolom (case insensitive)
-                        const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
-                        const possibleNama = ['nama', 'Nama', 'name', 'Name', 'agent_name', 'customer_name'];
-                        const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp', 'mobile', 'telp'];
-                        const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan', 'upline name'];
-                        const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline', 'upline phone', 'upline_wa'];
-                        const possibleProgresJenis = ['progres_jenis', 'jenis_progres', 'jenis', 'progresjenis', 'tipe_progres', 'status_progres'];
-                        const possibleProgresJumlah = ['progres_jumlah', 'jumlah_progres', 'jumlah', 'progresjumlah', 'value', 'nominal', 'total'];
-                        const possibleTanggal = ['tanggal_transaksi', 'tanggal', 'date', 'deadline', 'tgl', 'created_at'];
+else if (importType === 'transaksi') {
+    // Daftar kemungkinan nama kolom (case insensitive)
+    const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
+    const possibleNama = ['nama', 'Nama', 'name', 'Name', 'agent_name', 'customer_name'];
+    const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp', 'mobile', 'telp'];
+    const possibleApk = ['apk', 'APK', 'aplikasi', 'Aplikasi', 'app', 'APP'];  // <-- TAMBAHKAN BARIS INI
+    const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan', 'upline name'];
+    const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline', 'upline phone', 'upline_wa'];
+    const possibleProgresJenis = ['progres_jenis', 'jenis_progres', 'jenis', 'progresjenis', 'tipe_progres', 'status_progres'];
+    const possibleProgresJumlah = ['progres_jumlah', 'jumlah_progres', 'jumlah', 'progresjumlah', 'value', 'nominal', 'total'];
+    const possibleTanggal = ['tanggal_transaksi', 'tanggal', 'date', 'deadline', 'tgl', 'created_at'];
                         
                         // Loop semua kolom di Excel
                         for (let key in firstRow) {
@@ -7279,14 +7280,6 @@ function setupImportExcel() {
                         
                         if (!columnMap.progresJumlah) {
                             showNotif('❌ Kolom progres_jumlah tidak ditemukan di Excel!', true);
-                            btn.textContent = originalText;
-                            btn.disabled = false;
-                            progress.hide();
-                            return;
-                        }
-
-                        if (importType === 'transaksi' && !columnMap.apk) {
-                            showNotif('❌ Kolom apk (aplikasi) tidak ditemukan di Excel! Kolom apk WAJIB ada!', true);
                             btn.textContent = originalText;
                             btn.disabled = false;
                             progress.hide();
