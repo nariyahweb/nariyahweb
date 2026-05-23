@@ -3131,38 +3131,107 @@ async function moveAgentToFollowup(agentId) {
   );
 }
 
-// Fungsi untuk memindahkan SEMUA data transaksi ke followup
+// Fungsi untuk memindahkan data sesuai filter ke followup
 async function moveAllToFollowup() {
-    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan memindahkan SEMUA data di Database Transaksi ke Followup Agen.\n\nProses ini akan memindahkan data satu per satu dan bisa memakan waktu.\n\nKlik OK untuk melanjutkan.')) return;
+    // Ambil data sesuai filter yang aktif
+    const filteredData = await getFilteredTransaksiData();
     
-    // Ambil semua data transaksi (tanpa filter)
-    const isOwner = currentUserRole === 'owner';
-    let query = db.collection('db_transaksi');
-    if (!isOwner) {
-        query = query.where('user_id', '==', currentUser.uid);
-    }
-    
-    const snapshot = await query.get();
-    const allData = [];
-    
-    snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.status !== 'imported') { // hanya yang belum dipindah
-            allData.push({ id: doc.id, ...data });
-        }
-    });
-    
-    if (allData.length === 0) {
-        showNotifTop('📭 Tidak ada data yang perlu dipindahkan', true);
+    if (filteredData.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang sesuai filter untuk dipindahkan!', true);
         return;
     }
     
+    // Tampilkan konfirmasi
+    const progresFilter = document.getElementById('filterProgresTransaksi')?.value || '';
+    const filterText = progresFilter ? ` (Filter: ${progresFilter})` : '';
+    
+    if (!confirm(`⚠️ PERINGATAN!\n\nAnda akan memindahkan ${filteredData.length} data${filterText} ke Followup Agen.\n\nProses ini akan memindahkan data satu per satu.\n\nKlik OK untuk melanjutkan.`)) return;
+    
     // Tampilkan modal pilih CS
-    await showPilihCsModal(allData);
+    await showPilihCsModal(filteredData);
 }
 
 // Event listener untuk tombol baru
 document.getElementById('moveAllToFollowupBtn')?.addEventListener('click', moveAllToFollowup);
+
+// Fungsi untuk mendapatkan data transaksi sesuai filter yang aktif
+async function getFilteredTransaksiData() {
+    const searchTerm = document.getElementById('searchTransaksiInput')?.value.toLowerCase() || '';
+    const progresFilter = document.getElementById('filterProgresTransaksi')?.value || '';
+    const statusFilter = document.getElementById('filterStatusTransaksi')?.value || '';
+    
+    const isOwner = currentUserRole === 'owner';
+    let query = db.collection('db_transaksi');
+    
+    if (!isOwner) {
+        query = query.where('user_id', '==', currentUser.uid);
+    }
+    
+    // Terapkan filter progres ke query jika ada
+    if (progresFilter) {
+        query = query.where('progres_jenis', '==', progresFilter);
+    }
+    
+    const snapshot = await query.get();
+    let results = [];
+    
+    for (const doc of snapshot.docs) {
+        const d = doc.data();
+        let ownerName = '';
+        if (isOwner && d.user_id !== currentUser.uid) {
+            const userDoc = await db.collection('users').doc(d.user_id).get();
+            ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+        }
+        
+        // Filter tambahan untuk search term dan status
+        let include = true;
+        if (searchTerm) {
+            include = (d.nama && d.nama.toLowerCase().includes(searchTerm)) ||
+                      (d.agent_id && String(d.agent_id).toLowerCase().includes(searchTerm)) ||
+                      (d.hp && String(d.hp).includes(searchTerm));
+        }
+        
+        if (include && statusFilter && d.status !== statusFilter) {
+            include = false;
+        }
+        
+        if (include && d.status === 'imported') {
+            include = false; // Skip data yang sudah dipindah
+        }
+        
+        if (include) {
+            results.push({
+                id: doc.id,
+                ...d,
+                displayName: (d.nama || '') + ownerName
+            });
+        }
+    }
+    
+    return results;
+}
+
+// Tambahkan fungsi untuk menampilkan status filter
+function updateFilterStatus() {
+    const progresFilter = document.getElementById('filterProgresTransaksi')?.value || '';
+    const statusFilter = document.getElementById('filterStatusTransaksi')?.value || '';
+    const searchTerm = document.getElementById('searchTransaksiInput')?.value || '';
+    
+    let filterText = '';
+    if (progresFilter) filterText += `📊 ${progresFilter === 'naik' ? 'Naik' : (progresFilter === 'turun' ? 'Turun' : 'Normal')} `;
+    if (statusFilter) filterText += `📌 ${statusFilter === 'imported' ? 'Sudah Dipindah' : 'Pending'} `;
+    if (searchTerm) filterText += `🔍 "${searchTerm}"`;
+    
+    const filterInfo = document.getElementById('activeFilterInfo');
+    if (filterInfo) {
+        if (filterText) {
+            filterInfo.innerHTML = `🎯 Filter aktif: ${filterText}`;
+            filterInfo.style.display = 'block';
+        } else {
+            filterInfo.style.display = 'none';
+        }
+    }
+}
 
 function deleteSelectedAgentSafe() {
   const selectedIds = Array.from(selectedAgentIds.keys());
@@ -6447,7 +6516,54 @@ if (filterProgres) {
     
     if (filterProgres) filterProgres.addEventListener('change', applyFilters);
     if (filterStatus) filterStatus.addEventListener('change', applyFilters);
+
+        const updateFilterDisplay = () => {
+        const progresFilter = filterProgres?.value || '';
+        const statusFilter = filterStatus?.value || '';
+        const searchTerm = searchInput?.value || '';
+        
+        let filterText = '';
+        if (progresFilter) filterText += `📊 ${progresFilter === 'naik' ? 'Naik' : (progresFilter === 'turun' ? 'Turun' : 'Normal')} `;
+        if (statusFilter) filterText += `📌 ${statusFilter === 'imported' ? 'Sudah Dipindah' : 'Pending'} `;
+        if (searchTerm) filterText += `🔍 "${searchTerm}"`;
+        
+        const filterInfo = document.getElementById('activeFilterInfo');
+        if (filterInfo) {
+            if (filterText) {
+                filterInfo.innerHTML = `🎯 Filter aktif: ${filterText}`;
+                filterInfo.style.display = 'block';
+            } else {
+                filterInfo.style.display = 'none';
+            }
+        }
+    };
     
+    // Event listener dengan debounce untuk search
+    let debounceTimer;
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applyFilters();
+                updateFilterDisplay();  // <-- TAMBAHKAN INI
+            }, 500);
+        });
+    }
+    
+    if (filterProgres) {
+        filterProgres.addEventListener('change', () => {
+            applyFilters();
+            updateFilterDisplay();  // <-- TAMBAHKAN INI
+        });
+    }
+    
+    if (filterStatus) {
+        filterStatus.addEventListener('change', () => {
+            applyFilters();
+            updateFilterDisplay();  // <-- TAMBAHKAN INI
+        });
+    }
+  
     if (resetBtn) {
         resetBtn.onclick = async () => {
             if (searchInput) searchInput.value = '';
