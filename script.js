@@ -5285,7 +5285,7 @@ function attachCheckboxEvents(selector, map, selectAllId) {
     }
 }
 
-// ========== VARIABEL GLOBAL DB TRANSAKSI ==========
+// ========== DB TRANSAKSI FUNCTIONS ==========
 let transaksiData = [];
 let transaksiLastDoc = null;
 let transaksiHasMore = true;
@@ -5293,7 +5293,285 @@ let isLoadingMore = false;
 let isDeletingAll = false;
 let totalTransaksiCount = 0;
 
-// Fungsi untuk menampilkan floating progress dengan tombol close
+// ========== VARIABEL UNTUK PEMINDAHAN KE CS ==========
+let pendingMoveData = [];
+let daftarCs = [];
+
+// ========== FUNGSI UNTUK LOAD DAFTAR CS ==========
+async function loadDaftarCs() {
+    try {
+        const snapshot = await db.collection('users').where('role', '==', 'cs').get();
+        daftarCs = [];
+        snapshot.forEach(doc => {
+            daftarCs.push({
+                id: doc.id,
+                nama: doc.data().nama || doc.data().email || 'CS Agent',
+                email: doc.data().email,
+                hp: doc.data().hp
+            });
+        });
+        
+        // Update select single
+        const csSelect = document.getElementById('csTujuanSelect');
+        if (csSelect) {
+            csSelect.innerHTML = '<option value="">Pilih CS Agent</option>' + 
+                daftarCs.map(cs => `<option value="${cs.id}">${escapeHtml(cs.nama)}</option>`).join('');
+        }
+        
+        // Update multi select
+        const csMultiContainer = document.getElementById('csMultiSelect');
+        if (csMultiContainer) {
+            csMultiContainer.innerHTML = daftarCs.map(cs => `
+                <label style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; border-bottom: 1px solid #e5e7eb;">
+                    <input type="checkbox" value="${cs.id}" class="cs-checkbox" style="width: 18px; height: 18px;">
+                    <span>👤 ${escapeHtml(cs.nama)}</span>
+                    <small style="color: #9ca3af; margin-left: auto;">${escapeHtml(cs.email)}</small>
+                </label>
+            `).join('');
+        }
+    } catch (e) {
+        console.error('Error load CS:', e);
+    }
+}
+
+// ========== FUNGSI MENAMPILKAN MODAL PILIH CS ==========
+async function showPilihCsModal(dataToMove) {
+    pendingMoveData = dataToMove;
+    
+    await loadDaftarCs();
+    
+    // Update preview data count
+    const countSpan = document.getElementById('selectedDataCount');
+    if (countSpan) countSpan.innerText = pendingMoveData.length;
+    
+    const modal = document.getElementById('pilihCsTujuanModal');
+    if (modal) modal.style.display = 'flex';
+    
+    // Setup event listeners
+    const metodeSelect = document.getElementById('metodePembagian');
+    const satuGroup = document.getElementById('satuCsGroup');
+    const rataGroup = document.getElementById('rataCsGroup');
+    
+    if (metodeSelect) {
+        // Set default ke mode 'satu'
+        metodeSelect.value = 'satu';
+        satuGroup.style.display = 'block';
+        rataGroup.style.display = 'none';
+        
+        metodeSelect.onchange = () => {
+            if (metodeSelect.value === 'satu') {
+                satuGroup.style.display = 'block';
+                rataGroup.style.display = 'none';
+            } else {
+                satuGroup.style.display = 'none';
+                rataGroup.style.display = 'block';
+            }
+        };
+    }
+    
+    // Setup confirm button
+    const confirmBtn = document.getElementById('confirmPindahKeCsBtn');
+    if (confirmBtn) {
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        newConfirmBtn.onclick = async () => {
+            const metode = document.getElementById('metodePembagian').value;
+            let csIds = [];
+            
+            if (metode === 'satu') {
+                const csId = document.getElementById('csTujuanSelect').value;
+                if (!csId) {
+                    showNotifTop('⚠️ Pilih CS tujuan terlebih dahulu!', true);
+                    return;
+                }
+                csIds = [csId];
+            } else {
+                const checkboxes = document.querySelectorAll('#csMultiSelect .cs-checkbox:checked');
+                csIds = Array.from(checkboxes).map(cb => cb.value);
+                if (csIds.length === 0) {
+                    showNotifTop('⚠️ Pilih minimal satu CS tujuan!', true);
+                    return;
+                }
+            }
+            
+            await prosesPindahKeCs(pendingMoveData, csIds, metode);
+            closeModal('pilihCsTujuanModal');
+        };
+    }
+    
+    // Setup cancel button
+    const batalBtn = document.getElementById('batalPindahKeCsBtn');
+    if (batalBtn) {
+        const newBatalBtn = batalBtn.cloneNode(true);
+        batalBtn.parentNode.replaceChild(newBatalBtn, batalBtn);
+        newBatalBtn.onclick = () => {
+            closeModal('pilihCsTujuanModal');
+            pendingMoveData = [];
+        };
+    }
+}
+
+// ========== FUNGSI PROSES PEMINDAHAN KE CS ==========
+async function prosesPindahKeCs(dataToMove, csIds, metode) {
+    const totalData = dataToMove.length;
+    const totalCs = csIds.length;
+    
+    let dataPerCs = [];
+    if (metode === 'rata') {
+        // Bagikan data secara rata
+        const baseCount = Math.floor(totalData / totalCs);
+        const remainder = totalData % totalCs;
+        
+        let startIndex = 0;
+        for (let i = 0; i < totalCs; i++) {
+            let count = baseCount + (i < remainder ? 1 : 0);
+            dataPerCs.push({
+                csId: csIds[i],
+                data: dataToMove.slice(startIndex, startIndex + count),
+                count: count
+            });
+            startIndex += count;
+        }
+    } else {
+        // Kirim semua ke satu CS
+        dataPerCs.push({
+            csId: csIds[0],
+            data: dataToMove,
+            count: totalData
+        });
+    }
+    
+    const progress = showFloatingProgressWithCancel('📋 Memindahkan ke Followup', totalData, () => {
+        showNotifTop('⏹️ Pemindahan dibatalkan');
+    });
+    progress.update(0, '📋 Memindahkan', 'Memulai proses...');
+    
+    let totalSuccess = 0;
+    let totalFailed = 0;
+    let totalSkipped = 0;
+    
+    for (const csItem of dataPerCs) {
+        const csInfo = daftarCs.find(c => c.id === csItem.csId);
+        const csName = csInfo ? csInfo.nama : 'CS Agent';
+        
+        for (let i = 0; i < csItem.data.length; i++) {
+            const item = csItem.data[i];
+            
+            try {
+                // Cek duplikat
+                const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(item.agent_id, item.hp);
+                
+                if (duplicateAgent) {
+                    totalSkipped++;
+                    console.log(`Skip ${item.nama}: ID Agent ${item.agent_id} sudah terdaftar`);
+                    continue;
+                }
+                if (duplicateHp) {
+                    totalSkipped++;
+                    console.log(`Skip ${item.nama}: Nomor HP ${item.hp} sudah terdaftar`);
+                    continue;
+                }
+                
+                // Hitung total tercapai
+                let totalTercapai = 0;
+                if (item.progres_jenis === 'naik') {
+                    totalTercapai = Math.abs(item.progres_jumlah || 0);
+                } else if (item.progres_jenis === 'turun') {
+                    totalTercapai = -Math.abs(item.progres_jumlah || 0);
+                } else {
+                    totalTercapai = item.progres_jumlah || 0;
+                }
+                
+                // Progres item
+                const progresItem = {
+                    tanggal: item.tanggal_transaksi || getTodayDate(),
+                    jenis: item.progres_jenis || 'normal',
+                    jumlah: Math.abs(item.progres_jumlah || 0),
+                    keterangan: `Dipindahkan dari DB Transaksi oleh ${currentUserName} ke CS: ${csName}`,
+                    created_at: new Date().toISOString()
+                };
+                
+                // Pindah ke customers dengan user_id CS tujuan
+                await db.collection('customers').add({
+                    agent_id: item.agent_id,
+                    nama: item.nama,
+                    hp: item.hp,
+                    upline_name: item.upline_name || '',
+                    upline_phone: item.upline_phone || '',
+                    status: 'baru',
+                    tanggal: getTodayDate(),
+                    user_id: csItem.csId,
+                    created_at: new Date().toISOString(),
+                    followup_data: null,
+                    pending_data: [],
+                    progres_transaksi: {
+                        items: [progresItem],
+                        total_tercapai: totalTercapai
+                    },
+                    moved_from_transaksi: true,
+                    original_transaksi_id: item.id,
+                    moved_by: currentUser.uid,
+                    moved_by_name: currentUserName
+                });
+                
+                // Update status di db_transaksi
+                await db.collection('db_transaksi').doc(item.id).update({
+                    status: 'imported',
+                    moved_to_followup_at: new Date().toISOString(),
+                    moved_to_cs_id: csItem.csId,
+                    moved_to_cs_name: csName
+                });
+                
+                selectedTransaksiIds.delete(item.id);
+                totalSuccess++;
+                
+            } catch (e) {
+                totalFailed++;
+                console.error(`Gagal pindah ${item.nama}:`, e);
+            }
+            
+            const percent = Math.floor(((totalSuccess + totalFailed + totalSkipped) / totalData) * 100);
+            progress.update(percent, '📋 Memindahkan', `Memproses... (${totalSuccess + totalFailed + totalSkipped}/${totalData})`, totalSuccess + totalFailed + totalSkipped, totalData);
+            await delay(100);
+        }
+    }
+    
+    progress.update(100, '✅ Selesai', `Berhasil: ${totalSuccess}, Gagal: ${totalFailed}, Dilewati: ${totalSkipped}`, totalData, totalData);
+    showNotifTop(`✅ ${totalSuccess} data dipindahkan ke Followup Agen${totalFailed > 0 ? `, ${totalFailed} gagal` : ''}${totalSkipped > 0 ? `, ${totalSkipped} dilewati (duplikat)` : ''}`);
+    setTimeout(() => progress.hide(), 3000);
+    
+    await loadDbTransaksi();
+    await loadAllData();
+}
+
+// ========== FUNGSI MOVE SELECTED TO FOLLOWUP (VERSI BARU) ==========
+async function moveSelectedToFollowup() {
+    let selectedIds = Array.from(selectedTransaksiIds.keys());
+    
+    if (selectedIds.length === 0) {
+        showNotifTop('⚠️ Tidak ada data yang dipilih!', true);
+        return;
+    }
+    
+    // Ambil data dari database
+    let dataToMove = [];
+    for (const id of selectedIds) {
+        const item = transaksiData.find(t => t.id === id);
+        if (item && item.status !== 'imported') {
+            dataToMove.push({ id: item.id, ...item });
+        }
+    }
+    
+    if (dataToMove.length === 0) {
+        showNotifTop('⚠️ Data yang dipilih sudah dipindahkan semua!', true);
+        return;
+    }
+    
+    // Tampilkan modal pilih CS
+    await showPilihCsModal(dataToMove);
+}
+
+// ========== FUNGSI SHOW FLOATING PROGRESS WITH CANCEL ==========
 function showFloatingProgressWithCancel(title, total = 0, onCancel = null) {
     if (activeProgress) {
         activeProgress.remove();
@@ -5366,6 +5644,268 @@ function showFloatingProgressWithCancel(title, total = 0, onCancel = null) {
             if (countEl) countEl.innerHTML = `0 / ${newTotal}`;
         }
     };
+}
+
+// ========== FUNGSI LOAD DB TRANSAKSI ==========
+async function loadDbTransaksi(loadMore = false) {
+    if (!currentUser) {
+        console.log('loadDbTransaksi: No user logged in');
+        return;
+    }
+    
+    console.log('loadDbTransaksi: Memuat data transaksi...', loadMore ? '(load more)' : '(fresh)');
+    
+    if (!loadMore) {
+        transaksiData = [];
+        transaksiLastDoc = null;
+        transaksiHasMore = true;
+        isLoadingMore = false;
+    }
+    
+    if (isLoadingMore || !transaksiHasMore) {
+        if (!transaksiHasMore && loadMore) {
+            showNotifTop('📭 Tidak ada data lagi untuk dimuat');
+        }
+        return;
+    }
+    
+    isLoadingMore = true;
+    
+    // Tampilkan loading indicator
+    const container = document.getElementById('dbTransaksiList');
+    if (container && loadMore) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'loadingMoreTransaksi';
+        loadingDiv.style.textAlign = 'center';
+        loadingDiv.style.padding = '20px';
+        loadingDiv.innerHTML = '⏳ Memuat lebih banyak data...';
+        container.appendChild(loadingDiv);
+    }
+    
+    try {
+        const isOwner = currentUserRole === 'owner';
+        let query = db.collection('db_transaksi');
+        
+        if (!isOwner) {
+            query = query.where('user_id', '==', currentUser.uid);
+        }
+        
+        query = query.orderBy('tanggal_transaksi', 'desc');
+        
+        if (loadMore && transaksiLastDoc) {
+            query = query.startAfter(transaksiLastDoc);
+        }
+        
+        query = query.limit(500);
+        
+        const snapshot = await query.get();
+        console.log('loadDbTransaksi: Data ditemukan:', snapshot.size);
+        
+        let totalCount = 0;
+        if (!loadMore) {
+            // Buat query terpisah untuk menghitung total (tanpa limit)
+            let countQuery = db.collection('db_transaksi');
+            if (!isOwner) {
+                countQuery = countQuery.where('user_id', '==', currentUser.uid);
+            }
+            const countSnapshot = await countQuery.get();
+            totalCount = countSnapshot.size;
+            console.log('Total transaksi:', totalCount);
+            window.totalTransaksiCount = totalCount;
+        } else {
+            totalCount = window.totalTransaksiCount || 0;
+        }
+        
+        // Update total count di UI
+        const totalCountSpan = document.getElementById('transaksiTotalCount');
+        if (totalCountSpan) totalCountSpan.innerText = totalCount;
+        
+        if (snapshot.empty) {
+            transaksiHasMore = false;
+            if (loadMore && container) {
+                const noMoreDiv = document.createElement('div');
+                noMoreDiv.style.textAlign = 'center';
+                noMoreDiv.style.padding = '20px';
+                noMoreDiv.style.color = '#9ca3af';
+                noMoreDiv.innerHTML = '📭 Tidak ada data lagi';
+                container.appendChild(noMoreDiv);
+                setTimeout(() => noMoreDiv.remove(), 2000);
+            }
+        } else {
+            transaksiLastDoc = snapshot.docs[snapshot.docs.length - 1];
+            transaksiHasMore = snapshot.docs.length === 500;
+            
+            for (const doc of snapshot.docs) {
+                const d = doc.data();
+                let ownerName = '';
+                if (isOwner && d.user_id !== currentUser.uid) {
+                    const userDoc = await db.collection('users').doc(d.user_id).get();
+                    ownerName = userDoc.exists ? ` (${userDoc.data().nama || 'CS'})` : '';
+                }
+                transaksiData.push({ 
+                    id: doc.id, 
+                    ...d, 
+                    displayName: (d.nama || '') + ownerName 
+                });
+            }
+        }
+        
+        // Hapus loading indicator
+        if (container) {
+            const loadingDiv = document.getElementById('loadingMoreTransaksi');
+            if (loadingDiv) loadingDiv.remove();
+        }
+        
+        // Panggil statistik jika bukan load more
+        if (!loadMore && typeof getTransaksiStats === 'function') {
+            await getTransaksiStats();
+        }
+        
+        renderTransaksiList(transaksiData);
+        
+        // Update info Menampilkan X dari Y data
+        updateTransaksiStatsDisplay(transaksiData.length, totalCount);
+        
+        // Tambahkan tombol "Muat Lebih Banyak" jika masih ada data
+        if (transaksiHasMore && !loadMore) {
+            addLoadMoreButton();
+        } else if (!transaksiHasMore && !loadMore) {
+            removeLoadMoreButton();
+        }
+        
+        // Update total transaksi untuk target
+        await updateTotalTransaksiDariDBTransaksi();
+        
+    } catch (error) {
+        console.error('Error loadDbTransaksi:', error);
+        showNotifTop('❌ Gagal memuat data transaksi: ' + error.message, true);
+        const container = document.getElementById('dbTransaksiList');
+        if (container && !loadMore) {
+            container.innerHTML = '<p style="text-align:center;padding:40px;color:#ef4444;">❌ Gagal memuat data transaksi</p>';
+        }
+    } finally {
+        isLoadingMore = false;
+    }
+}
+
+// ========== FUNGSI RENDER TRANSAKSI LIST ==========
+function renderTransaksiList(items) {
+    console.log('renderTransaksiList dipanggil dengan', items.length, 'item');
+    
+    const container = document.getElementById('dbTransaksiList');
+    if (!container) {
+        console.error('ERROR: Container dbTransaksiList TIDAK DITEMUKAN!');
+        return;
+    }
+    
+    if (items.length === 0) {
+        container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Belum ada data transaksi. Silakan import data terlebih dahulu.</p>';
+        return;
+    }
+    
+    const formatRupiah = (angka) => {
+        if (!angka && angka !== 0) return '0';
+        return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+    
+    const getProgresIcon = (jenis) => {
+        if (jenis === 'naik') return '📈';
+        if (jenis === 'turun') return '📉';
+        return '⚖️';
+    };
+    
+    // Format jumlah progres dengan tanda + atau -
+    const formatProgresJumlah = (jenis, jumlah) => {
+        const absJumlah = Math.abs(jumlah);
+        if (jenis === 'naik') {
+            return `+${absJumlah.toLocaleString()}`;
+        } else if (jenis === 'turun') {
+            return `-${absJumlah.toLocaleString()}`;
+        } else {
+            // Untuk normal, tampilkan nilai asli (bisa positif atau negatif)
+            if (jumlah < 0) {
+                return `${jumlah.toLocaleString()}`;
+            } else if (jumlah > 0) {
+                return `+${jumlah.toLocaleString()}`;
+            }
+            return '0';
+        }
+    };
+    
+    const getStatusBadge = (status) => {
+        if (status === 'imported') return '<span style="background:#10b981; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">✅ Sudah Dipindah</span>';
+        return '<span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">⏳ Pending Import</span>';
+    };
+    
+    let html = '';
+    
+    for (const item of items) {
+        const isChecked = selectedTransaksiIds.get(item.id) === true;
+        
+        // Tentukan warna untuk progres
+        let progresColor = '#6b7280';
+        let progresBg = '#f3f4f6';
+        if (item.progres_jenis === 'naik') {
+            progresColor = '#10b981';
+            progresBg = '#ecfdf5';
+        } else if (item.progres_jenis === 'turun') {
+            progresColor = '#ef4444';
+            progresBg = '#fef2f2';
+        } else if (item.progres_jenis === 'normal' && item.progres_jumlah < 0) {
+            progresColor = '#ef4444';
+            progresBg = '#fef2f2';
+        } else if (item.progres_jenis === 'normal' && item.progres_jumlah > 0) {
+            progresColor = '#10b981';
+            progresBg = '#ecfdf5';
+        }
+        
+        const formattedJumlah = formatProgresJumlah(item.progres_jenis, item.progres_jumlah || 0);
+        
+        html += `
+            <div class="db-item-agent" data-id="${item.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s;">
+                <input type="checkbox" class="db-item-checkbox-transaksi" data-id="${item.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
+                <div class="db-item-agent-info" style="flex: 1;">
+                    <h4 style="font-size: 14px; margin-bottom: 2px;">${escapeHtml(item.displayName || item.nama)}</h4>
+                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">📱 ${escapeHtml(item.hp || '-')} | 🆔 ${escapeHtml(item.agent_id || '-')}</p>
+                    <p style="font-size: 12px; margin-bottom: 2px; background: ${progresBg}; padding: 4px 8px; border-radius: 8px; display: inline-block;">
+                        ${getProgresIcon(item.progres_jenis)} <strong style="color: ${progresColor};">${item.progres_jenis?.toUpperCase() || 'NORMAL'}</strong> | 
+                        Jumlah: ${formattedJumlah}
+                    </p>
+                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">👤 Upline: ${escapeHtml(item.upline_name || '-')} | 📞 ${escapeHtml(item.upline_phone || '-')}</p>
+                    <small style="font-size: 10px; color: #9ca3af;">📅 ${item.tanggal_transaksi ? new Date(item.tanggal_transaksi).toLocaleDateString('id-ID') : '-'} | Status: ${getStatusBadge(item.status)}</small>
+                </div>
+                <div class="db-item-agent-actions" style="display: flex; gap: 6px;">
+                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')" style="background: #25D366; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">💬 WA</button>
+                    ${item.status !== 'imported' ? `<button class="db-item-move-followup" onclick="event.stopPropagation(); moveSingleToFollowup('${item.id}')" style="background: #4f46e5; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">📋 Pindah ke Followup</button>` : ''}
+                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteTransaksiItem('${item.id}')" style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+    
+    // Event listener untuk klik card (menampilkan detail)
+    document.querySelectorAll('#dbTransaksiList .db-item-agent').forEach(el => {
+        el.removeEventListener('click', handleTransaksiItemClick);
+        el.addEventListener('click', handleTransaksiItemClick);
+    });
+    
+    // Event listener untuk checkbox
+    document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi').forEach(cb => {
+        const id = cb.dataset.id;
+        // Set checkbox sesuai dengan selectedTransaksiIds
+        if (selectedTransaksiIds.get(id) === true) {
+            cb.checked = true;
+        } else {
+            cb.checked = false;
+        }
+        
+        cb.removeEventListener('change', handleTransaksiCheckboxChange);
+        cb.addEventListener('change', handleTransaksiCheckboxChange);
+    });
+    
+    updateSelectAllTransaksiButton();
 }
 
 // Fungsi untuk menambahkan tombol "Muat Lebih Banyak"
@@ -5760,126 +6300,6 @@ async function updateTotalTransaksiDariDBTransaksi() {
     }
 }
 
-// RENDER DB TRANSAKSI LENGKAP
-function renderTransaksiList(items) {
-    console.log('renderTransaksiList dipanggil dengan', items.length, 'item');
-    
-    const container = document.getElementById('dbTransaksiList');
-    if (!container) {
-        console.error('ERROR: Container dbTransaksiList TIDAK DITEMUKAN!');
-        return;
-    }
-    
-    if (items.length === 0) {
-        container.innerHTML = '<p style="text-align:center;padding:40px;color:#9ca3af;">📭 Belum ada data transaksi. Silakan import data terlebih dahulu.</p>';
-        return;
-    }
-    
-    const formatRupiah = (angka) => {
-        if (!angka && angka !== 0) return '0';
-        return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    };
-    
-    const getProgresIcon = (jenis) => {
-        if (jenis === 'naik') return '📈';
-        if (jenis === 'turun') return '📉';
-        return '⚖️';
-    };
-    
-    // Format jumlah progres dengan tanda + atau -
-    const formatProgresJumlah = (jenis, jumlah) => {
-        const absJumlah = Math.abs(jumlah);
-        if (jenis === 'naik') {
-            return `+${absJumlah.toLocaleString()}`;
-        } else if (jenis === 'turun') {
-            return `-${absJumlah.toLocaleString()}`;
-        } else {
-            // Untuk normal, tampilkan nilai asli (bisa positif atau negatif)
-            if (jumlah < 0) {
-                return `${jumlah.toLocaleString()}`;
-            } else if (jumlah > 0) {
-                return `+${jumlah.toLocaleString()}`;
-            }
-            return '0';
-        }
-    };
-    
-    const getStatusBadge = (status) => {
-        if (status === 'imported') return '<span style="background:#10b981; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">✅ Sudah Dipindah</span>';
-        return '<span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">⏳ Pending Import</span>';
-    };
-    
-    let html = '';
-    
-    for (const item of items) {
-        const isChecked = selectedTransaksiIds.get(item.id) === true;
-        
-        // Tentukan warna untuk progres
-        let progresColor = '#6b7280';
-        let progresBg = '#f3f4f6';
-        if (item.progres_jenis === 'naik') {
-            progresColor = '#10b981';
-            progresBg = '#ecfdf5';
-        } else if (item.progres_jenis === 'turun') {
-            progresColor = '#ef4444';
-            progresBg = '#fef2f2';
-        } else if (item.progres_jenis === 'normal' && item.progres_jumlah < 0) {
-            progresColor = '#ef4444';
-            progresBg = '#fef2f2';
-        } else if (item.progres_jenis === 'normal' && item.progres_jumlah > 0) {
-            progresColor = '#10b981';
-            progresBg = '#ecfdf5';
-        }
-        
-        const formattedJumlah = formatProgresJumlah(item.progres_jenis, item.progres_jumlah || 0);
-        
-        html += `
-            <div class="db-item-agent" data-id="${item.id}" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: all 0.2s;">
-                <input type="checkbox" class="db-item-checkbox-transaksi" data-id="${item.id}" ${isChecked ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer;" onclick="event.stopPropagation()">
-                <div class="db-item-agent-info" style="flex: 1;">
-                    <h4 style="font-size: 14px; margin-bottom: 2px;">${escapeHtml(item.displayName || item.nama)}</h4>
-                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">📱 ${escapeHtml(item.hp || '-')} | 🆔 ${escapeHtml(item.agent_id || '-')}</p>
-                    <p style="font-size: 12px; margin-bottom: 2px; background: ${progresBg}; padding: 4px 8px; border-radius: 8px; display: inline-block;">
-                        ${getProgresIcon(item.progres_jenis)} <strong style="color: ${progresColor};">${item.progres_jenis?.toUpperCase() || 'NORMAL'}</strong> | 
-                        Jumlah: ${formattedJumlah}
-                    </p>
-                    <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">👤 Upline: ${escapeHtml(item.upline_name || '-')} | 📞 ${escapeHtml(item.upline_phone || '-')}</p>
-                    <small style="font-size: 10px; color: #9ca3af;">📅 ${item.tanggal_transaksi ? new Date(item.tanggal_transaksi).toLocaleDateString('id-ID') : '-'} | Status: ${getStatusBadge(item.status)}</small>
-                </div>
-                <div class="db-item-agent-actions" style="display: flex; gap: 6px;">
-                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')" style="background: #25D366; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">💬 WA</button>
-                    ${item.status !== 'imported' ? `<button class="db-item-move-followup" onclick="event.stopPropagation(); moveSingleToFollowup('${item.id}')" style="background: #4f46e5; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">📋 Pindah ke Followup</button>` : ''}
-                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteTransaksiItem('${item.id}')" style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
-                </div>
-            </div>
-        `;
-    }
-    
-    container.innerHTML = html;
-    
-    // Event listener untuk klik card (menampilkan detail)
-    document.querySelectorAll('#dbTransaksiList .db-item-agent').forEach(el => {
-        el.removeEventListener('click', handleTransaksiItemClick);
-        el.addEventListener('click', handleTransaksiItemClick);
-    });
-    
-    // Event listener untuk checkbox
-    document.querySelectorAll('#dbTransaksiList .db-item-checkbox-transaksi').forEach(cb => {
-        const id = cb.dataset.id;
-        // Set checkbox sesuai dengan selectedTransaksiIds
-        if (selectedTransaksiIds.get(id) === true) {
-            cb.checked = true;
-        } else {
-            cb.checked = false;
-        }
-        
-        cb.removeEventListener('change', handleTransaksiCheckboxChange);
-        cb.addEventListener('change', handleTransaksiCheckboxChange);
-    });
-    
-    updateSelectAllTransaksiButton();
-}
-
 // Handler untuk checkbox transaksi
 function handleTransaksiCheckboxChange(e) {
     e.stopPropagation();
@@ -5944,25 +6364,109 @@ function showTransaksiDetail(id) {
         }
     };
     
+    const getStatusIcon = (status) => {
+        if (status === 'imported') return '✅';
+        return '⏳';
+    };
+    
+    const getProgresColor = (jenis, jumlah) => {
+        if (jenis === 'naik') return '#10b981';
+        if (jenis === 'turun') return '#ef4444';
+        if (jumlah < 0) return '#ef4444';
+        if (jumlah > 0) return '#10b981';
+        return '#6b7280';
+    };
+    
+    const formattedJumlah = formatProgresJumlahDetail(item.progres_jenis, item.progres_jumlah || 0);
+    const progresColor = getProgresColor(item.progres_jenis, item.progres_jumlah || 0);
+    
     const modal = document.createElement('div');
     modal.className = 'modal';
     modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 450px;">
-            <h3>📊 Detail Transaksi</h3>
-            <div style="padding: 0 20px;">
-                <p><strong>Nama:</strong> ${escapeHtml(item.nama)}</p>
-                <p><strong>ID Agent:</strong> ${escapeHtml(item.agent_id)}</p>
-                <p><strong>HP:</strong> ${escapeHtml(item.hp || '-')}</p>
-                <p><strong>Upline:</strong> ${escapeHtml(item.upline_name || '-')} (${escapeHtml(item.upline_phone || '-')})</p>
-                <p><strong>Progres:</strong> ${item.progres_jenis === 'naik' ? '📈 Naik' : item.progres_jenis === 'turun' ? '📉 Turun' : '⚖️ Normal'} | ${formatProgresJumlahDetail(item.progres_jenis, item.progres_jumlah || 0)}</p>
-                <p><strong>Tanggal Transaksi:</strong> ${new Date(item.tanggal_transaksi).toLocaleDateString('id-ID')}</p>
-                <p><strong>Status:</strong> ${item.status === 'imported' ? '✅ Sudah Dipindah ke Followup' : '⏳ Pending Import'}</p>
+        <div class="modal-content" style="max-width: 480px; border-radius: 24px; overflow: hidden; animation: modalPopup 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);">
+            <!-- Header dengan gradient -->
+            <div style="background: linear-gradient(135deg, #4f46e5, #8b5cf6); padding: 20px 24px; color: white;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(255,255,255,0.2); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                        ${getStatusIcon(item.status)}
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 18px; color: white;">Detail Transaksi</h3>
+                        <p style="margin: 4px 0 0; font-size: 12px; opacity: 0.8;">ID: ${escapeHtml(item.id.substring(0, 8))}...</p>
+                    </div>
+                </div>
             </div>
-            <div class="modal-buttons">
-                <button class="btn-primary" onclick="window.open('https://wa.me/${item.hp?.replace(/[^\d]/g, '')}', '_blank')">💬 WhatsApp</button>
-                ${item.status !== 'imported' ? `<button class="btn-primary" onclick="moveSingleToFollowup('${item.id}'); closeModalFromElement(this)">📋 Pindah ke Followup</button>` : ''}
-                <button class="btn-outline" onclick="closeModalFromElement(this)">❌ Tutup</button>
+            
+            <!-- Body -->
+            <div style="padding: 20px 24px; background: #fff;">
+                <!-- Nama & Agent ID -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #e5e7eb;">
+                    <div>
+                        <div style="font-size: 12px; color: #9ca3af;">Nama Agent</div>
+                        <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${escapeHtml(item.nama)}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 12px; color: #9ca3af;">ID Agent</div>
+                        <div style="font-size: 14px; font-weight: 500; color: #4f46e5;">${escapeHtml(item.agent_id)}</div>
+                    </div>
+                </div>
+                
+                <!-- Informasi Kontak -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 12px;">
+                    <div>
+                        <div style="font-size: 11px; color: #9ca3af;">📱 Nomor HP</div>
+                        <div style="font-size: 13px; font-weight: 500;">${escapeHtml(item.hp || '-')}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: #9ca3af;">📅 Tanggal Transaksi</div>
+                        <div style="font-size: 13px; font-weight: 500;">${new Date(item.tanggal_transaksi).toLocaleDateString('id-ID')}</div>
+                    </div>
+                </div>
+                
+                <!-- Informasi Upline -->
+                <div style="margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 12px;">
+                    <div style="font-size: 11px; color: #9ca3af; margin-bottom: 8px;">👤 Upline / Atasan</div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 13px;">${escapeHtml(item.upline_name || '-')}</span>
+                        <span style="font-size: 12px; color: #6b7280;">📞 ${escapeHtml(item.upline_phone || '-')}</span>
+                    </div>
+                </div>
+                
+                <!-- Progres Transaksi - Card Highlight -->
+                <div style="margin-bottom: 16px; padding: 16px; background: ${progresColor === '#10b981' ? '#ecfdf5' : (progresColor === '#ef4444' ? '#fef2f2' : '#f3f4f6')}; border-radius: 16px; text-align: center;">
+                    <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">📊 Progres Transaksi</div>
+                    <div style="font-size: 32px; font-weight: 700; color: ${progresColor};">
+                        ${formattedJumlah}
+                    </div>
+                    <div style="font-size: 13px; margin-top: 4px;">
+                        <span style="background: ${progresColor === '#10b981' ? '#10b981' : (progresColor === '#ef4444' ? '#ef4444' : '#6b7280')}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px;">
+                            ${item.progres_jenis === 'naik' ? '📈 NAIK' : (item.progres_jenis === 'turun' ? '📉 TURUN' : '⚖️ NORMAL')}
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Status -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9fafb; border-radius: 12px;">
+                    <span style="font-size: 12px; color: #6b7280;">📌 Status</span>
+                    <span style="font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 20px; background: ${item.status === 'imported' ? '#d1fae5' : '#fef3c7'}; color: ${item.status === 'imported' ? '#065f46' : '#b45309'};">
+                        ${item.status === 'imported' ? '✅ Sudah Dipindah ke Followup' : '⏳ Pending Import'}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Footer dengan Tombol -->
+            <div style="display: flex; gap: 12px; padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb;">
+                <button class="btn-primary" onclick="window.open('https://wa.me/${item.hp?.replace(/[^\d]/g, '')}', '_blank')" style="flex: 1; background: #25D366; border: none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    💬 WhatsApp
+                </button>
+                ${item.status !== 'imported' ? `<button class="btn-primary" onclick="moveSingleToFollowup('${item.id}'); closeModalFromElement(this)" style="flex: 1; background: #4f46e5; border: none; padding: 12px; border-radius: 12px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    📋 Pindah ke Followup
+                </button>` : ''}
+                <button class="btn-outline" onclick="closeModalFromElement(this)" style="flex: 0.5; background: #f3f4f6; border: none; padding: 12px; border-radius: 12px; color: #374151; font-weight: 600; cursor: pointer;">
+                    Tutup
+                </button>
             </div>
         </div>
     `;
@@ -6136,199 +6640,6 @@ async function deleteTransaksiItem(id) {
         showNotifTop('❌ Gagal hapus: ' + e.message, true);
         progress.hide();
     }
-}
-
-// Fungsi untuk memindahkan data terpilih ke followup
-async function moveSelectedToFollowup() {
-    // Ambil ID yang terpilih dari selectedTransaksiIds
-    let selectedIds = Array.from(selectedTransaksiIds.keys());
-    
-    if (selectedIds.length === 0) {
-        showNotifTop('⚠️ Tidak ada data yang dipilih! Silakan centang data terlebih dahulu.', true);
-        return;
-    }
-    
-    // Jika ada filter yang aktif, ambil data dari database langsung (bukan dari yang tampil)
-    const filterProgres = document.getElementById('filterProgresTransaksi')?.value || '';
-    const filterStatus = document.getElementById('filterStatusTransaksi')?.value || '';
-    const searchTerm = document.getElementById('searchTransaksiInput')?.value.toLowerCase() || '';
-    
-    let dataToMove = [];
-    let isFilterActive = filterProgres !== '' || filterStatus !== '' || searchTerm !== '';
-    
-    if (isFilterActive) {
-        // Jika filter aktif, ambil data dari database sesuai filter
-        showNotifTop('⏳ Mengambil data dari database sesuai filter...');
-        
-        try {
-            const isOwner = currentUserRole === 'owner';
-            let query = db.collection('db_transaksi');
-            
-            if (!isOwner) {
-                query = query.where('user_id', '==', currentUser.uid);
-            }
-            
-            // Terapkan filter progres
-            if (filterProgres) {
-                query = query.where('progres_jenis', '==', filterProgres);
-            }
-            
-            // Terapkan filter status
-            if (filterStatus && filterStatus !== 'pending_import') {
-                query = query.where('status', '==', filterStatus);
-            }
-            
-            const snapshot = await query.get();
-            
-            for (const doc of snapshot.docs) {
-                const data = doc.data();
-                // Filter tambahan untuk search term
-                let matchesSearch = true;
-                if (searchTerm) {
-                    matchesSearch = (data.nama && data.nama.toLowerCase().includes(searchTerm)) ||
-                                   (data.agent_id && String(data.agent_id).toLowerCase().includes(searchTerm)) ||
-                                   (data.hp && String(data.hp).includes(searchTerm));
-                }
-                
-                // Hanya data yang statusnya pending (belum dipindah)
-                if (matchesSearch && data.status !== 'imported') {
-                    dataToMove.push({
-                        id: doc.id,
-                        ...data
-                    });
-                }
-            }
-            
-            console.log(`Ditemukan ${dataToMove.length} data dengan filter ${filterProgres || 'semua'}`);
-            
-            if (dataToMove.length === 0) {
-                showNotifTop('⚠️ Tidak ada data pending yang sesuai filter!', true);
-                return;
-            }
-            
-            // Konfirmasi dengan jumlah data yang sebenarnya
-            if (!confirm(`📋 Pindahkan ${dataToMove.length} data ke Followup Agen?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`)) {
-                return;
-            }
-            
-        } catch (error) {
-            console.error('Error mengambil data filter:', error);
-            showNotifTop('❌ Gagal mengambil data: ' + error.message, true);
-            return;
-        }
-    } else {
-        // Tanpa filter, gunakan data yang terpilih dari checkbox
-        dataToMove = selectedIds.map(id => {
-            const item = transaksiData.find(t => t.id === id);
-            return item ? { id: item.id, ...item } : null;
-        }).filter(item => item !== null && item.status !== 'imported');
-        
-        if (dataToMove.length === 0) {
-            showNotifTop('⚠️ Data yang dipilih sudah dipindahkan semua!', true);
-            return;
-        }
-        
-        // Konfirmasi dengan jumlah data yang terpilih
-        if (!confirm(`📋 Pindahkan ${dataToMove.length} data ke Followup Agen?\n\n⚠️ Data yang sudah dipindahkan TIDAK BISA dikembalikan!`)) {
-            return;
-        }
-    }
-    
-    // Proses pemindahan dengan progress bar
-    const progress = showFloatingProgressWithCancel('📋 Memindahkan ke Followup', dataToMove.length, () => {
-        showNotifTop('⏹️ Pemindahan dibatalkan');
-    });
-    progress.update(0, '📋 Memindahkan', 'Memulai proses...');
-    
-    let success = 0;
-    let failed = 0;
-    let skipped = 0;
-    
-    for (let i = 0; i < dataToMove.length; i++) {
-        const item = dataToMove[i];
-        
-        try {
-            // Cek duplikat sebelum pindah
-            const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(item.agent_id, item.hp);
-            
-            if (duplicateAgent) {
-                skipped++;
-                console.log(`Skip ${item.nama}: ID Agent ${item.agent_id} sudah terdaftar`);
-                continue;
-            }
-            if (duplicateHp) {
-                skipped++;
-                console.log(`Skip ${item.nama}: Nomor HP ${item.hp} sudah terdaftar`);
-                continue;
-            }
-            
-            // Hitung total tercapai berdasarkan progres
-            let totalTercapai = 0;
-            if (item.progres_jenis === 'naik') {
-                totalTercapai = Math.abs(item.progres_jumlah || 0);
-            } else if (item.progres_jenis === 'turun') {
-                totalTercapai = -Math.abs(item.progres_jumlah || 0);
-            } else {
-                totalTercapai = item.progres_jumlah || 0;
-            }
-            
-            // Buat item progres
-            const progresItem = {
-                tanggal: item.tanggal_transaksi || getTodayDate(),
-                jenis: item.progres_jenis || 'normal',
-                jumlah: Math.abs(item.progres_jumlah || 0),
-                keterangan: `Dipindahkan dari DB Transaksi (ID: ${item.agent_id})`,
-                created_at: new Date().toISOString()
-            };
-            
-            // Pindah ke customers
-            await db.collection('customers').add({
-                agent_id: item.agent_id,
-                nama: item.nama,
-                hp: item.hp,
-                upline_name: item.upline_name || '',
-                upline_phone: item.upline_phone || '',
-                status: 'baru',
-                tanggal: getTodayDate(),
-                user_id: item.user_id,
-                created_at: new Date().toISOString(),
-                followup_data: null,
-                pending_data: [],
-                progres_transaksi: {
-                    items: [progresItem],
-                    total_tercapai: totalTercapai
-                },
-                moved_from_transaksi: true,
-                original_transaksi_id: item.id
-            });
-            
-            // Update status di db_transaksi
-            await db.collection('db_transaksi').doc(item.id).update({
-                status: 'imported',
-                moved_to_followup_at: new Date().toISOString()
-            });
-            
-            // Hapus dari selectedIds jika ada
-            selectedTransaksiIds.delete(item.id);
-            success++;
-            
-        } catch (e) {
-            failed++;
-            console.error(`Gagal pindah ${item.nama}:`, e);
-        }
-        
-        const percent = Math.floor(((i + 1) / dataToMove.length) * 100);
-        progress.update(percent, '📋 Memindahkan', `Memproses... (${i + 1}/${dataToMove.length})`, i + 1, dataToMove.length);
-        await delay(100);
-    }
-    
-    progress.update(100, '✅ Selesai', `Berhasil: ${success}, Gagal: ${failed}, Dilewati: ${skipped}`, dataToMove.length, dataToMove.length);
-    showNotifTop(`✅ ${success} data dipindahkan ke Followup Agen${failed > 0 ? `, ${failed} gagal` : ''}${skipped > 0 ? `, ${skipped} dilewati (duplikat)` : ''}`);
-    setTimeout(() => progress.hide(), 3000);
-    
-    // Refresh data
-    await loadDbTransaksi();
-    await loadAllData();
 }
 
 // Fungsi untuk memindahkan satu item ke followup
@@ -6736,29 +7047,35 @@ function setupImportExcel() {
                             }
                             
                             // Validate untuk transaksi
-                            if (importType === 'transaksi') {
-                                if (!agentId) {
-                                    failed++;
-                                    errors.push(`Baris ke-${json.indexOf(row)+2}: Agent ID kosong`);
-                                    continue;
-                                }
-                                if (!nama) {
-                                    failed++;
-                                    errors.push(`Baris ke-${json.indexOf(row)+2}: Nama kosong`);
-                                    continue;
-                                }
-                            } else {
-                                if (!nama) {
-                                    failed++;
-                                    errors.push(`Baris ke-${json.indexOf(row)+2}: Nama kosong`);
-                                    continue;
-                                }
-                                if (!hp || hp === '0') {
-                                    failed++;
-                                    errors.push(`Baris ke-${json.indexOf(row)+2}: Nomor HP kosong atau tidak valid`);
-                                    continue;
-                                }
-                            }
+if (importType === 'transaksi') {
+    // KOLOM WAJIB: agent_id, progres_jenis, progres_jumlah
+    if (!agentId || agentId === '') {
+        failed++;
+        errors.push(`Baris ke-${json.indexOf(row)+2}: Agent ID WAJIB diisi!`);
+        continue;
+    }
+    
+    if (!progresJenis || progresJenis === '') {
+        failed++;
+        errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jenis WAJIB diisi (naik/turun/normal)!`);
+        continue;
+    }
+    
+    if (progresJumlah === 0 || progresJumlah === null || progresJumlah === '') {
+        failed++;
+        errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jumlah WAJIB diisi (angka positif)!`);
+        continue;
+    }
+    
+    // KOLOM TIDAK WAJIB: nama, hp, apk, upline_name, upline_phone, tanggal_transaksi
+    // Jika kosong, tetap lanjut dengan nilai default
+    if (!nama) {
+        nama = `Agent ${agentId}`;  // Default nama jika kosong
+    }
+    if (!hp || hp === '0' || hp === 0) {
+        hp = '';  // Biarkan kosong
+    }
+}
                             
                             // Format phone number
                             let cleanHp = '';
@@ -6859,25 +7176,31 @@ function setupImportExcel() {
                                 });
                             } 
                             else if (importType === 'transaksi') {
-                                // SIMPAN NILAI ASLI (positif untuk naik, NEGATIF untuk turun)
+                                // Gunakan nilai default jika kolom opsional kosong
                                 let finalProgresJenis = progresJenis;
                                 let finalProgresJumlah = progresJumlah;
+                                let finalNama = nama || `Agent ${agentId}`;
+                                let finalHp = cleanHp || '';
+                                let finalApk = apk || '';
+                                let finalUplineName = uplineName || '';
+                                let finalUplinePhone = uplinePhone || '';
                                 
                                 if (!finalProgresJenis || finalProgresJenis === '') {
                                     finalProgresJenis = 'normal';
                                 }
                                 
-                                console.log(`MENYIMPAN TRANSAKSI: agent=${agentId}, nama=${nama}, jenis=${finalProgresJenis}, jumlah=${finalProgresJumlah}`);
+                                console.log(`MENYIMPAN TRANSAKSI: agent=${agentId}, nama=${finalNama}, jenis=${finalProgresJenis}, jumlah=${finalProgresJumlah}`);
                                 
                                 await db.collection('db_transaksi').add({
                                     agent_id: agentId.toUpperCase(),
-                                    nama: nama,
-                                    hp: cleanHp || '',
-                                    upline_name: uplineName || '',
-                                    upline_phone: uplinePhone || '',
+                                    nama: finalNama,
+                                    hp: finalHp,
+                                    apk: finalApk,
+                                    upline_name: finalUplineName,
+                                    upline_phone: finalUplinePhone,
                                     progres_jenis: finalProgresJenis,
-                                    progres_jumlah: finalProgresJumlah,  // NILAI ASLI (bisa negatif)
-                                    tanggal_transaksi: formattedDeadline,
+                                    progres_jumlah: finalProgresJumlah,
+                                    tanggal_transaksi: formattedDeadline || getTodayDate(),
                                     status: 'pending_import',
                                     user_id: currentUser.uid,
                                     created_at: new Date().toISOString(),
@@ -6994,24 +7317,55 @@ function setupImportExcel() {
         showNotifTop('📋 Contoh file Prospek berhasil diunduh');
     });
     
-    document.getElementById('downloadTransaksiExample')?.addEventListener('click', () => {
-        const data = [{
-            agent_id: 'AG-001',
-            nama: 'Budi Santoso',
-            hp: '6281234567890',
-            upline_name: 'Siti Aminah',
-            upline_phone: '6281234567891',
-            progres_jenis: 'turun',
-            progres_jumlah: -2120,  // NEGATIF untuk turun
-            tanggal_transaksi: new Date().toISOString().split('T')[0]
-        }];
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'DB Transaksi');
-        XLSX.writeFile(wb, `contoh_db_transaksi_${new Date().toISOString().split('T')[0]}.xlsx`);
-        showNotifTop('📋 Contoh file DB Transaksi berhasil diunduh');
-    });
-}
+// Download contoh DB Transaksi
+document.getElementById('downloadTransaksiExample')?.addEventListener('click', () => {
+    // Data contoh dengan penjelasan kolom wajib
+    const data = [{
+        'agent_id': 'AG-001 (WAJIB)',
+        'nama': 'Budi Santoso (TIDAK WAJIB)',
+        'hp': '6281234567890 (TIDAK WAJIB)',
+        'apk': 'GNP',
+        'upline_name': 'Siti Aminah',
+        'upline_phone': '6281234567891',
+        'progres_jenis': 'turun (WAJIB: naik/turun/normal)',
+        'progres_jumlah': '2120 (WAJIB: angka positif)',
+        'tanggal_transaksi': new Date().toISOString().split('T')[0]
+    }];
+    
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Atur lebar kolom
+    ws['!cols'] = [
+        {wch: 25}, // agent_id
+        {wch: 30}, // nama
+        {wch: 25}, // hp
+        {wch: 10}, // apk
+        {wch: 20}, // upline_name
+        {wch: 20}, // upline_phone
+        {wch: 25}, // progres_jenis
+        {wch: 20}, // progres_jumlah
+        {wch: 18}  // tanggal_transaksi
+    ];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'DB Transaksi');
+    XLSX.writeFile(wb, `contoh_db_transaksi_${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    showNotifTop(`📋 Contoh file DB Transaksi berhasil diunduh
+    
+📌 KOLOM Wajib ( menentukan sukses/gagal import ):
+   ✅ agent_id - WAJIB
+   ✅ progres_jenis - WAJIB (naik/turun/normal)
+   ✅ progres_jumlah - WAJIB (angka positif)
+
+📌 KOLOM Tidak Wajib:
+   ⭕ nama - opsional
+   ⭕ hp - opsional
+   ⭕ apk - opsional
+   ⭕ upline_name - opsional
+   ⭕ upline_phone - opsional
+   ⭕ tanggal_transaksi - opsional (default hari ini)`);
+});
 
 // ========== UPLINE BROADCAST FUNCTIONS ==========
 function initUplineBroadcast() {
