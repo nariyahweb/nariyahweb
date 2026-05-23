@@ -7108,7 +7108,36 @@ function setupImportExcel() {
                     const workbook = XLSX.read(data, { type: 'array' });
                     const sheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[sheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                    
+                    // Cara 1: Baca dengan header: 1 untuk lihat semua baris
+                    const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+                    console.log('Raw data (header + rows):', rawData.slice(0, 3));
+                    
+                    if (!rawData || rawData.length < 2) {
+                        showNotif('File Excel kosong!', true);
+                        return;
+                    }
+                    
+                    // Ambil header dari baris pertama
+                    const headers = rawData[0];
+                    const dataRows = rawData.slice(1);
+                    
+                    console.log('Headers yang terdeteksi:', headers);
+                    
+                    // Konversi ke array of objects
+                    const json = dataRows.map(row => {
+                        const obj = {};
+                        headers.forEach((header, idx) => {
+                            obj[header] = row[idx];
+                        });
+                        return obj;
+                    }).filter(row => {
+                        // Filter baris yang benar-benar kosong
+                        return Object.values(row).some(v => v !== undefined && v !== null && v !== '');
+                    });
+                    
+                    console.log('Jumlah data setelah filter:', json.length);
+                    console.log('Sample data pertama:', json[0]);
                     
                     if (!json || json.length === 0) {
                         showNotif('File Excel kosong!', true);
