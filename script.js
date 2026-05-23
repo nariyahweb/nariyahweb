@@ -5964,20 +5964,33 @@ async function deleteAllTransaksi() {
     let failed = 0;
     isDeletingAll = true;
     
-    for (const doc of snapshot.docs) {
+    // Hapus dalam batch untuk mempercepat
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    const batches = [];
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
         if (!isDeletingAll) break;
         
-        try {
-            await db.collection('db_transaksi').doc(doc.id).delete();
-            deleted++;
-            const percent = Math.floor((deleted / totalData) * 100);
-            progress.update(percent, '🗑️ Menghapus', `Menghapus data...`, deleted, totalData);
-            await delay(50);
-        } catch (e) {
-            failed++;
-            console.error(`Gagal hapus ${doc.id}:`, e);
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
         }
+        
+        batches.push(batch.commit());
+        deleted += chunk.length;
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses batch... (${deleted}/${totalData})`, deleted, totalData);
+        
+        // HAPUS delay, biarkan batch berjalan
+        // await delay(50);  // <-- COMMENT atau HAPUS
     }
+    
+    // Tunggu semua batch selesai
+    await Promise.all(batches);
     
     isDeletingAll = false;
     
@@ -6570,7 +6583,6 @@ async function moveSingleToFollowup(id, silent = false) {
 
 // Fungsi untuk menghapus data terpilih
 async function deleteSelectedTransaksi() {
-    // Ambil ID yang terpilih dari selectedTransaksiIds
     const selectedIds = Array.from(selectedTransaksiIds.keys());
     if (selectedIds.length === 0) {
         showNotifTop('⚠️ Tidak ada data yang dipilih', true);
@@ -6585,25 +6597,41 @@ async function deleteSelectedTransaksi() {
     let deleted = 0;
     let failed = 0;
     
-    for (const id of selectedIds) {
-        try {
-            await db.collection('db_transaksi').doc(id).delete();
-            selectedTransaksiIds.delete(id);
-            deleted++;
-            const percent = Math.floor((deleted / selectedIds.length) * 100);
-            progress.update(percent, '🗑️ Menghapus', `Menghapus... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
-            await delay(100);
-        } catch (e) {
-            failed++;
-            console.error(`Gagal hapus ${id}:`, e);
+    // Gunakan batch untuk menghapus banyak data sekaligus
+    const BATCH_SIZE = 20; // Maksimal 500 operasi per batch, tapi amannya 20
+    const batches = [];
+    
+    for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = selectedIds.slice(i, i + BATCH_SIZE);
+        
+        for (const id of chunk) {
+            const docRef = db.collection('db_transaksi').doc(id);
+            batch.delete(docRef);
         }
+        
+        batches.push(batch.commit());
+        deleted += chunk.length;
+        
+        const percent = Math.floor((deleted / selectedIds.length) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses batch... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
+        
+        // Hapus delay, hanya tunggu batch selesai
+        // await delay(100);  // <-- HAPUS atau COMMENT baris ini
+    }
+    
+    // Tunggu semua batch selesai
+    await Promise.all(batches);
+    
+    // Bersihkan selectedIds
+    for (const id of selectedIds) {
+        selectedTransaksiIds.delete(id);
     }
     
     progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data${failed > 0 ? `, ${failed} gagal` : ''}`, deleted, selectedIds.length);
     showNotifTop(`✅ ${deleted} data berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
     setTimeout(() => progress.hide(), 2000);
     
-    // Reload data
     await loadDbTransaksi();
 }
 
