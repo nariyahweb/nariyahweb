@@ -7402,227 +7402,236 @@ function setupImportExcel() {
                     
                     let processed = 0;
                     
-                    for (let row of json) {
-                        processed++;
-                        
-                        if (processed % 10 === 0 || processed === totalRows) {
-                            const percent = 15 + Math.floor((processed / totalRows) * 80);
-                            progress.update(percent, '📥 Import Data', `Memproses data...`, processed, totalRows);
-                            await new Promise(resolve => setTimeout(resolve, 10));
-                        }
-                        
-                        try {
-                            let agentId = columnMap.agentId ? String(row[columnMap.agentId] || '').trim() : '';
-                            let nama = String(row[columnMap.nama] || '').trim();
-                            let hp = row[columnMap.hp];
-                            let uplineName = columnMap.uplineName ? String(row[columnMap.uplineName] || '').trim() : '';
-                            let uplinePhone = columnMap.uplinePhone ? String(row[columnMap.uplinePhone] || '').trim() : '';
-                            let apk = columnMap.apk ? String(row[columnMap.apk] || '').trim() : null;
-                            let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
-                            let agentType = columnMap.agentType ? String(row[columnMap.agentType] || '').trim() : '';
-                            
-                            // Progres variables
-                            let progresJenis = '';
-                            let progresJumlah = 0;
-                            let progresKeterangan = '';
-                            let totalTercapai = 0;
-                            
-                            // Baca progres untuk transaksi
-                            if (importType === 'transaksi') {
-                                // Baca progres_jenis dari Excel
-                                if (progresJenisCol && row[progresJenisCol] !== undefined && row[progresJenisCol] !== null && row[progresJenisCol] !== '') {
-                                    let jenisInput = String(row[progresJenisCol]).toLowerCase().trim();
-                                    if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+' || jenisInput === 'increase') {
-                                        progresJenis = 'naik';
-                                    } else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-' || jenisInput === 'decrease') {
-                                        progresJenis = 'turun';
-                                    } else if (jenisInput === 'normal') {
-                                        progresJenis = 'normal';
-                                    } else {
-                                        progresJenis = jenisInput;
-                                    }
-                                }
-                                
-                                // Baca progres_jumlah dari Excel
-                                if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== null && row[progresJumlahCol] !== '') {
-                                    const rawValue = row[progresJumlahCol];
-                                    if (typeof rawValue === 'number') {
-                                        progresJumlah = rawValue;
-                                    } else {
-                                        const rawString = String(rawValue).trim();
-                                        const isNegative = rawString.startsWith('-');
-                                        const matches = rawString.match(/\d+/);
-                                        if (matches) {
-                                            let numValue = parseInt(matches[0], 10);
-                                            progresJumlah = isNegative ? -numValue : numValue;
-                                        }
-                                    }
-                                }
-                                
-                                if (!progresJenis) progresJenis = 'normal';
-                                if (progresKeteranganCol && row[progresKeteranganCol]) {
-                                    progresKeterangan = String(row[progresKeteranganCol]).trim();
-                                }
-                            }
-
-                            let tanggalTransaksi = null;
-                            if (columnMap.tanggal) {
-                                tanggalTransaksi = row[columnMap.tanggal];
-                            }
-                            let formattedDeadline = getTodayDate(); // default hari ini
-                            if (tanggalTransaksi && tanggalTransaksi !== '' && tanggalTransaksi !== null && tanggalTransaksi !== undefined) {
-                                try {
-                                    const dateObj = new Date(tanggalTransaksi);
-                                    if (!isNaN(dateObj.getTime())) {
-                                        formattedDeadline = dateObj.toISOString().split('T')[0];
-                                    } else {
-                                        formattedDeadline = getTodayDate();
-                                    }
-                                } catch(e) {
-                                    formattedDeadline = getTodayDate();
-                                }
-                            }
-                            
-                            // Validasi untuk transaksi
-                          if (importType === 'transaksi') {
-                              // ========== KOLOM WAJIB (4 KOLOM) ==========
-                              // 1. agent_id WAJIB
-                              if (!agentId || agentId === '') {
-                                  failed++;
-                                  errors.push(`Baris ke-${json.indexOf(row)+2}: agent_id WAJIB diisi!`);
-                                  console.error(`Baris ${json.indexOf(row)+2}: agent_id kosong`, row);
-                                  continue;
-                              }
-                              
-                              // 2. apk WAJIB
-                              if (!apk || apk === '') {
-                                  failed++;
-                                  errors.push(`Baris ke-${json.indexOf(row)+2}: apk WAJIB diisi (contoh: GNP, BSB, BTN)!`);
-                                  console.error(`Baris ${json.indexOf(row)+2}: apk kosong`, row);
-                                  continue;
-                              }
-                              
-                              // 3. progres_jenis WAJIB (naik/turun/normal)
-                              if (!progresJenis || progresJenis === '') {
-                                  failed++;
-                                  errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jenis WAJIB diisi (naik/turun/normal)!`);
-                                  console.error(`Baris ${json.indexOf(row)+2}: progres_jenis kosong, nilai:`, row[progresJenisCol]);
-                                  continue;
-                              }
-                              
-                              // 4. progres_jumlah WAJIB (boleh 0, positif, atau negatif)
-                              if (progresJumlah === null || progresJumlah === undefined || progresJumlah === '') {
-                                  failed++;
-                                  errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jumlah WAJIB diisi!`);
-                                  console.error(`Baris ${json.indexOf(row)+2}: progres_jumlah kosong, nilai:`, row[progresJumlahCol]);
-                                  continue;
-                              }
-                              
-                              // Konversi progres_jumlah ke number
-                              if (typeof progresJumlah !== 'number') {
-                                  progresJumlah = parseFloat(progresJumlah) || 0;
-                              }
-                              
-                              // ========== KOLOM TIDAK WAJIB (boleh kosong, 0, atau apapun) ==========
-                              // nama: boleh kosong, akan diisi default
-                              if (!nama || nama === '') {
-                                  nama = `Agent ${agentId}`;
-                              }
-                              
-                              // hp: boleh kosong, 0, atau nomor tidak valid - TETAP DIPROSES
-                              // Biarkan apa adanya, jangan diubah jadi string kosong paksa
-                              let cleanHp = '';
-                              if (hp && hp !== 0 && hp !== '0') {
-                                  // Format HP jika ada
-                                  let rawHp = String(hp).trim();
-                                  let digits = rawHp.replace(/[^\d+]/g, '');
-                                  if (!digits.startsWith('+')) {
-                                      digits = digits.replace(/^0+/, '');
-                                      if (digits.startsWith('62')) {
-                                          cleanHp = '+' + digits;
-                                      } else if (digits.match(/^\d{10,13}$/)) {
-                                          cleanHp = '+62' + digits;
-                                      } else {
-                                          cleanHp = digits;
-                                      }
-                                  } else {
-                                      cleanHp = digits;
-                                  }
-                              } else {
-                                  // Jika hp kosong atau 0, biarkan kosong
-                                  cleanHp = '';
-                              }
-                              
-                              // upline_name: boleh kosong
-                              // upline_phone: boleh kosong
-                              // tanggal_transaksi: boleh kosong (akan diisi hari ini)
-                              
-                              console.log(`✅ Baris ${json.indexOf(row)+2} valid: agent=${agentId}, apk=${apk}, jenis=${progresJenis}, jumlah=${progresJumlah}`);
-                            }
-                            
-                              // Format phone number - TANPA VALIDASI KETAT, boleh kosong atau 0
-                              let cleanHp = '';
-                              
-                              // Jika hp ada dan bukan 0, coba format
-                              if (hp && hp !== 0 && hp !== '0') {
-                                  try {
-                                      let rawHp = String(hp).trim();
-                                      let digits = rawHp.replace(/[^\d+]/g, '');
-                                      
-                                      if (!digits.startsWith('+')) {
-                                          digits = digits.replace(/^0+/, '');
-                                          if (digits.startsWith('62')) {
-                                              cleanHp = '+' + digits;
-                                          } else if (digits.match(/^\d{10,13}$/)) {
-                                              cleanHp = '+62' + digits;
-                                          } else {
-                                              cleanHp = digits;
-                                          }
-                                      } else {
-                                          cleanHp = digits;
-                                      }
-                                  } catch(e) {
-                                      cleanHp = String(hp);
-                                  }
-                              } else {
-                                  // hp kosong atau 0, biarkan kosong
-                                  cleanHp = '';
-                              }
-                              
-                              console.log(`HP处理后: ${cleanHp || '(kosong)'}`);
-                            
-                                // Save to database
-                                if (importType === 'transaksi') {
-                                    // Tanggal transaksi: jika kosong, pakai hari ini
-                                    let tanggalAkhir = formattedDeadline || getTodayDate();
-                                    
-                                    console.log(`📝 Menyimpan: ${agentId} | ${apk} | ${progresJenis} | ${progresJumlah}`);
-                                    
-                                    await db.collection('db_transaksi').add({
-                                        agent_id: agentId.toUpperCase(),      // WAJIB
-                                        apk: apk || '',                       // WAJIB
-                                        progres_jenis: progresJenis,          // WAJIB
-                                        progres_jumlah: progresJumlah,        // WAJIB
-                                        nama: nama || `Agent ${agentId}`,     // OPSIONAL (default jika kosong)
-                                        hp: cleanHp || '',                    // OPSIONAL (boleh kosong)
-                                        upline_name: uplineName || '',        // OPSIONAL (boleh kosong)
-                                        upline_phone: uplinePhone || '',      // OPSIONAL (boleh kosong)
-                                        tanggal_transaksi: tanggalAkhir,      // OPSIONAL (default hari ini)
-                                        status: 'pending_import',             // DEFAULT
-                                        user_id: currentUser.uid,             // DEFAULT
-                                        created_at: new Date().toISOString(), // DEFAULT
-                                        updated_at: new Date().toISOString()  // DEFAULT
-                                    });
-                                    
-                                    console.log(`✅ Berhasil simpan: ${agentId}`);
-                                    success++;
-                                }
-                            
-                        catch (rowError) {
-                            failed++;
-                            errors.push(`Baris ke-${json.indexOf(row)+2}: ${rowError.message}`);
-                        }
+for (let row of json) {
+    processed++;
+    
+    if (processed % 10 === 0 || processed === totalRows) {
+        const percent = 15 + Math.floor((processed / totalRows) * 80);
+        progress.update(percent, '📥 Import Data', `Memproses data...`, processed, totalRows);
+        await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    
+    try {
+        let agentId = columnMap.agentId ? String(row[columnMap.agentId] || '').trim() : '';
+        let nama = String(row[columnMap.nama] || '').trim();
+        let hp = row[columnMap.hp];
+        let uplineName = columnMap.uplineName ? String(row[columnMap.uplineName] || '').trim() : '';
+        let uplinePhone = columnMap.uplinePhone ? String(row[columnMap.uplinePhone] || '').trim() : '';
+        let apk = columnMap.apk ? String(row[columnMap.apk] || '').trim() : null;
+        let deadline = columnMap.deadline ? row[columnMap.deadline] : null;
+        let agentType = columnMap.agentType ? String(row[columnMap.agentType] || '').trim() : '';
+        
+        // Progres variables
+        let progresJenis = '';
+        let progresJumlah = 0;
+        let progresKeterangan = '';
+        let totalTercapai = 0;
+        
+        // Baca progres untuk transaksi
+        if (importType === 'transaksi') {
+            // Baca progres_jenis dari Excel
+            if (progresJenisCol && row[progresJenisCol] !== undefined && row[progresJenisCol] !== null && row[progresJenisCol] !== '') {
+                let jenisInput = String(row[progresJenisCol]).toLowerCase().trim();
+                if (jenisInput === 'naik' || jenisInput === 'up' || jenisInput === '+' || jenisInput === 'increase') {
+                    progresJenis = 'naik';
+                } else if (jenisInput === 'turun' || jenisInput === 'down' || jenisInput === '-' || jenisInput === 'decrease') {
+                    progresJenis = 'turun';
+                } else if (jenisInput === 'normal') {
+                    progresJenis = 'normal';
+                } else {
+                    progresJenis = jenisInput;
+                }
+            }
+            
+            // Baca progres_jumlah dari Excel
+            if (progresJumlahCol && row[progresJumlahCol] !== undefined && row[progresJumlahCol] !== null && row[progresJumlahCol] !== '') {
+                const rawValue = row[progresJumlahCol];
+                if (typeof rawValue === 'number') {
+                    progresJumlah = rawValue;
+                } else {
+                    const rawString = String(rawValue).trim();
+                    const isNegative = rawString.startsWith('-');
+                    const matches = rawString.match(/\d+/);
+                    if (matches) {
+                        let numValue = parseInt(matches[0], 10);
+                        progresJumlah = isNegative ? -numValue : numValue;
                     }
+                }
+            }
+            
+            if (!progresJenis) progresJenis = 'normal';
+            if (progresKeteranganCol && row[progresKeteranganCol]) {
+                progresKeterangan = String(row[progresKeteranganCol]).trim();
+            }
+        }
+        
+        let tanggalTransaksi = null;
+        if (columnMap.tanggal) {
+            tanggalTransaksi = row[columnMap.tanggal];
+        }
+        let formattedDeadline = getTodayDate(); // default hari ini
+        if (tanggalTransaksi && tanggalTransaksi !== '' && tanggalTransaksi !== null && tanggalTransaksi !== undefined) {
+            try {
+                const dateObj = new Date(tanggalTransaksi);
+                if (!isNaN(dateObj.getTime())) {
+                    formattedDeadline = dateObj.toISOString().split('T')[0];
+                } else {
+                    formattedDeadline = getTodayDate();
+                }
+            } catch(e) {
+                formattedDeadline = getTodayDate();
+            }
+        }
+        
+        // Validasi untuk transaksi
+        if (importType === 'transaksi') {
+            // ========== KOLOM WAJIB (4 KOLOM) ==========
+            // 1. agent_id WAJIB
+            if (!agentId || agentId === '') {
+                failed++;
+                errors.push(`Baris ke-${json.indexOf(row)+2}: agent_id WAJIB diisi!`);
+                console.error(`Baris ${json.indexOf(row)+2}: agent_id kosong`, row);
+                continue;
+            }
+            
+            // 2. apk WAJIB
+            if (!apk || apk === '') {
+                failed++;
+                errors.push(`Baris ke-${json.indexOf(row)+2}: apk WAJIB diisi (contoh: GNP, BSB, BTN)!`);
+                console.error(`Baris ${json.indexOf(row)+2}: apk kosong`, row);
+                continue;
+            }
+            
+            // 3. progres_jenis WAJIB (naik/turun/normal)
+            if (!progresJenis || progresJenis === '') {
+                failed++;
+                errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jenis WAJIB diisi (naik/turun/normal)!`);
+                console.error(`Baris ${json.indexOf(row)+2}: progres_jenis kosong, nilai:`, row[progresJenisCol]);
+                continue;
+            }
+            
+            // 4. progres_jumlah WAJIB (boleh 0, positif, atau negatif)
+            if (progresJumlah === null || progresJumlah === undefined || progresJumlah === '') {
+                failed++;
+                errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jumlah WAJIB diisi!`);
+                console.error(`Baris ${json.indexOf(row)+2}: progres_jumlah kosong, nilai:`, row[progresJumlahCol]);
+                continue;
+            }
+            
+            // Konversi progres_jumlah ke number
+            if (typeof progresJumlah !== 'number') {
+                progresJumlah = parseFloat(progresJumlah) || 0;
+            }
+            
+            // ========== KOLOM TIDAK WAJIB ==========
+            // nama: boleh kosong, akan diisi default
+            if (!nama || nama === '') {
+                nama = `Agent ${agentId}`;
+            }
+            
+            // upline_name: boleh kosong
+            // upline_phone: boleh kosong
+            // tanggal_transaksi: boleh kosong (akan diisi hari ini)
+            
+            console.log(`✅ Baris ${json.indexOf(row)+2} valid: agent=${agentId}, apk=${apk}, jenis=${progresJenis}, jumlah=${progresJumlah}`);
+        }
+        
+        // Format phone number - TANPA VALIDASI KETAT, boleh kosong atau 0
+        let cleanHp = '';
+        
+        // Jika hp ada dan bukan 0, coba format
+        if (hp && hp !== 0 && hp !== '0') {
+            try {
+                let rawHp = String(hp).trim();
+                let digits = rawHp.replace(/[^\d+]/g, '');
+                
+                if (!digits.startsWith('+')) {
+                    digits = digits.replace(/^0+/, '');
+                    if (digits.startsWith('62')) {
+                        cleanHp = '+' + digits;
+                    } else if (digits.match(/^\d{10,13}$/)) {
+                        cleanHp = '+62' + digits;
+                    } else {
+                        cleanHp = digits;
+                    }
+                } else {
+                    cleanHp = digits;
+                }
+            } catch(e) {
+                cleanHp = String(hp);
+            }
+        } else {
+            // hp kosong atau 0, biarkan kosong
+            cleanHp = '';
+        }
+        
+        console.log(`HP处理后: ${cleanHp || '(kosong)'}`);
+        
+        // Save to database
+        if (importType === 'transaksi') {
+            // Tanggal transaksi: jika kosong, pakai hari ini
+            let tanggalAkhir = formattedDeadline || getTodayDate();
+            
+            console.log(`📝 Menyimpan: ${agentId} | ${apk} | ${progresJenis} | ${progresJumlah}`);
+            
+            await db.collection('db_transaksi').add({
+                agent_id: agentId.toUpperCase(),      // WAJIB
+                apk: apk || '',                       // WAJIB
+                progres_jenis: progresJenis,          // WAJIB
+                progres_jumlah: progresJumlah,        // WAJIB
+                nama: nama || `Agent ${agentId}`,     // OPSIONAL (default jika kosong)
+                hp: cleanHp || '',                    // OPSIONAL (boleh kosong)
+                upline_name: uplineName || '',        // OPSIONAL (boleh kosong)
+                upline_phone: uplinePhone || '',      // OPSIONAL (boleh kosong)
+                tanggal_transaksi: tanggalAkhir,      // OPSIONAL (default hari ini)
+                status: 'pending_import',             // DEFAULT
+                user_id: currentUser.uid,             // DEFAULT
+                created_at: new Date().toISOString(), // DEFAULT
+                updated_at: new Date().toISOString()  // DEFAULT
+            });
+            
+            console.log(`✅ Berhasil simpan: ${agentId}`);
+            success++;
+        } else if (importType === 'customer') {
+            // Kode untuk customer (biarkan seperti sebelumnya)
+            await db.collection('customers').add({
+                agent_id: agentId.toUpperCase(),
+                nama: nama,
+                hp: cleanHp,
+                apk: apk,
+                agent_type: agentType || '',
+                tanggal: formattedDeadline,
+                status: 'baru',
+                upline_name: uplineName || '',
+                upline_phone: uplinePhone || '',
+                user_id: currentUser.uid,
+                created_at: new Date().toISOString(),
+                followup_data: null,
+                pending_data: []
+            });
+            success++;
+        } else {
+            // Kode untuk prospek
+            await db.collection('prospek').add({
+                nama: nama,
+                hp: cleanHp,
+                agent_type: agentType || '',
+                status: 'Baru',
+                deadline: formattedDeadline,
+                user_id: currentUser.uid,
+                created_at: new Date().toISOString(),
+                dihubungi_data: null,
+                negosiasi_data: null
+            });
+            success++;
+        }
+        
+    } catch (rowError) {
+        failed++;
+        errors.push(`Baris ke-${json.indexOf(row)+2}: ${rowError.message}`);
+        console.error(`Error pada baris ${json.indexOf(row)+2}:`, rowError);
+    }
+}
                     
                     progress.update(100, '✅ Selesai', 'Menyelesaikan...', totalRows, totalRows);
                     
