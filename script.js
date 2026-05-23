@@ -6404,21 +6404,15 @@ function closeModalFromElement(btn) {
 function setupTransaksiFilters() {
     const searchInput = document.getElementById('searchTransaksiInput');
     const filterProgres = document.getElementById('filterProgresTransaksi');
-if (filterProgres) {
-    // Pastikan value sesuai dengan data di database
-    filterProgres.innerHTML = `
-        <option value="">Semua Progres</option>
-        <option value="naik">📈 Naik</option>
-        <option value="turun">📉 Turun</option>
-        <option value="normal">⚖️ Normal</option>
-    `;
-}
     const filterStatus = document.getElementById('filterStatusTransaksi');
     const resetBtn = document.getElementById('resetTransaksiFilterBtn');
     
     // Variabel untuk menyimpan hasil filter dari database
     let filteredDataCache = [];
     let isFiltering = false;
+    
+    // HANYA SATU DEKLARASI debounceTimer - HAPUS YANG DUPLIKAT
+    let debounceTimer;
     
     const applyFilters = async () => {
         if (isFiltering) return;
@@ -6505,27 +6499,16 @@ if (filterProgres) {
         }
     };
     
-    // Event listener dengan debounce untuk search
-    let debounceTimer;
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(applyFilters, 500);
-        });
-    }
-    
-    if (filterProgres) filterProgres.addEventListener('change', applyFilters);
-    if (filterStatus) filterStatus.addEventListener('change', applyFilters);
-
-        const updateFilterDisplay = () => {
+    // Fungsi update status filter
+    const updateFilterDisplay = () => {
         const progresFilter = filterProgres?.value || '';
         const statusFilter = filterStatus?.value || '';
-        const searchTerm = searchInput?.value || '';
+        const searchTermValue = searchInput?.value || '';
         
         let filterText = '';
         if (progresFilter) filterText += `📊 ${progresFilter === 'naik' ? 'Naik' : (progresFilter === 'turun' ? 'Turun' : 'Normal')} `;
         if (statusFilter) filterText += `📌 ${statusFilter === 'imported' ? 'Sudah Dipindah' : 'Pending'} `;
-        if (searchTerm) filterText += `🔍 "${searchTerm}"`;
+        if (searchTermValue) filterText += `🔍 "${searchTermValue}"`;
         
         const filterInfo = document.getElementById('activeFilterInfo');
         if (filterInfo) {
@@ -6539,13 +6522,12 @@ if (filterProgres) {
     };
     
     // Event listener dengan debounce untuk search
-    let debounceTimer;
     if (searchInput) {
         searchInput.addEventListener('input', () => {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => {
                 applyFilters();
-                updateFilterDisplay();  // <-- TAMBAHKAN INI
+                updateFilterDisplay();
             }, 500);
         });
     }
@@ -6553,17 +6535,17 @@ if (filterProgres) {
     if (filterProgres) {
         filterProgres.addEventListener('change', () => {
             applyFilters();
-            updateFilterDisplay();  // <-- TAMBAHKAN INI
+            updateFilterDisplay();
         });
     }
     
     if (filterStatus) {
         filterStatus.addEventListener('change', () => {
             applyFilters();
-            updateFilterDisplay();  // <-- TAMBAHKAN INI
+            updateFilterDisplay();
         });
     }
-  
+    
     if (resetBtn) {
         resetBtn.onclick = async () => {
             if (searchInput) searchInput.value = '';
@@ -6575,6 +6557,9 @@ if (filterProgres) {
             
             // Reload semua data
             await loadDbTransaksi();
+            
+            // Update filter display setelah reset
+            updateFilterDisplay();
         };
     }
 }
