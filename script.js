@@ -5941,69 +5941,6 @@ function removeLoadMoreButton() {
     if (btnContainer) btnContainer.remove();
 }
 
-// Fungsi untuk menghapus semua data transaksi
-async function deleteAllTransaksi() {
-    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Transaksi.\n\nProses ini TIDAK BISA dibatalkan dan data akan hilang permanen!\n\nKlik OK untuk melanjutkan.')) return;
-    
-    const snapshot = await db.collection('db_transaksi').get();
-    const totalData = snapshot.size;
-    
-    if (totalData === 0) {
-        showNotifTop('📭 Tidak ada data untuk dihapus', true);
-        return;
-    }
-    
-    const progress = showFloatingProgressWithCancel('🗑️ Menghapus Semua Data', totalData, () => {
-        isDeletingAll = false;
-        showNotifTop('⏹️ Penghapusan dibatalkan');
-    });
-    
-    progress.update(0, '🗑️ Menghapus', 'Memulai proses hapus semua data...', 0, totalData);
-    
-    let deleted = 0;
-    let failed = 0;
-    isDeletingAll = true;
-    
-    // Hapus dalam batch untuk mempercepat
-    const BATCH_SIZE = 20;
-    const docs = snapshot.docs;
-    const batches = [];
-    
-    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
-        if (!isDeletingAll) break;
-        
-        const batch = db.batch();
-        const chunk = docs.slice(i, i + BATCH_SIZE);
-        
-        for (const doc of chunk) {
-            batch.delete(doc.ref);
-        }
-        
-        batches.push(batch.commit());
-        deleted += chunk.length;
-        
-        const percent = Math.floor((deleted / totalData) * 100);
-        progress.update(percent, '🗑️ Menghapus', `Memproses batch... (${deleted}/${totalData})`, deleted, totalData);
-        
-        // HAPUS delay, biarkan batch berjalan
-        // await delay(50);  // <-- COMMENT atau HAPUS
-    }
-    
-    // Tunggu semua batch selesai
-    await Promise.all(batches);
-    
-    isDeletingAll = false;
-    
-    if (deleted > 0) {
-        selectedTransaksiIds.clear();
-        await loadDbTransaksi();
-    }
-    
-    progress.update(100, '✅ Selesai', `Berhasil: ${deleted}, Gagal: ${failed}`, deleted, totalData);
-    showNotifTop(`✅ ${deleted} data berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
-    setTimeout(() => progress.hide(), 3000);
-}
-
 // Fungsi untuk menghitung jumlah data per jenis progres
 async function getTransaksiStats() {
     try {
@@ -6581,7 +6518,7 @@ async function moveSingleToFollowup(id, silent = false) {
     return true;
 }
 
-// Fungsi untuk menghapus data terpilih
+// Fungsi untuk menghapus data terpilih (VERSI CEPAT dengan BATCH)
 async function deleteSelectedTransaksi() {
     const selectedIds = Array.from(selectedTransaksiIds.keys());
     if (selectedIds.length === 0) {
@@ -6597,9 +6534,8 @@ async function deleteSelectedTransaksi() {
     let deleted = 0;
     let failed = 0;
     
-    // Gunakan batch untuk menghapus banyak data sekaligus
-    const BATCH_SIZE = 20; // Maksimal 500 operasi per batch, tapi amannya 20
-    const batches = [];
+    // BATCH DELETE - sama seperti import, 20 data per batch
+    const BATCH_SIZE = 20;
     
     for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
         const batch = db.batch();
@@ -6610,29 +6546,117 @@ async function deleteSelectedTransaksi() {
             batch.delete(docRef);
         }
         
-        batches.push(batch.commit());
-        deleted += chunk.length;
+        try {
+            await batch.commit();
+            deleted += chunk.length;
+            
+            // Hapus dari selectedIds
+            for (const id of chunk) {
+                selectedTransaksiIds.delete(id);
+            }
+        } catch (e) {
+            failed += chunk.length;
+            console.error('Batch delete gagal:', e);
+        }
         
         const percent = Math.floor((deleted / selectedIds.length) * 100);
-        progress.update(percent, '🗑️ Menghapus', `Memproses batch... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${selectedIds.length})`, deleted, selectedIds.length);
         
-        // Hapus delay, hanya tunggu batch selesai
-        // await delay(100);  // <-- HAPUS atau COMMENT baris ini
+        // Tidak ada delay! Langsung lanjut ke batch berikutnya
     }
     
-    // Tunggu semua batch selesai
-    await Promise.all(batches);
-    
-    // Bersihkan selectedIds
-    for (const id of selectedIds) {
-        selectedTransaksiIds.delete(id);
-    }
-    
-    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data${failed > 0 ? `, ${failed} gagal` : ''}`, deleted, selectedIds.length);
+    progress.update(100, '✅ Selesai', `Berhasil: ${deleted}, Gagal: ${failed}`, deleted, selectedIds.length);
     showNotifTop(`✅ ${deleted} data berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
     setTimeout(() => progress.hide(), 2000);
     
     await loadDbTransaksi();
+}
+
+// Fungsi untuk hapus semua data (VERSI CEPAT dengan BATCH)
+async function deleteAllTransaksi() {
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Transaksi.\n\nProses ini TIDAK BISA dibatalkan dan data akan hilang permanen!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgressWithCancel('🗑️ Menghapus Semua Data', 0, () => {
+        isDeletingAll = false;
+        showNotifTop('⏹️ Penghapusan dibatalkan');
+    });
+    
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    // Ambil semua ID dulu (tanpa data lengkap agar cepat)
+    let allIds = [];
+    let lastDoc = null;
+    let hasMore = true;
+    
+    while (hasMore) {
+        let query = db.collection('db_transaksi').select('__name__').limit(500);
+        if (lastDoc) {
+            query = query.startAfter(lastDoc);
+        }
+        const snapshot = await query.get();
+        
+        snapshot.forEach(doc => {
+            allIds.push(doc.id);
+        });
+        
+        hasMore = snapshot.docs.length === 500;
+        if (hasMore) {
+            lastDoc = snapshot.docs[snapshot.docs.length - 1];
+        }
+        progress.update(10, '🗑️ Menghapus', `Mengambil ID... (${allIds.length})`, allIds.length, 0);
+    }
+    
+    const totalData = allIds.length;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    progress.update(10, '🗑️ Menghapus', `Memulai hapus ${totalData} data...`, 0, totalData);
+    
+    let deleted = 0;
+    let failed = 0;
+    isDeletingAll = true;
+    
+    // BATCH DELETE
+    const BATCH_SIZE = 20;
+    
+    for (let i = 0; i < allIds.length; i += BATCH_SIZE) {
+        if (!isDeletingAll) break;
+        
+        const batch = db.batch();
+        const chunk = allIds.slice(i, i + BATCH_SIZE);
+        
+        for (const id of chunk) {
+            const docRef = db.collection('db_transaksi').doc(id);
+            batch.delete(docRef);
+        }
+        
+        try {
+            await batch.commit();
+            deleted += chunk.length;
+        } catch (e) {
+            failed += chunk.length;
+            console.error('Batch delete gagal:', e);
+        }
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    isDeletingAll = false;
+    
+    if (deleted > 0) {
+        selectedTransaksiIds.clear();
+        await loadDbTransaksi();
+    }
+    
+    progress.update(100, '✅ Selesai', `Berhasil: ${deleted}, Gagal: ${failed}`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
+    setTimeout(() => progress.hide(), 3000);
 }
 
 // ========== IMPORT EXCEL FUNCTIONS ==========
