@@ -7322,25 +7322,37 @@ function setupImportExcel() {
                         console.log('Kolom progres terdeteksi:', { progresJenisCol, progresJumlahCol });
                     }
 
-                    // ========== TAMBAHKAN PENGECEKAN SAMPLE ROW DI SINI ==========
+                    // ========== TAMBAHKAN DEBUGGING DI SINI ==========
                     if (importType === 'transaksi') {
-                        console.log('Memulai import transaksi...');
+                        console.log('========== DEBUG IMPORT TRANSAKSI ==========');
                         console.log('Total baris data:', json.length);
-                        console.log('Sample row pertama:', json[0]);
+                        console.log('Column Map yang terdeteksi:', columnMap);
+                        console.log('Sample row pertama (raw):', json[0]);
                         
-                        // Cek sample row pertama untuk memastikan data terbaca
-                        const sampleRow = json[0];
-                        const sampleAgentId = sampleRow[columnMap.agentId];
-                        console.log('Sample agent_id:', sampleAgentId);
+                        // Tampilkan 3 sample data pertama
+                        for (let i = 0; i < Math.min(3, json.length); i++) {
+                            const row = json[i];
+                            console.log(`Sample row ${i+1}:`);
+                            console.log(`  agent_id (${columnMap.agentId}):`, row[columnMap.agentId]);
+                            console.log(`  progres_jenis (${columnMap.progresJenis}):`, row[columnMap.progresJenis]);
+                            console.log(`  progres_jumlah (${columnMap.progresJumlah}):`, row[columnMap.progresJumlah]);
+                            console.log(`  nama (${columnMap.nama}):`, row[columnMap.nama]);
+                            console.log(`  hp (${columnMap.hp}):`, row[columnMap.hp]);
+                        }
                         
-                        if (!sampleAgentId) {
-                            showNotif('❌ Data agent_id pada baris pertama kosong! Periksa file Excel Anda.', true);
-                            btn.textContent = originalText;
-                            btn.disabled = false;
-                            progress.hide();
-                            return;
+                        // Cek apakah data bisa diakses
+                        if (json.length > 0) {
+                            const testRow = json[0];
+                            const testAgentId = testRow[columnMap.agentId];
+                            console.log('Test ambil agent_id:', testAgentId);
+                            
+                            if (!testAgentId || testAgentId === '') {
+                                console.error('❌ agent_id tidak terbaca! Periksa nama kolom di Excel.');
+                                console.error('Nama kolom yang ada di Excel:', Object.keys(json[0]));
+                            }
                         }
                     }
+                    // =============================================
                   
                     const totalRows = json.length;
                     progress.update(15, '📥 Import Data', `Memproses ${totalRows} baris data...`, 0, totalRows);
