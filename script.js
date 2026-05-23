@@ -3131,6 +3131,39 @@ async function moveAgentToFollowup(agentId) {
   );
 }
 
+// Fungsi untuk memindahkan SEMUA data transaksi ke followup
+async function moveAllToFollowup() {
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan memindahkan SEMUA data di Database Transaksi ke Followup Agen.\n\nProses ini akan memindahkan data satu per satu dan bisa memakan waktu.\n\nKlik OK untuk melanjutkan.')) return;
+    
+    // Ambil semua data transaksi (tanpa filter)
+    const isOwner = currentUserRole === 'owner';
+    let query = db.collection('db_transaksi');
+    if (!isOwner) {
+        query = query.where('user_id', '==', currentUser.uid);
+    }
+    
+    const snapshot = await query.get();
+    const allData = [];
+    
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.status !== 'imported') { // hanya yang belum dipindah
+            allData.push({ id: doc.id, ...data });
+        }
+    });
+    
+    if (allData.length === 0) {
+        showNotifTop('📭 Tidak ada data yang perlu dipindahkan', true);
+        return;
+    }
+    
+    // Tampilkan modal pilih CS
+    await showPilihCsModal(allData);
+}
+
+// Event listener untuk tombol baru
+document.getElementById('moveAllToFollowupBtn')?.addEventListener('click', moveAllToFollowup);
+
 function deleteSelectedAgentSafe() {
   const selectedIds = Array.from(selectedAgentIds.keys());
   if (selectedIds.length === 0) {
