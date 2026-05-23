@@ -7467,9 +7467,9 @@ function setupImportExcel() {
                                     continue;
                                 }
                                 
-                                if (progresJumlah === 0 || progresJumlah === null || progresJumlah === '') {
+                                if (progresJumlah === null || progresJumlah === '') {
                                     failed++;
-                                    errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jumlah WAJIB diisi (angka positif)!`);
+                                    errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jumlah WAJIB diisi!`);
                                     continue;
                                 }
                                 
