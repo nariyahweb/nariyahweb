@@ -6659,6 +6659,273 @@ async function deleteAllTransaksi() {
     setTimeout(() => progress.hide(), 3000);
 }
 
+// ========== FUNGSI HAPUS SEMUA UNTUK SEMUA DATABASE ==========
+
+// Hapus semua Database Agent
+async function deleteAllAgent() {
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Agent.\n\nProses ini TIDAK BISA dibatalkan!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Agent', 0);
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    const snapshot = await db.collection('db_agent').get();
+    const totalData = snapshot.size;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    let deleted = 0;
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
+        }
+        
+        await batch.commit();
+        deleted += chunk.length;
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    selectedAgentIds.clear();
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data Agent berhasil dihapus`);
+    setTimeout(() => progress.hide(), 2000);
+    
+    await loadDatabaseAgent();
+}
+
+// Hapus semua Database Closing
+async function deleteAllClosing() {
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Closing.\n\nProses ini TIDAK BISA dibatalkan!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Closing', 0);
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    const snapshot = await db.collection('db_closing').get();
+    const totalData = snapshot.size;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    let deleted = 0;
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
+        }
+        
+        await batch.commit();
+        deleted += chunk.length;
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    selectedClosingIds.clear();
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data Closing berhasil dihapus`);
+    setTimeout(() => progress.hide(), 2000);
+    
+    loadDBClosing();
+}
+
+// Hapus semua Database Tidak Tertarik
+async function deleteAllTidak() {
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Tidak Tertarik.\n\nProses ini TIDAK BISA dibatalkan!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Tidak Tertarik', 0);
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    const snapshot = await db.collection('db_tidak_tertarik').get();
+    const totalData = snapshot.size;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    let deleted = 0;
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
+        }
+        
+        await batch.commit();
+        deleted += chunk.length;
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    selectedTidakIds.clear();
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data Tidak Tertarik berhasil dihapus`);
+    setTimeout(() => progress.hide(), 2000);
+    
+    loadDBTidak();
+}
+
+// Hapus semua Database Nomor Salah
+async function deleteAllNomorSalah() {
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Nomor Salah.\n\nProses ini TIDAK BISA dibatalkan!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Nomor Salah', 0);
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    const snapshot = await db.collection('nomor_salah').get();
+    const totalData = snapshot.size;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    let deleted = 0;
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
+        }
+        
+        await batch.commit();
+        deleted += chunk.length;
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    selectedNomorSalahIds.clear();
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data Nomor Salah berhasil dihapus`);
+    setTimeout(() => progress.hide(), 2000);
+    
+    loadDBNomorSalah();
+}
+
+// Hapus semua Database Commitment
+async function deleteAllCommitment() {
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Commitment.\n\nProses ini TIDAK BISA dibatalkan!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Commitment', 0);
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    const snapshot = await db.collection('db_commitment').get();
+    const totalData = snapshot.size;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    let deleted = 0;
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
+        }
+        
+        await batch.commit();
+        deleted += chunk.length;
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    selectedCommitmentIds.clear();
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data Commitment berhasil dihapus`);
+    setTimeout(() => progress.hide(), 2000);
+    
+    loadDBCommitment();
+}
+
+// Hapus semua Produk
+async function deleteAllProduk() {
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data Produk.\n\nProduk yang sudah terpakai di Agent akan kehilangan referensi!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Produk', 0);
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    const snapshot = await db.collection('produk').get();
+    const totalData = snapshot.size;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    let deleted = 0;
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
+        }
+        
+        await batch.commit();
+        deleted += chunk.length;
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    selectedProdukIds.clear();
+    produkData = [];
+    progress.update(100, '✅ Selesai', `Berhasil menghapus ${deleted} data`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data Produk berhasil dihapus`);
+    setTimeout(() => progress.hide(), 2000);
+    
+    await loadProduk();
+}
+
 // ========== IMPORT EXCEL FUNCTIONS ==========
 function setupImportExcel() {
     const dropZone = document.getElementById('dropZone');
@@ -9221,5 +9488,13 @@ if (moveSelectedBtn) {
     moveSelectedBtn.parentNode.replaceChild(newMoveBtn, moveSelectedBtn);
     newMoveBtn.addEventListener('click', moveSelectedToFollowup);
 }
+
+// Tombol hapus semua untuk setiap database
+document.getElementById('deleteAllAgent')?.addEventListener('click', deleteAllAgent);
+document.getElementById('deleteAllClosing')?.addEventListener('click', deleteAllClosing);
+document.getElementById('deleteAllTidak')?.addEventListener('click', deleteAllTidak);
+document.getElementById('deleteAllNomorSalah')?.addEventListener('click', deleteAllNomorSalah);
+document.getElementById('deleteAllCommitment')?.addEventListener('click', deleteAllCommitment);
+document.getElementById('deleteAllProduk')?.addEventListener('click', deleteAllProduk);
   
 }); // <-- INI SATU-SATUNYA TUTUP DARI DOMContentLoaded
