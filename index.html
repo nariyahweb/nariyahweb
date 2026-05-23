@@ -261,10 +261,11 @@
                             <div class="db-actions">
                                 <button class="db-select-all" id="selectAllAgent">✅ Pilih Semua</button>
                                 <button class="db-delete-selected" id="deleteSelectedAgent">🗑️ Hapus Terpilih</button>
+                                <button class="db-delete-all" id="deleteAllAgent" style="background: #dc2626; color: white;">🗑️ Hapus Semua</button>
                                 <button id="loadAllAgentBtn" class="db-import-excel" style="background: #4f46e5;">🔄 Muat Semua Data</button>
                                 <button class="db-import-excel" id="importAgentExcelBtn" style="background: #10b981;">📥 Import Excel</button>
                                 <button class="db-export-excel" id="exportAgentExcelBtn" style="background: #3b82f6;">📤 Export Excel</button>
-                            </div>
+                        </div>
                         </div>
                         <div style="background: #f9fafb; padding: 16px; border-radius: 12px; margin-bottom: 20px;">
                             <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
@@ -293,6 +294,7 @@
                             <div class="db-actions">
                                 <button class="db-select-all" id="selectAllTransaksi">✅ Pilih Semua</button>
                                 <button class="db-delete-selected" id="deleteSelectedTransaksi">🗑️ Hapus Terpilih</button>
+                                <button class="db-delete-all" id="deleteAllTransaksiBtn" style="background: #dc2626; color: white;">🗑️ Hapus Semua</button>
                                 <button class="db-move-followup" id="moveSelectedToFollowupBtn" style="background: #8b5cf6;">📋 Pindah ke Followup</button>
                                 <button class="add-btn" id="viewTransaksiHistoryBtn" style="background: #10b981;">📋 Riwayat Transaksi Global</button>
                             </div>
@@ -313,7 +315,10 @@
                 <!-- DATABASE CLOSING PAGE -->
                 <div id="dbClosingPage" class="page-content" style="display:none">
                     <div class="db-section">
-                        <div class="db-header"><h3>📁 Database Closing</h3><div class="db-actions"><button class="db-select-all" id="selectAllClosing">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedClosing">🗑️ Hapus Terpilih</button></div></div>
+                        <div class="db-header"><h3>📁 Database Closing</h3><div class="db-actions">
+                        <button class="db-select-all" id="selectAllClosing">✅ Pilih Semua</button>
+                        <button class="db-delete-selected" id="deleteSelectedClosing">🗑️ Hapus Terpilih</button>
+                        <button class="db-delete-all" id="deleteAllClosing" style="background: #dc2626; color: white;">🗑️ Hapus Semua</button></div></div>
                         <div id="dbClosingList" class="db-list"></div>
                     </div>
                 </div>
@@ -321,7 +326,11 @@
                 <!-- DATABASE TIDAK TERTARIK PAGE -->
                 <div id="dbTidakPage" class="page-content" style="display:none">
                     <div class="db-section">
-                        <div class="db-header"><h3>📁 Database Tidak Tertarik</h3><div class="db-actions"><button class="db-select-all" id="selectAllTidak">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedTidak">🗑️ Hapus Terpilih</button></div></div>
+                        <div class="db-header"><h3>📁 Database Tidak Tertarik</h3><div class="db-actions">
+                        <button class="db-select-all" id="selectAllTidak">✅ Pilih Semua</button>
+                        <button class="db-delete-selected" id="deleteSelectedTidak">🗑️ Hapus Terpilih</button>
+                        <button class="db-delete-all" id="deleteAllTidak" style="background: #dc2626; color: white;">🗑️ Hapus Semua</button>
+                    </div></div>
                         <div id="dbTidakList" class="db-list"></div>
                     </div>
                 </div>
@@ -329,7 +338,11 @@
                 <!-- DATABASE NOMOR SALAH PAGE -->
                 <div id="dbNomorSalahPage" class="page-content" style="display:none">
                     <div class="db-section">
-                        <div class="db-header"><h3>📵 Database Nomor Salah</h3><div class="db-actions"><button class="db-select-all" id="selectAllNomorSalah">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedNomorSalah">🗑️ Hapus Terpilih</button></div></div>
+                        <div class="db-header"><h3>📵 Database Nomor Salah</h3><div class="db-actions">
+                        <button class="db-select-all" id="selectAllNomorSalah">✅ Pilih Semua</button>
+                        <button class="db-delete-selected" id="deleteSelectedNomorSalah">🗑️ Hapus Terpilih</button>
+                        <button class="db-delete-all" id="deleteAllNomorSalah" style="background: #dc2626; color: white;">🗑️ Hapus Semua</button>
+                    </div></div>
                         <div id="dbNomorSalahList" class="db-list"></div>
                     </div>
                 </div>
@@ -337,7 +350,11 @@
                 <!-- DATABASE COMMITMENT PAGE -->
                 <div id="dbCommitmentPage" class="page-content" style="display:none">
                     <div class="db-section">
-                        <div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions"><button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button><button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button></div></div>
+                        <div class="db-header"><h3>🤝 Database Commitment</h3><div class="db-actions">
+                        <button class="db-select-all" id="selectAllCommitment">✅ Pilih Semua</button>
+                        <button class="db-delete-selected" id="deleteSelectedCommitment">🗑️ Hapus Terpilih</button>
+                        <button class="db-delete-all" id="deleteAllCommitment" style="background: #dc2626; color: white;">🗑️ Hapus Semua</button>
+                    </div></div>
                         <div id="dbCommitmentList" class="db-list"></div>
                     </div>
                 </div>
@@ -348,13 +365,14 @@
                         <div class="db-header">
                             <h3>🏷️ Manajemen Produk</h3>
                             <div class="db-actions">
-                                <button class="db-select-all" id="selectAllProduk">✅ Pilih Semua</button>
-                                <button class="db-delete-selected" id="deleteSelectedProduk">🗑️ Hapus Terpilih</button>
-                                <button class="add-btn" id="addProdukBtn">+ Tambah Produk</button>
-                                <button class="add-btn" id="manageTarifAdminBtn" style="background: #8b5cf6;">🏷️ Kelola Admin per CID</button>
-                                <button class="db-import-excel" id="importProdukExcelBtn" style="background: #10b981;">📥 Import Excel</button>
-                                <button class="db-export-excel" id="exportProdukExcelBtn" style="background: #3b82f6;">📤 Export Excel</button>
-                            </div>
+                            <button class="db-select-all" id="selectAllProduk">✅ Pilih Semua</button>
+                            <button class="db-delete-selected" id="deleteSelectedProduk">🗑️ Hapus Terpilih</button>
+                            <button class="db-delete-all" id="deleteAllProduk" style="background: #dc2626; color: white;">🗑️ Hapus Semua</button>
+                            <button class="add-btn" id="addProdukBtn">+ Tambah Produk</button>
+                            <button class="add-btn" id="manageTarifAdminBtn" style="background: #8b5cf6;">🏷️ Kelola Admin per CID</button>
+                            <button class="db-import-excel" id="importProdukExcelBtn" style="background: #10b981;">📥 Import Excel</button>
+                            <button class="db-export-excel" id="exportProdukExcelBtn" style="background: #3b82f6;">📤 Export Excel</button>
+                        </div>
                         </div>
                         <div style="margin-bottom: 16px;"><input type="text" id="searchProdukInput" placeholder="🔍 Cari produk (nama, jenis)..." style="width:100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 10px;"></div>
                         <div id="produkList" class="db-list"></div>
