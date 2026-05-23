@@ -52,7 +52,7 @@ db.settings({
 let currentUser = null;
 let currentUserRole = 'cs';
 let currentUserName = '';
-let importType = "prospek";
+let importType = "transaksi";
 let chartCustomer = null;
 let chartProspek = null;
 let sidebarTimeout = null;
@@ -6635,6 +6635,9 @@ function setupImportExcel() {
                 importType = this.dataset.import;
                 importTypeRadios.forEach(o => o.classList.remove('active'));
                 this.classList.add('active');
+                
+                // Debug: log import type yang dipilih
+                console.log('Import type dipilih:', importType);
             });
         });
     }
