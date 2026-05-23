@@ -7172,29 +7172,60 @@ function setupImportExcel() {
                         }
                     } 
                       
-                      else if (importType === 'transaksi') {
+                    else if (importType === 'transaksi') {
+                        // Daftar kemungkinan nama kolom (case insensitive)
                         const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
-                        const possibleNama = ['nama', 'Nama', 'name', 'Name', 'agent_name'];
-                        const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
-                        const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan'];
-                        const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline'];
-                        const possibleProgresJenis = ['progres_jenis', 'jenis_progres', 'jenis', 'progresjenis'];
-                        const possibleProgresJumlah = ['progres_jumlah', 'jumlah_progres', 'jumlah', 'progresjumlah'];
-                        const possibleTanggal = ['tanggal_transaksi', 'tanggal', 'date', 'deadline'];
+                        const possibleNama = ['nama', 'Nama', 'name', 'Name', 'agent_name', 'customer_name'];
+                        const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp', 'mobile', 'telp'];
+                        const possibleUplineName = ['upline_name', 'nama_upline', 'upline', 'atasan', 'upline name'];
+                        const possibleUplinePhone = ['upline_phone', 'phone_upline', 'hp_upline', 'no_upline', 'upline phone', 'upline_wa'];
+                        const possibleProgresJenis = ['progres_jenis', 'jenis_progres', 'jenis', 'progresjenis', 'tipe_progres', 'status_progres'];
+                        const possibleProgresJumlah = ['progres_jumlah', 'jumlah_progres', 'jumlah', 'progresjumlah', 'value', 'nominal', 'total'];
+                        const possibleTanggal = ['tanggal_transaksi', 'tanggal', 'date', 'deadline', 'tgl', 'created_at'];
                         
+                        // Loop semua kolom di Excel
                         for (let key in firstRow) {
                             const lowerKey = key.toLowerCase();
-                            if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) columnMap.agentId = key;
-                            if (possibleNama.some(p => p.toLowerCase() === lowerKey)) columnMap.nama = key;
-                            if (possibleHp.some(p => p.toLowerCase() === lowerKey)) columnMap.hp = key;
-                            if (possibleUplineName.some(p => p.toLowerCase() === lowerKey)) columnMap.uplineName = key;
-                            if (possibleUplinePhone.some(p => p.toLowerCase() === lowerKey)) columnMap.uplinePhone = key;
-                            if (possibleProgresJenis.some(p => p.toLowerCase() === lowerKey)) columnMap.progresJenis = key;
-                            if (possibleProgresJumlah.some(p => p.toLowerCase() === lowerKey)) columnMap.progresJumlah = key;
-                            if (possibleTanggal.some(p => p.toLowerCase() === lowerKey)) columnMap.tanggal = key;
+                            console.log(`Checking column: "${key}" -> lower: "${lowerKey}"`);
+                            
+                            if (possibleAgentId.some(p => p.toLowerCase() === lowerKey)) {
+                                columnMap.agentId = key;
+                                console.log(`✓ Found agent_id column: ${key}`);
+                            }
+                            if (possibleNama.some(p => p.toLowerCase() === lowerKey)) {
+                                columnMap.nama = key;
+                                console.log(`✓ Found nama column: ${key}`);
+                            }
+                            if (possibleHp.some(p => p.toLowerCase() === lowerKey)) {
+                                columnMap.hp = key;
+                                console.log(`✓ Found hp column: ${key}`);
+                            }
+                            if (possibleUplineName.some(p => p.toLowerCase() === lowerKey)) {
+                                columnMap.uplineName = key;
+                                console.log(`✓ Found upline_name column: ${key}`);
+                            }
+                            if (possibleUplinePhone.some(p => p.toLowerCase() === lowerKey)) {
+                                columnMap.uplinePhone = key;
+                                console.log(`✓ Found upline_phone column: ${key}`);
+                            }
+                            if (possibleProgresJenis.some(p => p.toLowerCase() === lowerKey)) {
+                                columnMap.progresJenis = key;
+                                console.log(`✓ Found progres_jenis column: ${key}`);
+                            }
+                            if (possibleProgresJumlah.some(p => p.toLowerCase() === lowerKey)) {
+                                columnMap.progresJumlah = key;
+                                console.log(`✓ Found progres_jumlah column: ${key}`);
+                            }
+                            if (possibleTanggal.some(p => p.toLowerCase() === lowerKey)) {
+                                columnMap.tanggal = key;
+                                console.log(`✓ Found tanggal column: ${key}`);
+                            }
                         }
                         
-                        // Hanya agent_id yang WAJIB untuk transaksi
+                        // Log semua kolom yang terdeteksi
+                        console.log('Final columnMap for transaksi:', columnMap);
+                        
+                        // Validasi: Agent ID WAJIB ada
                         if (!columnMap.agentId) {
                             showNotif('❌ Format Excel tidak sesuai! Kolom agent_id WAJIB ada untuk DB Transaksi!', true);
                             btn.textContent = originalText;
@@ -7203,8 +7234,30 @@ function setupImportExcel() {
                             return;
                         }
                         
-                        // Nama dan HP TIDAK WAJIB - jangan divalidasi
-                        console.log('Detected columns for transaksi:', columnMap);
+                        // Progres jenis dan jumlah juga wajib
+                        if (!columnMap.progresJenis) {
+                            showNotif('❌ Kolom progres_jenis (naik/turun/normal) tidak ditemukan di Excel!', true);
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                            progress.hide();
+                            return;
+                        }
+                        
+                        if (!columnMap.progresJumlah) {
+                            showNotif('❌ Kolom progres_jumlah tidak ditemukan di Excel!', true);
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                            progress.hide();
+                            return;
+                        }
+                        
+                        // Nama dan HP TIDAK WAJIB - hanya warning jika tidak ada
+                        if (!columnMap.nama) {
+                            console.warn('⚠️ Kolom nama tidak ditemukan, nama akan diisi default');
+                        }
+                        if (!columnMap.hp) {
+                            console.warn('⚠️ Kolom hp tidak ditemukan, hp akan dikosongkan');
+                        }
                     }
                         
                     else {
@@ -7268,7 +7321,27 @@ function setupImportExcel() {
                         
                         console.log('Kolom progres terdeteksi:', { progresJenisCol, progresJumlahCol });
                     }
-                    
+
+                    // ========== TAMBAHKAN PENGECEKAN SAMPLE ROW DI SINI ==========
+                    if (importType === 'transaksi') {
+                        console.log('Memulai import transaksi...');
+                        console.log('Total baris data:', json.length);
+                        console.log('Sample row pertama:', json[0]);
+                        
+                        // Cek sample row pertama untuk memastikan data terbaca
+                        const sampleRow = json[0];
+                        const sampleAgentId = sampleRow[columnMap.agentId];
+                        console.log('Sample agent_id:', sampleAgentId);
+                        
+                        if (!sampleAgentId) {
+                            showNotif('❌ Data agent_id pada baris pertama kosong! Periksa file Excel Anda.', true);
+                            btn.textContent = originalText;
+                            btn.disabled = false;
+                            progress.hide();
+                            return;
+                        }
+                    }
+                  
                     const totalRows = json.length;
                     progress.update(15, '📥 Import Data', `Memproses ${totalRows} baris data...`, 0, totalRows);
                     progress.setTotal(totalRows);
