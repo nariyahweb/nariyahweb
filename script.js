@@ -7320,44 +7320,73 @@ function setupImportExcel() {
                             
                             // Validasi untuk transaksi
                             if (importType === 'transaksi') {
+                                // KOLOM WAJIB: agent_id, progres_jenis, progres_jumlah
                                 if (!agentId || agentId === '') {
                                     failed++;
                                     errors.push(`Baris ke-${json.indexOf(row)+2}: Agent ID WAJIB diisi!`);
                                     continue;
                                 }
+                                
                                 if (!progresJenis || progresJenis === '') {
                                     failed++;
-                                    errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jenis WAJIB diisi!`);
+                                    errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jenis WAJIB diisi (naik/turun/normal)!`);
                                     continue;
                                 }
+                                
                                 if (progresJumlah === 0 || progresJumlah === null || progresJumlah === '') {
                                     failed++;
-                                    errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jumlah WAJIB diisi!`);
+                                    errors.push(`Baris ke-${json.indexOf(row)+2}: progres_jumlah WAJIB diisi (angka positif)!`);
                                     continue;
                                 }
-                                if (!nama) nama = `Agent ${agentId}`;
-                                if (!hp || hp === '0' || hp === 0) hp = '';
+                                
+                                // KOLOM TIDAK WAJIB: nama, hp, apk, upline_name, upline_phone, tanggal_transaksi
+                                // Jika kosong, tetap lanjut dengan nilai default
+                                if (!nama) {
+                                    nama = `Agent ${agentId}`;  // Default nama jika kosong
+                                }
+                                if (!hp || hp === '0' || hp === 0) {
+                                    hp = '';  // Biarkan kosong
+                                }
                             }
                             
                             // Format phone number
                             let cleanHp = '';
-                            if (hp && hp !== 0 && hp !== '0' && String(hp).trim() !== '') {
+                            let isHpValid = false;
+                            const hasValidHp = hp !== undefined && hp !== null && hp !== 0 && hp !== '0' && String(hp).trim() !== '';
+                            
+                            if (hasValidHp) {
                                 let rawHp = String(hp).trim();
                                 let digits = rawHp.replace(/[^\d+]/g, '');
+                                
                                 if (!digits.startsWith('+')) {
                                     digits = digits.replace(/^0+/, '');
                                     if (digits.startsWith('62')) {
                                         cleanHp = '+' + digits;
-                                    } else {
+                                    } else if (digits.match(/^\d{10,13}$/)) {
+                                        // Jika digit antara 10-13 dan tidak diawali 62, tambahkan +62
                                         cleanHp = '+62' + digits;
+                                    } else {
+                                        cleanHp = '+' + digits;
                                     }
                                 } else {
                                     cleanHp = digits;
                                 }
+                                
+                                const numberPart = cleanHp.replace(/^\+62/, '');
+                                // Validasi: nomor harus antara 8-13 digit setelah +62
+                                if (numberPart.length >= 8 && numberPart.length <= 13) {
+                                    isHpValid = true;
+                                } else {
+                                    // Jika nomor tidak valid, tetap simpan dengan warning
+                                    console.warn(`Nomor HP tidak standar: ${rawHp} -> ${cleanHp}`);
+                                    isHpValid = true; // Tetap dianggap valid agar data tetap tersimpan
+                                }
+                            } else {
+                                // Jika hp kosong, tetap simpan dengan nilai default
+                                cleanHp = '';
+                                isHpValid = true; // Jangan gagalkan hanya karena hp kosong
+                                console.log(`Baris dengan hp kosong, tetap diproses dengan cleanHp = ''`);
                             }
-                            
-                            let formattedDeadline = deadline ? new Date(deadline).toISOString().split('T')[0] : getTodayDate();
-                            if (deadline && isNaN(new Date(deadline).getTime())) formattedDeadline = getTodayDate();
                             
                             // Save to database
                             if (importType === 'transaksi') {
