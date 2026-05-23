@@ -6573,6 +6573,126 @@ async function deleteSelectedTransaksi() {
 }
 
 // Fungsi untuk hapus semua data (VERSI CEPAT dengan BATCH)
+// ========== HAPUS SEMUA DATA FOLLOWUP AGEN (FULL MODE) ==========
+async function deleteAllFullFollowup() {
+    if (currentUserRole !== 'owner') {
+        showNotifTop('⚠️ Hanya Owner yang dapat menghapus semua data!', true);
+        return;
+    }
+    
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Data Followup Agen (Full Mode).\n\nData yang dihapus mencakup SEMUA status (Baru, Follow Up, Pending, Closing).\n\nProses ini TIDAK BISA dibatalkan!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Followup Agen', 0);
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    // Ambil semua data customers (tanpa filter user_id karena owner)
+    const snapshot = await db.collection('customers').get();
+    const totalData = snapshot.size;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    let deleted = 0;
+    let failed = 0;
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
+        }
+        
+        try {
+            await batch.commit();
+            deleted += chunk.length;
+        } catch (e) {
+            failed += chunk.length;
+            console.error('Batch delete gagal:', e);
+        }
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    // Bersihkan selectedIds
+    selectedFullFollowupIds.clear();
+    
+    progress.update(100, '✅ Selesai', `Berhasil: ${deleted}, Gagal: ${failed}`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data Followup Agen berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
+    setTimeout(() => progress.hide(), 2000);
+    
+    // Refresh data
+    await loadAllData();
+    renderFullFollowupKanban();
+}
+
+// ========== HAPUS SEMUA DATA PROSPEK AGEN (FULL MODE) ==========
+async function deleteAllFullProspek() {
+    if (currentUserRole !== 'owner') {
+        showNotifTop('⚠️ Hanya Owner yang dapat menghapus semua data!', true);
+        return;
+    }
+    
+    if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Data Prospek Agen (Full Mode).\n\nData yang dihapus mencakup SEMUA status (Baru, Dihubungi, Negosiasi, Tertarik).\n\nProses ini TIDAK BISA dibatalkan!\n\nKlik OK untuk melanjutkan.')) return;
+    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Prospek Agen', 0);
+    progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
+    
+    // Ambil semua data prospek (tanpa filter user_id karena owner)
+    const snapshot = await db.collection('prospek').get();
+    const totalData = snapshot.size;
+    progress.setTotal(totalData);
+    
+    if (totalData === 0) {
+        showNotifTop('📭 Tidak ada data untuk dihapus', true);
+        progress.hide();
+        return;
+    }
+    
+    let deleted = 0;
+    let failed = 0;
+    const BATCH_SIZE = 20;
+    const docs = snapshot.docs;
+    
+    for (let i = 0; i < docs.length; i += BATCH_SIZE) {
+        const batch = db.batch();
+        const chunk = docs.slice(i, i + BATCH_SIZE);
+        
+        for (const doc of chunk) {
+            batch.delete(doc.ref);
+        }
+        
+        try {
+            await batch.commit();
+            deleted += chunk.length;
+        } catch (e) {
+            failed += chunk.length;
+            console.error('Batch delete gagal:', e);
+        }
+        
+        const percent = Math.floor((deleted / totalData) * 100);
+        progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+    }
+    
+    // Bersihkan selectedIds
+    selectedFullProspekIds.clear();
+    
+    progress.update(100, '✅ Selesai', `Berhasil: ${deleted}, Gagal: ${failed}`, deleted, totalData);
+    showNotifTop(`✅ ${deleted} data Prospek Agen berhasil dihapus${failed > 0 ? `, ${failed} gagal` : ''}`);
+    setTimeout(() => progress.hide(), 2000);
+    
+    // Refresh data
+    await loadAllData();
+    renderFullProspekKanban();
+}
+
 async function deleteAllTransaksi() {
     if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Transaksi.\n\nProses ini TIDAK BISA dibatalkan dan data akan hilang permanen!\n\nKlik OK untuk melanjutkan.')) return;
     
@@ -7973,20 +8093,26 @@ function initFullModeSelection() {
   if (currentUserRole !== 'owner') {
     const followupSelectBtn = document.getElementById('selectAllFullFollowup');
     const followupDeleteBtn = document.getElementById('deleteSelectedFullFollowup');
+    const followupDeleteAllBtn = document.getElementById('deleteAllFullFollowup'); 
     const prospekSelectBtn = document.getElementById('selectAllFullProspek');
     const prospekDeleteBtn = document.getElementById('deleteSelectedFullProspek');
+    const prospekDeleteAllBtn = document.getElementById('deleteAllFullProspek');   
     
     if (followupSelectBtn) followupSelectBtn.style.display = 'none';
     if (followupDeleteBtn) followupDeleteBtn.style.display = 'none';
+    if (followupDeleteAllBtn) followupDeleteAllBtn.style.display = 'none';         
     if (prospekSelectBtn) prospekSelectBtn.style.display = 'none';
     if (prospekDeleteBtn) prospekDeleteBtn.style.display = 'none';
+    if (prospekDeleteAllBtn) prospekDeleteAllBtn.style.display = 'none';           
     return;
   }
   
   const followupSelectBtn = document.getElementById('selectAllFullFollowup');
   const followupDeleteBtn = document.getElementById('deleteSelectedFullFollowup');
+  const followupDeleteAllBtn = document.getElementById('deleteAllFullFollowup');  
   const prospekSelectBtn = document.getElementById('selectAllFullProspek');
   const prospekDeleteBtn = document.getElementById('deleteSelectedFullProspek');
+  const prospekDeleteAllBtn = document.getElementById('deleteAllFullProspek');    
   
   if (followupSelectBtn) {
     followupSelectBtn.style.display = 'inline-block';
@@ -7996,6 +8122,10 @@ function initFullModeSelection() {
     followupDeleteBtn.style.display = 'inline-block';
     followupDeleteBtn.onclick = () => deleteSelectedFullFollowup();
   }
+  if (followupDeleteAllBtn) {                                                      
+    followupDeleteAllBtn.style.display = 'inline-block';
+    followupDeleteAllBtn.onclick = () => deleteAllFullFollowup();
+  }
   if (prospekSelectBtn) {
     prospekSelectBtn.style.display = 'inline-block';
     prospekSelectBtn.onclick = () => toggleSelectAllFullProspek();
@@ -8003,6 +8133,10 @@ function initFullModeSelection() {
   if (prospekDeleteBtn) {
     prospekDeleteBtn.style.display = 'inline-block';
     prospekDeleteBtn.onclick = () => deleteSelectedFullProspek();
+  }
+  if (prospekDeleteAllBtn) {                                                      
+    prospekDeleteAllBtn.style.display = 'inline-block';
+    prospekDeleteAllBtn.onclick = () => deleteAllFullProspek();
   }
 }
 
