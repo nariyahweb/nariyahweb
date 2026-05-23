@@ -6693,26 +6693,25 @@ async function deleteAllFullProspek() {
     renderFullProspekKanban();
 }
 
+// Fungsi untuk hapus semua data (VERSI CEPAT dengan BATCH)
 async function deleteAllTransaksi() {
     if (!confirm('⚠️ PERINGATAN!\n\nAnda akan menghapus SEMUA data di Database Transaksi.\n\nProses ini TIDAK BISA dibatalkan dan data akan hilang permanen!\n\nKlik OK untuk melanjutkan.')) return;
     
-    const progress = showFloatingProgressWithCancel('🗑️ Menghapus Semua Data', 0, () => {
-        isDeletingAll = false;
-        showNotifTop('⏹️ Penghapusan dibatalkan');
-    });
-    
+    const progress = showFloatingProgress('🗑️ Menghapus Semua Data', 0);
     progress.update(0, '🗑️ Menghapus', 'Mengambil data...');
     
-    // Ambil semua ID dulu (tanpa data lengkap agar cepat)
+    // Ambil semua data (tanpa select karena tidak support)
     let allIds = [];
     let lastDoc = null;
     let hasMore = true;
     
     while (hasMore) {
-        let query = db.collection('db_transaksi').select('__name__').limit(500);
+        let query = db.collection('db_transaksi');
         if (lastDoc) {
             query = query.startAfter(lastDoc);
         }
+        query = query.limit(500);
+        
         const snapshot = await query.get();
         
         snapshot.forEach(doc => {
@@ -6724,6 +6723,8 @@ async function deleteAllTransaksi() {
             lastDoc = snapshot.docs[snapshot.docs.length - 1];
         }
         progress.update(10, '🗑️ Menghapus', `Mengambil ID... (${allIds.length})`, allIds.length, 0);
+        // Delay kecil agar tidak terlalu banyak request
+        await delay(100);
     }
     
     const totalData = allIds.length;
@@ -6739,14 +6740,11 @@ async function deleteAllTransaksi() {
     
     let deleted = 0;
     let failed = 0;
-    isDeletingAll = true;
     
     // BATCH DELETE
     const BATCH_SIZE = 20;
     
     for (let i = 0; i < allIds.length; i += BATCH_SIZE) {
-        if (!isDeletingAll) break;
-        
         const batch = db.batch();
         const chunk = allIds.slice(i, i + BATCH_SIZE);
         
@@ -6765,9 +6763,10 @@ async function deleteAllTransaksi() {
         
         const percent = Math.floor((deleted / totalData) * 100);
         progress.update(percent, '🗑️ Menghapus', `Memproses... (${deleted}/${totalData})`, deleted, totalData);
+        
+        // Delay kecil agar tidak overload
+        await delay(50);
     }
-    
-    isDeletingAll = false;
     
     if (deleted > 0) {
         selectedTransaksiIds.clear();
@@ -7172,7 +7171,8 @@ function setupImportExcel() {
                             return;
                         }
                     } 
-                    else if (importType === 'transaksi') {
+                      
+                      else if (importType === 'transaksi') {
                         const possibleAgentId = ['agent_id', 'Agent_ID', 'agentid', 'AgentId', 'id', 'ID'];
                         const possibleNama = ['nama', 'Nama', 'name', 'Name', 'agent_name'];
                         const possibleHp = ['hp', 'HP', 'phone', 'Phone', 'no_hp', 'NoHP', 'whatsapp', 'WhatsApp'];
@@ -7194,21 +7194,19 @@ function setupImportExcel() {
                             if (possibleTanggal.some(p => p.toLowerCase() === lowerKey)) columnMap.tanggal = key;
                         }
                         
+                        // Hanya agent_id yang WAJIB untuk transaksi
                         if (!columnMap.agentId) {
-                            showNotif('❌ Format Excel tidak sesuai! Kolom agent_id WAJIB ada!', true);
+                            showNotif('❌ Format Excel tidak sesuai! Kolom agent_id WAJIB ada untuk DB Transaksi!', true);
                             btn.textContent = originalText;
                             btn.disabled = false;
                             progress.hide();
                             return;
                         }
-                        if (!columnMap.nama) {
-                            showNotif('❌ Format Excel tidak sesuai! Kolom nama WAJIB ada!', true);
-                            btn.textContent = originalText;
-                            btn.disabled = false;
-                            progress.hide();
-                            return;
-                        }
+                        
+                        // Nama dan HP TIDAK WAJIB - jangan divalidasi
+                        console.log('Detected columns for transaksi:', columnMap);
                     }
+                        
                     else {
                         // For prospek
                         const possibleNama = ['nama', 'Nama', 'name', 'Name', 'prospek_name', 'ProspekName'];
@@ -7225,6 +7223,27 @@ function setupImportExcel() {
                         }
                     }
                     
+                // Validasi kolom wajib berdasarkan tipe import
+                if (importType === 'customer') {
+                    if (!columnMap.nama || !columnMap.hp) {
+                        showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: nama, hp (wajib untuk Customer)', true);
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                        progress.hide();
+                        return;
+                    }
+                } else if (importType === 'transaksi') {
+                    // Untuk transaksi, hanya agent_id yang wajib (nama dan hp opsional)
+                    if (!columnMap.agentId) {
+                        showNotif('❌ Format Excel tidak sesuai! Kolom agent_id WAJIB ada untuk DB Transaksi!', true);
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                        progress.hide();
+                        return;
+                    }
+                    // nama dan hp tidak wajib, jadi tidak perlu divalidasi
+                } else {
+                    // Untuk prospek
                     if (!columnMap.nama || !columnMap.hp) {
                         showNotif('❌ Format Excel tidak sesuai! Gunakan kolom: nama, hp (wajib)', true);
                         btn.textContent = originalText;
@@ -7232,6 +7251,7 @@ function setupImportExcel() {
                         progress.hide();
                         return;
                     }
+                }
                     
                     // Detect progres columns for transaksi
                     let progresJenisCol = null;
