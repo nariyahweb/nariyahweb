@@ -246,7 +246,7 @@
                         <div class="import-header"><h3>📜 Import Data Excel</h3><p>Import data dengan mudah dan cepat. Data yang sudah terdaftar akan ditolak.</p></div>
                         <div class="import-grid">
                             <div class="import-card"><h4>1. Pilih File Excel</h4><div class="drop-zone" id="dropZone"><p>📂 Drag & Drop file di sini</p><small>atau klik untuk pilih file</small><input type="file" id="excelFile" hidden accept=".xlsx,.xls,.csv"></div><div id="fileInfo" class="file-info"></div></div>
-                            <div class="import-card"><h4>2. Pilih Tujuan Import</h4><div class="radio-option active" data-import="prospek"><b>📋 Import ke Prospek</b><p>Data akan masuk ke Prospek Agen</p></div><div class="radio-option" data-import="customer"><b>👥 Import ke Customer</b><p>Data akan masuk ke Followup Agen</p></div><div class="radio-option" data-import="transaksi"><b>📊 Import ke DB Transaksi</b><p>Data akan masuk ke Database Transaksi</p></div></div>
+                            <div class="import-card"><h4>2. Pilih Tujuan Import</h4><div class="radio-option active" data-import="transaksi"><b>📊 Import ke DB Transaksi</b><p>Data akan masuk ke Database Transaksi</p></div><div class="radio-option" data-import="customer"><b>👥 Import ke Customer</b><p>Data akan masuk ke Followup Agen</p></div></div>
                             <div class="import-card"><h4>3. Informasi Import</h4><ul class="info-list"><li>✔ Import ribuan data sekaligus</li><li>✔ Validasi nomor otomatis</li><li>✔ Data duplikat akan dilewati</li></ul><button class="import-btn" id="importBtn">🚀 Import Data Sekarang</button></div>
                             <div class="import-card"><h4>📥 Contoh File Import</h4><button class="download-example-btn" id="downloadCustomerExample">📋 Download Contoh Customer</button><button class="download-example-btn" id="downloadProspekExample">📋 Download Contoh Prospek</button><button class="download-example-btn" id="downloadTransaksiExample" style="background: #8b5cf6;">📊 Download Contoh DB Transaksi</button></div>
                         </div>
@@ -451,6 +451,44 @@
                 <div class="modal" id="transaksiListModal"><div class="modal-content" style="max-width: 500px; max-height: 85vh; overflow-y: auto;"><h3>📋 Riwayat Transaksi</h3><div class="modal-subtitle">Daftar semua transaksi yang telah dicatat</div><div id="transaksiList" class="db-list" style="max-height: 400px; overflow-y: auto;"></div><div class="modal-buttons"><button class="btn-outline" onclick="closeModal('transaksiListModal')">Tutup</button></div></div></div>
 
                 <div class="modal" id="pilihNomorModal"><div class="modal-content" style="max-width: 400px;"><h3>📱 Pilih Nomor Tujuan</h3><div class="modal-subtitle">Pilih nomor WhatsApp yang akan dihubungi</div><div style="padding: 0 20px 20px 20px;"><div id="pilihNomorOptions" style="display: flex; flex-direction: column; gap: 12px;"></div></div><div class="modal-buttons"><button id="batalPilihNomorBtn" class="btn-outline">Batal</button></div></div></div>
+            <!-- MODAL PILIH CS TUJUAN -->
+<div class="modal" id="pilihCsTujuanModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <h3>📋 Pilih CS Tujuan</h3>
+        <div class="modal-subtitle">Pilih CS Agent yang akan menerima data followup</div>
+        <div style="padding: 0 20px;">
+            <div class="form-group">
+                <label>Metode Pembagian</label>
+                <select id="metodePembagian" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+                    <option value="satu">📨 Kirim ke satu CS tertentu</option>
+                    <option value="rata">🔄 Bagikan secara rata ke semua CS terpilih</option>
+                </select>
+            </div>
+            <div class="form-group" id="satuCsGroup">
+                <label>Pilih CS Tujuan</label>
+                <select id="csTujuanSelect" style="width:100%; padding:12px; border-radius:14px; border:1.5px solid #e5e7eb;">
+                    <option value="">Pilih CS Agent</option>
+                </select>
+            </div>
+            <div class="form-group" id="rataCsGroup" style="display:none;">
+                <label>Pilih CS Agent (bisa pilih lebih dari satu)</label>
+                <div id="csMultiSelect" style="max-height: 200px; overflow-y: auto; border: 1.5px solid #e5e7eb; border-radius: 14px; padding: 8px;">
+                    <!-- Daftar CS dengan checkbox akan diisi JavaScript -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Preview Data yang akan dipindah</label>
+                <div id="previewDataCount" style="background: #f3f4f6; padding: 10px; border-radius: 10px; font-size: 13px;">
+                    <span id="selectedDataCount">0</span> data akan dipindahkan
+                </div>
+            </div>
+        </div>
+        <div class="modal-buttons">
+            <button id="confirmPindahKeCsBtn" class="btn-primary">✅ Konfirmasi Pindah</button>
+            <button id="batalPindahKeCsBtn" class="btn-outline">Batal</button>
+        </div>
+    </div>
+</div>
 
                 <input type="file" id="produkExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
                 <input type="file" id="agentExcelFile" accept=".xlsx,.xls,.csv" style="display: none;">
