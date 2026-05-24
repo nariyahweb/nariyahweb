@@ -5639,12 +5639,16 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
     }
     
     progress.update(100, '✅ Selesai', `Berhasil: ${totalSuccess}, Gagal: ${totalFailed}, Dilewati: ${totalSkipped}`, totalData, totalData);
-    showNotifTop(`✅ ${totalSuccess} data dipindahkan ke Followup Agen${totalFailed > 0 ? `, ${totalFailed} gagal` : ''}${totalSkipped > 0 ? `, ${totalSkipped} dilewati (duplikat)` : ''}`);
-    setTimeout(() => progress.hide(), 3000);
+    showNotifTop(`✅ ${totalSuccess} data dipindahkan ke Followup Agen...`);
     
-    await loadDbTransaksi();
-    await loadAllData();
-}
+    // REFRESH SEMUA DATA
+    await loadDbTransaksi();  // Refresh DB Transaksi
+    await loadAllData();       // Refresh data customer
+    renderFullFollowupKanban(); // Refresh tampilan Full Mode
+    renderFullProspekKanban();  // Refresh tampilan Prospek Full Mode
+    
+    setTimeout(() => progress.hide(), 3000);
+    }
 
 // ========== FUNGSI MOVE SELECTED TO FOLLOWUP (VERSI BARU) ==========
 async function moveSelectedToFollowup() {
@@ -7912,6 +7916,8 @@ function initUplineBroadcast() {
 
 // ========== FULL PAGE KANBAN FUNCTIONS ==========
 function renderFullFollowupKanban() {
+  console.log('renderFullFollowupKanban - jumlah customersData:', customersData.length);
+  
   const today = getTodayDate();
   const lists = { baru: [], followup: [], pending: [], closing: [] };
   
@@ -8731,18 +8737,21 @@ async function updateAllBadges() {
 // ========== LOAD ALL DATA ==========
 function loadAllData() {
   if (!currentUser) return;
+  
+  // BERSIHKAN DATA LAMA
+  customersData = [];
+  prospekData = [];
+  
   const today = getTodayDate();
   const isOwner = currentUserRole === 'owner';
 
+  // HAPUS LIMIT 500 - ambil semua data
   let customersQuery = db.collection('customers');
   let prospekQuery = db.collection('prospek');
 
   if (!isOwner) {
-    customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid).limit(500);
-    prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid).limit(500);
-  } else {
-    customersQuery = db.collection('customers').limit(500);
-    prospekQuery = db.collection('prospek').limit(500);
+    customersQuery = db.collection('customers').where('user_id', '==', currentUser.uid);
+    prospekQuery = db.collection('prospek').where('user_id', '==', currentUser.uid);
   }
 
   customersQuery.onSnapshot(async snap => {
