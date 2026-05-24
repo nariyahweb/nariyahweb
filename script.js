@@ -5651,21 +5651,21 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
                     totalSkipped++;
                     console.log(`Skip ${item.nama}: ID Agent ${item.agent_id} sudah terdaftar`);
                     await db.collection('db_transaksi').doc(item.id).update({
-                    status: 'duplicate',
-                    duplicate_reason: `ID Agent ${item.agent_id} sudah terdaftar oleh ${duplicateAgent.owner}`,
-                    last_check_at: new Date().toISOString()
-                }).catch(err => console.error('Gagal update status:', err));
-                continue;
+                        status: 'duplicate',
+                        duplicate_reason: `ID Agent ${item.agent_id} sudah terdaftar oleh ${duplicateAgent.owner}`,
+                        last_check_at: new Date().toISOString()
+                    }).catch(err => console.error('Gagal update status:', err));
+                    continue;
                 }
                 if (duplicateHp) {
                     totalSkipped++;
                     console.log(`Skip ${item.nama}: Nomor HP ${item.hp} sudah terdaftar`);
                     await db.collection('db_transaksi').doc(item.id).update({
-                    status: 'duplicate',
-                    duplicate_reason: `Nomor HP ${item.hp} sudah terdaftar oleh ${duplicateHp.owner}`,
-                    last_check_at: new Date().toISOString()
-                });
-                continue;
+                        status: 'duplicate',
+                        duplicate_reason: `Nomor HP ${item.hp} sudah terdaftar oleh ${duplicateHp.owner}`,
+                        last_check_at: new Date().toISOString()
+                    }).catch(err => console.error('Gagal update status:', err));
+                    continue;
                 }
                 
                 // Hitung total tercapai
@@ -5692,6 +5692,7 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
                     agent_id: item.agent_id,
                     nama: item.nama,
                     hp: item.hp,
+                    apk: item.apk || '',
                     upline_name: item.upline_name || '',
                     upline_phone: item.upline_phone || '',
                     status: 'baru',
@@ -5724,13 +5725,16 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
             } catch (e) {
                 totalFailed++;
                 console.error(`Gagal pindah ${item.nama}:`, e);
-              await db.collection('db_transaksi').doc(item.id).update({
-                status: 'error',
-                error_message: e.message,
-                last_check_at: new Date().toISOString()
-            }).catch(err => console.error('Gagal update status error:', err));
-        }
-    }
+                try {
+                    await db.collection('db_transaksi').doc(item.id).update({
+                        status: 'error',
+                        error_message: e.message,
+                        last_check_at: new Date().toISOString()
+                    });
+                } catch (err) {
+                    console.error('Gagal update status error:', err);
+                }
+            }
             
             const percent = Math.floor(((totalSuccess + totalFailed + totalSkipped) / totalData) * 100);
             progress.update(percent, '📋 Memindahkan', `Memproses... (${totalSuccess + totalFailed + totalSkipped}/${totalData})`, totalSuccess + totalFailed + totalSkipped, totalData);
@@ -5748,7 +5752,7 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
     renderFullProspekKanban();  // Refresh tampilan Prospek Full Mode
     
     setTimeout(() => progress.hide(), 3000);
-    }
+}
 
 // ========== FUNGSI MOVE SELECTED TO FOLLOWUP (VERSI BARU) ==========
 async function moveSelectedToFollowup() {
