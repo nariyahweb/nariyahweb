@@ -6523,6 +6523,24 @@ function setupTransaksiFilters() {
     const filterProgres = document.getElementById('filterProgresTransaksi');
     const filterStatus = document.getElementById('filterStatusTransaksi');
     const resetBtn = document.getElementById('resetTransaksiFilterBtn');
+  if (filterProgres) {
+        filterProgres.innerHTML = `
+            <option value="">Semua Progres</option>
+            <option value="naik">📈 Naik</option>
+            <option value="turun">📉 Turun</option>
+            <option value="normal">⚖️ Normal</option>
+        `;
+    }
+    
+    if (filterStatus) {
+        filterStatus.innerHTML = `
+            <option value="">Semua</option>
+            <option value="pending_import">⏳ Pending</option>
+            <option value="imported">✅ Sudah Dipindah</option>
+            <option value="duplicate">⚠️ Duplikat</option>
+            <option value="error">❌ Gagal</option>
+        `;
+    }
     
     // Variabel untuk menyimpan hasil filter dari database
     let filteredDataCache = [];
@@ -6601,26 +6619,6 @@ function setupTransaksiFilters() {
             
             // Tampilkan hasil
             renderTransaksiList(results);
-
-           if (filterStatus) {
-        filterStatus.innerHTML = `
-            <option value="">Semua</option>
-            <option value="pending_import">⏳ Pending</option>
-            <option value="imported">✅ Sudah Dipindah</option>
-            <option value="duplicate">⚠️ Duplikat</option>
-            <option value="error">❌ Gagal</option>
-        `;
-    }
-            
-            // Tampilkan notifikasi jumlah data
-            if (filterProgres) {
-        filterProgres.innerHTML = `
-            <option value="">Semua Progres</option>
-            <option value="naik">📈 Naik</option>
-            <option value="turun">📉 Turun</option>
-            <option value="normal">⚖️ Normal</option>
-        `;
-    }
             
         } catch (error) {
             console.error('Error filtering:', error);
