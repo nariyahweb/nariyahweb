@@ -5442,29 +5442,31 @@ async function showPilihCsModal(dataToMove) {
     
     await loadDaftarCs();
     
-    // Update preview data count
     const countSpan = document.getElementById('selectedDataCount');
     if (countSpan) countSpan.innerText = pendingMoveData.length;
     
     const modal = document.getElementById('pilihCsTujuanModal');
     if (modal) modal.style.display = 'flex';
     
-    // Setup event listeners
     const metodeSelect = document.getElementById('metodePembagian');
     const satuGroup = document.getElementById('satuCsGroup');
     const rataGroup = document.getElementById('rataCsGroup');
     
     if (metodeSelect) {
-        // Set default ke mode 'satu'
         metodeSelect.value = 'satu';
         satuGroup.style.display = 'block';
         rataGroup.style.display = 'none';
         
         metodeSelect.onchange = () => {
-            if (metodeSelect.value === 'satu') {
+            const metode = metodeSelect.value;
+            if (metode === 'satu') {
                 satuGroup.style.display = 'block';
                 rataGroup.style.display = 'none';
-            } else {
+            } else if (metode === 'rata') {
+                satuGroup.style.display = 'none';
+                rataGroup.style.display = 'block';
+            } else if (metode === 'upline') {
+                // Untuk metode upline, gunakan multi-select (bagi rata)
                 satuGroup.style.display = 'none';
                 rataGroup.style.display = 'block';
             }
@@ -5513,14 +5515,82 @@ async function showPilihCsModal(dataToMove) {
     }
 }
 
-// ========== FUNGSI PROSES PEMINDAHAN KE CS ==========
+// ========== FUNGSI PROSES PEMINDAHAN KE CS PEMBAGIAN DATA BERDASARKAN UPLINE ==========
+
+function bagiDataBerdasarkanUpline(dataToMove, csIds) {
+    // Step 1: Kelompokkan data berdasarkan upline_phone
+    const uplineGroups = new Map();
+    
+    for (const item of dataToMove) {
+        const uplineKey = item.upline_phone || 'no_upline';
+        const uplineName = item.upline_name || 'Tanpa Upline';
+        
+        if (!uplineGroups.has(uplineKey)) {
+            uplineGroups.set(uplineKey, {
+                upline_phone: uplineKey,
+                upline_name: uplineName,
+                agents: [],
+                totalAgent: 0
+            });
+        }
+        
+        uplineGroups.get(uplineKey).agents.push(item);
+        uplineGroups.get(uplineKey).totalAgent++;
+    }
+    
+    // Konversi ke array dan urutkan dari yang terbesar ke terkecil
+    let groups = Array.from(uplineGroups.values());
+    groups.sort((a, b) => b.totalAgent - a.totalAgent);
+    
+    console.log(`📊 Total group upline: ${groups.length}`);
+    console.log(`📊 Total agent: ${dataToMove.length}`);
+    console.log(`📊 Total CS: ${csIds.length}`);
+    
+    // Inisialisasi hasil untuk setiap CS
+    const result = csIds.map(csId => ({
+        csId: csId,
+        data: [],
+        totalAgent: 0,
+        groups: []
+    }));
+    
+    // Algoritma Greedy - assign group terbesar ke CS dengan total paling sedikit
+    for (const group of groups) {
+        let minIndex = 0;
+        let minTotal = result[0].totalAgent;
+        
+        for (let i = 1; i < result.length; i++) {
+            if (result[i].totalAgent < minTotal) {
+                minTotal = result[i].totalAgent;
+                minIndex = i;
+            }
+        }
+        
+        result[minIndex].data.push(...group.agents);
+        result[minIndex].totalAgent += group.totalAgent;
+        result[minIndex].groups.push(group);
+    }
+    
+    result.sort((a, b) => b.totalAgent - a.totalAgent);
+    
+    console.log('📊 Hasil pembagian:');
+    for (const cs of result) {
+        console.log(`  CS: ${cs.csId} - Total Agent: ${cs.totalAgent} (${cs.groups.length} group upline)`);
+    }
+    
+    return result;
+}
+
+// KEMUDIAN MODIFIKASI fungsi prosesPindahKeCs
 async function prosesPindahKeCs(dataToMove, csIds, metode) {
     const totalData = dataToMove.length;
     const totalCs = csIds.length;
     
     let dataPerCs = [];
+    
     if (metode === 'rata') {
-        // Bagikan data secara rata
+        // METODE LAMA - BAGI RATA (hanya untuk fallback)
+        console.log('📋 Menggunakan metode pembagian rata biasa (tanpa memperhatikan upline)');
         const baseCount = Math.floor(totalData / totalCs);
         const remainder = totalData % totalCs;
         
@@ -5534,7 +5604,25 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
             });
             startIndex += count;
         }
-    } else {
+    } 
+    else if (metode === 'upline') {
+        // METODE BARU - BERDASARKAN UPLINE (tidak memisah grup)
+        console.log('📋 Menggunakan metode pembagian berdasarkan Upline (tidak memisah grup)');
+        
+        const pembagian = bagiDataBerdasarkanUpline(dataToMove, csIds);
+        
+        dataPerCs = pembagian.map(item => ({
+            csId: item.csId,
+            data: item.data,
+            count: item.totalAgent
+        }));
+        
+        console.log('📊 Ringkasan pembagian per CS:');
+        dataPerCs.forEach(cs => {
+            console.log(`  CS ${cs.csId}: ${cs.count} agent`);
+        });
+    }
+    else {
         // Kirim semua ke satu CS
         dataPerCs.push({
             csId: csIds[0],
