@@ -3195,10 +3195,6 @@ async function getFilteredTransaksiData() {
             include = false;
         }
         
-        if (include && d.status === 'imported') {
-            include = false; // Skip data yang sudah dipindah
-        }
-        
         if (include) {
             results.push({
                 id: doc.id,
@@ -5654,12 +5650,22 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
                 if (duplicateAgent) {
                     totalSkipped++;
                     console.log(`Skip ${item.nama}: ID Agent ${item.agent_id} sudah terdaftar`);
-                    continue;
+                    await db.collection('db_transaksi').doc(item.id).update({
+                    status: 'duplicate',
+                    duplicate_reason: `ID Agent ${item.agent_id} sudah terdaftar oleh ${duplicateAgent.owner}`,
+                    last_check_at: new Date().toISOString()
+                }).catch(err => console.error('Gagal update status:', err));
+                continue;
                 }
                 if (duplicateHp) {
                     totalSkipped++;
                     console.log(`Skip ${item.nama}: Nomor HP ${item.hp} sudah terdaftar`);
-                    continue;
+                    await db.collection('db_transaksi').doc(item.id).update({
+                    status: 'duplicate',
+                    duplicate_reason: `Nomor HP ${item.hp} sudah terdaftar oleh ${duplicateHp.owner}`,
+                    last_check_at: new Date().toISOString()
+                });
+                continue;
                 }
                 
                 // Hitung total tercapai
@@ -5718,7 +5724,13 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
             } catch (e) {
                 totalFailed++;
                 console.error(`Gagal pindah ${item.nama}:`, e);
-            }
+              await db.collection('db_transaksi').doc(item.id).update({
+                status: 'error',
+                error_message: e.message,
+                last_check_at: new Date().toISOString()
+            }).catch(err => console.error('Gagal update status error:', err));
+        }
+    }
             
             const percent = Math.floor(((totalSuccess + totalFailed + totalSkipped) / totalData) * 100);
             progress.update(percent, '📋 Memindahkan', `Memproses... (${totalSuccess + totalFailed + totalSkipped}/${totalData})`, totalSuccess + totalFailed + totalSkipped, totalData);
@@ -6027,9 +6039,15 @@ function renderTransaksiList(items) {
     };
     
     const getStatusBadge = (status) => {
-        if (status === 'imported') return '<span style="background:#10b981; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">✅ Sudah Dipindah</span>';
-        return '<span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">⏳ Pending Import</span>';
-    };
+    if (status === 'imported') {
+        return '<span style="background:#10b981; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">✅ Sudah Dipindah</span>';
+    } else if (status === 'duplicate') {
+        return '<span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">⚠️ Duplikat</span>';
+    } else if (status === 'error') {
+        return '<span style="background:#ef4444; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">❌ Gagal</span>';
+    }
+    return '<span style="background:#3b82f6; color:white; padding:2px 8px; border-radius:12px; font-size:10px;">⏳ Pending</span>';
+};
     
     let html = '';
     
@@ -6068,11 +6086,18 @@ function renderTransaksiList(items) {
                     <p style="font-size: 12px; color: #6b7280; margin-bottom: 2px;">👤 Upline: ${escapeHtml(item.upline_name || '-')} | 📞 ${escapeHtml(item.upline_phone || '-')}</p>
                     <small style="font-size: 10px; color: #9ca3af;">📅 ${item.tanggal_transaksi ? new Date(item.tanggal_transaksi).toLocaleDateString('id-ID') : '-'} | Status: ${getStatusBadge(item.status)}</small>
                 </div>
-                <div class="db-item-agent-actions" style="display: flex; gap: 6px;">
-                    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')" style="background: #25D366; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">💬 WA</button>
-                    ${item.status !== 'imported' ? `<button class="db-item-move-followup" onclick="event.stopPropagation(); moveSingleToFollowup('${item.id}')" style="background: #4f46e5; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">📋 Pindah ke Followup</button>` : ''}
-                    <button class="db-item-delete" onclick="event.stopPropagation(); deleteTransaksiItem('${item.id}')" style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
-                </div>
+                <div class="db-item-agent-actions" style="display: flex; gap: 6px; flex-wrap: wrap;">
+    <button class="db-item-wa" onclick="event.stopPropagation(); openWA('${escapeHtml(item.hp || '')}')" style="background: #25D366; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">💬 WA</button>
+    
+    ${item.status === 'duplicate' || item.status === 'error' ? 
+        `<button class="db-item-retry" onclick="event.stopPropagation(); retryMoveToFollowup('${item.id}')" style="background: #f59e0b; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">🔄 Coba Lagi</button>` : 
+        (item.status !== 'imported' ? 
+            `<button class="db-item-move-followup" onclick="event.stopPropagation(); moveSingleToFollowup('${item.id}')" style="background: #4f46e5; color: white; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">📋 Pindah ke Followup</button>` : 
+            '')
+                  }
+    
+                <button class="db-item-delete" onclick="event.stopPropagation(); deleteTransaksiItem('${item.id}')" style="background: #fef2f2; color: #dc2626; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer;">🗑️ Hapus</button>
+              </div>
             </div>
         `;
     }
@@ -6576,12 +6601,26 @@ function setupTransaksiFilters() {
             
             // Tampilkan hasil
             renderTransaksiList(results);
+
+           if (filterStatus) {
+        filterStatus.innerHTML = `
+            <option value="">Semua</option>
+            <option value="pending_import">⏳ Pending</option>
+            <option value="imported">✅ Sudah Dipindah</option>
+            <option value="duplicate">⚠️ Duplikat</option>
+            <option value="error">❌ Gagal</option>
+        `;
+    }
             
             // Tampilkan notifikasi jumlah data
-            if (progresFilter) {
-                const jenisLabel = progresFilter === 'naik' ? '📈 Naik' : (progresFilter === 'turun' ? '📉 Turun' : '⚖️ Normal');
-                showNotifTop(`📊 Menampilkan ${results.length} data dengan status ${jenisLabel}`);
-            }
+            if (filterProgres) {
+        filterProgres.innerHTML = `
+            <option value="">Semua Progres</option>
+            <option value="naik">📈 Naik</option>
+            <option value="turun">📉 Turun</option>
+            <option value="normal">⚖️ Normal</option>
+        `;
+    }
             
         } catch (error) {
             console.error('Error filtering:', error);
@@ -6742,6 +6781,60 @@ async function moveSingleToFollowup(id, silent = false) {
     
     if (!silent) showNotifTop('✅ Data berhasil dipindahkan ke Followup Agen!');
     return true;
+}
+
+// Fungsi untuk mencoba ulang pemindahan data yang gagal
+async function retryMoveToFollowup(id) {
+    console.log(`🔄 Mencoba ulang pemindahan untuk ID: ${id}`);
+    
+    try {
+        // Reset status menjadi pending_import
+        await db.collection('db_transaksi').doc(id).update({
+            status: 'pending_import',
+            duplicate_reason: null,
+            error_message: null,
+            last_check_at: new Date().toISOString()
+        });
+        
+        showNotifTop('🔄 Mereset status data, mencoba memindahkan ulang...');
+        
+        // Panggil fungsi pindah
+        const result = await moveSingleToFollowup(id);
+        
+        if (result) {
+            showNotifTop('✅ Data berhasil dipindahkan ke Followup Agen!');
+        } else {
+            // Jika gagal karena duplikat, biarkan status tetap pending_import atau update jadi duplicate
+            const doc = await db.collection('db_transaksi').doc(id).get();
+            const data = doc.data();
+            const { duplicateAgent, duplicateHp } = await checkDuplicateCustomer(data.agent_id, data.hp);
+            
+            if (duplicateAgent || duplicateHp) {
+                await db.collection('db_transaksi').doc(id).update({
+                    status: 'duplicate',
+                    duplicate_reason: duplicateAgent ? `ID Agent ${data.agent_id} sudah terdaftar` : `Nomor HP ${data.hp} sudah terdaftar`,
+                    last_check_at: new Date().toISOString()
+                });
+                showNotifTop('⚠️ Data masih duplikat, tidak bisa dipindahkan', true);
+            }
+        }
+        
+        // Refresh tampilan
+        await loadDbTransaksi();
+        await loadAllData();
+        renderFullFollowupKanban();
+        
+    } catch (error) {
+        console.error('Error retry move:', error);
+        showNotifTop('❌ Gagal mencoba ulang: ' + error.message, true);
+        
+        // Update status menjadi error
+        await db.collection('db_transaksi').doc(id).update({
+            status: 'error',
+            error_message: error.message,
+            last_check_at: new Date().toISOString()
+        }).catch(err => console.error('Gagal update status:', err));
+    }
 }
 
 // Fungsi untuk menghapus data terpilih (VERSI CEPAT dengan BATCH)
