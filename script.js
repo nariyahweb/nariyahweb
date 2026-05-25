@@ -9180,6 +9180,22 @@ auth.onAuthStateChanged(async user => {
       currentUserName = nama;
     }
 
+    const menuDbAgent = document.getElementById('menuDbAgent');
+    const menuDbTransaksi = document.getElementById('menuDbTransaksi');
+    const ownerMenu = document.getElementById('ownerMenu');
+    
+    if (currentUserRole === 'owner') {
+      // Owner: lihat semua menu
+      if (menuDbAgent) menuDbAgent.style.display = 'flex';
+      if (menuDbTransaksi) menuDbTransaksi.style.display = 'flex';
+      if (ownerMenu) ownerMenu.style.display = 'block';
+    } else {
+      // CS: sembunyikan Database Agent dan DB Transaksi, serta menu owner
+      if (menuDbAgent) menuDbAgent.style.display = 'none';
+      if (menuDbTransaksi) menuDbTransaksi.style.display = 'none';
+      if (ownerMenu) ownerMenu.style.display = 'none';
+    }
+    
     document.getElementById('topUserName').innerText = nama;
     document.getElementById('profileName').value = nama;
     document.getElementById('profileImg').src = foto;
