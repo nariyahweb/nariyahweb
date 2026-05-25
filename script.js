@@ -5453,21 +5453,22 @@ async function showPilihCsModal(dataToMove) {
         satuGroup.style.display = 'block';
         rataGroup.style.display = 'none';
         
-        metodeSelect.onchange = () => {
-            const metode = metodeSelect.value;
-            if (metode === 'satu') {
-                satuGroup.style.display = 'block';
-                rataGroup.style.display = 'none';
-            } else if (metode === 'rata') {
-                satuGroup.style.display = 'none';
-                rataGroup.style.display = 'block';
-            } else if (metode === 'upline') {
-                // Untuk metode upline, gunakan multi-select (bagi rata)
-                satuGroup.style.display = 'none';
-                rataGroup.style.display = 'block';
-            }
-        };
+        // Di dalam showPilihCsModal, bagian metodeSelect.onchange
+metodeSelect.onchange = () => {
+    const metode = metodeSelect.value;
+    if (metode === 'satu') {
+        satuGroup.style.display = 'block';
+        rataGroup.style.display = 'none';
+    } else if (metode === 'rata') {
+        satuGroup.style.display = 'none';
+        rataGroup.style.display = 'block';
+    } else if (metode === 'upline') {
+        // Untuk metode upline, gunakan multi-select
+        satuGroup.style.display = 'none';
+        rataGroup.style.display = 'block';
     }
+};
+}
     
     // Setup confirm button
     const confirmBtn = document.getElementById('confirmPindahKeCsBtn');
@@ -5514,11 +5515,24 @@ async function showPilihCsModal(dataToMove) {
 // ========== FUNGSI PROSES PEMINDAHAN KE CS PEMBAGIAN DATA BERDASARKAN UPLINE ==========
 
 function bagiDataBerdasarkanUpline(dataToMove, csIds) {
+    console.log('========== DEBUG PEMBAGIAN UPLINE ==========');
+    console.log('Total data yang akan dibagi:', dataToMove.length);
+    console.log('Jumlah CS:', csIds.length);
+    
     // Step 1: Kelompokkan data berdasarkan upline_phone
     const uplineGroups = new Map();
     
     for (const item of dataToMove) {
-        const uplineKey = item.upline_phone || 'no_upline';
+        // Gunakan upline_phone sebagai kunci utama
+        let uplineKey = item.upline_phone || 'NO_UPLINE';
+        // Bersihkan nomor (hapus spasi, dll)
+        uplineKey = String(uplineKey).trim();
+        
+        // Jika upline_phone kosong atau tidak valid, beri kunci khusus
+        if (!uplineKey || uplineKey === '' || uplineKey === '0' || uplineKey === '+62') {
+            uplineKey = 'NO_UPLINE';
+        }
+        
         const uplineName = item.upline_name || 'Tanpa Upline';
         
         if (!uplineGroups.has(uplineKey)) {
@@ -5528,19 +5542,36 @@ function bagiDataBerdasarkanUpline(dataToMove, csIds) {
                 agents: [],
                 totalAgent: 0
             });
+            console.log(`📌 Group baru untuk Upline: ${uplineName} (${uplineKey})`);
         }
         
         uplineGroups.get(uplineKey).agents.push(item);
         uplineGroups.get(uplineKey).totalAgent++;
     }
     
-    // Konversi ke array dan urutkan dari yang terbesar ke terkecil
+    // Konversi ke array
     let groups = Array.from(uplineGroups.values());
+    
+    // Log semua group
+    console.log('\n📊 Daftar Group Upline:');
+    groups.forEach((group, idx) => {
+        console.log(`  ${idx + 1}. ${group.upline_name} (${group.upline_phone}) - ${group.totalAgent} agent`);
+        // Tampilkan 3 agent pertama sebagai contoh
+        group.agents.slice(0, 3).forEach(agent => {
+            console.log(`      - ${agent.nama} (${agent.agent_id})`);
+        });
+        if (group.agents.length > 3) {
+            console.log(`      ... dan ${group.agents.length - 3} agent lainnya`);
+        }
+    });
+    
+    // Urutkan dari group terbesar ke terkecil (untuk fairness)
     groups.sort((a, b) => b.totalAgent - a.totalAgent);
     
-    console.log(`📊 Total group upline: ${groups.length}`);
-    console.log(`📊 Total agent: ${dataToMove.length}`);
-    console.log(`📊 Total CS: ${csIds.length}`);
+    console.log('\n📊 Urutan group (dari terbesar ke terkecil):');
+    groups.forEach((group, idx) => {
+        console.log(`  ${idx + 1}. ${group.upline_name}: ${group.totalAgent} agent`);
+    });
     
     // Inisialisasi hasil untuk setiap CS
     const result = csIds.map(csId => ({
@@ -5552,6 +5583,7 @@ function bagiDataBerdasarkanUpline(dataToMove, csIds) {
     
     // Algoritma Greedy - assign group terbesar ke CS dengan total paling sedikit
     for (const group of groups) {
+        // Cari CS dengan total agent paling sedikit
         let minIndex = 0;
         let minTotal = result[0].totalAgent;
         
@@ -5562,17 +5594,31 @@ function bagiDataBerdasarkanUpline(dataToMove, csIds) {
             }
         }
         
+        // Assign seluruh group ke CS tersebut
         result[minIndex].data.push(...group.agents);
         result[minIndex].totalAgent += group.totalAgent;
         result[minIndex].groups.push(group);
+        
+        console.log(`📦 Assign group "${group.upline_name}" (${group.totalAgent} agent) ke CS index ${minIndex}`);
     }
     
+    // Urutkan hasil berdasarkan total agent (descending)
     result.sort((a, b) => b.totalAgent - a.totalAgent);
     
-    console.log('📊 Hasil pembagian:');
+    console.log('\n📊 HASIL AKHIR PEMBAGIAN:');
     for (const cs of result) {
-        console.log(`  CS: ${cs.csId} - Total Agent: ${cs.totalAgent} (${cs.groups.length} group upline)`);
+        const csInfo = daftarCs.find(c => c.id === cs.csId);
+        const csName = csInfo ? csInfo.nama : cs.csId;
+        console.log(`\n👤 CS: ${csName}`);
+        console.log(`   Total Agent: ${cs.totalAgent}`);
+        console.log(`   Jumlah Group Upline: ${cs.groups.length}`);
+        console.log(`   Daftar Upline:`);
+        cs.groups.forEach(group => {
+            console.log(`     - ${group.upline_name} (${group.upline_phone}): ${group.totalAgent} agent`);
+        });
     }
+    
+    console.log('========== END DEBUG ==========\n');
     
     return result;
 }
@@ -5602,22 +5648,24 @@ async function prosesPindahKeCs(dataToMove, csIds, metode) {
         }
     } 
     else if (metode === 'upline') {
-        // METODE BARU - BERDASARKAN UPLINE (tidak memisah grup)
-        console.log('📋 Menggunakan metode pembagian berdasarkan Upline (tidak memisah grup)');
-        
-        const pembagian = bagiDataBerdasarkanUpline(dataToMove, csIds);
-        
-        dataPerCs = pembagian.map(item => ({
-            csId: item.csId,
-            data: item.data,
-            count: item.totalAgent
-        }));
-        
-        console.log('📊 Ringkasan pembagian per CS:');
-        dataPerCs.forEach(cs => {
-            console.log(`  CS ${cs.csId}: ${cs.count} agent`);
-        });
-    }
+    // METODE BARU - BERDASARKAN UPLINE
+    console.log('📋 Menggunakan metode pembagian berdasarkan Upline (tidak memisah grup)');
+    
+    const pembagian = bagiDataBerdasarkanUpline(dataToMove, csIds);
+    
+    dataPerCs = pembagian.map(item => ({
+        csId: item.csId,
+        data: item.data,
+        count: item.totalAgent
+    }));
+    
+    console.log('📊 Ringkasan pembagian per CS:');
+    dataPerCs.forEach(cs => {
+        const csInfo = daftarCs.find(c => c.id === cs.csId);
+        const csName = csInfo ? csInfo.nama : cs.csId;
+        console.log(`  CS ${csName}: ${cs.count} agent`);
+    });
+}
     else {
         // Kirim semua ke satu CS
         dataPerCs.push({
