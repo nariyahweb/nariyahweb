@@ -5623,6 +5623,19 @@ function bagiDataBerdasarkanUpline(dataToMove, csIds) {
     return result;
 }
 
+// ========== TAMBAHKAN FUNGSI DEBUG DI SINI ==========
+async function cekUplineData() {
+    const snapshot = await db.collection('db_transaksi').limit(20).get();
+    console.log('🔍 CEK DATA UPLINE DI DB TRANSAKSI:');
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        console.log(`  Agent: ${data.nama}`);
+        console.log(`    upline_name: "${data.upline_name}"`);
+        console.log(`    upline_phone: "${data.upline_phone}"`);
+        console.log('---');
+    });
+}
+
 // KEMUDIAN MODIFIKASI fungsi prosesPindahKeCs
 async function prosesPindahKeCs(dataToMove, csIds, metode) {
     const totalData = dataToMove.length;
