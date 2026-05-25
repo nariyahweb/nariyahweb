@@ -42,39 +42,49 @@
         <div class="sidebar" id="sidebar">
             <div class="sidebar-header"><h2>PROSPEKTA</h2></div>
             <div class="sidebar-menu">
-                <div class="menu-item active" data-page="dashboard"><span class="icon">📊</span><span>Dashboard</span></div>
-                <div class="menu-item" data-page="followupFull"><span class="icon">📋</span><span>Data Followup Agen</span></div>
-                <div class="menu-item" data-page="prospekFull"><span class="icon">📋</span><span>Data Prospek Agen</span></div>
-                <div class="menu-divider"></div>
-                <div class="menu-label">DATABASE</div>
-                <div class="menu-item" data-page="dbAgent"><span class="icon">📁</span><span>Database Agent</span></div>
-                <div class="menu-item" data-page="dbTransaksi"><span class="icon">📊</span><span>DB Transaksi</span></div>
-                <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
-                <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
-                <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📁</span><span>DB Nomor Salah</span></div>
-                <div class="menu-item" data-page="dbCommitment"><span class="icon">📁</span><span>DB Commitment</span></div>
-                <div class="menu-divider"></div>
-                <div class="menu-label">IMPORT DATA</div>
-                <div class="menu-item" data-page="import"><span class="icon">📜</span><span>Import Data</span></div>
-                <div class="menu-divider"></div>
-                <div class="menu-label">KOMUNIKASI</div>
-                <div class="menu-item" data-page="reminder"><span class="icon">⏰</span><span>Pengingat (Reminder)</span></div>
-                <div class="menu-item" data-page="pesan"><span class="icon">💬</span><span>Pesan</span></div>
-                <div class="menu-item" data-page="broadcast"><span class="icon">📢</span><span>Broadcast WhatsApp</span></div>
-                <div class="menu-item" data-page="broadcastUpline"><span class="icon">⭐</span><span>Broadcast Upline</span></div>
-                <div class="menu-divider"></div>
-                <div class="menu-label">PENCARIAN</div>
-                <div class="menu-item" data-page="search"><span class="icon">🔍</span><span>Pencarian Data</span></div>
-                <div class="menu-divider"></div>
-                <!-- Menu untuk Owner (akan ditampilkan jika role=owner) -->
-                <div id="ownerMenu" style="display:none;">
-                    <div class="menu-label">MANAJEMEN</div>
-                    <div class="menu-item" data-page="produk"><span class="icon">🏷️</span><span>Produk</span></div>
-                    <div class="menu-item" data-page="manageUsers"><span class="icon">👥</span><span>Kelola CS Agent</span></div>
-                    <div class="menu-divider"></div>
-                </div>
-                <div class="menu-item" id="logoutBtn"><span class="icon">☕</span><span>Logout</span></div>
-            </div>
+    <div class="menu-item active" data-page="dashboard"><span class="icon">📊</span><span>Dashboard</span></div>
+    <div class="menu-item" data-page="followupFull"><span class="icon">📋</span><span>Data Followup Agen</span></div>
+    <div class="menu-item" data-page="prospekFull"><span class="icon">📋</span><span>Data Prospek Agen</span></div>
+    <div class="menu-divider"></div>
+    
+    <div class="menu-label">DATABASE</div>
+    <!-- Menu untuk Database Agent - HANYA OWNER -->
+    <div id="menuDbAgent" class="menu-item" data-page="dbAgent"><span class="icon">📁</span><span>Database Agent</span></div>
+    <!-- Menu untuk DB Transaksi - HANYA OWNER -->
+    <div id="menuDbTransaksi" class="menu-item" data-page="dbTransaksi"><span class="icon">📊</span><span>DB Transaksi</span></div>
+    <!-- Menu database lain - TETAP ADA UNTUK SEMUA -->
+    <div class="menu-item" data-page="dbClosing"><span class="icon">📁</span><span>DB Closing</span></div>
+    <div class="menu-item" data-page="dbTidak"><span class="icon">📁</span><span>DB Tidak Tertarik</span></div>
+    <div class="menu-item" data-page="dbNomorSalah"><span class="icon">📁</span><span>DB Nomor Salah</span></div>
+    <div class="menu-item" data-page="dbCommitment"><span class="icon">📁</span><span>DB Commitment</span></div>
+    <div class="menu-divider"></div>
+    
+    <!-- Menu lain tetap sama -->
+    <div class="menu-label">IMPORT DATA</div>
+    <div class="menu-item" data-page="import"><span class="icon">📜</span><span>Import Data</span></div>
+    <div class="menu-divider"></div>
+    
+    <div class="menu-label">KOMUNIKASI</div>
+    <div class="menu-item" data-page="reminder"><span class="icon">⏰</span><span>Pengingat (Reminder)</span></div>
+    <div class="menu-item" data-page="pesan"><span class="icon">💬</span><span>Pesan</span></div>
+    <div class="menu-item" data-page="broadcast"><span class="icon">📢</span><span>Broadcast WhatsApp</span></div>
+    <div class="menu-item" data-page="broadcastUpline"><span class="icon">⭐</span><span>Broadcast Upline</span></div>
+    <div class="menu-divider"></div>
+    
+    <div class="menu-label">PENCARIAN</div>
+    <div class="menu-item" data-page="search"><span class="icon">🔍</span><span>Pencarian Data</span></div>
+    <div class="menu-divider"></div>
+    
+    <!-- Menu untuk Owner SAJA (Produk dan Kelola CS) -->
+    <div id="ownerMenu" style="display:none;">
+        <div class="menu-label">MANAJEMEN</div>
+        <div class="menu-item" data-page="produk"><span class="icon">🏷️</span><span>Produk</span></div>
+        <div class="menu-item" data-page="manageUsers"><span class="icon">👥</span><span>Kelola CS Agent</span></div>
+        <div class="menu-divider"></div>
+    </div>
+    
+    <div class="menu-item" id="logoutBtn"><span class="icon">☕</span><span>Logout</span></div>
+</div>
         </div>
 
         <div class="main-content">
