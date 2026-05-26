@@ -5284,9 +5284,38 @@ function openDBDetailModal(id, type) {
         let detailHtml = '';
         
         if (type === 'closing') {
-            detailHtml = `${ownerInfo}<div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
+            // ========== TAMBAHKAN PENDING RESPONSES DI SINI ==========
+            let pendingHtml = '';
+            if (d.pending_data && d.pending_data.length > 0) {
+                const completedCount = d.pending_data.filter(item => item.checked === true && item.text?.trim() !== '').length;
+                const totalCount = d.pending_data.length;
+                
+                pendingHtml = `
+                    <div class="detail-info-item" style="align-items: flex-start;">
+                        <div class="detail-info-icon">📝</div>
+                        <div class="detail-info-content">
+                            <label>Pending Responses (${completedCount}/${totalCount} terjawab)</label>
+                            <div class="value" style="margin-top: 8px;">
+                                <div style="background: #f3f4f6; border-radius: 8px; padding: 8px; max-height: 150px; overflow-y: auto;">
+                                    ${d.pending_data.map(item => `
+                                        <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb;">
+                                            <span style="font-size: 14px;">${item.checked ? '✅' : '⭕'}</span>
+                                            <span style="flex: 1; font-size: 12px;">${escapeHtml(item.text) || '(kosong)'}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            detailHtml = `${ownerInfo}
+                <div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
-                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Closing</label><div class="value">${new Date(d.closing_date).toLocaleDateString('id-ID')}</div></div></div>`;
+                <div class="detail-info-item"><div class="detail-info-icon">📅</div><div class="detail-info-content"><label>Tanggal Closing</label><div class="value">${new Date(d.closing_date).toLocaleDateString('id-ID')}</div></div></div>
+                ${pendingHtml}
+                <div class="detail-info-item"><div class="detail-info-icon">📌</div><div class="detail-info-content"><label>Catatan Followup</label><div class="value">${d.followup_data ? `Terkirim: ${d.followup_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.followup_data.dibalas ? 'Ya' : 'Tidak'}` : '-'}</div></div></div>`;
         } else if (type === 'tidak') {
             detailHtml = `${ownerInfo}<div class="detail-info-item"><div class="detail-info-icon">👤</div><div class="detail-info-content"><label>Nama</label><div class="value">${escapeHtml(d.nama)}</div></div></div>
                 <div class="detail-info-item"><div class="detail-info-icon">📱</div><div class="detail-info-content"><label>Nomor WhatsApp</label><div class="value">${escapeHtml(d.hp)}</div></div></div>
