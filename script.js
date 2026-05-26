@@ -1306,11 +1306,38 @@ function openDetailCustomer(id) {
       followupInfo = `<div class="detail-info-item"><div class="detail-info-icon">✅</div><div class="detail-info-content"><label>Follow Up</label><div class="value">Terkirim: ${d.followup_data.terkirim ? 'Ya' : 'Tidak'} | Dibalas: ${d.followup_data.dibalas ? 'Ya' : 'Tidak'}</div></div></div>`;
     }
     
+    // ========== PERBAIKAN: TAMPILKAN PENDING RESPONSES UNTUK SEMUA STATUS ==========
     let pendingInfo = '';
     if (d.pending_data && d.pending_data.length > 0) {
       const completedCount = d.pending_data.filter(item => item.checked === true && item.text?.trim() !== '').length;
       const totalCount = d.pending_data.length;
-      pendingInfo = `<div class="detail-info-item"><div class="detail-info-icon">📝</div><div class="detail-info-content"><label>Pending Responses</label><div class="value">${completedCount} / ${totalCount} balasan tercatat</div></div></div>`;
+      
+      // Buat HTML untuk menampilkan detail pending responses
+      let pendingItemsHtml = '';
+      d.pending_data.forEach(item => {
+        const statusIcon = item.checked ? '✅' : '⭕';
+        const textDisplay = item.text && item.text.trim() !== '' ? escapeHtml(item.text) : '<em style="color:#9ca3af;">(kosong)</em>';
+        pendingItemsHtml += `
+          <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #e5e7eb;">
+            <span style="font-size: 14px;">${statusIcon}</span>
+            <span style="flex: 1; font-size: 12px;">${textDisplay}</span>
+          </div>
+        `;
+      });
+      
+      pendingInfo = `
+        <div class="detail-info-item" style="align-items: flex-start;">
+          <div class="detail-info-icon">📝</div>
+          <div class="detail-info-content">
+            <label>Pending Responses (${completedCount}/${totalCount} balasan tercatat)</label>
+            <div class="value" style="margin-top: 8px;">
+              <div style="background: #f9fafb; border-radius: 8px; padding: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #e5e7eb;">
+                ${pendingItemsHtml}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     const deadlineDisplay = d.tanggal || '-';
@@ -1398,7 +1425,7 @@ function openDetailCustomer(id) {
             </div>
           </div>
           ${followupInfo}
-          ${pendingInfo}
+          ${pendingInfo}  <!-- ← PENDING INFO AKAN TAMPIL UNTUK SEMUA STATUS, TERMASUK CLOSING -->
           <div class="detail-info-item">
             <div class="detail-info-icon">📌</div>
             <div class="detail-info-content">
