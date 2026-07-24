@@ -8,6 +8,8 @@ const LOGO_CONFIG = {
     text: 'https://haylblhjzfavrfiyaicq.supabase.co/storage/v1/object/public/logo/prospekta_logo.png',
 };
 
+const DEBUG = false;
+
 // ========== FLAG UNTUK CEK SETUP TOMBOL ==========
 let _buttonsSetupDone = false;
 
@@ -220,6 +222,47 @@ function showNotif(msg, isError = false) {
     notif.className = `notif-toast ${isError ? 'notif-error' : ''}`;
     document.getElementById('notifBox').appendChild(notif);
     setTimeout(() => notif.remove(), 3000);
+}
+
+// ========== FORMAT NOMOR HP UNTUK WHATSAPP ==========
+function formatPhoneNumber(hp) {
+    if (!hp) return '';
+    
+    // Hapus semua karakter non-digit
+    let clean = String(hp).replace(/[^\d+]/g, '');
+    
+    // Jika sudah ada +, biarkan
+    if (clean.startsWith('+')) {
+        return clean;
+    }
+    
+    // Hapus leading 0
+    clean = clean.replace(/^0+/, '');
+    
+    // Jika sudah dimulai dengan 62, tambahkan +
+    if (clean.startsWith('62')) {
+        return '+' + clean;
+    }
+    
+    // Jika dimulai dengan 8 (nomor lokal)
+    if (clean.startsWith('8')) {
+        return '+62' + clean;
+    }
+    
+    // Fallback: tambahkan +62
+    return '+62' + clean;
+}
+
+// ========== VALIDASI NOMOR HP ==========
+function isValidPhoneNumber(hp) {
+    if (!hp) return false;
+    const clean = String(hp).replace(/[^\d+]/g, '');
+    // Minimal 10 digit setelah +62
+    const numberOnly = clean.replace('+', '');
+    if (numberOnly.startsWith('62')) {
+        return numberOnly.length >= 12 && numberOnly.length <= 15;
+    }
+    return numberOnly.length >= 10 && numberOnly.length <= 15;
 }
 
 // ========== LOADING SCREEN FUNCTIONS ==========
@@ -650,7 +693,7 @@ function updateLogoUser(name) {
     }
 }
 
-// ========== FUNGSI UNTUK DARKMODE MODAL DINAMIS ==========
+// ========== APPLY DARK MODE TO MODAL ==========
 function applyDarkModeToModal(modalElement) {
     if (!modalElement) return;
     if (!document.body.classList.contains('dark-mode')) return;
@@ -660,6 +703,18 @@ function applyDarkModeToModal(modalElement) {
     
     // Tambahkan class untuk styling via CSS
     content.classList.add('dark-mode-content');
+    
+    // ===== PERBAIKAN: Cari dan set scroll container =====
+    const scrollContainers = content.querySelectorAll('.modal-body-scroll, .chat-premium-container, .modal-body');
+    scrollContainers.forEach(container => {
+        container.style.background = '#0f172a';
+        container.style.borderColor = '#334155';
+        container.style.color = '#f1f5f9';
+        
+        // Scrollbar styling
+        container.style.scrollbarWidth = 'thin';
+        container.style.scrollbarColor = '#475569 transparent';
+    });
     
     // FORCE OVERRIDE untuk inline style yang bandel
     // Cari semua div dengan background kuning (#fef3c7) - PERINGATAN
@@ -671,7 +726,6 @@ function applyDarkModeToModal(modalElement) {
         div.style.borderRadius = '12px !important';
         div.style.color = '#fcd34d !important';
         
-        // Semua p di dalamnya
         div.querySelectorAll('p').forEach(p => {
             p.style.color = '#fcd34d !important';
         });
@@ -754,6 +808,13 @@ function applyDarkModeToModal(modalElement) {
             el.style.color = '#f1f5f9 !important';
         }
     });
+    
+    // ===== PERBAIKAN: Chat premium container =====
+    const chatContainers = content.querySelectorAll('.chat-premium-container');
+    chatContainers.forEach(container => {
+        container.style.background = '#0f172a !important';
+        container.style.borderColor = '#334155 !important';
+    });
 }
 
 // ========== FUNGSI UNTUK MEMBUAT MODAL DINAMIS YANG BISA DIKLIK ==========
@@ -766,21 +827,82 @@ function createModalWithHighZIndex(htmlContent, onClose = null) {
     
     const modal = document.createElement('div');
     modal.className = 'modal dynamic-modal';
-    modal.style.display = 'flex';
-    modal.style.zIndex = '999999999';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    modal.style.backdropFilter = 'blur(5px)';
-    modal.style.pointerEvents = 'auto';
+    modal.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        z-index: 999999999 !important;
+        backdrop-filter: blur(5px) !important;
+        pointer-events: auto !important;
+        overflow: hidden !important;
+    `;
     modal.innerHTML = htmlContent;
     
-    // Pastikan modal content memiliki z-index tinggi dan bisa diklik
+    // Pastikan modal content memiliki struktur yang benar
     const modalContent = modal.querySelector('.modal-content');
     if (modalContent) {
+        // Jika ada elemen dengan class modal-body-scroll, gunakan itu
+        // Jika tidak, bungkus body dengan scrollable container
+        const bodyElement = modalContent.querySelector('.modal-body, .modal-body-scroll');
+        if (!bodyElement) {
+            // Cari elemen yang berisi konten utama (setelah header dan sebelum footer)
+            const children = Array.from(modalContent.children);
+            let startIndex = -1;
+            let endIndex = -1;
+            
+            // Cari header (biasanya div pertama dengan padding)
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child.style && child.style.padding && child.style.padding.includes('20px')) {
+                    if (startIndex === -1) {
+                        startIndex = i + 1;
+                    }
+                }
+                if (child.className && child.className.includes('modal-buttons')) {
+                    endIndex = i;
+                    break;
+                }
+            }
+            
+            if (startIndex !== -1 && endIndex !== -1 && startIndex < endIndex) {
+                // Pindahkan elemen ke dalam scrollable container
+                const scrollContainer = document.createElement('div');
+                scrollContainer.className = 'modal-body-scroll';
+                scrollContainer.style.cssText = `
+                    flex: 1;
+                    overflow-y: auto;
+                    padding: 16px 20px;
+                    max-height: calc(85vh - 180px);
+                    scroll-behavior: smooth;
+                `;
+                
+                const elementsToMove = [];
+                for (let i = startIndex; i < endIndex; i++) {
+                    elementsToMove.push(children[i]);
+                }
+                
+                elementsToMove.forEach(el => {
+                    modalContent.removeChild(el);
+                    scrollContainer.appendChild(el);
+                });
+                
+                // Sisipkan scroll container setelah header
+                const headerElement = children[0];
+                if (headerElement) {
+                    modalContent.insertBefore(scrollContainer, children[endIndex] || null);
+                } else {
+                    modalContent.insertBefore(scrollContainer, modalContent.firstChild);
+                }
+            }
+        }
+        
+        // Pastikan z-index tinggi
         modalContent.style.zIndex = '999999999';
         modalContent.style.position = 'relative';
         modalContent.style.pointerEvents = 'auto';
@@ -803,17 +925,29 @@ function createModalWithHighZIndex(htmlContent, onClose = null) {
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    document.body.style.top = '0';
+    document.body.style.left = '0';
     document.body.style.pointerEvents = 'auto';
+    
     applyDarkModeToModal(modal);
     
     return modal;
 }
 
+// ========== CLOSE DYNAMIC MODAL ==========
 function closeDynamicModal(modal) {
     if (modal) {
         modal.remove();
     }
     document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.height = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
     document.body.classList.remove('modal-open');
     document.body.style.pointerEvents = '';
 }
@@ -1334,61 +1468,90 @@ async function updateTargetDisplay() {
 function updateChartsForDarkMode() {
     const isDark = document.body.classList.contains('dark-mode');
     const textColor = isDark ? '#f1f5f9' : '#1e293b';
+    const primaryColor = isDark ? '#818cf8' : '#4f46e5';
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
     
-    // Update semua chart yang ada
-    if (chartCustomer) {
-        if (chartCustomer.options && chartCustomer.options.plugins && chartCustomer.options.plugins.legend) {
-            chartCustomer.options.plugins.legend.labels.color = textColor;
+    // ===== UPDATE TOTAL LABEL DI SEMUA CHART =====
+    document.querySelectorAll('.chart-total-label').forEach(label => {
+        label.style.color = textColor;
+        const spans = label.querySelectorAll('span');
+        spans.forEach(span => {
+            span.style.color = textColor;
+        });
+        const totalValue = label.querySelector('.total-value');
+        if (totalValue) {
+            totalValue.style.color = primaryColor;
         }
+    });
+    
+    // ===== UPDATE CHART CUSTOMER =====
+    if (chartCustomer) {
+        chartCustomer.options.plugins.legend.labels.color = textColor;
+        chartCustomer.options.plugins.tooltip.titleColor = textColor;
+        chartCustomer.options.plugins.tooltip.bodyColor = textColor;
+        chartCustomer.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+        chartCustomer.options.plugins.tooltip.borderColor = isDark ? '#334155' : '#e5e7eb';
         chartCustomer.update();
     }
     
+    // ===== UPDATE CHART PROSPEK =====
     if (chartProspek) {
-        if (chartProspek.options && chartProspek.options.plugins && chartProspek.options.plugins.legend) {
-            chartProspek.options.plugins.legend.labels.color = textColor;
-        }
+        chartProspek.options.plugins.legend.labels.color = textColor;
+        chartProspek.options.plugins.tooltip.titleColor = textColor;
+        chartProspek.options.plugins.tooltip.bodyColor = textColor;
+        chartProspek.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+        chartProspek.options.plugins.tooltip.borderColor = isDark ? '#334155' : '#e5e7eb';
         chartProspek.update();
     }
     
+    // ===== UPDATE TARGET CHART =====
     if (targetChart) {
-        if (targetChart.options && targetChart.options.plugins && targetChart.options.plugins.legend) {
-            targetChart.options.plugins.legend.labels.color = textColor;
+        targetChart.options.plugins.legend.labels.color = textColor;
+        if (targetChart.options.scales && targetChart.options.scales.y) {
+            targetChart.options.scales.y.ticks.color = textColor;
+        }
+        if (targetChart.options.scales && targetChart.options.scales.x) {
+            targetChart.options.scales.x.ticks.color = textColor;
         }
         targetChart.update();
     }
     
+    // ===== UPDATE TREND CHART =====
     if (trendChart) {
-        if (trendChart.options && trendChart.options.plugins && trendChart.options.plugins.legend) {
-            trendChart.options.plugins.legend.labels.color = textColor;
+        trendChart.options.plugins.legend.labels.color = textColor;
+        trendChart.options.plugins.tooltip.titleColor = textColor;
+        trendChart.options.plugins.tooltip.bodyColor = textColor;
+        trendChart.options.plugins.tooltip.backgroundColor = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+        trendChart.options.plugins.tooltip.borderColor = isDark ? '#334155' : '#e5e7eb';
+        if (trendChart.options.scales && trendChart.options.scales.y) {
+            trendChart.options.scales.y.ticks.color = textColor;
+            trendChart.options.scales.y.grid.color = gridColor;
+        }
+        if (trendChart.options.scales && trendChart.options.scales.x) {
+            trendChart.options.scales.x.ticks.color = textColor;
         }
         trendChart.update();
     }
     
-    // Update background canvas secara langsung
-    document.querySelectorAll('canvas').forEach(canvas => {
+    // ===== UPDATE BACKGROUND CANVAS =====
+    document.querySelectorAll('.chart-card canvas').forEach(canvas => {
         if (isDark) {
             canvas.style.background = '#0f172a';
             canvas.style.borderRadius = '12px';
-            canvas.setAttribute('style', 
-                (canvas.getAttribute('style') || '') + 
-                'background: #0f172a !important; border-radius: 12px !important;'
-            );
+            canvas.style.padding = '8px';
         } else {
             canvas.style.background = '';
             canvas.style.borderRadius = '';
+            canvas.style.padding = '';
         }
     });
     
-    // ===== PERBAIKAN: Update card-id di dark mode =====
-    document.querySelectorAll('.card-id').forEach(el => {
+    // ===== UPDATE LEGEND DI DARK MODE =====
+    document.querySelectorAll('.chart-card .chartjs-legend').forEach(legend => {
         if (isDark) {
-            el.style.background = '#1e293b';
-            el.style.color = '#a5b4fc';
-            el.style.border = '1px solid #334155';
+            legend.style.color = '#f1f5f9';
         } else {
-            el.style.background = '#eef2ff';
-            el.style.color = '#4f46e5';
-            el.style.border = 'none';
+            legend.style.color = '';
         }
     });
 }
@@ -3076,6 +3239,10 @@ async function openDetailCustomer(id) {
     const statusText = customer.status === 'followup' ? 'Follow Up' : customer.status;
     const statusClass = customer.status === 'followup' ? 'status-followup' : `status-${customer.status}`;
     
+    // ===== RIWAYAT FOLLOWUP =====
+    const followupHistory = customer.followup_history || [];
+    const hasHistory = followupHistory.length > 0;
+    
     let ownerInfo = '';
     if (currentUserRole === 'owner' && customer.user_id !== currentUser.id) {
         try {
@@ -3103,6 +3270,16 @@ async function openDetailCustomer(id) {
             ` : `
                 <div class="info-row" style="border-bottom: none;"><span class="label">📊 Data Transaksi</span><span class="value" style="color: #9ca3af;">Belum ada data</span></div>
             `}
+        </div>
+    `;
+    
+    // ===== RIWAYAT KOMUNIKASI (CHAT MODERN) =====
+    bodyHTML += `
+        <div class="info-card" style="margin-bottom: 0;">
+            <div class="card-title">💬 Riwayat Komunikasi</div>
+            <div id="chatModernDetailCustomer" class="chat-modern-container" style="max-height: 300px; min-height: ${hasHistory ? '150px' : '80px'};">
+                <!-- Akan diisi oleh JavaScript -->
+            </div>
         </div>
     `;
     
@@ -3139,24 +3316,6 @@ async function openDetailCustomer(id) {
                 <div class="info-row"><span class="label">Dibalas</span><span class="value">${customer.followup_data.dibalas ? '✅ Ya' : '❌ Tidak'}</span></div>
                 <div class="info-row"><span class="label">Pesan</span><span class="value" style="font-size: 12px;">${escapeHtml(customer.followup_data.pesan || '-')}</span></div>
                 <div class="info-row" style="border-bottom: none;"><span class="label">Balasan</span><span class="value" style="font-size: 12px;">${escapeHtml(customer.followup_data.balasan || '-')}</span></div>
-            </div>
-        `;
-    }
-    
-    // ===== FOLLOWUP HISTORY =====
-    if (customer.followup_history && customer.followup_history.length > 0) {
-        const historyItems = customer.followup_history.map((item, idx) => `
-            <div class="info-row" style="padding: 4px 0;">
-                <span class="label">#${idx + 1}</span>
-                <span class="value" style="font-size: 12px; text-align: left; max-width: 70%;">${escapeHtml(item.pesan || '-')}</span>
-                <span class="value" style="font-size: 10px; color: #9ca3af; text-align: right;">${item.timestamp ? formatDateDDMMYYYY(item.timestamp) : ''}</span>
-            </div>
-        `).join('');
-        
-        bodyHTML += `
-            <div class="info-card">
-                <div class="card-title">📞 Riwayat Followup (${customer.followup_history.length})</div>
-                ${historyItems}
             </div>
         `;
     }
@@ -3210,12 +3369,28 @@ async function openDetailCustomer(id) {
     
     // ===== TAMPILKAN MODAL =====
     createModalNew(
-        '📊 Detail Transaksi',
-        'Informasi lengkap data transaksi',
+        '📊 Detail Customer',
+        'Informasi lengkap data customer',
         bodyHTML,
         footerHTML,
         'detailModalCustomer'
     );
+    
+    // ===== RENDER CHAT MODERN SETELAH MODAL TAMPIL =====
+    setTimeout(() => {
+        const chatContainer = document.getElementById('chatModernDetailCustomer');
+        if (chatContainer) {
+            const history = customer.followup_history || [];
+            renderChatModern(history, 'chatModernDetailCustomer', {
+                title: 'Riwayat Followup',
+                emptyMessage: 'Belum ada riwayat komunikasi',
+                showHeader: true,
+                showAvatar: true,
+                showTime: true,
+                showStatus: true
+            });
+        }
+    }, 100);
 }
 
 // ========== FIX MODAL SCROLLBAR ==========
@@ -3273,7 +3448,6 @@ async function openDetailProspek(id) {
         } catch(e) { console.error(e); }
     }
     
-    // ===== STATUS BADGE =====
     const statusMap = {
         'Baru': 'status-baru',
         'Dihubungi': 'status-dihubungi',
@@ -3282,10 +3456,13 @@ async function openDetailProspek(id) {
     };
     const statusClass = statusMap[prospek.status] || 'status-baru';
     
-    // ===== TIPE AGENT =====
     const tipeAgent = prospek.tipe_agent || 'AGENT';
     const tipeLabel = tipeAgent === 'CA' ? '🏦 Collecting Agent (CA)' : 
                      tipeAgent === 'Koordinator' ? '👥 Koordinator Wilayah (KORWIL)' : '👤 Agent';
+    
+    // ===== RIWAYAT DIHUBUNGI =====
+    const dihubungiHistory = prospek.dihubungi_history || [];
+    const hasHistory = dihubungiHistory.length > 0;
     
     // ===== BUILD BODY HTML =====
     let bodyHTML = `
@@ -3302,36 +3479,15 @@ async function openDetailProspek(id) {
         </div>
     `;
     
-    // ===== DIHUBUNGI DATA =====
-    if (prospek.dihubungi_data) {
-        bodyHTML += `
-            <div class="info-card">
-                <div class="card-title">✅ Dihubungi</div>
-                <div class="info-row"><span class="label">Terkirim</span><span class="value">${prospek.dihubungi_data.terkirim ? '✅ Ya' : '❌ Tidak'}</span></div>
-                <div class="info-row"><span class="label">Dibalas</span><span class="value">${prospek.dihubungi_data.dibalas ? '✅ Ya' : '❌ Tidak'}</span></div>
-                <div class="info-row"><span class="label">Pesan</span><span class="value" style="font-size: 12px;">${escapeHtml(prospek.dihubungi_data.pesan || '-')}</span></div>
-                <div class="info-row" style="border-bottom: none;"><span class="label">Balasan</span><span class="value" style="font-size: 12px;">${escapeHtml(prospek.dihubungi_data.balasan || '-')}</span></div>
+    // ===== RIWAYAT KOMUNIKASI (CHAT MODERN) =====
+    bodyHTML += `
+        <div class="info-card" style="margin-bottom: 0;">
+            <div class="card-title">💬 Riwayat Komunikasi</div>
+            <div id="chatModernDetailProspek" class="chat-modern-container" style="max-height: 300px; min-height: ${hasHistory ? '150px' : '80px'};">
+                <!-- Akan diisi oleh JavaScript -->
             </div>
-        `;
-    }
-    
-    // ===== DIHUBUNGI HISTORY =====
-    if (prospek.dihubungi_history && prospek.dihubungi_history.length > 0) {
-        const historyItems = prospek.dihubungi_history.map((item, idx) => `
-            <div class="info-row" style="padding: 4px 0;">
-                <span class="label">#${idx + 1}</span>
-                <span class="value" style="font-size: 12px; text-align: left; max-width: 70%;">${escapeHtml(item.pesan || '-')}</span>
-                <span class="value" style="font-size: 10px; color: #9ca3af; text-align: right;">${item.timestamp ? formatDateDDMMYYYY(item.timestamp) : ''}</span>
-            </div>
-        `).join('');
-        
-        bodyHTML += `
-            <div class="info-card">
-                <div class="card-title">📞 Riwayat Dihubungi (${prospek.dihubungi_history.length})</div>
-                ${historyItems}
-            </div>
-        `;
-    }
+        </div>
+    `;
     
     // ===== NEGOSIASI DATA =====
     if (prospek.negosiasi_data) {
@@ -3391,6 +3547,22 @@ async function openDetailProspek(id) {
         footerHTML,
         'detailModalProspek'
     );
+    
+    // ===== RENDER CHAT MODERN SETELAH MODAL TAMPIL =====
+    setTimeout(() => {
+        const chatContainer = document.getElementById('chatModernDetailProspek');
+        if (chatContainer) {
+            const history = prospek.dihubungi_history || [];
+            renderChatModern(history, 'chatModernDetailProspek', {
+                title: 'Riwayat Dihubungi',
+                emptyMessage: 'Belum ada riwayat komunikasi',
+                showHeader: true,
+                showAvatar: true,
+                showTime: true,
+                showStatus: true
+            });
+        }
+    }, 100);
 }
 
 // ========== FOLLOWUP CONFIRMATION FUNCTIONS ==========
@@ -3398,53 +3570,117 @@ function openFollowupConfirm(id) {
     currentPendingId = id;
     
     window.db.from('customers').select('*').eq('id', id).single().then(({ data: existingData }) => {
-        // ===== PERBAIKAN: Hitung jumlah followup =====
         const followupHistory = existingData?.followup_history || [];
         const followupCount = followupHistory.length;
         const nextFollowupNumber = followupCount + 1;
-        
-        // ===== PERBAIKAN: Ambil pesan terakhir untuk validasi =====
         const lastPesan = followupHistory.length > 0 ? followupHistory[followupHistory.length - 1].pesan : '';
         
         const modal = createModalWithHighZIndex(`
-            <div class="modal-content" style="max-width: 500px;">
-                <h3>✅ Konfirmasi Follow Up #${nextFollowupNumber}</h3>
-                <div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan customer</div>
-                <div style="background: #eef2ff; padding: 12px; border-radius: 10px; margin: 0 20px 10px 20px;">
-                    <p style="font-size: 12px; color: #4f46e5; margin: 0;">📌 <strong>Ketentuan:</strong><br>
-                    • Centang checklist dan isi pesan untuk menyimpan (deadline +1 hari)<br>
-                    • Isi BALASAN untuk dapat pindah ke Pending<br>
-                    • Pesan yang dikirim harus BERBEDA dari sebelumnya</p>
+            <div class="modal-content" style="max-width: 600px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; background: #fff; border-radius: 24px;">
+                <!-- HEADER -->
+                <div style="padding: 16px 24px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; flex-shrink: 0;">
+                    <div>
+                        <h3 style="font-size: 18px; margin: 0; color: #1f2937;">💬 Konfirmasi Follow Up #${nextFollowupNumber}</h3>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 2px;">
+                            📞 ${escapeHtml(existingData?.nama || 'Customer')}
+                        </div>
+                    </div>
+                    <button onclick="closeDynamicModal(this.closest('.modal'))" style="
+                        background: none;
+                        border: none;
+                        font-size: 28px;
+                        cursor: pointer;
+                        color: #6b7280;
+                        padding: 0 4px;
+                        line-height: 1;
+                    ">✕</button>
                 </div>
-                <div style="padding: 0 20px;">
-                    <div class="form-group">
-                        <label><input type="checkbox" id="followup_terkirim" style="margin-right: 8px;" ${existingData?.followup_data?.terkirim ? 'checked' : ''}> Apakah pesan sudah terkirim dan terbaca? <span style="color: #ef4444;">*</span></label>
-                    </div>
-                    <div class="form-group">
-                        <label>Isi Pesan yang Dikirim <span style="color: #ef4444;">*</span></label>
-                        <textarea id="followup_pesan" rows="3" placeholder="Tulis pesan yang dikirim ke customer..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">${escapeHtml(existingData?.followup_data?.pesan || '')}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label><input type="checkbox" id="followup_dibalas" style="margin-right: 8px;" ${existingData?.followup_data?.dibalas ? 'checked' : ''}> Apakah sudah di balas? <span style="color: #ef4444;">*</span></label>
-                    </div>
-                    <div class="form-group">
-                        <label>Balasan dari Customer <span style="color: #ef4444;">*</span></label>
-                        <textarea id="followup_balasan" rows="2" placeholder="Tulis balasan dari customer..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">${escapeHtml(existingData?.followup_data?.balasan || '')}</textarea>
-                    </div>
-                    <div style="background: #f3f4f6; padding: 8px 12px; border-radius: 8px; margin-top: 8px;">
-                        <small>📊 <strong>Riwayat Followup:</strong> ${followupCount} kali sebelumnya</small>
-                        ${followupCount > 0 ? `<br><small style="color: #6b7280;">📝 Pesan terakhir: "${escapeHtml(lastPesan.substring(0, 30))}${lastPesan.length > 30 ? '...' : ''}"</small>` : ''}
+                
+                <!-- ===== RIWAYAT CHAT ===== -->
+                <div style="padding: 12px 20px 8px; flex-shrink: 0;">
+                    <div id="chatModernConfirmFollowup" class="chat-modern-container" style="max-height: 250px; min-height: 120px;">
+                        <!-- Akan diisi oleh JavaScript -->
                     </div>
                 </div>
-                <div class="modal-buttons" style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <button id="followupSaveBtn" class="btn-primary" style="flex: 1;" disabled>💾 Simpan (+1 hari)</button>
-                    <button id="followupMoveBtn" class="btn-success" style="flex: 1;" disabled>📋 Simpan & Pindah ke Pending</button>
-                    <button id="followupConfirmNo" class="btn-danger" style="flex: 1;">📵 Nomor salah</button>
-                    <button id="followupConfirmCancel" class="btn-outline" style="flex: 1;">❌ Batal</button>
+                
+                <!-- ===== FORM INPUT ===== -->
+                <div style="padding: 0 20px 12px; flex-shrink: 0;">
+                    <!-- Checklist -->
+                    <div class="chat-modern-checklist">
+                        <input type="checkbox" id="followup_terkirim" ${existingData?.followup_data?.terkirim ? 'checked' : ''}>
+                        <span class="checklist-label">✅ Pesan sudah terkirim dan terbaca <span class="required">*</span></span>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 12px; font-weight: 600; color: #374151; display: block; margin-bottom: 4px;">
+                                ✏️ Pesan Dikirim <span style="color: #ef4444;">*</span>
+                            </label>
+                            <textarea id="followup_pesan" rows="2" placeholder="Tulis pesan yang dikirim..." style="
+                                width:100%; 
+                                padding: 10px 14px; 
+                                border-radius: 12px; 
+                                border: 1.5px solid #e5e7eb; 
+                                font-size: 13px;
+                                resize: vertical;
+                                background: #fafcff;
+                                color: #1f2937;
+                                transition: all 0.3s;
+                            ">${escapeHtml(existingData?.followup_data?.pesan || '')}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-modern-checklist">
+                        <input type="checkbox" id="followup_dibalas" ${existingData?.followup_data?.dibalas ? 'checked' : ''}>
+                        <span class="checklist-label">💬 Sudah di balas <span style="color: #ef4444;">*</span></span>
+                    </div>
+                    
+                    <div style="margin-bottom: 4px;">
+                        <label style="font-size: 12px; font-weight: 600; color: #374151; display: block; margin-bottom: 4px;">
+                            💬 Balasan dari Customer <span style="color: #ef4444;">*</span>
+                        </label>
+                        <textarea id="followup_balasan" rows="2" placeholder="Tulis balasan dari customer..." style="
+                            width:100%; 
+                            padding: 10px 14px; 
+                            border-radius: 12px; 
+                            border: 1.5px solid #e5e7eb; 
+                            font-size: 13px;
+                            resize: vertical;
+                            background: #fafcff;
+                            color: #1f2937;
+                            transition: all 0.3s;
+                        ">${escapeHtml(existingData?.followup_data?.balasan || '')}</textarea>
+                    </div>
+                    
+                    <div style="background: #fef3c7; padding: 8px 12px; border-radius: 8px; margin-top: 8px; border-left: 3px solid #f59e0b;">
+                        <p style="font-size: 11px; color: #92400e; margin: 0;">
+                            ⚠️ <strong>Peringatan:</strong> Pesan harus berbeda dari sebelumnya
+                            ${followupCount > 0 ? `<br>📝 Pesan terakhir: "${escapeHtml(lastPesan.substring(0, 30))}${lastPesan.length > 30 ? '...' : ''}"` : ''}
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- ===== TOMBOL ===== -->
+                <div class="modal-buttons" style="display: flex; gap: 10px; flex-wrap: wrap; padding: 12px 20px 16px; border-top: 1px solid #e5e7eb; flex-shrink: 0;">
+                    <button id="followupSaveBtn" class="btn-primary" style="flex: 1; padding: 10px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #4f46e5, #6366f1); color: white;" disabled>💾 Simpan (+1 hari)</button>
+                    <button id="followupMoveBtn" class="btn-success" style="flex: 1; padding: 10px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; background: #10b981; color: white;" disabled>📋 Simpan & Pindah ke Pending</button>
+                    <button id="followupConfirmNo" class="btn-danger" style="flex: 1; padding: 10px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; background: #ef4444; color: white;">📵 Nomor salah</button>
+                    <button id="followupConfirmCancel" class="btn-outline" style="flex: 1; padding: 10px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; background: #f3f4f6; color: #374151;">❌ Batal</button>
                 </div>
             </div>
         `, () => closeDynamicModal(modal));
         
+        // ===== RENDER CHAT =====
+        renderChatModern(followupHistory, 'chatModernConfirmFollowup', {
+            title: 'Riwayat Followup',
+            emptyMessage: 'Belum ada riwayat komunikasi',
+            showHeader: false,
+            showAvatar: true,
+            showTime: true,
+            showStatus: true
+        });
+        
+        // ===== ELEMEN FORM =====
         const cb1 = modal.querySelector('#followup_terkirim');
         const cb2 = modal.querySelector('#followup_dibalas');
         const pesanInput = modal.querySelector('#followup_pesan');
@@ -3454,48 +3690,26 @@ function openFollowupConfirm(id) {
         const noBtn = modal.querySelector('#followupConfirmNo');
         const cancelBtn = modal.querySelector('#followupConfirmCancel');
         
-        // ===== PERBAIKAN: Validasi form tanpa peringatan =====
+        // ===== VALIDASI FORM =====
         function validateForm() {
             const isChecked = cb1.checked;
             const hasPesan = pesanInput.value.trim() !== '';
             const hasBalasan = balasanInput.value.trim() !== '';
             const isDibalas = cb2.checked;
             
-            // ===== Cek apakah pesan berbeda dari sebelumnya =====
             const previousPesan = followupHistory.length > 0 ? followupHistory[followupHistory.length - 1].pesan : '';
             const isDifferent = pesanInput.value.trim() !== previousPesan.trim();
             
-            // ===== Kondisi untuk tombol Simpan =====
             const canSave = isChecked && hasPesan && isDifferent;
-            
-            // ===== Kondisi untuk tombol Pindah =====
             const canMove = isChecked && hasPesan && isDifferent && hasBalasan && isDibalas;
             
-            // ===== Update tombol Simpan =====
-            if (canSave) {
-                saveBtn.disabled = false;
-                saveBtn.style.opacity = '1';
-                saveBtn.style.background = '#4f46e5';
-                saveBtn.style.cursor = 'pointer';
-            } else {
-                saveBtn.disabled = true;
-                saveBtn.style.opacity = '0.6';
-                saveBtn.style.background = '#9ca3af';
-                saveBtn.style.cursor = 'not-allowed';
-            }
+            saveBtn.disabled = !canSave;
+            saveBtn.style.opacity = canSave ? '1' : '0.6';
+            saveBtn.style.cursor = canSave ? 'pointer' : 'not-allowed';
             
-            // ===== Update tombol Pindah =====
-            if (canMove) {
-                moveBtn.disabled = false;
-                moveBtn.style.opacity = '1';
-                moveBtn.style.background = '#10b981';
-                moveBtn.style.cursor = 'pointer';
-            } else {
-                moveBtn.disabled = true;
-                moveBtn.style.opacity = '0.6';
-                moveBtn.style.background = '#9ca3af';
-                moveBtn.style.cursor = 'not-allowed';
-            }
+            moveBtn.disabled = !canMove;
+            moveBtn.style.opacity = canMove ? '1' : '0.6';
+            moveBtn.style.cursor = canMove ? 'pointer' : 'not-allowed';
         }
         
         cb1.onclick = validateForm;
@@ -3504,7 +3718,7 @@ function openFollowupConfirm(id) {
         balasanInput.oninput = validateForm;
         validateForm();
         
-        // ===== Tombol Simpan (Hanya simpan, tidak pindah) =====
+        // ===== TOMBOL SIMPAN =====
         saveBtn.onclick = async () => {
             if (saveBtn.disabled) {
                 showNotifTop('⚠️ Harap centang checklist dan isi pesan yang berbeda!', true);
@@ -3565,7 +3779,7 @@ function openFollowupConfirm(id) {
             }
         };
         
-        // ===== Tombol Pindah (Simpan + Pindah ke Pending) =====
+        // ===== TOMBOL PINDAH =====
         moveBtn.onclick = async () => {
             if (moveBtn.disabled) {
                 showNotifTop('⚠️ Harap lengkapi semua data termasuk balasan!', true);
@@ -3631,7 +3845,7 @@ function openFollowupConfirm(id) {
             }
         };
         
-        // ===== Tombol Nomor Salah =====
+        // ===== TOMBOL NOMOR SALAH =====
         noBtn.onclick = async () => {
             const { data: doc } = await window.db.from('customers').select('*').eq('id', id).single();
             if (!doc) {
@@ -3665,6 +3879,10 @@ function openFollowupConfirm(id) {
         cancelBtn.onclick = () => {
             closeDynamicModal(modal);
         };
+        
+        // ===== DARK MODE =====
+        applyDarkModeToModal(modal);
+        
     }).catch(err => {
         console.error('❌ Error load customer:', err);
         showNotifTop('❌ Gagal memuat data: ' + err.message, true);
@@ -3672,277 +3890,935 @@ function openFollowupConfirm(id) {
 }
 
 // ========== PROSPEK DIHUBUNGI CONFIRMATION ==========
+// ========== PROSPEK DIHUBUNGI CONFIRMATION (DENGAN EDIT & HAPUS - FIX) ==========
 function openProspekDihubungiConfirm(id) {
     currentProspekId = id;
     
     window.db.from('prospek').select('*').eq('id', id).single().then(({ data: existingData }) => {
-        // ===== PERBAIKAN: Hitung jumlah dihubungi =====
         const dihubungiHistory = existingData?.dihubungi_history || [];
         const dihubungiCount = dihubungiHistory.length;
         const nextDihubungiNumber = dihubungiCount + 1;
-        
-        // ===== PERBAIKAN: Ambil pesan terakhir untuk validasi =====
         const lastPesan = dihubungiHistory.length > 0 ? dihubungiHistory[dihubungiHistory.length - 1].pesan : '';
+        const namaProspek = existingData?.nama || 'Prospek';
         
+        // ===== BUAT MODAL CHAT =====
         const modal = createModalWithHighZIndex(`
-            <div class="modal-content" style="max-width: 500px;">
-                <h3>✅ Konfirmasi Dihubungi #${nextDihubungiNumber}</h3>
-                <div class="modal-subtitle">Pastikan sudah melakukan komunikasi dengan prospek</div>
-                <div style="background: #eef2ff; padding: 12px; border-radius: 10px; margin: 0 20px 10px 20px;">
-                    <p style="font-size: 12px; color: #4f46e5; margin: 0;">📌 <strong>Ketentuan:</strong><br>
-                    • Centang checklist dan isi pesan untuk menyimpan (deadline +5 hari)<br>
-                    • Isi BALASAN untuk dapat pindah ke Negosiasi<br>
-                    • Pesan yang dikirim harus BERBEDA dari sebelumnya</p>
+            <div class="modal-content" style="max-width: 650px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; background: #fff; border-radius: 24px;">
+                <!-- HEADER -->
+                <div style="padding: 14px 20px 10px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; flex-shrink: 0;">
+                    <div>
+                        <h3 style="font-size: 16px; margin: 0; color: #1f2937;">💬 Konfirmasi Dihubungi #${nextDihubungiNumber}</h3>
+                        <div style="font-size: 11px; color: #6b7280; margin-top: 2px;">
+                            📞 ${escapeHtml(namaProspek)}
+                        </div>
+                    </div>
+                    <button onclick="closeDynamicModal(this.closest('.modal'))" style="
+                        background: none;
+                        border: none;
+                        font-size: 24px;
+                        cursor: pointer;
+                        color: #6b7280;
+                        padding: 0 4px;
+                        line-height: 1;
+                    ">✕</button>
                 </div>
-                <div style="padding: 0 20px;">
-                    <div class="form-group">
-                        <label><input type="checkbox" id="prospek_terkirim" style="margin-right: 8px;" ${existingData?.dihubungi_data?.terkirim ? 'checked' : ''}> Apakah pesan sudah terkirim dan terbaca? <span style="color: #ef4444;">*</span></label>
-                    </div>
-                    <div class="form-group">
-                        <label>Isi Pesan yang Dikirim <span style="color: #ef4444;">*</span></label>
-                        <textarea id="prospek_pesan" rows="3" placeholder="Tulis pesan yang dikirim ke prospek..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">${escapeHtml(existingData?.dihubungi_data?.pesan || '')}</textarea>
-                    </div>
-                    <div class="form-group">
-                        <label><input type="checkbox" id="prospek_dibalas" style="margin-right: 8px;" ${existingData?.dihubungi_data?.dibalas ? 'checked' : ''}> Apakah sudah di balas? <span style="color: #ef4444;">*</span></label>
-                    </div>
-                    <div class="form-group">
-                        <label>Balasan dari Prospek <span style="color: #ef4444;">*</span></label>
-                        <textarea id="prospek_balasan" rows="2" placeholder="Tulis balasan dari prospek..." style="width:100%; padding: 10px; border-radius: 10px; border: 1px solid #e5e7eb;">${escapeHtml(existingData?.dihubungi_data?.balasan || '')}</textarea>
-                    </div>
-                    <div style="background: #f3f4f6; padding: 8px 12px; border-radius: 8px; margin-top: 8px;">
-                        <small>📊 <strong>Riwayat Dihubungi:</strong> ${dihubungiCount} kali sebelumnya</small>
-                        ${dihubungiCount > 0 ? `<br><small style="color: #6b7280;">📝 Pesan terakhir: "${escapeHtml(lastPesan.substring(0, 30))}${lastPesan.length > 30 ? '...' : ''}"</small>` : ''}
+                
+                <!-- ===== RIWAYAT CHAT ===== -->
+                <div style="padding: 8px 16px 4px; flex-shrink: 0;">
+                    <div id="chatConfirmProspek" class="chat-premium-container" style="max-height: 300px; min-height: 120px; overflow-y: auto;">
+                        <!-- Akan diisi oleh JavaScript -->
                     </div>
                 </div>
-                <div class="modal-buttons" style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <button id="prospekSaveBtn" class="btn-primary" style="flex: 1;" disabled>💾 Simpan (+5 hari)</button>
-                    <button id="prospekMoveBtn" class="btn-success" style="flex: 1;" disabled>📋 Simpan & Pindah ke Negosiasi</button>
-                    <button id="prospekConfirmNo" class="btn-danger" style="flex: 1;">📵 Nomor salah</button>
-                    <button id="prospekConfirmCancel" class="btn-outline" style="flex: 1;">❌ Batal</button>
+                
+                <!-- ===== INFO ===== -->
+                <div style="padding: 0 16px 6px; flex-shrink: 0;">
+                    <div style="background: #eef2ff; padding: 6px 12px; border-radius: 8px; border-left: 3px solid #4f46e5;">
+                        <p style="font-size: 10px; color: #4f46e5; margin: 0;">
+                            💡 Pilih peran lalu kirim pesan. Klik ✏️ untuk edit, 🗑️ untuk hapus.
+                            ${dihubungiCount > 0 ? `<br>📝 Pesan terakhir: "${escapeHtml(lastPesan.substring(0, 25))}${lastPesan.length > 25 ? '...' : ''}"` : ''}
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- ===== TOMBOL AKSI ===== -->
+                <div class="modal-buttons" style="display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 16px 14px; border-top: 1px solid #e5e7eb; flex-shrink: 0;">
+                    <button id="prospekSaveBtn" class="btn-primary" style="flex: 1; padding: 8px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; font-size: 12px;" disabled>💾 Simpan (+5 hari)</button>
+                    <button id="prospekMoveBtn" class="btn-success" style="flex: 1; padding: 8px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #10b981; color: white; font-size: 12px;" disabled>📋 Pindah Negosiasi</button>
+                    <button id="prospekConfirmNo" class="btn-danger" style="flex: 1; padding: 8px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #ef4444; color: white; font-size: 12px;">📵 Nomor salah</button>
+                    <button id="prospekConfirmCancel" class="btn-outline" style="flex: 1; padding: 8px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; background: #f3f4f6; color: #374151; font-size: 12px;">❌ Batal</button>
                 </div>
             </div>
         `, () => closeDynamicModal(modal));
         
-        const cb1 = modal.querySelector('#prospek_terkirim');
-        const cb2 = modal.querySelector('#prospek_dibalas');
-        const pesanInput = modal.querySelector('#prospek_pesan');
-        const balasanInput = modal.querySelector('#prospek_balasan');
-        const saveBtn = modal.querySelector('#prospekSaveBtn');
-        const moveBtn = modal.querySelector('#prospekMoveBtn');
-        const noBtn = modal.querySelector('#prospekConfirmNo');
-        const cancelBtn = modal.querySelector('#prospekConfirmCancel');
+        // ===== VARIABEL STATE =====
+        let currentHistory = [...dihubungiHistory];
+        let editingIndex = -1;
+        let isSending = false;
+        let currentRole = 'sender';
         
-        // ===== PERBAIKAN: Validasi form tanpa peringatan =====
-        function validateForm() {
-            const isChecked = cb1.checked;
-            const hasPesan = pesanInput.value.trim() !== '';
-            const hasBalasan = balasanInput.value.trim() !== '';
-            const isDibalas = cb2.checked;
+        // ===== REFERENSI KE ELEMEN =====
+        const chatContainer = document.getElementById('chatConfirmProspek');
+        
+        // ===== FUNGSI UPDATE TOMBOL =====
+        function updateButtons() {
+            const hasPesan = currentHistory.some(h => h.pesan && h.pesan.trim());
+            const hasBalasan = currentHistory.some(h => h.balasan && h.balasan.trim());
             
-            // ===== Cek apakah pesan berbeda dari sebelumnya =====
-            const previousPesan = dihubungiHistory.length > 0 ? dihubungiHistory[dihubungiHistory.length - 1].pesan : '';
-            const isDifferent = pesanInput.value.trim() !== previousPesan.trim();
+            const saveBtn = modal.querySelector('#prospekSaveBtn');
+            const moveBtn = modal.querySelector('#prospekMoveBtn');
             
-            // ===== Kondisi untuk tombol Simpan =====
-            const canSave = isChecked && hasPesan && isDifferent;
-            
-            // ===== Kondisi untuk tombol Pindah =====
-            const canMove = isChecked && hasPesan && isDifferent && hasBalasan && isDibalas;
-            
-            // ===== Update tombol Simpan =====
-            if (canSave) {
-                saveBtn.disabled = false;
-                saveBtn.style.opacity = '1';
-                saveBtn.style.background = '#4f46e5';
-                saveBtn.style.cursor = 'pointer';
-            } else {
-                saveBtn.disabled = true;
-                saveBtn.style.opacity = '0.6';
-                saveBtn.style.background = '#9ca3af';
-                saveBtn.style.cursor = 'not-allowed';
+            if (saveBtn) {
+                saveBtn.disabled = !hasPesan;
+                saveBtn.style.opacity = hasPesan ? '1' : '0.6';
+                saveBtn.style.cursor = hasPesan ? 'pointer' : 'not-allowed';
             }
             
-            // ===== Update tombol Pindah =====
-            if (canMove) {
-                moveBtn.disabled = false;
-                moveBtn.style.opacity = '1';
-                moveBtn.style.background = '#10b981';
-                moveBtn.style.cursor = 'pointer';
-            } else {
-                moveBtn.disabled = true;
-                moveBtn.style.opacity = '0.6';
-                moveBtn.style.background = '#9ca3af';
-                moveBtn.style.cursor = 'not-allowed';
+            if (moveBtn) {
+                const canMove = hasPesan && hasBalasan;
+                moveBtn.disabled = !canMove;
+                moveBtn.style.opacity = canMove ? '1' : '0.6';
+                moveBtn.style.cursor = canMove ? 'pointer' : 'not-allowed';
             }
         }
         
-        cb1.onclick = validateForm;
-        cb2.onclick = validateForm;
-        pesanInput.oninput = validateForm;
-        balasanInput.oninput = validateForm;
-        validateForm();
-        
-        // ===== Tombol Simpan (Hanya simpan, tidak pindah) =====
-        saveBtn.onclick = async () => {
-            if (saveBtn.disabled) {
-                showNotifTop('⚠️ Harap centang checklist dan isi pesan yang berbeda!', true);
+        // ===== FUNGSI KIRIM PESAN =====
+        async function sendMessage(message, role) {
+            if (isSending) {
+                showNotifTop('⏳ Sedang mengirim...', true);
                 return;
             }
             
-            saveBtn.disabled = true;
-            saveBtn.textContent = '⏳ Menyimpan...';
+            if (!message || message.trim() === '') {
+                showNotifTop('⚠️ Pesan tidak boleh kosong!', true);
+                return;
+            }
+            
+            isSending = true;
+            
+            const isSender = role === 'sender';
             
             try {
-                const { data: doc } = await window.db.from('prospek').select('*').eq('id', id).single();
-                if (!doc) {
-                    showNotifTop('❌ Data prospek tidak ditemukan!', true);
+                // ===== CEK DUPLIKAT =====
+                const lastItem = currentHistory.length > 0 ? currentHistory[currentHistory.length - 1] : null;
+                if (lastItem && isSender && lastItem.pesan === message) {
+                    showNotifTop('⚠️ Pesan sama dengan sebelumnya!', true);
+                    isSending = false;
                     return;
                 }
                 
-                const newDeadline = addDaysFromToday(5);
-                const dihubungiHistory = doc.dihubungi_history || [];
-                
-                const dihubungiData = {
-                    terkirim: true,
-                    dibalas: cb2.checked,
-                    pesan: pesanInput.value,
-                    balasan: balasanInput.value || null,
+                const newItem = {
+                    pesan: isSender ? message : '',
+                    balasan: isSender ? '' : message,
                     timestamp: new Date().toISOString(),
-                    dihubungi_number: dihubungiHistory.length + 1
+                    dibalas: isSender ? false : true,
+                    dihubungi_number: currentHistory.length + 1
                 };
                 
-                const updatedHistory = [...dihubungiHistory, {
-                    pesan: pesanInput.value,
-                    balasan: balasanInput.value || null,
-                    timestamp: new Date().toISOString(),
-                    dihubungi_number: dihubungiHistory.length + 1,
-                    dibalas: cb2.checked
-                }];
+                currentHistory.push(newItem);
                 
-                await window.db.from('prospek').update({
-                    dihubungi_data: dihubungiData,
-                    dihubungi_history: updatedHistory,
-                    deadline: newDeadline,
-                    pesan_terkirim: pesanInput.value,
-                    balasan_diterima: balasanInput.value || null,
-                    pesan_dikirim_at: new Date().toISOString(),
+                const updateData = {
+                    dihubungi_history: currentHistory,
                     updated_at: new Date().toISOString()
-                }).eq('id', id);
+                };
                 
-                closeDynamicModal(modal);
-                showNotifTop(`✅ Dihubungi #${dihubungiHistory.length + 1} tersimpan! Deadline +5 hari menjadi ${newDeadline}`);
-                await loadProspek();
-                closeModal('detailModal');
+                if (isSender) {
+                    updateData.pesan_terkirim = message;
+                    updateData.pesan_dikirim_at = new Date().toISOString();
+                } else {
+                    updateData.balasan_diterima = message;
+                }
+                
+                await window.db.from('prospek').update(updateData).eq('id', id);
+                
+                showNotifTop(`✅ ${isSender ? 'Pesan' : 'Balasan'} berhasil dikirim!`);
+                
+                // ===== RE-RENDER CHAT =====
+                renderChatWithActions(currentHistory);
+                updateButtons();
                 
             } catch (err) {
                 console.error('Error:', err);
-                showNotifTop('❌ Gagal: ' + err.message, true);
+                showNotifTop('❌ Gagal mengirim: ' + err.message, true);
             } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = '💾 Simpan (+5 hari)';
+                isSending = false;
             }
-        };
+        }
         
-        // ===== Tombol Pindah (Simpan + Pindah ke Negosiasi) =====
-        moveBtn.onclick = async () => {
-            if (moveBtn.disabled) {
-                showNotifTop('⚠️ Harap lengkapi semua data termasuk balasan!', true);
+        // ===== FUNGSI RENDER CHAT DENGAN EDIT & HAPUS =====
+        function renderChatWithActions(history) {
+            if (!chatContainer) return;
+            
+            if (!history || history.length === 0) {
+                chatContainer.innerHTML = `
+                    <div class="chat-premium-empty">
+                        <div class="empty-icon">💬</div>
+                        <div class="empty-title">Belum ada riwayat komunikasi</div>
+                    </div>
+                `;
+                // Tetap tambahkan input group meskipun kosong
+                renderInputGroup();
                 return;
             }
             
-            if (!confirm('Pindahkan data ke Negosiasi? Pastikan semua data sudah lengkap.')) {
-                return;
+            // Batasi 20 pesan terakhir
+            const displayHistory = history.slice(-20);
+            let html = '';
+            let prevDate = '';
+            
+            displayHistory.forEach((item, index) => {
+                const pesan = item.pesan || '';
+                const balasan = item.balasan || '';
+                const timestamp = item.timestamp || item.created_at || '';
+                const dateStr = timestamp ? formatDateDDMMYYYY(timestamp) : '';
+                const timeStr = timestamp ? formatTimeMessage(timestamp) : '';
+                const isRead = item.dibalas === true || item.dibalas === 'true';
+                const actualIndex = history.length - displayHistory.length + index;
+                
+                if (dateStr && dateStr !== prevDate) {
+                    html += `
+                        <div class="chat-premium-message system">
+                            <div class="chat-premium-bubble">📅 ${dateStr}</div>
+                        </div>
+                    `;
+                    prevDate = dateStr;
+                }
+                
+                // ===== PESAN TERKIRIM (Pengirim - CS Agent) =====
+                if (pesan) {
+                    const initials = getInitials('CS Agent');
+                    html += `
+                        <div class="chat-premium-message sent" data-index="${actualIndex}">
+                            <div class="chat-premium-avatar sender">
+                                <span class="avatar-initials">${initials}</span>
+                            </div>
+                            <div class="chat-premium-bubble" style="position: relative; padding-right: 55px;">
+                                ${escapeHtml(pesan)}
+                                <span class="chat-premium-time">
+                                    ${timeStr || 'Baru saja'}
+                                    <span class="chat-premium-status ${isRead ? 'read' : 'sent'}">
+                                        ${isRead ? '✅' : '⏳'}
+                                    </span>
+                                </span>
+                                <div style="position: absolute; top: 4px; right: 4px; display: flex; gap: 4px;">
+                                    <button class="btn-edit-message" data-index="${actualIndex}" data-type="pesan" style="
+                                        background: #f59e0b;
+                                        border: none;
+                                        border-radius: 50%;
+                                        width: 20px;
+                                        height: 20px;
+                                        font-size: 10px;
+                                        cursor: pointer;
+                                        color: white;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                                        opacity: 0.7;
+                                        transition: opacity 0.2s;
+                                    " title="Edit pesan">✏️</button>
+                                    <button class="btn-delete-message" data-index="${actualIndex}" data-type="pesan" style="
+                                        background: #ef4444;
+                                        border: none;
+                                        border-radius: 50%;
+                                        width: 20px;
+                                        height: 20px;
+                                        font-size: 10px;
+                                        cursor: pointer;
+                                        color: white;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                                        opacity: 0.7;
+                                        transition: opacity 0.2s;
+                                    " title="Hapus pesan">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // ===== BALASAN (Penerima - Customer) =====
+                if (balasan) {
+                    const initials = getInitials('Customer');
+                    html += `
+                        <div class="chat-premium-message received" data-index="${actualIndex}">
+                            <div class="chat-premium-avatar receiver">
+                                <span class="avatar-initials">${initials}</span>
+                            </div>
+                            <div class="chat-premium-bubble" style="position: relative; padding-right: 55px;">
+                                ${escapeHtml(balasan)}
+                                <span class="chat-premium-time">${timeStr || 'Baru saja'}</span>
+                                <div style="position: absolute; top: 4px; right: 4px; display: flex; gap: 4px;">
+                                    <button class="btn-edit-message" data-index="${actualIndex}" data-type="balasan" style="
+                                        background: #f59e0b;
+                                        border: none;
+                                        border-radius: 50%;
+                                        width: 20px;
+                                        height: 20px;
+                                        font-size: 10px;
+                                        cursor: pointer;
+                                        color: white;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                                        opacity: 0.7;
+                                        transition: opacity 0.2s;
+                                    " title="Edit balasan">✏️</button>
+                                    <button class="btn-delete-message" data-index="${actualIndex}" data-type="balasan" style="
+                                        background: #ef4444;
+                                        border: none;
+                                        border-radius: 50%;
+                                        width: 20px;
+                                        height: 20px;
+                                        font-size: 10px;
+                                        cursor: pointer;
+                                        color: white;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                                        opacity: 0.7;
+                                        transition: opacity 0.2s;
+                                    " title="Hapus balasan">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            chatContainer.innerHTML = html;
+            
+            // ===== EVENT LISTENER UNTUK EDIT =====
+            chatContainer.querySelectorAll('.btn-edit-message').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const index = parseInt(this.dataset.index);
+                    const type = this.dataset.type;
+                    openEditMessageModal(index, type);
+                });
+                // Tampilkan selalu di mobile
+                if (window.innerWidth <= 640) {
+                    btn.style.opacity = '1';
+                }
+            });
+            
+            // ===== EVENT LISTENER UNTUK HAPUS =====
+            chatContainer.querySelectorAll('.btn-delete-message').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const index = parseInt(this.dataset.index);
+                    const type = this.dataset.type;
+                    if (confirm(`Hapus ${type === 'pesan' ? 'pesan' : 'balasan'} ini?`)) {
+                        deleteMessage(index, type);
+                    }
+                });
+                // Tampilkan selalu di mobile
+                if (window.innerWidth <= 640) {
+                    btn.style.opacity = '1';
+                }
+            });
+            
+            // ===== SCROLL KE BAWAH =====
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+            
+            // ===== TAMBAHKAN INPUT GROUP =====
+            renderInputGroup();
+        }
+        
+        // ===== FUNGSI RENDER INPUT GROUP =====
+        function renderInputGroup() {
+            // Hapus input group lama
+            const oldInputGroup = chatContainer.querySelector('.chat-premium-input-group');
+            if (oldInputGroup) {
+                oldInputGroup.remove();
             }
             
-            moveBtn.disabled = true;
-            moveBtn.textContent = '⏳ Memproses...';
+            const inputGroup = document.createElement('div');
+            inputGroup.className = 'chat-premium-input-group';
+            inputGroup.style.cssText = `
+                display: flex !important;
+                gap: 8px !important;
+                align-items: flex-end !important;
+                padding-top: 10px !important;
+                border-top: 1px solid #e5e7eb !important;
+                flex-wrap: wrap !important;
+                flex-shrink: 0 !important;
+                background: #f8fafc !important;
+                border-radius: 12px !important;
+                padding: 10px !important;
+                margin-top: 8px !important;
+            `;
             
-            try {
-                const { data: doc } = await window.db.from('prospek').select('*').eq('id', id).single();
-                if (!doc) {
-                    showNotifTop('❌ Data prospek tidak ditemukan!', true);
+            inputGroup.innerHTML = `
+                <div class="chat-premium-input-wrapper" style="flex: 1 !important; min-width: 0 !important;">
+                    <textarea class="chat-premium-input" rows="1" placeholder="Tulis pesan..." id="chatPremiumInput" style="
+                        width: 100% !important;
+                        padding: 10px 14px !important;
+                        border: 1.5px solid #e5e7eb !important;
+                        border-radius: 12px !important;
+                        font-size: 13px !important;
+                        resize: none !important;
+                        min-height: 44px !important;
+                        max-height: 100px !important;
+                        background: #ffffff !important;
+                        color: #1f2937 !important;
+                        transition: all 0.3s !important;
+                    "></textarea>
+                </div>
+                <div class="chat-premium-role-selector" style="display: flex !important; gap: 6px !important; flex-shrink: 0 !important;">
+                    <button class="chat-premium-role-btn active-sender" data-role="sender" id="chatRoleSender" style="
+                        padding: 8px 14px !important;
+                        border-radius: 10px !important;
+                        border: 1.5px solid #e5e7eb !important;
+                        background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+                        color: #ffffff !important;
+                        font-size: 12px !important;
+                        font-weight: 600 !important;
+                        cursor: pointer !important;
+                        transition: all 0.3s !important;
+                    ">📤 CS</button>
+                    <button class="chat-premium-role-btn" data-role="receiver" id="chatRoleReceiver" style="
+                        padding: 8px 14px !important;
+                        border-radius: 10px !important;
+                        border: 1.5px solid #e5e7eb !important;
+                        background: #ffffff !important;
+                        color: #6b7280 !important;
+                        font-size: 12px !important;
+                        font-weight: 600 !important;
+                        cursor: pointer !important;
+                        transition: all 0.3s !important;
+                    ">📥 Customer</button>
+                </div>
+                <button class="chat-premium-send-btn" id="chatPremiumSendBtn" style="
+                    padding: 10px 20px !important;
+                    border-radius: 12px !important;
+                    border: none !important;
+                    background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+                    color: white !important;
+                    font-weight: 600 !important;
+                    font-size: 13px !important;
+                    cursor: pointer !important;
+                    transition: all 0.3s !important;
+                    min-height: 44px !important;
+                    white-space: nowrap !important;
+                    flex-shrink: 0 !important;
+                ">📤 Kirim</button>
+            `;
+            
+            chatContainer.appendChild(inputGroup);
+            
+            // ===== SETUP EVENT LISTENERS =====
+            setupInputListeners();
+        }
+        
+        // ===== FUNGSI SETUP INPUT LISTENERS =====
+        // ===== FUNGSI SETUP INPUT LISTENERS =====
+function setupInputListeners() {
+    const input = chatContainer.querySelector('#chatPremiumInput');
+    const sendBtn = chatContainer.querySelector('#chatPremiumSendBtn');
+    const roleSender = chatContainer.querySelector('#chatRoleSender');
+    const roleReceiver = chatContainer.querySelector('#chatRoleReceiver');
+    
+    // ===== ROLE SELECTOR DENGAN ANIMASI =====
+    if (roleSender && roleReceiver) {
+        // Reset ke sender
+        currentRole = 'sender';
+        
+        // Set class awal
+        roleSender.className = 'chat-premium-role-btn active-sender';
+        roleReceiver.className = 'chat-premium-role-btn inactive';
+        
+        // Hapus listener lama dengan clone
+        const newRoleSender = roleSender.cloneNode(true);
+        const newRoleReceiver = roleReceiver.cloneNode(true);
+        roleSender.parentNode.replaceChild(newRoleSender, roleSender);
+        roleReceiver.parentNode.replaceChild(newRoleReceiver, roleReceiver);
+        
+        const freshRoleSender = chatContainer.querySelector('#chatRoleSender');
+        const freshRoleReceiver = chatContainer.querySelector('#chatRoleReceiver');
+        
+        // ===== EVENT SENDER =====
+        freshRoleSender.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            currentRole = 'sender';
+            
+            // Animasi class
+            this.className = 'chat-premium-role-btn active-sender';
+            freshRoleReceiver.className = 'chat-premium-role-btn inactive';
+            
+            // Tambahkan efek ripple
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1.02)';
+            }, 100);
+            
+            // Update style inline untuk keamanan
+            this.style.background = 'linear-gradient(135deg, #4f46e5, #6366f1)';
+            this.style.color = '#ffffff';
+            this.style.borderColor = '#4f46e5';
+            this.style.boxShadow = '0 4px 12px rgba(79, 70, 229, 0.3)';
+            
+            freshRoleReceiver.style.background = '#ffffff';
+            freshRoleReceiver.style.color = '#6b7280';
+            freshRoleReceiver.style.borderColor = '#e5e7eb';
+            freshRoleReceiver.style.boxShadow = 'none';
+            
+            // Dark mode support
+            if (document.body.classList.contains('dark-mode')) {
+                freshRoleReceiver.style.background = '#1e293b';
+                freshRoleReceiver.style.color = '#94a3b8';
+                freshRoleReceiver.style.borderColor = '#334155';
+            }
+        });
+        
+        // ===== EVENT RECEIVER =====
+        freshRoleReceiver.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            currentRole = 'receiver';
+            
+            // Animasi class
+            this.className = 'chat-premium-role-btn active-receiver';
+            freshRoleSender.className = 'chat-premium-role-btn inactive';
+            
+            // Tambahkan efek ripple
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1.02)';
+            }, 100);
+            
+            // Update style inline untuk keamanan
+            this.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            this.style.color = '#ffffff';
+            this.style.borderColor = '#10b981';
+            this.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)';
+            
+            freshRoleSender.style.background = '#ffffff';
+            freshRoleSender.style.color = '#6b7280';
+            freshRoleSender.style.borderColor = '#e5e7eb';
+            freshRoleSender.style.boxShadow = 'none';
+            
+            // Dark mode support
+            if (document.body.classList.contains('dark-mode')) {
+                freshRoleSender.style.background = '#1e293b';
+                freshRoleSender.style.color = '#94a3b8';
+                freshRoleSender.style.borderColor = '#334155';
+            }
+        });
+        
+        // ===== TERAPKAN DARK MODE AWAL =====
+        if (document.body.classList.contains('dark-mode')) {
+            // Sender aktif di dark mode
+            freshRoleSender.style.background = 'linear-gradient(135deg, #4f46e5, #6366f1)';
+            freshRoleSender.style.color = '#ffffff';
+            freshRoleSender.style.borderColor = '#4f46e5';
+            
+            freshRoleReceiver.style.background = '#1e293b';
+            freshRoleReceiver.style.color = '#94a3b8';
+            freshRoleReceiver.style.borderColor = '#334155';
+        }
+    }
+    
+    // ===== SEND BUTTON =====
+    if (sendBtn) {
+        const newSendBtn = sendBtn.cloneNode(true);
+        sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+        const freshSendBtn = chatContainer.querySelector('#chatPremiumSendBtn');
+        
+        freshSendBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const inputField = chatContainer.querySelector('#chatPremiumInput');
+            const message = inputField ? inputField.value.trim() : '';
+            
+            if (message) {
+                // Efek klik
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'scale(1)';
+                }, 150);
+                
+                sendMessage(message, currentRole);
+                if (inputField) {
+                    inputField.value = '';
+                    inputField.style.height = 'auto';
+                }
+            } else {
+                showNotifTop('⚠️ Pesan tidak boleh kosong!', true);
+            }
+        });
+    }
+    
+    // ===== INPUT TEXTAREA =====
+    if (input) {
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        const freshInput = chatContainer.querySelector('#chatPremiumInput');
+        
+        freshInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const message = this.value.trim();
+                if (message) {
+                    sendMessage(message, currentRole);
+                    this.value = '';
+                    this.style.height = 'auto';
+                } else {
+                    showNotifTop('⚠️ Pesan tidak boleh kosong!', true);
+                }
+            }
+        });
+        
+        freshInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+        
+        // ===== DARK MODE INPUT =====
+        if (document.body.classList.contains('dark-mode')) {
+            freshInput.style.background = '#0f172a';
+            freshInput.style.color = '#f1f5f9';
+            freshInput.style.borderColor = '#334155';
+        }
+    }
+}
+        
+        // ===== FUNGSI EDIT PESAN =====
+        function openEditMessageModal(index, type) {
+            const item = currentHistory[index];
+            if (!item) return;
+            
+            const currentText = type === 'pesan' ? item.pesan : item.balasan;
+            
+            // Buat modal edit sederhana
+            const editModal = document.createElement('div');
+            editModal.className = 'modal edit-message-modal';
+            editModal.style.cssText = `
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                background: rgba(0, 0, 0, 0.6) !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                z-index: 9999999999 !important;
+                backdrop-filter: blur(4px) !important;
+            `;
+            
+            editModal.innerHTML = `
+                <div class="modal-content" style="max-width: 450px; padding: 0; overflow: hidden;">
+                    <div style="padding: 16px 20px 12px; border-bottom: 1px solid #f0f0f0;">
+                        <h3 style="font-size: 16px; margin: 0;">✏️ Edit ${type === 'pesan' ? 'Pesan' : 'Balasan'}</h3>
+                    </div>
+                    <div style="padding: 16px 20px;">
+                        <textarea id="editMessageText" rows="3" style="
+                            width: 100%;
+                            padding: 10px 14px;
+                            border: 1.5px solid #e5e7eb;
+                            border-radius: 12px;
+                            font-size: 13px;
+                            resize: vertical;
+                            background: #fafcff;
+                            color: #1f2937;
+                        ">${escapeHtml(currentText)}</textarea>
+                        <div style="margin-top: 8px; font-size: 11px; color: #6b7280;">
+                            💡 Edit pesan dan klik Simpan
+                        </div>
+                    </div>
+                    <div class="modal-buttons" style="padding: 12px 20px 16px; border-top: 1px solid #e5e7eb; gap: 10px;">
+                        <button id="saveEditMessageBtn" class="btn-primary" style="flex: 1; padding: 10px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #4f46e5, #6366f1); color: white;">💾 Simpan</button>
+                        <button id="cancelEditMessageBtn" class="btn-outline" style="flex: 1; padding: 10px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; background: #f3f4f6; color: #374151;">❌ Batal</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(editModal);
+            
+            // ===== TOMBOL SIMPAN =====
+            document.getElementById('saveEditMessageBtn').onclick = async function() {
+                const newText = document.getElementById('editMessageText').value.trim();
+                if (!newText) {
+                    showNotifTop('⚠️ Pesan tidak boleh kosong!', true);
                     return;
                 }
                 
-                const newDeadline = addDaysFromToday(5);
-                const dihubungiHistory = doc.dihubungi_history || [];
+                this.disabled = true;
+                this.textContent = '⏳ Menyimpan...';
                 
-                const dihubungiData = {
-                    terkirim: true,
-                    dibalas: true,
-                    pesan: pesanInput.value,
-                    balasan: balasanInput.value,
-                    timestamp: new Date().toISOString(),
-                    dihubungi_number: dihubungiHistory.length + 1
-                };
-                
-                const updatedHistory = [...dihubungiHistory, {
-                    pesan: pesanInput.value,
-                    balasan: balasanInput.value,
-                    timestamp: new Date().toISOString(),
-                    dihubungi_number: dihubungiHistory.length + 1,
-                    dibalas: true
-                }];
-                
-                await window.db.from('prospek').update({
-                    dihubungi_data: dihubungiData,
-                    dihubungi_history: updatedHistory,
-                    status: 'Negosiasi',
-                    deadline: newDeadline,
-                    pesan_terkirim: pesanInput.value,
-                    balasan_diterima: balasanInput.value,
-                    pesan_dikirim_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }).eq('id', id);
-                
-                closeDynamicModal(modal);
-                showNotifTop(`✅ Dihubungi #${dihubungiHistory.length + 1} selesai! Data dipindahkan ke Negosiasi. Deadline +5 hari menjadi ${newDeadline}`);
-                await loadProspek();
-                closeModal('detailModal');
-                
-            } catch (err) {
-                console.error('Error:', err);
-                showNotifTop('❌ Gagal: ' + err.message, true);
-            } finally {
-                moveBtn.disabled = false;
-                moveBtn.textContent = '📋 Simpan & Pindah ke Negosiasi';
-            }
-        };
-        
-        // ===== Tombol Nomor Salah =====
-        noBtn.onclick = async () => {
-            const { data: doc } = await window.db.from('prospek').select('*').eq('id', id).single();
-            if (!doc) {
-                showNotifTop('❌ Data prospek tidak ditemukan!', true);
-                return;
-            }
-            
-            if (confirm(`Pindahkan "${escapeHtml(doc.nama)}" ke Database Nomor Salah?`)) {
                 try {
-                    const nomorSalahData = {
-                        nama: doc.nama || 'Tidak ada nama',
-                        hp: doc.hp || '',
-                        alasan: 'Nomor tidak bisa dihubungi / tidak aktif',
-                        deleted_at: new Date().toISOString()
+                    // Update data
+                    const updatedItem = { ...item };
+                    if (type === 'pesan') {
+                        updatedItem.pesan = newText;
+                    } else {
+                        updatedItem.balasan = newText;
+                    }
+                    updatedItem.timestamp = new Date().toISOString();
+                    
+                    currentHistory[index] = updatedItem;
+                    
+                    // Simpan ke database
+                    await window.db.from('prospek').update({
+                        dihubungi_history: currentHistory,
+                        updated_at: new Date().toISOString()
+                    }).eq('id', id);
+                    
+                    showNotifTop('✅ Pesan berhasil diupdate!');
+                    editModal.remove();
+                    
+                    // Re-render chat
+                    renderChatWithActions(currentHistory);
+                    updateButtons();
+                    
+                } catch (err) {
+                    console.error('Error:', err);
+                    showNotifTop('❌ Gagal update: ' + err.message, true);
+                } finally {
+                    this.disabled = false;
+                    this.textContent = '💾 Simpan';
+                }
+            };
+            
+            // ===== TOMBOL BATAL =====
+            document.getElementById('cancelEditMessageBtn').onclick = function() {
+                editModal.remove();
+            };
+            
+            // Klik di luar modal
+            editModal.onclick = function(e) {
+                if (e.target === this) {
+                    editModal.remove();
+                }
+            };
+            
+            // Fokus ke textarea
+            setTimeout(() => {
+                const textarea = document.getElementById('editMessageText');
+                if (textarea) {
+                    textarea.focus();
+                    textarea.select();
+                }
+            }, 100);
+        }
+        
+        // ===== FUNGSI HAPUS PESAN =====
+        async function deleteMessage(index, type) {
+            try {
+                const item = currentHistory[index];
+                if (!item) return;
+                
+                // Kosongkan field yang dihapus
+                if (type === 'pesan') {
+                    item.pesan = '';
+                } else {
+                    item.balasan = '';
+                }
+                
+                // Jika kedua field kosong, hapus item dari array
+                if (!item.pesan && !item.balasan) {
+                    currentHistory.splice(index, 1);
+                } else {
+                    currentHistory[index] = item;
+                }
+                
+                // Simpan ke database
+                await window.db.from('prospek').update({
+                    dihubungi_history: currentHistory,
+                    updated_at: new Date().toISOString()
+                }).eq('id', id);
+                
+                showNotifTop('🗑️ Pesan berhasil dihapus!');
+                
+                // Re-render chat
+                renderChatWithActions(currentHistory);
+                updateButtons();
+                
+            } catch (err) {
+                console.error('Error:', err);
+                showNotifTop('❌ Gagal hapus: ' + err.message, true);
+            }
+        }
+        
+        // ===== RENDER AWAL =====
+        renderChatWithActions(currentHistory);
+        updateButtons();
+        
+        // ===== TOMBOL SIMPAN =====
+        const saveBtn = modal.querySelector('#prospekSaveBtn');
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                if (saveBtn.disabled) {
+                    showNotifTop('⚠️ Kirim minimal satu pesan terlebih dahulu!', true);
+                    return;
+                }
+                
+                saveBtn.disabled = true;
+                saveBtn.textContent = '⏳ Menyimpan...';
+                
+                try {
+                    const newDeadline = addDaysFromToday(5);
+                    const lastItem = currentHistory.length > 0 ? currentHistory[currentHistory.length - 1] : {};
+                    
+                    const dihubungiData = {
+                        terkirim: !!lastItem.pesan,
+                        dibalas: !!lastItem.balasan,
+                        pesan: lastItem.pesan || null,
+                        balasan: lastItem.balasan || null,
+                        timestamp: lastItem.timestamp || new Date().toISOString(),
+                        dihubungi_number: currentHistory.length
                     };
                     
-                    await window.db.from('nomor_salah').insert(nomorSalahData);
-                    await window.db.from('prospek').delete().eq('id', id);
+                    await window.db.from('prospek').update({
+                        dihubungi_data: dihubungiData,
+                        deadline: newDeadline,
+                        updated_at: new Date().toISOString()
+                    }).eq('id', id);
                     
-                    showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
                     closeDynamicModal(modal);
+                    showNotifTop(`✅ Data tersimpan! Deadline +5 hari menjadi ${newDeadline}`);
                     await loadProspek();
-                    await loadDBNomorSalah();
                     closeModal('detailModal');
+                    
                 } catch (err) {
+                    console.error('Error:', err);
                     showNotifTop('❌ Gagal: ' + err.message, true);
+                } finally {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = '💾 Simpan (+5 hari)';
                 }
-            }
-        };
+            };
+        }
         
-        cancelBtn.onclick = () => {
-            closeDynamicModal(modal);
-        };
+        // ===== TOMBOL PINDAH =====
+        const moveBtn = modal.querySelector('#prospekMoveBtn');
+        if (moveBtn) {
+            moveBtn.onclick = async () => {
+                if (moveBtn.disabled) {
+                    showNotifTop('⚠️ Harap kirim pesan dan balasan terlebih dahulu!', true);
+                    return;
+                }
+                
+                if (!confirm('Pindahkan data ke Negosiasi? Pastikan semua data sudah lengkap.')) {
+                    return;
+                }
+                
+                moveBtn.disabled = true;
+                moveBtn.textContent = '⏳ Memproses...';
+                
+                try {
+                    const newDeadline = addDaysFromToday(5);
+                    const lastItem = currentHistory.length > 0 ? currentHistory[currentHistory.length - 1] : {};
+                    
+                    const dihubungiData = {
+                        terkirim: true,
+                        dibalas: true,
+                        pesan: lastItem.pesan || null,
+                        balasan: lastItem.balasan || null,
+                        timestamp: lastItem.timestamp || new Date().toISOString(),
+                        dihubungi_number: currentHistory.length
+                    };
+                    
+                    await window.db.from('prospek').update({
+                        dihubungi_data: dihubungiData,
+                        status: 'Negosiasi',
+                        deadline: newDeadline,
+                        updated_at: new Date().toISOString()
+                    }).eq('id', id);
+                    
+                    closeDynamicModal(modal);
+                    showNotifTop(`✅ Data dipindahkan ke Negosiasi! Deadline +5 hari menjadi ${newDeadline}`);
+                    await loadProspek();
+                    closeModal('detailModal');
+                    
+                } catch (err) {
+                    console.error('Error:', err);
+                    showNotifTop('❌ Gagal: ' + err.message, true);
+                } finally {
+                    moveBtn.disabled = false;
+                    moveBtn.textContent = '📋 Pindah Negosiasi';
+                }
+            };
+        }
+        
+        // ===== TOMBOL NOMOR SALAH =====
+        const noBtn = modal.querySelector('#prospekConfirmNo');
+        if (noBtn) {
+            noBtn.onclick = async () => {
+                if (currentHistory.length === 0) {
+                    showNotifTop('⚠️ Tidak ada data untuk dipindahkan!', true);
+                    return;
+                }
+                
+                if (confirm(`Pindahkan "${escapeHtml(namaProspek)}" ke Database Nomor Salah?`)) {
+                    try {
+                        const { data: doc } = await window.db.from('prospek').select('*').eq('id', id).single();
+                        if (!doc) {
+                            showNotifTop('❌ Data prospek tidak ditemukan!', true);
+                            return;
+                        }
+                        
+                        const negosiasiData = doc.negosiasi_data || null;
+                        const dihubungiData = doc.dihubungi_data || null;
+                        
+                        const nomorSalahData = {
+                            nama: doc.nama || 'Tidak ada nama',
+                            hp: formatPhoneNumber(doc.hp || ''),
+                            alasan: 'Nomor tidak bisa dihubungi / tidak aktif',
+                            deleted_at: new Date().toISOString(),
+                            user_id: doc.user_id || currentUser.id,
+                            dihubungi_data: dihubungiData || { pesan: null, balasan: null },
+                            negosiasi_data: negosiasiData,
+                            pesan_terkirim: doc.pesan_terkirim || null,
+                            balasan_diterima: doc.balasan_diterima || null,
+                            upline_name: doc.upline_name || null,
+                            upline_phone: doc.upline_phone || null,
+                            dihubungi_history: currentHistory
+                        };
+                        
+                        await window.db.from('nomor_salah').insert(nomorSalahData);
+                        await window.db.from('prospek').delete().eq('id', id);
+                        
+                        showNotifTop('📵 Data dipindahkan ke Database Nomor Salah');
+                        closeDynamicModal(modal);
+                        await loadProspek();
+                        await loadDBNomorSalah();
+                        closeModal('detailModal');
+                    } catch (err) {
+                        showNotifTop('❌ Gagal: ' + err.message, true);
+                    }
+                }
+            };
+        }
+        
+        // ===== TOMBOL BATAL =====
+        const cancelBtn = modal.querySelector('#prospekConfirmCancel');
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                closeDynamicModal(modal);
+            };
+        }
+        
+        // ===== DARK MODE =====
+        applyDarkModeToModal(modal);
+        
+        // ===== SCROLL KE BAWAH =====
+        setTimeout(() => {
+            if (chatContainer) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }, 200);
+        
     }).catch(err => {
         console.error('❌ Error load prospek:', err);
         showNotifTop('❌ Gagal memuat data: ' + err.message, true);
@@ -5721,6 +6597,7 @@ async function updateProspekStatus(id, newStatus) {
     await loadProspek();
 }
 
+// ========== DELETE CUSTOMER ==========
 async function deleteCustomer(id) {
     if (!confirm('Yakin hapus customer ini? Data akan dihapus permanen!')) return;
     
@@ -5741,7 +6618,6 @@ async function deleteCustomer(id) {
     let transaksiId = null;
     
     if (agentId) {
-        // Cari di db_transaksi dengan agent_id yang sama dan status 'imported'
         const { data: transaksiData } = await window.db
             .from('db_transaksi')
             .select('id')
@@ -5781,7 +6657,523 @@ async function deleteCustomer(id) {
     showNotifTop('🗑️ Data customer berhasil dihapus');
     closeModal('detailModal');
     await loadCustomers();
-    await loadDbTransaksi(); // Refresh db_transaksi
+    await loadDbTransaksi();
+    renderFullFollowupKanban();
+    updateChartCustomer();
+    updateStats();
+    updateDeadlineBadge();
+}
+
+// ========== DELETE PROSPEK ==========
+async function deleteProspek(id) {
+    if (!confirm('Yakin hapus prospek ini? Data akan dihapus permanen!')) return;
+    
+    try {
+        const { error } = await window.db.from('prospek').delete().eq('id', id);
+        if (error) {
+            showNotifTop('❌ Gagal hapus: ' + error.message, true);
+            return;
+        }
+        
+        showNotifTop('🗑️ Data prospek berhasil dihapus');
+        closeModal('detailModal');
+        await loadProspek();
+        renderFullProspekKanban();
+        updateChartProspek();
+        updateDeadlineBadge();
+        
+    } catch (err) {
+        console.error('Error delete prospek:', err);
+        showNotifTop('❌ Gagal: ' + err.message, true);
+    }
+}
+
+// ================================================================
+// ========== RENDER CHAT MODERN (UNTUK DETAIL) ==========
+// ================================================================
+
+/**
+ * Render chat modern untuk riwayat komunikasi di detail (READ-ONLY)
+ * @param {Array} history - Array riwayat komunikasi
+ * @param {string} containerId - ID container
+ * @param {Object} options - Opsi tambahan
+ */
+function renderChatModern(history, containerId, options = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const {
+        title = '💬 Riwayat Komunikasi',
+        emptyMessage = 'Belum ada riwayat komunikasi',
+        showHeader = true,
+        showAvatar = true,
+        showTime = true,
+        showStatus = true,
+        maxItems = 30, // REDUKSI DARI 50 KE 30
+        senderLabel = 'CS Agent',
+        receiverLabel = 'Customer'
+    } = options;
+    
+    if (!history || history.length === 0) {
+        container.innerHTML = `
+            <div class="chat-modern-empty">
+                <div class="empty-icon">💬</div>
+                <div class="empty-title">${emptyMessage}</div>
+            </div>
+        `;
+        return;
+    }
+    
+    // ===== BATASI HISTORI =====
+    const displayHistory = history.slice(-maxItems);
+    const totalMessages = displayHistory.length;
+    const totalPesan = displayHistory.filter(h => h.pesan && h.pesan.trim()).length;
+    const totalBalasan = displayHistory.filter(h => h.balasan && h.balasan.trim()).length;
+    
+    let html = '';
+    
+    if (showHeader) {
+        html += `
+            <div class="chat-modern-header">
+                <div class="chat-title">
+                    💬 ${title}
+                    <span style="font-size: 10px; font-weight: 400; color: #9ca3af; margin-left: 4px;">
+                        (${totalMessages} pesan)
+                    </span>
+                </div>
+                <div class="chat-meta">
+                    📤 ${totalPesan} · 📥 ${totalBalasan}
+                </div>
+            </div>
+        `;
+    }
+    
+    let prevDate = '';
+    
+    displayHistory.forEach((item) => {
+        const pesan = item.pesan || '';
+        const balasan = item.balasan || '';
+        const timestamp = item.timestamp || item.created_at || '';
+        const dateStr = timestamp ? formatDateDDMMYYYY(timestamp) : '';
+        const timeStr = timestamp ? formatTimeMessage(timestamp) : '';
+        const isRead = item.dibalas === true || item.dibalas === 'true';
+        
+        // ===== HANYA TAMPILKAN TANGGAL JIKA BERBEDA =====
+        if (dateStr && dateStr !== prevDate) {
+            html += `
+                <div class="chat-modern-message system">
+                    <div class="chat-modern-bubble">📅 ${dateStr}</div>
+                </div>
+            `;
+            prevDate = dateStr;
+        }
+        
+        // ===== PESAN TERKIRIM (Pengirim - CS Agent) =====
+        if (pesan) {
+            const initials = getInitials(senderLabel);
+            html += `
+                <div class="chat-modern-message sent">
+                    ${showAvatar ? `
+                        <div class="chat-modern-avatar sender">
+                            <span class="avatar-initials">${initials}</span>
+                        </div>
+                    ` : ''}
+                    <div class="chat-modern-bubble">
+                        ${escapeHtml(pesan)}
+                        ${showTime ? `
+                            <span class="chat-modern-time">
+                                ${timeStr || 'Baru saja'}
+                                ${showStatus ? `
+                                    <span class="chat-modern-status ${isRead ? 'read' : 'unread'}">
+                                        <span class="status-dot"></span>
+                                        ${isRead ? 'Dibaca' : 'Belum Dibaca'}
+                                    </span>
+                                ` : ''}
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ===== BALASAN (Penerima - Customer) =====
+        if (balasan) {
+            const initials = getInitials(receiverLabel);
+            html += `
+                <div class="chat-modern-message received">
+                    ${showAvatar ? `
+                        <div class="chat-modern-avatar receiver">
+                            <span class="avatar-initials">${initials}</span>
+                        </div>
+                    ` : ''}
+                    <div class="chat-modern-bubble">
+                        ${escapeHtml(balasan)}
+                        ${showTime ? `
+                            <span class="chat-modern-time">${timeStr || 'Baru saja'}</span>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    container.innerHTML = html;
+    
+    // ===== SCROLL KE BAWAH =====
+    setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+    }, 100);
+}
+
+// ================================================================
+// ========== RENDER CHAT PREMIUM DENGAN INPUT ==========
+// ================================================================
+
+function renderChatPremiumWithInput(history, containerId, options = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const {
+        title = '💬 Riwayat Komunikasi',
+        emptyMessage = 'Belum ada riwayat komunikasi',
+        showHeader = false,
+        showAvatar = true,
+        showTime = true,
+        showStatus = true,
+        maxItems = 20,
+        onSendMessage = null,
+        senderLabel = 'CS Agent',
+        receiverLabel = 'Customer'
+    } = options;
+    
+    // ===== RENDER CHAT =====
+    if (!history || history.length === 0) {
+        container.innerHTML = `
+            <div class="chat-premium-empty">
+                <div class="empty-icon">💬</div>
+                <div class="empty-title">${emptyMessage}</div>
+            </div>
+        `;
+    } else {
+        const displayHistory = history.slice(-maxItems);
+        let html = '';
+        let prevDate = '';
+        
+        displayHistory.forEach((item) => {
+            const pesan = item.pesan || '';
+            const balasan = item.balasan || '';
+            const timestamp = item.timestamp || item.created_at || '';
+            const dateStr = timestamp ? formatDateDDMMYYYY(timestamp) : '';
+            const timeStr = timestamp ? formatTimeMessage(timestamp) : '';
+            const isRead = item.dibalas === true || item.dibalas === 'true';
+            
+            if (dateStr && dateStr !== prevDate) {
+                html += `
+                    <div class="chat-premium-message system">
+                        <div class="chat-premium-bubble">📅 ${dateStr}</div>
+                    </div>
+                `;
+                prevDate = dateStr;
+            }
+            
+            if (pesan) {
+                const initials = getInitials(senderLabel);
+                html += `
+                    <div class="chat-premium-message sent">
+                        ${showAvatar ? `
+                            <div class="chat-premium-avatar sender">
+                                <span class="avatar-initials">${initials}</span>
+                            </div>
+                        ` : ''}
+                        <div class="chat-premium-bubble">
+                            ${escapeHtml(pesan)}
+                            ${showTime ? `
+                                <span class="chat-premium-time">
+                                    ${timeStr || 'Baru saja'}
+                                    ${showStatus ? `
+                                        <span class="chat-premium-status ${isRead ? 'read' : 'sent'}">
+                                            ${isRead ? '✅' : '⏳'}
+                                        </span>
+                                    ` : ''}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (balasan) {
+                const initials = getInitials(receiverLabel);
+                html += `
+                    <div class="chat-premium-message received">
+                        ${showAvatar ? `
+                            <div class="chat-premium-avatar receiver">
+                                <span class="avatar-initials">${initials}</span>
+                            </div>
+                        ` : ''}
+                        <div class="chat-premium-bubble">
+                            ${escapeHtml(balasan)}
+                            ${showTime ? `
+                                <span class="chat-premium-time">${timeStr || 'Baru saja'}</span>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        container.innerHTML = html;
+    }
+    
+    // ===== HAPUS INPUT GROUP LAMA =====
+    const oldInputGroup = container.querySelector('.chat-premium-input-group');
+    if (oldInputGroup) {
+        oldInputGroup.remove();
+    }
+    
+    // ===== TAMBAHKAN INPUT GROUP =====
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'chat-premium-input-group';
+    inputGroup.innerHTML = `
+        <div class="chat-premium-input-wrapper">
+            <textarea class="chat-premium-input" rows="1" placeholder="Tulis pesan..." id="chatPremiumInput"></textarea>
+        </div>
+        <div class="chat-premium-role-selector">
+            <button class="chat-premium-role-btn active-sender" data-role="sender" id="chatRoleSender">📤 CS</button>
+            <button class="chat-premium-role-btn" data-role="receiver" id="chatRoleReceiver">📥 Customer</button>
+        </div>
+        <button class="chat-premium-send-btn" id="chatPremiumSendBtn">📤 Kirim</button>
+    `;
+    
+    container.appendChild(inputGroup);
+    
+    // ===== EVENT LISTENERS =====
+    const input = container.querySelector('#chatPremiumInput');
+    const sendBtn = container.querySelector('#chatPremiumSendBtn');
+    const roleSender = container.querySelector('#chatRoleSender');
+    const roleReceiver = container.querySelector('#chatRoleReceiver');
+    let currentRole = 'sender';
+    
+    if (roleSender && roleReceiver) {
+        roleSender.addEventListener('click', function() {
+            this.classList.add('active-sender');
+            this.classList.remove('active-receiver');
+            roleReceiver.classList.remove('active-sender', 'active-receiver');
+            currentRole = 'sender';
+        });
+        
+        roleReceiver.addEventListener('click', function() {
+            this.classList.add('active-receiver');
+            this.classList.remove('active-sender');
+            roleSender.classList.remove('active-sender', 'active-receiver');
+            currentRole = 'receiver';
+        });
+    }
+    
+    const sendMessage = () => {
+        const message = input.value.trim();
+        if (!message) return;
+        
+        if (onSendMessage) {
+            onSendMessage(message, currentRole);
+        }
+        input.value = '';
+        input.style.height = 'auto';
+    };
+    
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+    }
+    
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        input.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+    }
+    
+    // ===== SCROLL KE BAWAH =====
+    setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+    }, 100);
+}
+
+// ================================================================
+// ========== CHAT PREMIUM RENDERER ==========
+// ================================================================
+
+/**
+ * Render chat premium untuk riwayat dihubungi
+ * @param {Array} history - Array riwayat dihubungi
+ * @param {string} containerId - ID container
+ * @param {Object} options - Opsi tambahan
+ */
+function renderChatPremium(history, containerId, options = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const {
+        title = '📞 Riwayat Dihubungi',
+        emptyMessage = 'Belum ada riwayat komunikasi',
+        showHeader = true,
+        showAvatar = true,
+        showTime = true,
+        maxItems = 50
+    } = options;
+    
+    if (!history || history.length === 0) {
+        container.innerHTML = `
+            <div class="chat-premium-empty">
+                <div class="empty-icon">💬</div>
+                <div class="empty-title">${emptyMessage}</div>
+            </div>
+        `;
+        return;
+    }
+    
+    // Batasi jumlah item
+    const displayHistory = history.slice(-maxItems);
+    
+    // Hitung statistik
+    const totalMessages = displayHistory.length;
+    const totalPesan = displayHistory.filter(h => h.pesan && h.pesan.trim()).length;
+    const totalBalasan = displayHistory.filter(h => h.balasan && h.balasan.trim()).length;
+    
+    let html = '';
+    
+    // Header
+    if (showHeader) {
+        html += `
+            <div class="chat-premium-header">
+                <div class="chat-title">
+                    💬 ${title}
+                    <span style="font-size: 11px; font-weight: 400; color: #9ca3af; margin-left: 4px;">
+                        (${totalMessages} pesan)
+                    </span>
+                </div>
+                <div class="chat-meta">
+                    📤 ${totalPesan} terkirim · 📥 ${totalBalasan} balasan
+                </div>
+            </div>
+        `;
+    }
+    
+    // Messages
+    html += `<div class="chat-premium-messages">`;
+    
+    let prevDate = '';
+    
+    displayHistory.forEach((item, index) => {
+        const isSender = item.dibalas === true || item.dibalas === 'true';
+        const pesan = item.pesan || '';
+        const balasan = item.balasan || '';
+        const timestamp = item.timestamp || item.created_at || '';
+        const dateStr = timestamp ? formatDateDDMMYYYY(timestamp) : '';
+        const timeStr = timestamp ? formatTimeMessage(timestamp) : '';
+        
+        // Tambahkan pemisah tanggal jika berubah
+        if (dateStr && dateStr !== prevDate) {
+            html += `
+                <div class="chat-premium-message system">
+                    <div class="chat-premium-bubble">
+                        📅 ${dateStr}
+                    </div>
+                </div>
+            `;
+            prevDate = dateStr;
+        }
+        
+        // ===== PESAN TERKIRIM (Pengirim) =====
+        if (pesan) {
+            const avatarName = 'CS Agent';
+            const initials = getInitials(avatarName);
+            
+            html += `
+                <div class="chat-premium-message sent">
+                    ${showAvatar ? `
+                        <div class="chat-premium-avatar sender">
+                            <span class="avatar-initials">${initials}</span>
+                        </div>
+                    ` : ''}
+                    <div class="chat-premium-bubble">
+                        ${escapeHtml(pesan)}
+                        ${showTime ? `<span class="chat-premium-time">${timeStr || 'Baru saja'} <span class="chat-premium-status read">✅</span></span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ===== BALASAN (Penerima) =====
+        if (balasan) {
+            const avatarName = 'Customer';
+            const initials = getInitials(avatarName);
+            
+            html += `
+                <div class="chat-premium-message received">
+                    ${showAvatar ? `
+                        <div class="chat-premium-avatar receiver">
+                            <span class="avatar-initials">${initials}</span>
+                        </div>
+                    ` : ''}
+                    <div class="chat-premium-bubble">
+                        ${escapeHtml(balasan)}
+                        ${showTime ? `<span class="chat-premium-time">${timeStr || 'Baru saja'}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+    });
+    
+    html += `</div>`;
+    container.innerHTML = html;
+    
+    // Scroll ke bawah
+    setTimeout(() => {
+        container.scrollTop = container.scrollHeight;
+    }, 100);
+}
+
+/**
+ * Format waktu untuk chat
+ */
+function formatTimeMessage(dateStr) {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diff = now - date;
+        
+        if (diff < 60000) return 'Baru saja';
+        if (diff < 3600000) return Math.floor(diff / 60000) + 'm yang lalu';
+        if (diff < 86400000) {
+            return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+        if (diff < 604800000) {
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            return days[date.getDay()];
+        }
+        return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+    } catch (e) {
+        return '';
+    }
+}
+
+/**
+ * Dapatkan inisial dari nama
+ */
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
 }
 
 // ========== LOAD DATA FUNCTIONS ==========
@@ -8784,7 +10176,7 @@ function updateTransaksiStats(data) {
     // ===== GUNAKAN DATA YANG DITERIMA =====
     const allData = data || transaksiData || [];
     
-    console.log('📊 updateTransaksiStats - data length:', allData.length);
+    if (DEBUG) console.log('📊 updateTransaksiStats - data length:', allData.length);
     
     let totalNaik = 0;
     let totalTurun = 0;
@@ -8806,7 +10198,7 @@ function updateTransaksiStats(data) {
         else totalPending++;
     });
     
-    console.log('📊 Statistik:', {
+    if (DEBUG) console.log('📊 Statistik:', {
         total: totalData,
         naik: totalNaik,
         turun: totalTurun,
@@ -8912,7 +10304,7 @@ async function saveRiwayatTransaksiBulanan(periode, data, userId) {
             updated_at: new Date().toISOString()
         };
         
-        console.log('📊 Menyimpan riwayat:', riwayatData);
+        if (DEBUG) console.log('📊 Menyimpan riwayat:', riwayatData);
         
         // Upsert (insert atau update jika sudah ada)
         const { data: result, error } = await window.db
@@ -8929,7 +10321,7 @@ async function saveRiwayatTransaksiBulanan(periode, data, userId) {
             return;
         }
         
-        console.log('✅ Riwayat berhasil disimpan:', result);
+        if (DEBUG) console.log('✅ Riwayat berhasil disimpan:', result);
         showNotifTop(`📊 Riwayat ${periode} berhasil disimpan!`);
         
         // ===== RELOAD RIWAYAT DAN UPDATE CHART =====
@@ -8971,7 +10363,7 @@ let _isLoadingRiwayat = false;
 async function loadRiwayatTransaksi() {
     // ===== CEGAH MULTIPLE LOAD =====
     if (_isLoadingRiwayat) {
-        console.log('⏳ Riwayat sedang dimuat, skip...');
+        if (DEBUG) console.log('⏳ Riwayat sedang dimuat, skip...');
         return;
     }
     
@@ -8999,8 +10391,8 @@ async function loadRiwayatTransaksi() {
             return;
         }
         
-        console.log(`📊 Riwayat ditemukan: ${count || 0} data`);
-        console.log('📊 Data riwayat:', data);
+        if (DEBUG) console.log(`📊 Riwayat ditemukan: ${count || 0} data`);
+        if (DEBUG) console.log('📊 Data riwayat:', data);
         
         // ===== SIMPAN DATA GLOBAL =====
         window._riwayatData = data || [];
@@ -9015,7 +10407,7 @@ async function loadRiwayatTransaksi() {
         // ===== UPDATE BADGE =====
         updateTrendChartBadge();
         
-        console.log(`📊 Riwayat dimuat: ${(data || []).length} bulan`);
+        if (DEBUG) console.log(`📊 Riwayat dimuat: ${(data || []).length} bulan`);
         
     } catch (err) {
         console.error('❌ Error load riwayat:', err);
@@ -9350,7 +10742,7 @@ function updateSelectAllTransaksiButton() {
 
 // ========== SELECT ALL TRANSAKSI ==========
 function toggleSelectAllTransaksi() {
-    console.log('🔄 toggleSelectAllTransaksi dipanggil!'); // Debug
+    if (DEBUG) console.log('🔄 toggleSelectAllTransaksi dipanggil!'); // Debug
     
     if (currentUserRole !== 'owner') {
         showNotifTop('⚠️ Hanya Owner yang dapat menggunakan fitur ini!', true);
@@ -9358,7 +10750,7 @@ function toggleSelectAllTransaksi() {
     }
     
     const checkboxes = document.querySelectorAll('#dbTransaksiList .transaksi-checkbox');
-    console.log('📋 Jumlah checkbox:', checkboxes.length); // Debug
+    if (DEBUG) console.log('📋 Jumlah checkbox:', checkboxes.length); // Debug
     
     if (checkboxes.length === 0) {
         showNotifTop('⚠️ Tidak ada data untuk dipilih', true);
@@ -9712,7 +11104,7 @@ async function moveSingleToFollowup(id) {
     
     // ===== JIKA BATAL, LANGSUNG KELUAR =====
     if (!isConfirmed) {
-        console.log('❌ Pemindahan dibatalkan oleh user');
+        if (DEBUG) console.log('❌ Pemindahan dibatalkan oleh user');
         showNotifTop('❌ Pemindahan dibatalkan', true);
         return;
     }
@@ -9766,7 +11158,7 @@ async function moveSingleToFollowup(id) {
 let isMovingSingleWithModal = false;
 
 async function moveSingleToFollowupWithModal(id) {
-    console.log('🔍 moveSingleToFollowupWithModal dipanggil dengan id:', id); // <-- TAMBAHKAN
+    if (DEBUG) console.log('🔍 moveSingleToFollowupWithModal dipanggil dengan id:', id); // <-- TAMBAHKAN
     
     // Cegah multiple click
     if (isMovingSingleWithModal) {
@@ -9794,7 +11186,7 @@ async function moveSingleToFollowupWithModal(id) {
     
     // ===== LOAD CS LIST =====
     const csList = await loadCsList();
-    console.log('📋 Daftar CS:', csList); // <-- TAMBAHKAN
+    if (DEBUG) console.log('📋 Daftar CS:', csList); // <-- TAMBAHKAN
     
     if (csList.length === 0) {
         showNotifTop('⚠️ Tidak ada CS Agent selain Anda! Tambahkan CS terlebih dahulu.', true);
@@ -10953,7 +12345,7 @@ async function distributeDataToCs(selectedIds, csIds, metode) {
         return `${csName}: ${d.assigned.length} data`;
     }).join('\n');
     
-    console.log('📊 Distribusi Data:', summary);
+    if (DEBUG) console.log('📊 Distribusi Data:', summary);
     
     return true;
 }
@@ -11096,9 +12488,9 @@ async function loadTargetData() {
         
         if (data && data.value) {
             targetData = data.value;
-            console.log('✅ Target loaded from settings:', targetData);
+            if (DEBUG) console.log('✅ Target loaded from settings:', targetData);
         } else {
-            console.log('⚠️ No target found, creating default');
+            if (DEBUG) console.log('⚠️ No target found, creating default');
             targetData = { agent: 10, upline: 5, transaksi: 100, selisih: 50, monthlyTargets: [] };
             
             try {
@@ -11108,7 +12500,7 @@ async function loadTargetData() {
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
                 });
-                console.log('✅ Default target saved to database');
+                if (DEBUG) console.log('✅ Default target saved to database');
             } catch (insertErr) {
                 console.warn('⚠️ Error inserting default target:', insertErr);
             }
@@ -11116,7 +12508,7 @@ async function loadTargetData() {
         
         // ===== AMBIL DATA TRANSAKSI =====
         const transaksiDataLocal = window.transaksiData || transaksiData || [];
-        console.log(`📊 Transaksi data length: ${transaksiDataLocal.length}`);
+        if (DEBUG) console.log(`📊 Transaksi data length: ${transaksiDataLocal.length}`);
         
         if (transaksiDataLocal.length === 0) { 
             console.warn('⚠️ No transaksi data available');
@@ -11146,7 +12538,7 @@ async function loadTargetData() {
         validData.forEach(t => { totalBulanLalu += (t.transaksi_bulan_lalu || 0); });
         const currentSelisih = currentTransaksi - totalBulanLalu;
         
-        console.log('📊 Target Statistics:', {
+        if (DEBUG) console.log('📊 Target Statistics:', {
             currentAgent, currentUpline, currentTransaksi, currentSelisih
         });
         
@@ -11543,7 +12935,7 @@ async function updateTrendChart() {
     // ===== AMBIL DATA DARI window._riwayatData =====
     let riwayatData = window._riwayatData || [];
     
-    console.log('📊 updateTrendChart - riwayatData length:', riwayatData.length);
+    if (DEBUG) console.log('📊 updateTrendChart - riwayatData length:', riwayatData.length);
     
     // ===== JIKA KOSONG, COBA AMBIL DARI DATABASE =====
     if (riwayatData.length === 0 && currentUser) {
@@ -11558,7 +12950,7 @@ async function updateTrendChart() {
             if (!error && data && data.length > 0) {
                 riwayatData = data;
                 window._riwayatData = data;
-                console.log(`📊 Ambil riwayat dari database: ${data.length} bulan`);
+                if (DEBUG) console.log(`📊 Ambil riwayat dari database: ${data.length} bulan`);
             }
         } catch (err) {
             console.warn('Gagal ambil riwayat dari database:', err);
@@ -11581,10 +12973,10 @@ async function updateTrendChart() {
             tidakData.push(item.total_tidak_transaksi || 0);
         });
         
-        console.log(`📊 Trend Chart: Menampilkan ${labels.length} bulan dari riwayat:`, labels);
+        if (DEBUG) console.log(`📊 Trend Chart: Menampilkan ${labels.length} bulan dari riwayat:`, labels);
     } else {
         // ===== TIDAK ADA DATA =====
-        console.log('📊 Trend Chart: Tidak ada data riwayat');
+        if (DEBUG) console.log('📊 Trend Chart: Tidak ada data riwayat');
         
         const parent = ctx.parentElement;
         if (parent) {
@@ -11703,6 +13095,9 @@ async function updateTrendChart() {
             }
         });
         
+        ctx.style.maxHeight = '260px';
+        ctx.style.minHeight = '200px';
+        ctx.style.width = '100% !important';
         updateTrendChartBadge();
         return;
     }
@@ -11901,24 +13296,24 @@ async function updateTrendChart() {
         }
     });
     
-    console.log(`✅ Trend Chart updated: ${labels.length} bulan ditampilkan`);
+    if (DEBUG) console.log(`✅ Trend Chart updated: ${labels.length} bulan ditampilkan`);
     
     // ===== UPDATE BADGE =====
     updateTrendChartBadge();
     
     // ===== TAMPILKAN INFORMASI JUMLAH DATA =====
     if (isMinimalData && labels.length > 0) {
-        console.log(`ℹ️ Hanya ${labels.length} bulan data, titik diperbesar untuk tampilan premium`);
+        if (DEBUG) console.log(`ℹ️ Hanya ${labels.length} bulan data, titik diperbesar untuk tampilan premium`);
     }
 }
 
 // ========== FUNGSI DEBUG UNTUK CEK DATA RIWAYAT ==========
 function debugRiwayat() {
-    console.log('📊 === DEBUG RIWAYAT ===');
-    console.log('📊 window._riwayatData:', window._riwayatData);
-    console.log('📊 isRiwayatLoaded:', isRiwayatLoaded);
-    console.log('📊 currentUser:', currentUser?.id);
-    console.log('📊 Jumlah data:', window._riwayatData?.length || 0);
+    if (DEBUG) console.log('📊 === DEBUG RIWAYAT ===');
+    if (DEBUG) console.log('📊 window._riwayatData:', window._riwayatData);
+    if (DEBUG) console.log('📊 isRiwayatLoaded:', isRiwayatLoaded);
+    if (DEBUG) console.log('📊 currentUser:', currentUser?.id);
+    if (DEBUG) console.log('📊 Jumlah data:', window._riwayatData?.length || 0);
     
     // Coba ambil langsung dari database
     if (currentUser) {
@@ -11931,8 +13326,8 @@ function debugRiwayat() {
                 if (error) {
                     console.error('❌ Error:', error);
                 } else {
-                    console.log('📊 Data dari database:', data);
-                    console.log('📊 Jumlah dari database:', data?.length || 0);
+                    if (DEBUG) console.log('📊 Data dari database:', data);
+                    if (DEBUG) console.log('📊 Jumlah dari database:', data?.length || 0);
                     
                     // Jika data ditemukan, update chart
                     if (data && data.length > 0) {
@@ -12036,7 +13431,7 @@ function generateDemoData() {
 
 // ========== FUNGSI UPDATE UI TARGET ==========
 function updateTargetUI(targetAgent, targetUpline, targetTransaksi, targetSelisih, currentAgent, currentUpline, currentTransaksi, currentSelisih) {
-    console.log('📊 updateTargetUI:', {
+    if (DEBUG) console.log('📊 updateTargetUI:', {
         targetAgent, targetUpline, targetTransaksi, targetSelisih,
         currentAgent, currentUpline, currentTransaksi, currentSelisih
     });
@@ -12110,24 +13505,81 @@ function updateTargetUI(targetAgent, targetUpline, targetTransaksi, targetSelisi
 function updateTargetChart(percentages) {
     const ctx = document.getElementById('targetChart');
     if (!ctx) return;
-    if (targetChart) { targetChart.destroy(); targetChart = null; }
+    
+    if (targetChart) {
+        targetChart.destroy();
+        targetChart = null;
+    }
+    
     const isDark = document.body.classList.contains('dark-mode');
     const textColor = isDark ? '#f1f5f9' : '#1e293b';
-    let data = [0,0,0];
-    if (percentages && percentages.length >= 3) data = percentages.slice(0,3).map(v => typeof v === 'number' && !isNaN(v) ? Math.min(v,100) : 0);
+    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+    
+    let data = [0, 0, 0];
+    if (percentages && percentages.length >= 3) {
+        data = percentages.slice(0, 3).map(v => typeof v === 'number' && !isNaN(v) ? Math.min(v, 100) : 0);
+    }
+    
     targetChart = new Chart(ctx, {
         type: 'bar',
-        data: { labels: ['Agent', 'Upline', 'Transaksi'], datasets: [{ label: 'Pencapaian Target (%)', data: data, backgroundColor: ['#667eea','#4facfe','#f093fb'], borderRadius: 8, barPercentage: 0.6 }] },
+        data: {
+            labels: ['Agent', 'Upline', 'Transaksi'],
+            datasets: [{
+                label: 'Pencapaian Target (%)',
+                data: data,
+                backgroundColor: ['#667eea', '#4facfe', '#f093fb'],
+                borderRadius: 8,
+                barPercentage: 0.6
+            }]
+        },
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { return `${context.raw || 0}%`; } } } },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.raw || 0}%`;
+                        }
+                    }
+                }
+            },
             scales: {
-                y: { beginAtZero: true, max: 100, title: { display: true, text: 'Persentase (%)', color: textColor, font: { size: 11 } }, ticks: { color: textColor, callback: function(value) { return value + '%'; } }, grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)' } },
-                x: { ticks: { color: textColor, font: { size: 12, weight: 'bold' } }, grid: { display: false } }
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Persentase (%)',
+                        color: textColor,
+                        font: { size: 11 }
+                    },
+                    ticks: {
+                        color: textColor,
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        color: gridColor
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: textColor,
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    grid: {
+                        display: false
+                    }
+                }
             }
         }
     });
+    
     targetChart.update();
 }
 
@@ -12295,7 +13747,7 @@ async function loadRiwayatTransaksi() {
         // ===== RENDER LIST =====
         renderRiwayatTransaksi(data || []);
         
-        console.log(`📊 Riwayat dimuat: ${(data || []).length} bulan`);
+        if (DEBUG) console.log(`📊 Riwayat dimuat: ${(data || []).length} bulan`);
         
     } catch (err) {
         console.error('❌ Error load riwayat:', err);
@@ -12853,13 +14305,19 @@ async function loadBroadcastNumbers() {
     
     if (sourceType === 'custom') {
         const customNumbers = document.getElementById('customNumbers')?.value || '';
-        const numbers = customNumbers.split('\n').filter(n => n.trim()).map(n => ({ 
-            hp: n.trim(), 
-            nama: 'Custom', 
-            source: 'custom',
-            id: null,
-            status: 'custom'
-        }));
+        const numbers = customNumbers.split('\n')
+            .filter(n => n.trim())
+            .map(n => {
+                let hp = n.trim();
+                hp = formatPhoneNumber(hp); // <-- GUNAKAN FUNGSI FORMAT
+                return { 
+                    hp: hp, 
+                    nama: 'Custom', 
+                    source: 'custom',
+                    id: null,
+                    status: 'custom'
+                };
+            });
         currentNumbers = numbers;
         updateNumberDisplay();
         return;
@@ -12899,7 +14357,6 @@ async function loadBroadcastNumbers() {
     // ===== AMBIL DATA TRANSAKSI UNTUK SETIAP AGENT =====
     const transaksiMap = new Map();
     if (sourceType === 'customer') {
-        // Ambil semua agent_id dari customer
         const agentIds = data.filter(item => item.agent_id).map(item => item.agent_id);
         if (agentIds.length > 0) {
             const { data: transaksiData, error: transaksiError } = await window.db
@@ -12923,25 +14380,63 @@ async function loadBroadcastNumbers() {
                 transaksi = transaksiMap.get(item.agent_id) || null;
             }
             
+            // ===== FORMAT NOMOR HP =====
+            let formattedHp = formatPhoneNumber(item.hp);
+            
             return {
-                hp: item.hp,
+                hp: formattedHp, // <-- SIMPAN DALAM FORMAT +62
                 nama: item.nama || 'Customer',
                 id: item.id,
                 source: sourceType,
                 status: item.status,
-                // Data tambahan untuk variabel
                 agent_id: item.agent_id || '',
                 apk: item.apk || '',
                 upline: item.upline_name || '',
                 upline_phone: item.upline_phone || '',
-                // Data transaksi
                 transaksi: transaksi,
-                // Untuk prospek
                 tipe_agent: item.tipe_agent || ''
             };
         });
     
     updateNumberDisplay();
+}
+
+// ========== FORMAT NOMOR HP UNTUK WHATSAPP ==========
+function formatPhoneNumber(hp) {
+    if (!hp) return '';
+    
+    // Hapus semua karakter non-digit
+    let clean = String(hp).replace(/[^\d+]/g, '');
+    
+    // Jika sudah ada +, biarkan
+    if (clean.startsWith('+')) {
+        return clean;
+    }
+    
+    // Hapus leading 0
+    clean = clean.replace(/^0+/, '');
+    
+    // Jika sudah dimulai dengan 62, tambahkan +
+    if (clean.startsWith('62')) {
+        return '+' + clean;
+    }
+    
+    // Jika dimulai dengan 8 (nomor lokal)
+    if (clean.startsWith('8')) {
+        return '+62' + clean;
+    }
+    
+    // Fallback: tambahkan +62
+    return '+62' + clean;
+}
+
+// ========== VALIDASI NOMOR HP ==========
+function isValidPhoneNumber(hp) {
+    if (!hp) return false;
+    const clean = String(hp).replace(/[^\d+]/g, '');
+    // Minimal 10 digit setelah +62
+    const numberOnly = clean.replace('+', '');
+    return numberOnly.length >= 10 && numberOnly.length <= 15;
 }
 
 function updateNumberDisplay() {
@@ -13402,20 +14897,36 @@ async function sendBroadcast() {
         return;
     }
     
-    if (!confirm(`📢 Kirim broadcast ke ${currentNumbers.length} nomor?\n\nPastikan pesan sudah benar.`)) {
+    // ===== VALIDASI NOMOR =====
+    const invalidNumbers = currentNumbers.filter(item => !isValidPhoneNumber(item.hp));
+    if (invalidNumbers.length > 0) {
+        console.warn('⚠️ Nomor tidak valid:', invalidNumbers.map(i => i.hp).join(', '));
+        if (!confirm(`⚠️ ${invalidNumbers.length} nomor tidak valid. Lanjutkan?`)) {
+            return;
+        }
+    }
+    
+    // Filter nomor valid
+    const validNumbers = currentNumbers.filter(item => isValidPhoneNumber(item.hp));
+    if (validNumbers.length === 0) {
+        showNotifTop('⚠️ Tidak ada nomor valid!', true);
+        return;
+    }
+    
+    if (!confirm(`📢 Kirim broadcast ke ${validNumbers.length} nomor valid? (${currentNumbers.length - validNumbers.length} nomor tidak valid)`)) {
         return;
     }
     
     isBroadcasting = true;
     broadcastHistory = [];
     
-    const progress = showFloatingProgress('📢 Broadcast', currentNumbers.length);
+    const progress = showFloatingProgress('📢 Broadcast', validNumbers.length);
     let success = 0;
     let failed = 0;
     let stopped = false;
     
-    for (let i = 0; i < currentNumbers.length; i++) {
-        const item = currentNumbers[i];
+    for (let i = 0; i < validNumbers.length; i++) {
+        const item = validNumbers[i];
         
         // ===== PERSIAPKAN VARIABEL =====
         let message = messageTemplate;
@@ -13431,7 +14942,6 @@ async function sendBroadcast() {
         // ===== DATA TRANSAKSI =====
         let transaksiData = item.transaksi || null;
         
-        // Jika tidak ada data transaksi dari item, coba ambil dari database
         if (!transaksiData && item.source === 'customer' && item.agent_id) {
             const { data: tData } = await window.db
                 .from('db_transaksi')
@@ -13475,7 +14985,6 @@ async function sendBroadcast() {
             message = message.replace(/{periode_lalu}/g, transaksiData.periode_bulan_lalu || 'Tidak tersedia');
             message = message.replace(/{periode_ini}/g, transaksiData.periode_bulan_ini || 'Tidak tersedia');
         } else {
-            // Jika tidak ada data transaksi, ganti dengan placeholder
             message = message.replace(/{progres_jenis}/g, '-');
             message = message.replace(/{selisih}/g, '-');
             message = message.replace(/{transaksi_lalu}/g, '-');
@@ -13485,13 +14994,33 @@ async function sendBroadcast() {
         }
         
         // ===== KIRIM =====
-        const nomor = item.hp.toString().replace('+', '').replace(/^0/, '62').replace(/[^\d]/g, '');
+        // Gunakan nomor yang sudah diformat dengan +62
+        const nomor = String(item.hp).replace(/[^\d+]/g, '');
         
-        window.open('https://wa.me/' + nomor + '?text=' + encodeURIComponent(message), '_blank');
+        // Pastikan formatnya benar
+        let cleanNomor = nomor;
+        if (!cleanNomor.startsWith('+')) {
+            cleanNomor = cleanNomor.replace(/^0+/, '');
+            if (cleanNomor.startsWith('62')) {
+                cleanNomor = '+' + cleanNomor;
+            } else {
+                cleanNomor = '+62' + cleanNomor;
+            }
+        }
+        
+        // Validasi terakhir
+        if (!isValidPhoneNumber(cleanNomor)) {
+            failed++;
+            showNotifTop(`⚠️ Nomor tidak valid: ${cleanNomor}`, true);
+            continue;
+        }
+        
+        const waUrl = 'https://wa.me/' + encodeURIComponent(cleanNomor) + '?text=' + encodeURIComponent(message);
+        window.open(waUrl, '_blank');
         
         let confirmResult;
         if (sendOneByOne) {
-            confirmResult = await showContinueModal(item, i + 1, currentNumbers.length);
+            confirmResult = await showContinueModal(item, i + 1, validNumbers.length);
         } else {
             confirmResult = { status: 'success' };
         }
@@ -13530,12 +15059,12 @@ async function sendBroadcast() {
             }
         }
         
-        const percent = Math.floor(((i + 1) / currentNumbers.length) * 100);
-        progress.update(percent, '📢 Mengirim', `Memproses ${item.nama} (${i + 1}/${currentNumbers.length})...`, i + 1, currentNumbers.length);
+        const percent = Math.floor(((i + 1) / validNumbers.length) * 100);
+        progress.update(percent, '📢 Mengirim', `Memproses ${item.nama} (${i + 1}/${validNumbers.length})...`, i + 1, validNumbers.length);
         await delay(300);
     }
     
-    progress.update(100, '✅ Selesai', `Berhasil: ${success}, Gagal: ${failed}`, currentNumbers.length, currentNumbers.length);
+    progress.update(100, '✅ Selesai', `Berhasil: ${success}, Gagal: ${failed}`, validNumbers.length, validNumbers.length);
     showNotifTop(`✅ Broadcast selesai! Berhasil: ${success}, Gagal: ${failed}`);
     if (failed > 0) {
         showNotifTop(`⚠️ ${failed} nomor gagal dipindahkan ke DB Nomor Salah`, true);
@@ -13547,7 +15076,6 @@ async function sendBroadcast() {
     isBroadcasting = false;
     setTimeout(() => progress.hide(), 1000);
     
-    // Simpan history
     saveBroadcastHistory(false);
     updateBroadcastHistoryIndicator();
     
@@ -13587,19 +15115,25 @@ async function loadUplineNumbers() {
     
     if (sourceType === 'custom') {
         const customNumbers = document.getElementById('uplineCustomNumbers')?.value || '';
-        const numbers = customNumbers.split('\n').filter(n => n.trim()).map(n => ({
-            upline_phone: n.trim(),
-            upline_name: 'Custom',
-            agents: [],
-            source: 'custom'
-        }));
+        const numbers = customNumbers.split('\n').filter(n => n.trim()).map(n => {
+            let phone = formatPhoneNumber(n.trim());
+            return {
+                upline_phone: phone,
+                upline_name: 'Custom',
+                agents: [],
+                source: 'custom'
+            };
+        });
         uplineDataList = numbers;
         if (listDiv) {
             if (numbers.length === 0) {
                 listDiv.innerHTML = '<p style="color:#9ca3af; padding:20px;">Masukkan nomor tujuan!</p>';
             } else {
                 listDiv.innerHTML = numbers.map(num => `
-                    <div class="number-item">📞 ${escapeHtml(num.upline_phone)}</div>
+                    <div class="number-item ${isValidPhoneNumber(num.upline_phone) ? '' : 'invalid'}">
+                        📞 ${escapeHtml(num.upline_phone)}
+                        ${!isValidPhoneNumber(num.upline_phone) ? '<span class="number-warning">⚠️ Tidak valid</span>' : ''}
+                    </div>
                 `).join('');
             }
         }
@@ -13641,6 +15175,14 @@ async function loadUplineNumbers() {
         let uplineName = item.upline_name || 'Tidak ada upline';
         
         if (!uplinePhone || uplinePhone === '+62' || uplinePhone === '62' || uplinePhone === '' || uplinePhone === '0') {
+            dataWithoutUpline++;
+            continue;
+        }
+        
+        // ===== FORMAT NOMOR =====
+        uplinePhone = formatPhoneNumber(uplinePhone);
+        
+        if (!isValidPhoneNumber(uplinePhone)) {
             dataWithoutUpline++;
             continue;
         }
@@ -13706,7 +15248,63 @@ async function loadUplineNumbers() {
     showNotifTop(`✅ Ditemukan ${uplineDataList.length} Upline dengan total ${uplineDataList.reduce((sum, u) => sum + u.agents.length, 0)} agent`);
 }
 
-// ===== SEND UPLINE BROADCAST =====
+// ===== INIT UPLINE BROADCAST =====
+function initUplineBroadcast() {
+    if (DEBUG) console.log('initUplineBroadcast dipanggil');
+    
+    loadBroadcastHistory(true);
+    updateBroadcastHistoryIndicator();
+    
+    const radioButtons = document.querySelectorAll('input[name="uplineSourceType"]');
+    radioButtons.forEach(radio => {
+        radio.removeEventListener('change', handleUplineSourceChange);
+        radio.addEventListener('change', handleUplineSourceChange);
+    });
+    
+    function handleUplineSourceChange(e) {
+        const value = e.target.value;
+        const customerFilter = document.getElementById('uplineCustomerFilter');
+        const customCard = document.getElementById('uplineCustomCard');
+        
+        if (customerFilter) customerFilter.style.display = value === 'customer' ? 'block' : 'none';
+        if (customCard) customCard.style.display = value === 'custom' ? 'block' : 'none';
+        
+        loadUplineNumbers();
+    }
+    
+    const customerCheckboxes = document.querySelectorAll('#uplineCustomerFilter input');
+    customerCheckboxes.forEach(cb => {
+        cb.removeEventListener('change', loadUplineNumbers);
+        cb.addEventListener('change', loadUplineNumbers);
+    });
+    
+    const customNumbers = document.getElementById('uplineCustomNumbers');
+    if (customNumbers) {
+        customNumbers.removeEventListener('input', loadUplineNumbers);
+        customNumbers.addEventListener('input', loadUplineNumbers);
+    }
+    
+    const refreshBtn = document.getElementById('refreshUplineBtn');
+    if (refreshBtn) {
+        refreshBtn.removeEventListener('click', loadUplineNumbers);
+        refreshBtn.addEventListener('click', loadUplineNumbers);
+    }
+    
+    const sendBtn = document.getElementById('sendUplineBroadcastBtn');
+    if (sendBtn) {
+        sendBtn.removeEventListener('click', sendUplineBroadcast);
+        sendBtn.addEventListener('click', sendUplineBroadcast);
+    }
+    
+    // ===== LOAD UPLINE TEMPLATES =====
+    loadUplineTemplates();
+    
+    loadUplineNumbers();
+}
+
+// ================================================================
+// ========== SEND UPLINE BROADCAST ==========
+// ================================================================
 async function sendUplineBroadcast() {
     if (isUplineBroadcasting) {
         showNotifTop('⏳ Broadcast sedang berjalan...', true);
@@ -13726,21 +15324,28 @@ async function sendUplineBroadcast() {
         return;
     }
     
-    const totalAgent = uplineDataList.reduce((sum, u) => sum + u.agents.length, 0);
-    if (!confirm(`⭐ KIRIM BROADCAST KE UPLINE\n\n👥 Upline: ${uplineDataList.length}\n📋 Total Agent: ${totalAgent}\n\nKlik OK untuk melanjutkan.`)) {
+    // ===== VALIDASI NOMOR =====
+    const validUpline = uplineDataList.filter(item => isValidPhoneNumber(item.upline_phone));
+    if (validUpline.length === 0) {
+        showNotifTop('⚠️ Tidak ada nomor upline yang valid!', true);
+        return;
+    }
+    
+    const totalAgent = validUpline.reduce((sum, u) => sum + u.agents.length, 0);
+    if (!confirm(`⭐ KIRIM BROADCAST KE UPLINE\n\n👥 Upline valid: ${validUpline.length}\n📋 Total Agent: ${totalAgent}\n\nKlik OK untuk melanjutkan.`)) {
         return;
     }
     
     isUplineBroadcasting = true;
     uplineBroadcastHistory = [];
     
-    const progress = showFloatingProgress('⭐ Broadcast ke Upline', uplineDataList.length);
+    const progress = showFloatingProgress('⭐ Broadcast ke Upline', validUpline.length);
     let success = 0;
     let failed = 0;
     let stopped = false;
     
-    for (let i = 0; i < uplineDataList.length; i++) {
-        const upline = uplineDataList[i];
+    for (let i = 0; i < validUpline.length; i++) {
+        const upline = validUpline[i];
         
         let message = messageTemplate;
         message = message.replace(/{nama_upline}/g, upline.upline_name);
@@ -13753,23 +15358,34 @@ async function sendUplineBroadcast() {
         }
         message = message.replace(/{tabel_agent}/g, tableText);
         
-        let nomor = upline.upline_phone.toString();
-        nomor = nomor.replace(/[^\d+]/g, '');
+        // ===== FORMAT NOMOR =====
+        let nomor = String(upline.upline_phone).replace(/[^\d+]/g, '');
         if (!nomor.startsWith('+')) {
             nomor = nomor.replace(/^0+/, '');
-            if (nomor.startsWith('62')) nomor = '+' + nomor;
-            else nomor = '+62' + nomor;
+            if (nomor.startsWith('62')) {
+                nomor = '+' + nomor;
+            } else {
+                nomor = '+62' + nomor;
+            }
         }
-        const cleanNomor = nomor.replace(/[^\d]/g, '');
         
-        window.open('https://wa.me/' + cleanNomor + '?text=' + encodeURIComponent(message), '_blank');
+        // Validasi
+        if (!isValidPhoneNumber(nomor)) {
+            failed++;
+            showNotifTop(`⚠️ Nomor upline tidak valid: ${nomor}`, true);
+            continue;
+        }
+        
+        const cleanNomor = nomor.replace(/[^\d+]/g, '');
+        const waUrl = 'https://wa.me/' + encodeURIComponent(cleanNomor) + '?text=' + encodeURIComponent(message);
+        window.open(waUrl, '_blank');
         
         let confirmResult;
         if (sendOneByOne) {
             confirmResult = await showContinueModal(
                 { nama: upline.upline_name, hp: upline.upline_phone }, 
                 i + 1, 
-                uplineDataList.length
+                validUpline.length
             );
         } else {
             confirmResult = { status: 'success' };
@@ -13817,12 +15433,12 @@ async function sendUplineBroadcast() {
             }
         }
         
-        const percent = Math.floor(((i + 1) / uplineDataList.length) * 100);
-        progress.update(percent, '⭐ Mengirim', `Mengirim ke ${upline.upline_name} (${i + 1}/${uplineDataList.length})...`, i + 1, uplineDataList.length);
+        const percent = Math.floor(((i + 1) / validUpline.length) * 100);
+        progress.update(percent, '⭐ Mengirim', `Mengirim ke ${upline.upline_name} (${i + 1}/${validUpline.length})...`, i + 1, validUpline.length);
         await delay(300);
     }
     
-    progress.update(100, '✅ Selesai', `Berhasil: ${success}, Gagal: ${failed}`, uplineDataList.length, uplineDataList.length);
+    progress.update(100, '✅ Selesai', `Berhasil: ${success}, Gagal: ${failed}`, validUpline.length, validUpline.length);
     showNotifTop(`✅ Broadcast ke Upline selesai! Terkirim ke ${success} upline, Gagal: ${failed}`);
     if (failed > 0) {
         showNotifTop(`⚠️ ${failed} data gagal dipindahkan ke DB Nomor Salah`, true);
@@ -13846,7 +15462,7 @@ async function sendUplineBroadcast() {
 
 // ===== INIT UPLINE BROADCAST =====
 function initUplineBroadcast() {
-    console.log('initUplineBroadcast dipanggil');
+    if (DEBUG) console.log('initUplineBroadcast dipanggil');
     
     loadBroadcastHistory(true);
     updateBroadcastHistoryIndicator();
@@ -14299,72 +15915,116 @@ function updateChartCustomer() {
     const followup = customersData.filter(c => c.status === 'followup').length;
     const baru = customersData.length - (closing + pending + followup);
     
-    let totalTercapai = 0;
-    customersData.forEach(customer => {
-        const progres = customer.progres_transaksi;
-        if (progres && progres.total_tercapai !== undefined) {
-            totalTercapai += progres.total_tercapai;
-        }
-    });
+    const labels = ['Closing', 'Pending', 'Follow Up', 'Baru'];
+    const data = [closing, pending, followup, baru];
+    const colors = ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'];
     
-    const chartTitle = document.querySelector('#chartCustomer h3');
-    if (chartTitle) {
-        chartTitle.innerHTML = `📊 Followup Agen | 🎯 Total Tercapai: ${totalTercapai.toLocaleString()} Transaksi`;
+    if (chartCustomer) {
+        chartCustomer.destroy();
+        chartCustomer = null;
     }
-    
-    if (chartCustomer) chartCustomer.destroy();
     
     const isDark = document.body.classList.contains('dark-mode');
     const textColor = isDark ? '#f1f5f9' : '#1e293b';
+    const primaryColor = isDark ? '#818cf8' : '#4f46e5';
+    const total = data.reduce((a, b) => a + b, 0);
     
-    // ===== PERBAIKAN: Set background canvas =====
-    // Hapus background yang mungkin ditambahkan Chart.js
-    const canvas = ctx;
-    canvas.style.background = isDark ? '#0f172a' : '#ffffff';
-    canvas.style.borderRadius = '12px';
+    // ===== BUAT TOTAL LABEL DI ATAS LEGEND =====
+    const container = ctx.parentElement;
+    let totalEl = container.querySelector('.chart-total-label');
+    if (!totalEl) {
+        totalEl = document.createElement('div');
+        totalEl.className = 'chart-total-label';
+        totalEl.style.cssText = `
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            margin-bottom: 6px !important;
+            padding: 0 4px !important;
+            width: 100% !important;
+            color: ${textColor} !important;
+        `;
+        container.insertBefore(totalEl, ctx);
+    }
     
+    // ===== SET TOTAL LABEL =====
+    totalEl.innerHTML = `
+        <span style="font-size: 13px; color: ${textColor};">📊 Total Data:</span>
+        <span class="total-value" style="font-size: 18px; font-weight: 800; color: ${primaryColor};">${total.toLocaleString()}</span>
+    `;
+    totalEl.style.color = textColor;
+    
+    // ===== BUAT CHART =====
     chartCustomer = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Closing', 'Pending', 'Follow Up', 'Baru'],
+            labels: labels,
             datasets: [{
-                data: [closing, pending, followup, baru],
-                backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#8b5cf6'],
-                borderWidth: 0,
-                cutout: '65%'
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: isDark ? '#1e293b' : '#ffffff',
+                hoverOffset: 8
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            // ===== PERBAIKAN: Tambahkan plugin untuk background =====
+            cutout: '65%',
             plugins: {
-                legend: { 
-                    position: 'right', 
-                    labels: { 
-                        font: { size: 11 },
+                legend: {
+                    position: 'right',
+                    labels: {
+                        font: { size: 11, weight: '600' },
                         color: textColor,
-                        padding: 10,
-                        // ===== PERBAIKAN: Background label =====
-                        boxWidth: 15,
-                        usePointStyle: true
-                    } 
+                        padding: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 10,
+                        boxHeight: 10,
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            return data.labels.map((label, i) => {
+                                const value = data.datasets[0].data[i];
+                                const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return {
+                                    text: `${label}  ${percent}%`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].backgroundColor[i],
+                                    hidden: false,
+                                    index: i
+                                };
+                            });
+                        }
+                    }
                 },
                 tooltip: {
+                    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    titleColor: isDark ? '#f1f5f9' : '#1f2937',
+                    bodyColor: isDark ? '#cbd5e1' : '#374151',
+                    borderColor: isDark ? '#334155' : '#e5e7eb',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    padding: 12,
                     callbacks: {
                         label: function(context) {
                             const label = context.label || '';
                             const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            return `${label}: ${value} (${total ? ((value / total) * 100).toFixed(1) : 0}%)`;
+                            const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value} (${percent}%)`;
                         }
                     }
                 }
-            },
-            // ===== PERBAIKAN: Background untuk seluruh chart =====
-            backgroundColor: isDark ? '#0f172a' : '#ffffff'
+            }
         }
     });
+    
+    // ===== PASTIKAN LEGEND COLOR DI DARK MODE =====
+    chartCustomer.options.plugins.legend.labels.color = textColor;
+    chartCustomer.update();
 }
 
 function updateChartProspek() {
@@ -14376,47 +16036,116 @@ function updateChartProspek() {
     const negosiasi = prospekData.filter(p => p.status === 'Negosiasi').length;
     const tertarik = prospekData.filter(p => p.status === 'Tertarik').length;
     
-    if (chartProspek) chartProspek.destroy();
+    const labels = ['Baru', 'Dihubungi', 'Negosiasi', 'Tertarik'];
+    const data = [baru, dihubungi, negosiasi, tertarik];
+    const colors = ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'];
+    
+    if (chartProspek) {
+        chartProspek.destroy();
+        chartProspek = null;
+    }
     
     const isDark = document.body.classList.contains('dark-mode');
     const textColor = isDark ? '#f1f5f9' : '#1e293b';
+    const primaryColor = isDark ? '#818cf8' : '#4f46e5';
+    const total = data.reduce((a, b) => a + b, 0);
     
+    // ===== BUAT TOTAL LABEL DI ATAS LEGEND =====
+    const container = ctx.parentElement;
+    let totalEl = container.querySelector('.chart-total-label');
+    if (!totalEl) {
+        totalEl = document.createElement('div');
+        totalEl.className = 'chart-total-label';
+        totalEl.style.cssText = `
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            margin-bottom: 6px !important;
+            padding: 0 4px !important;
+            width: 100% !important;
+            color: ${textColor} !important;
+        `;
+        container.insertBefore(totalEl, ctx);
+    }
+    
+    // ===== SET TOTAL LABEL =====
+    totalEl.innerHTML = `
+        <span style="font-size: 13px; color: ${textColor};">📊 Total Data:</span>
+        <span class="total-value" style="font-size: 18px; font-weight: 800; color: ${primaryColor};">${total.toLocaleString()}</span>
+    `;
+    totalEl.style.color = textColor;
+    
+    // ===== BUAT CHART =====
     chartProspek = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Baru', 'Dihubungi', 'Negosiasi', 'Tertarik'],
+            labels: labels,
             datasets: [{
-                data: [baru, dihubungi, negosiasi, tertarik],
-                backgroundColor: ['#8b5cf6', '#3b82f6', '#f59e0b', '#10b981'],
-                borderWidth: 0,
-                cutout: '65%'
+                data: data,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: isDark ? '#1e293b' : '#ffffff',
+                hoverOffset: 8
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            cutout: '65%',
             plugins: {
-                legend: { 
-                    position: 'right', 
-                    labels: { 
-                        font: { size: 11 },
+                legend: {
+                    position: 'right',
+                    labels: {
+                        font: { size: 11, weight: '600' },
                         color: textColor,
-                        padding: 10
-                    } 
+                        padding: 12,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        boxWidth: 10,
+                        boxHeight: 10,
+                        generateLabels: function(chart) {
+                            const data = chart.data;
+                            return data.labels.map((label, i) => {
+                                const value = data.datasets[0].data[i];
+                                const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                return {
+                                    text: `${label}  ${percent}%`,
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].backgroundColor[i],
+                                    hidden: false,
+                                    index: i
+                                };
+                            });
+                        }
+                    }
                 },
                 tooltip: {
+                    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                    titleColor: isDark ? '#f1f5f9' : '#1f2937',
+                    bodyColor: isDark ? '#cbd5e1' : '#374151',
+                    borderColor: isDark ? '#334155' : '#e5e7eb',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    padding: 12,
                     callbacks: {
                         label: function(context) {
                             const label = context.label || '';
                             const value = context.raw || 0;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            return `${label}: ${value} (${total ? ((value / total) * 100).toFixed(1) : 0}%)`;
+                            const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return `${label}: ${value} (${percent}%)`;
                         }
                     }
                 }
             }
         }
     });
+    
+    // ===== PASTIKAN LEGEND COLOR DI DARK MODE =====
+    chartProspek.options.plugins.legend.labels.color = textColor;
+    chartProspek.update();
 }
 
 // ========== BADGE FUNCTIONS ==========
@@ -14468,12 +16197,12 @@ async function updatePesanBadge() {
 // ========== AUTH STATE CHANGE LISTENER ==========
 function initAuthListener() {
     window.db.auth.onAuthStateChange((event, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
+        if (DEBUG) console.log('Auth state change:', event, session?.user?.email);
         
         if (event === 'SIGNED_IN' && session) {
             // ===== CEK APAKAH SUDAH LOGIN =====
             if (currentUser && currentUser.id === session.user.id) {
-                console.log('⏳ User sudah login, skip reload');
+                if (DEBUG) console.log('⏳ User sudah login, skip reload');
                 return;
             }
             
@@ -14539,9 +16268,9 @@ function initAuthListener() {
             showNotifTop('👋 Anda telah logout');
             
         } else if (event === 'TOKEN_REFRESHED') {
-            console.log('Token refreshed successfully');
+            if (DEBUG) console.log('Token refreshed successfully');
         } else if (event === 'USER_UPDATED') {
-            console.log('User updated');
+            if (DEBUG) console.log('User updated');
             if (currentUser) {
                 loadUserProfile();
             }
@@ -14641,7 +16370,7 @@ async function checkAuth() {
 document.addEventListener('DOMContentLoaded', function() {
     // ===== CEK APAKAH SUDAH DIPROSES =====
     if (document._domReadyExecuted) {
-        console.log('⏳ DOM already processed, skip');
+        if (DEBUG) console.log('⏳ DOM already processed, skip');
         return;
     }
     document._domReadyExecuted = true;
@@ -14661,7 +16390,7 @@ document.addEventListener('DOMContentLoaded', function() {
         appleLink.href = LOGO_CONFIG.icon;
         document.head.appendChild(appleLink);
         
-        console.log('✅ Logo PROSPEKTA initialized');
+        if (DEBUG) console.log('✅ Logo PROSPEKTA initialized');
     }
     
     // Panggil init logos
@@ -14695,7 +16424,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 5000);
     
-    console.log('✅ PROSPEKTA loaded successfully');
+    if (DEBUG) console.log('✅ PROSPEKTA loaded successfully');
 });
 
 // ================================================================
@@ -14704,7 +16433,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ===== FUNGSI UNTUK RESET TARGET (jika diperlukan) =====
 function resetTargetData() {
-    console.log('🔄 Reset target data...');
+    if (DEBUG) console.log('🔄 Reset target data...');
     
     // Reset data target
     targetData = {
@@ -14763,7 +16492,7 @@ function resetTargetData() {
 
 // ===== FUNGSI UNTUK REFRESH TARGET =====
 function refreshTargetData() {
-    console.log('🔄 Refresh target data...');
+    if (DEBUG) console.log('🔄 Refresh target data...');
     
     // Reset flag agar bisa dimuat ulang
     isDataLoaded = false;
@@ -14791,7 +16520,7 @@ window.updateTargetChart = updateTargetChart;
 window.loadTargetData = loadTargetData;
 window.closeTargetDetailModal = closeTargetDetailModal;
 
-console.log('✅ Semua fungsi target telah diinisialisasi');
+if (DEBUG) console.log('✅ Semua fungsi target telah diinisialisasi');
 
 // ========== GLOBAL FUNCTIONS ==========
 window.showAlasanTidakTertarikModal = showAlasanTidakTertarikModal;
@@ -15242,11 +16971,11 @@ function navigateTo(page) {
 async function executePageLoad(page) {
     switch(page) {
 case 'dashboard':
-    console.log('📊 Dashboard diinisialisasi');
+    if (DEBUG) console.log('📊 Dashboard diinisialisasi');
     
     // ===== CEK APAKAH SUDAH DILOAD =====
     if (_dashboardInitialized) {
-        console.log('⏳ Dashboard sudah dimuat, skip...');
+        if (DEBUG) console.log('⏳ Dashboard sudah dimuat, skip...');
         // Tapi tetap update chart jika data berubah
         if (typeof updateTrendChart === 'function') {
             updateTrendChart();
@@ -15603,7 +17332,7 @@ function setupImportExcel() {
                                     }
                                 });
                             }
-                            console.log(`📊 Data existing di DB Transaksi: ${existingIds.size} agent_id`);
+                            if (DEBUG) console.log(`📊 Data existing di DB Transaksi: ${existingIds.size} agent_id`);
                         } else if (importType === 'customer') {
                             const { data: existingData } = await window.db
                                 .from('customers')
@@ -15615,7 +17344,7 @@ function setupImportExcel() {
                                     if (item.nama) existingNames.add(item.nama.toLowerCase());
                                 });
                             }
-                            console.log(`📊 Data existing di Customers: ${existingIds.size} agent_id`);
+                            if (DEBUG) console.log(`📊 Data existing di Customers: ${existingIds.size} agent_id`);
                         } else if (importType === 'prospek') {
                             const { data: existingData } = await window.db
                                 .from('prospek')
@@ -15626,7 +17355,7 @@ function setupImportExcel() {
                                     if (item.nama) existingNames.add(item.nama.toLowerCase());
                                 });
                             }
-                            console.log(`📊 Data existing di Prospek: ${existingNames.size} nama`);
+                            if (DEBUG) console.log(`📊 Data existing di Prospek: ${existingNames.size} nama`);
                         }
                         
                         // ===== BATCH PROCESSING =====
@@ -17098,7 +18827,7 @@ async function restoreTransaksiStatusForDeletedCustomers(deletedCustomerIds) {
                 .eq('status', 'imported');
         }
         
-        console.log(`✅ Restored ${agentIds.length} transaksi status to pending`);
+        if (DEBUG) console.log(`✅ Restored ${agentIds.length} transaksi status to pending`);
         
     } catch (err) {
         console.error('Error restoring transaksi status:', err);
@@ -17418,7 +19147,7 @@ function initEventListeners() {
             document.getElementById('selectAllTransaksi')?.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Select All clicked!');
+                if (DEBUG) console.log('Select All clicked!');
                 toggleSelectAllTransaksi();
             });
         }
@@ -17842,10 +19571,10 @@ function initEventListeners() {
     // Send broadcast
     document.getElementById('sendBroadcastBtn')?.addEventListener('click', sendBroadcast);
     
-    // ================================================================
-    // ========== BROADCAST UPLINE EVENT LISTENERS ==========
-    // ================================================================
-    
+// ================================================================
+// ========== BROADCAST UPLINE EVENT LISTENERS ==========
+// ================================================================
+function initBroadcastUplineListeners() {
     document.querySelectorAll('input[name="uplineSourceType"]').forEach(radio => {
         radio.addEventListener('change', loadUplineNumbers);
     });
@@ -17863,6 +19592,7 @@ function initEventListeners() {
     document.getElementById('uplineDeleteTemplateBtn')?.addEventListener('click', deleteUplineTemplate);
     
     document.getElementById('sendUplineBroadcastBtn')?.addEventListener('click', sendUplineBroadcast);
+}
     
     // ================================================================
     // ========== LOAD ALL TEMPLATES & HISTORY ==========
